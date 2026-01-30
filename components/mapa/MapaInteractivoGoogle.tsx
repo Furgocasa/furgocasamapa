@@ -330,11 +330,10 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
   useEffect(() => {
     if (!map || !areaSeleccionada || !infoWindowRef.current) return
 
-    // Buscar el marcador correspondiente
-    const markerIndex = areas.findIndex((a: any) => a.id === areaSeleccionada.id)
-    if (markerIndex !== -1 && markersRef.current[markerIndex]) {
-      const marker = markersRef.current[markerIndex]
-      
+    // Buscar el marcador correspondiente en TODOS los markers (no depender de 'areas' filtrado)
+    const marker = markersRef.current.find((m, index) => markerIdsRef.current[index] === areaSeleccionada.id)
+    
+    if (marker) {
       // Centrar mapa
       map.panTo(marker.getPosition()!)
       map.setZoom(14)
@@ -343,8 +342,18 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
       const content = createInfoWindowContent(areaSeleccionada)
       infoWindowRef.current.setContent(content)
       infoWindowRef.current.open(map, marker)
+    } else {
+      // Si no hay marker (área no visible), crear InfoWindow temporal
+      const position = { lat: areaSeleccionada.latitud, lng: areaSeleccionada.longitud }
+      map.panTo(position)
+      map.setZoom(14)
+      
+      const content = createInfoWindowContent(areaSeleccionada)
+      infoWindowRef.current.setContent(content)
+      infoWindowRef.current.setPosition(position)
+      infoWindowRef.current.open(map)
     }
-  }, [areaSeleccionada, map, areas])
+  }, [areaSeleccionada, map])
 
   // Auto-activar GPS si estaba activo anteriormente
   useEffect(() => {
