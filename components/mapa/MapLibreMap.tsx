@@ -211,6 +211,21 @@ export function MapLibreMap({
           el.style.cursor = 'pointer'
           el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)'
 
+          const popup = new maplibregl.Popup({ 
+            offset: 25,
+            closeButton: true,      // ✅ Botón X para cerrar
+            closeOnClick: true,     // ✅ Cerrar al hacer click fuera
+            closeOnMove: false,     // No cerrar al mover el mapa
+            maxWidth: '360px',      // Ancho consistente
+            className: 'maplibre-popup-custom'
+          })
+            .setHTML(createPopupContent(area))
+
+          const marker = new maplibregl.Marker({ element: el })
+            .setLngLat([lng, lat])
+            .setPopup(popup)
+            .addTo(map)
+
           el.addEventListener('click', () => {
             onAreaClick(area)
             // ✅ Centrar mapa en el marcador al abrir popup
@@ -219,22 +234,9 @@ export function MapLibreMap({
               zoom: Math.max(map.getZoom(), 12), // Zoom mínimo 12 para ver detalles
               duration: 800
             })
+            // ✅ Abrir el popup explícitamente
+            marker.togglePopup()
           })
-
-          const marker = new maplibregl.Marker({ element: el })
-            .setLngLat([lng, lat])
-            .setPopup(
-              new maplibregl.Popup({ 
-                offset: 25,
-                closeButton: true,      // ✅ Botón X para cerrar
-                closeOnClick: true,     // ✅ Cerrar al hacer click fuera
-                closeOnMove: false,     // No cerrar al mover el mapa
-                maxWidth: '360px',      // Ancho consistente
-                className: 'maplibre-popup-custom'
-              })
-                .setHTML(createPopupContent(area))
-            )
-            .addTo(map)
 
           markersRef.current[areaId] = marker
         }
@@ -553,6 +555,7 @@ export function MapLibreMap({
           border-radius: 16px !important;
           box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
           overflow: hidden !important;
+          max-width: 360px !important;
         }
         .maplibregl-popup-close-button {
           font-size: 24px !important;
@@ -566,6 +569,9 @@ export function MapLibreMap({
           z-index: 10 !important;
           box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
           transition: all 0.2s !important;
+          line-height: 28px !important;
+          text-align: center !important;
+          padding: 0 !important;
         }
         .maplibregl-popup-close-button:hover {
           background: #F3F4F6 !important;
@@ -577,6 +583,22 @@ export function MapLibreMap({
         }
         .maplibre-popup-custom .maplibregl-popup-content {
           max-width: 380px !important;
+        }
+        
+        /* ✅ Estilos responsive para móvil */
+        @media (max-width: 640px) {
+          .maplibregl-popup-content {
+            max-width: 90vw !important;
+            width: 320px !important;
+          }
+          .maplibregl-popup {
+            max-width: 90vw !important;
+          }
+        }
+        
+        /* ✅ Mejorar interacción táctil en móvil */
+        .maplibregl-popup a {
+          -webkit-tap-highlight-color: transparent;
         }
       `}</style>
 
