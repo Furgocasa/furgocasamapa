@@ -67,9 +67,9 @@ export default function MapaPage() {
   useEffect(() => {
     const loadPaises = async () => {
       try {
-        // Cache de países (válido por 1 hora)
-        const PAISES_CACHE_KEY = 'mapa_paises_disponibles'
-        const PAISES_TIMESTAMP_KEY = 'mapa_paises_timestamp'
+        // Cache de países (válido por 1 hora) - v2 fuerza recarga con paginación
+        const PAISES_CACHE_KEY = 'mapa_paises_v2'
+        const PAISES_TIMESTAMP_KEY = 'mapa_paises_v2_timestamp'
         const CACHE_MAX_AGE = 1000 * 60 * 60 // 1 hora
 
         // Intentar desde cache
