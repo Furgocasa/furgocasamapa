@@ -36,6 +36,13 @@ export default function MapaPage() {
   // Hook de filtros persistentes (reemplaza el useState anterior)
   const { filtros, setFiltros, metadata, setMetadata, limpiarFiltros, contarFiltrosActivos } = usePersistentFilters()
 
+  const handlePaisManualChange = (_pais: string) => {
+    setMetadata((prev) => ({
+      ...prev,
+      paisSource: 'manual'
+    }))
+  }
+
   // Verificar autenticación
   useEffect(() => {
     const supabase = createClient()
@@ -275,11 +282,11 @@ export default function MapaPage() {
               setMetadata({
                 gpsCountry: detectedCountryValue,
                 gpsActive: true,
-                paisSource: filtros.pais ? metadata.paisSource : 'gps'
+                paisSource: metadata.paisSource === 'manual' ? 'manual' : (filtros.pais ? metadata.paisSource : 'gps')
               })
 
               // APLICAR FILTRO AUTOMÁTICO si no hay filtro de país previo
-              if (!filtros.pais) {
+              if (!filtros.pais && metadata.paisSource !== 'manual') {
                 console.log('✅ Aplicando filtro automático de país:', detectedCountryValue)
                 setFiltros({
                   ...filtros,
@@ -395,7 +402,9 @@ export default function MapaPage() {
   // Obtener países únicos de las áreas
   // Ya no necesitamos comunidades ni provincias
 
-  // ✅ ÁREAS PARA LA LISTA: Todas o filtradas por país seleccionado en filtros
+  const paisObjetivo = filtros.pais || (metadata.paisSource === 'gps' ? detectedCountry : '')
+
+  // ✅ ÁREAS PARA LA LISTA: Todas o filtradas por país objetivo
   const areasParaLista = useMemo(() => {
     return areas.filter((area: any) => {
       // Filtro de búsqueda
@@ -411,9 +420,9 @@ export default function MapaPage() {
       }
 
       // Filtro de país (normalizado)
-      if (filtros.pais) {
+      if (paisObjetivo) {
         const paisArea = area.pais?.trim() || ''
-        const paisFiltro = filtros.pais.trim()
+        const paisFiltro = paisObjetivo.trim()
 
         // Log para depuración (solo en desarrollo)
         if (process.env.NODE_ENV === 'development') {
@@ -475,21 +484,21 @@ export default function MapaPage() {
 
       return true
     })
-  }, [areas, filtros])
+  }, [areas, filtros, paisObjetivo])
 
-  // ✅ ÁREAS PARA EL MAPA: Solo las del país detectado por GPS (optimización)
+  // ✅ ÁREAS PARA EL MAPA: usar mismo país objetivo
   const areasParaMapa = useMemo(() => {
-    if (!detectedCountry) {
-      // Si no hay país detectado, mostrar todas las áreas (fallback)
+    if (!paisObjetivo) {
+      // Si no hay país objetivo, mostrar todas las áreas (fallback)
       return areas
     }
-    
-    // Filtrar solo las áreas del país detectado por GPS
+
+    // Filtrar solo las áreas del país objetivo
     return areas.filter((area: any) => {
       const paisArea = area.pais?.trim() || ''
-      return paisArea === detectedCountry.trim()
+      return paisArea === paisObjetivo.trim()
     })
-  }, [areas, detectedCountry])
+  }, [areas, paisObjetivo])
 
   const handleAreaClick = (area: Area) => {
     setAreaSeleccionada(area)
@@ -508,6 +517,10 @@ export default function MapaPage() {
     setFiltros(prev => ({
       ...prev,
       pais: newCountry
+    }))
+    setMetadata(prev => ({
+      ...prev,
+      paisSource: 'manual'
     }))
 
     // Mostrar mensaje informativo
@@ -616,6 +629,7 @@ export default function MapaPage() {
           <FiltrosMapa
             filtros={filtros}
             onFiltrosChange={setFiltros}
+            onPaisChange={handlePaisManualChange}
             onClose={() => {}}
             totalResultados={areasParaLista.length}
             paisesDisponibles={paisesDisponibles}
@@ -630,7 +644,7 @@ export default function MapaPage() {
             onAreaClick={handleAreaClick}
             mapRef={mapRef}
             onCountryChange={handleCountryChange}
-            currentCountry={detectedCountry || filtros.pais}
+            currentCountry={paisObjetivo || undefined}
           />
 
 
@@ -687,6 +701,7 @@ export default function MapaPage() {
         <FiltrosMapa
           filtros={filtros}
           onFiltrosChange={setFiltros}
+          onPaisChange={handlePaisManualChange}
           onClose={() => setMostrarFiltros(false)}
           totalResultados={areasParaLista.length}
           paisesDisponibles={paisesDisponibles}

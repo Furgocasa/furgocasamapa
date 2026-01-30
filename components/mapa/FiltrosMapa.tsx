@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline'
 
 export interface Filtros {
@@ -14,6 +14,7 @@ export interface Filtros {
 interface FiltrosMapaProps {
   filtros: Filtros
   onFiltrosChange: (filtros: Filtros) => void
+  onPaisChange?: (pais: string) => void
   onClose?: () => void
   totalResultados: number
   paisesDisponibles: string[]
@@ -48,6 +49,9 @@ const CARACTERISTICAS = [
 export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados, paisesDisponibles }: FiltrosMapaProps) {
   const [busquedaLocal, setBusquedaLocal] = useState(filtros.busqueda)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const [paisDropdownOpen, setPaisDropdownOpen] = useState(false)
+  const [paisSearch, setPaisSearch] = useState('')
+  const paisDropdownRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     setBusquedaLocal(filtros.busqueda)
@@ -71,8 +75,22 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados
     }
   }, [])
 
+  useEffect(() => {
+    if (!paisDropdownOpen) return
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (paisDropdownRef.current && !paisDropdownRef.current.contains(event.target as Node)) {
+        setPaisDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [paisDropdownOpen])
+
   const handlePaisChange = (valor: string) => {
     onFiltrosChange({ ...filtros, pais: valor })
+    onPaisChange?.(valor)
   }
 
   const handlePrecioChange = (valor: string) => {
@@ -102,6 +120,12 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados
       caracteristicas: []
     })
   }
+
+  const paisesFiltrados = useMemo(() => {
+    const term = paisSearch.trim().toLowerCase()
+    if (!term) return paisesDisponibles
+    return paisesDisponibles.filter((pais) => pais.toLowerCase().includes(term))
+  }, [paisesDisponibles, paisSearch])
 
   return (
     <div className="h-full flex flex-col bg-white">
@@ -146,23 +170,72 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados
           </div>
         </div>
 
-        {/* PAÍS - SELECT NATIVO HTML - FUNCIONA PERFECTO */}
-        <div>
+        {/* PAÍS - SELECT PERSONALIZADO CON SCROLL */}
+        <div className="relative" ref={paisDropdownRef}>
           <label className="block text-xs font-medium text-gray-600 mb-1">
             País ({paisesDisponibles.length} disponibles)
           </label>
-          <select
-            value={filtros.pais}
-            onChange={(e) => handlePaisChange(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white cursor-pointer"
+          <button
+            type="button"
+            onClick={() => {
+              setPaisDropdownOpen((prev) => !prev)
+              if (!paisDropdownOpen) setPaisSearch('')
+            }}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white cursor-pointer text-left flex items-center justify-between"
+            aria-expanded={paisDropdownOpen}
+            aria-haspopup="listbox"
           >
-            <option value="">🌍 Todos los países</option>
-            {paisesDisponibles.map((pais) => (
-              <option key={pais} value={pais}>
-                {pais}
-              </option>
-            ))}
-          </select>
+            <span className={filtros.pais ? 'text-gray-900' : 'text-gray-500'}>
+              {filtros.pais || '🌍 Todos los países'}
+            </span>
+            <span className="text-gray-400">▾</span>
+          </button>
+
+          {paisDropdownOpen && (
+            <div className="absolute z-30 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
+              <div className="p-2 border-b border-gray-100">
+                <input
+                  type="text"
+                  value={paisSearch}
+                  onChange={(e) => setPaisSearch(e.target.value)}
+                  placeholder="Buscar país..."
+                  className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+              <div className="max-h-60 overflow-y-auto py-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handlePaisChange('')
+                    setPaisDropdownOpen(false)
+                  }}
+                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
+                    filtros.pais === '' ? 'bg-primary-50 text-primary-700' : 'text-gray-700'
+                  }`}
+                >
+                  🌍 Todos los países
+                </button>
+                {paisesFiltrados.length === 0 && (
+                  <div className="px-3 py-2 text-xs text-gray-500">Sin resultados</div>
+                )}
+                {paisesFiltrados.map((pais) => (
+                  <button
+                    key={pais}
+                    type="button"
+                    onClick={() => {
+                      handlePaisChange(pais)
+                      setPaisDropdownOpen(false)
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
+                      filtros.pais === pais ? 'bg-primary-50 text-primary-700' : 'text-gray-700'
+                    }`}
+                  >
+                    {pais}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Servicios */}

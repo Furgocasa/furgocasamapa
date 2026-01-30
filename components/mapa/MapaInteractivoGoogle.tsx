@@ -28,6 +28,7 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
   const [map, setMap] = useState<GoogleMap | null>(null)
   const [error, setError] = useState<string | null>(null)
   const markersRef = useRef<GoogleMarker[]>([])
+  const markerIdsRef = useRef<string[]>([])
   const infoWindowRef = useRef<GoogleInfoWindow | null>(null)
   const markerClustererRef = useRef<MarkerClusterer | null>(null)
   const userMarkerRef = useRef<GoogleMarker | null>(null)
@@ -166,9 +167,38 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
 
   // A├▒adir marcadores al mapa con clustering INCREMENTAL (sin parpadeo)
   useEffect(() => {
-    if (!map || areas.length === 0) return
+    if (!map) return
+
+    // Si no hay ├íreas, limpiar markers y clusters
+    if (areas.length === 0) {
+      if (markerClustererRef.current) {
+        markerClustererRef.current.clearMarkers()
+        markerClustererRef.current = null
+      }
+      markersRef.current.forEach((marker: any) => marker.setMap(null))
+      markersRef.current = []
+      markerIdsRef.current = []
+      return
+    }
 
     const google = (window as any).google
+
+    // Reset si cambiaron los filtros (ids diferentes o menor cantidad)
+    const nextIds = areas.map((area) => area.id)
+    const prevIds = markerIdsRef.current
+    const idsIguales =
+      prevIds.length === nextIds.length &&
+      prevIds.every((id, index) => id === nextIds[index])
+
+    if (!idsIguales) {
+      if (markerClustererRef.current) {
+        markerClustererRef.current.clearMarkers()
+        markerClustererRef.current = null
+      }
+      markersRef.current.forEach((marker: any) => marker.setMap(null))
+      markersRef.current = []
+      markerIdsRef.current = []
+    }
 
     // N├║mero de markers existentes
     const existingCount = markersRef.current.length
@@ -222,6 +252,7 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
 
     // A├æADIR los nuevos markers al array existente (sin borrar los anteriores)
     markersRef.current = [...markersRef.current, ...newMarkers]
+    markerIdsRef.current = [...markerIdsRef.current, ...newAreas.map((area) => area.id)]
 
     // Actualizar clusterer: a├▒adir solo los nuevos markers
     if (!markerClustererRef.current) {
