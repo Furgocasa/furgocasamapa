@@ -6,12 +6,12 @@ alwaysApply: true
 
 ## Repositorio y Despliegue
 
-- **SIEMPRE** hacer commit y push al repositorio de GitHub: `https://github.com/ActtaxIA/Mapa-Furgocasa.git`
+- **SIEMPRE** hacer commit y push al repositorio de GitHub: `https://github.com/Furgocasa/furgocasamapa.git`
 - **Branch principal**: `main`
 - **NO** usar desarrollo local - este proyecto solo funciona en producción
 - **NO** pushear a otros repositorios ni branches
-- El despliegue es automático vía **AWS Amplify** cuando se hace push a `main`
-- Esperar 2-3 minutos después del push para que AWS Amplify construya y despliegue
+- El despliegue es automático vía **Vercel** cuando se hace push a `main`
+- Esperar 2-3 minutos después del push para que Vercel construya y despliegue
 
 ## Workflow de Cambios
 
@@ -19,7 +19,7 @@ alwaysApply: true
 2. `git add` de todos los archivos modificados
 3. `git commit` con mensaje descriptivo
 4. `git push origin main`
-5. Verificar despliegue en AWS Amplify Console
+5. Verificar despliegue en Vercel Dashboard
 6. Limpiar caché del navegador (Ctrl+F5) para ver cambios
 
 ## Commits
@@ -31,5 +31,5 @@ alwaysApply: true
 ## URLs de Producción
 
 - **Producción**: https://www.mapafurgocasa.com
-- **AWS Amplify**: https://main.d1wbtrilaad2yt.amplifyapp.com
+- **Vercel**: https://furgocasamapa.vercel.app
 - **NO** hay desarrollo local ni localhost configurado

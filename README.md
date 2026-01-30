@@ -5,9 +5,9 @@
 > 🔴 **ENTORNO DE PRODUCCIÓN ACTIVA**
 >
 > - **URL:** https://www.mapafurgocasa.com
-> - **Hosting:** AWS Amplify
-> - **Repositorio:** GitHub (ActtaxIA/Mapa-Furgocasa)
-> - **Deploy automático:** Cada push a `main` → Despliega a AWS automáticamente
+> - **Hosting:** Vercel ⚡
+> - **Repositorio:** GitHub (Furgocasa/furgocasamapa)
+> - **Deploy automático:** Cada push a `main` → Despliega a Vercel automáticamente
 > - **NO hay entorno de desarrollo local** - Se trabaja directamente en producción
 
 Plataforma web interactiva totalmente funcional para descubrir y gestionar áreas de autocaravanas, campers y vehículos recreativos en **Europa y Latinoamérica** (España, Portugal, Francia, Italia, Alemania, Argentina, Chile, Uruguay, Brasil, Colombia, Perú y más).
@@ -210,7 +210,7 @@ En Supabase Dashboard:
 
 ### 7. Flujo de Trabajo de Desarrollo
 
-**IMPORTANTE:** Esta aplicación NO se ejecuta localmente. Todo el desarrollo se hace directamente en producción.
+**IMPORTANTE:** Esta aplicación NO se ejecuta localmente. Todo el desarrollo se hace directamente en producción en Vercel.
 
 #### Workflow:
 
@@ -223,25 +223,25 @@ git commit -m "descripción de cambios"
 # 3. Push a GitHub (rama main)
 git push origin main
 
-# 4. AWS Amplify detecta el push automáticamente
-# 5. Build y deploy se ejecutan en AWS (2-5 minutos)
+# 4. Vercel detecta el push automáticamente
+# 5. Build y deploy se ejecutan en Vercel (2-3 minutos)
 # 6. Cambios visibles en https://www.mapafurgocasa.com
 ```
 
 #### Ver Logs de Deploy:
 
-1. Ve a AWS Console → Amplify
-2. Selecciona tu app
-3. Ve a **Deployments** para ver el progreso
-4. Click en el deployment para ver los logs
+1. Ve a Vercel Dashboard → tu proyecto
+2. Selecciona la pestaña **Deployments**
+3. Click en el deployment para ver los logs en tiempo real
 
-#### Variables de Entorno en AWS:
+#### Variables de Entorno en Vercel:
 
-Las variables `.env.local` deben configurarse en AWS Amplify:
+Las variables `.env.local` deben configurarse en Vercel:
 
-1. AWS Console → Amplify → Tu App
-2. **Environment variables** en el menú lateral
+1. Vercel Dashboard → Tu proyecto
+2. **Settings** → **Environment Variables**
 3. Añade las mismas variables que en `.env.local`
+4. Asegúrate de aplicarlas a **Production**, **Preview** y **Development**
 
 ---
 
