@@ -392,19 +392,70 @@ export default function MapaPage() {
     })
   }, [areas, filtros, paisFiltroLista])
 
-  // ✅ ÁREAS PARA EL MAPA: usar mismo país/región objetivo
+  // ✅ ÁREAS PARA EL MAPA: aplicar TODOS los filtros (igual que la lista)
   const areasParaMapa = useMemo(() => {
-    if (!paisObjetivo) {
-      // Si no hay país objetivo, mostrar todas las áreas (fallback)
-      return areas
-    }
-
-    // Filtrar áreas usando la función que soporta regiones
     return areas.filter((area: any) => {
-      const paisArea = area.pais?.trim() || ''
-      return paisPerteneceAFiltro(paisArea, paisObjetivo)
+      // Filtro de búsqueda
+      if (filtros.busqueda) {
+        const busqueda = filtros.busqueda.toLowerCase()
+        const coincide =
+          area.nombre.toLowerCase().includes(busqueda) ||
+          area.ciudad?.toLowerCase().includes(busqueda) ||
+          area.provincia?.toLowerCase().includes(busqueda) ||
+          area.descripcion?.toLowerCase().includes(busqueda)
+
+        if (!coincide) return false
+      }
+
+      // Filtro de país/región
+      if (paisFiltroLista) {
+        const paisArea = area.pais?.trim() || ''
+        if (!paisPerteneceAFiltro(paisArea, paisFiltroLista)) {
+          return false
+        }
+      }
+
+      // Filtro de precio
+      if (filtros.precio) {
+        if (filtros.precio === 'gratis') {
+          if (area.precio_noche !== 0) {
+            return false
+          }
+        }
+        if (filtros.precio === 'de-pago') {
+          if (!area.precio_noche || area.precio_noche <= 0) {
+            return false
+          }
+        }
+        if (filtros.precio === 'desconocido') {
+          if (area.precio_noche !== null && area.precio_noche !== undefined) {
+            return false
+          }
+        }
+      }
+
+      // Filtro de características
+      if (filtros.caracteristicas.length > 0) {
+        if (filtros.caracteristicas.includes('verificado') && !area.verificado) {
+          return false
+        }
+        if (filtros.caracteristicas.includes('con_descuento_furgocasa') && !area.con_descuento_furgocasa) {
+          return false
+        }
+      }
+
+      // Filtro de servicios
+      if (filtros.servicios.length > 0) {
+        const serviciosArea = area.servicios as Record<string, boolean>
+        const tieneServicios = filtros.servicios.every(
+          servicio => serviciosArea && serviciosArea[servicio] === true
+        )
+        if (!tieneServicios) return false
+      }
+
+      return true
     })
-  }, [areas, paisObjetivo])
+  }, [areas, filtros, paisFiltroLista])
 
   const handleAreaClick = (area: Area) => {
     setAreaSeleccionada(area)
