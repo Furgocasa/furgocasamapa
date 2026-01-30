@@ -91,17 +91,24 @@ export default function MapaPage() {
         const pageSize = 1000
         let page = 0
         let hasMore = true
+        let totalCount: number | null = null
 
         console.log('📥 Cargando países con paginación...')
 
         while (hasMore) {
-          const { data, error } = await supabase
+          const { data, error, count } = await supabase
             .from('areas')
-            .select('pais')
+            .select('pais', { count: 'exact' })
             .eq('activo', true)
+            .not('pais', 'is', null)
+            .neq('pais', '')
+            .order('pais')
             .range(page * pageSize, (page + 1) * pageSize - 1)
 
           if (error) throw error
+          if (totalCount === null && typeof count === 'number') {
+            totalCount = count
+          }
 
           if (data && data.length > 0) {
             // Extraer países únicos de esta página
@@ -114,7 +121,8 @@ export default function MapaPage() {
             console.log(`   Página ${page + 1}: ${data.length} áreas procesadas`)
 
             // Si hay menos registros que el tamaño de página, es la última página
-            if (data.length < pageSize) {
+            const loaded = (page + 1) * pageSize
+            if (data.length < pageSize || (totalCount !== null && loaded >= totalCount)) {
               hasMore = false
             } else {
               page++
@@ -403,8 +411,9 @@ export default function MapaPage() {
   // Ya no necesitamos comunidades ni provincias
 
   const paisObjetivo = filtros.pais || (metadata.paisSource === 'gps' ? detectedCountry : '')
+  const paisFiltroLista = metadata.paisSource === 'manual' ? filtros.pais : ''
 
-  // ✅ ÁREAS PARA LA LISTA: Todas o filtradas por país objetivo
+  // ✅ ÁREAS PARA LA LISTA: Solo filtrar por país si es manual
   const areasParaLista = useMemo(() => {
     return areas.filter((area: any) => {
       // Filtro de búsqueda
@@ -420,9 +429,9 @@ export default function MapaPage() {
       }
 
       // Filtro de país (normalizado)
-      if (paisObjetivo) {
+      if (paisFiltroLista) {
         const paisArea = area.pais?.trim() || ''
-        const paisFiltro = paisObjetivo.trim()
+        const paisFiltro = paisFiltroLista.trim()
 
         // Log para depuración (solo en desarrollo)
         if (process.env.NODE_ENV === 'development') {
@@ -484,7 +493,7 @@ export default function MapaPage() {
 
       return true
     })
-  }, [areas, filtros, paisObjetivo])
+  }, [areas, filtros, paisFiltroLista])
 
   // ✅ ÁREAS PARA EL MAPA: usar mismo país objetivo
   const areasParaMapa = useMemo(() => {
