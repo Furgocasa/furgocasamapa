@@ -46,6 +46,61 @@ const CARACTERISTICAS = [
   { id: 'verificado', label: '✓ Verificado oficialmente' }
 ]
 
+// Regiones para filtrar
+const REGIONES = {
+  EUROPA: {
+    id: 'REGION_EUROPA',
+    label: 'Europa',
+    emoji: '🇪🇺',
+    paises: [
+      'España', 'Portugal', 'Francia', 'Italia', 'Alemania', 'Austria', 'Suiza',
+      'Bélgica', 'Países Bajos', 'Holanda', 'Reino Unido', 'Irlanda', 'Dinamarca',
+      'Noruega', 'Suecia', 'Finlandia', 'Polonia', 'Chequia', 'República Checa',
+      'Eslovaquia', 'Hungría', 'Croacia', 'Eslovenia', 'Grecia', 'Rumanía',
+      'Bulgaria', 'Serbia', 'Montenegro', 'Albania', 'Macedonia', 'Bosnia',
+      'Luxemburgo', 'Mónaco', 'Andorra', 'Malta', 'Chipre', 'Estonia',
+      'Letonia', 'Lituania', 'Islandia'
+    ]
+  },
+  SUDAMERICA: {
+    id: 'REGION_SUDAMERICA',
+    label: 'Sudamérica',
+    emoji: '🌎',
+    paises: [
+      'Argentina', 'Chile', 'Uruguay', 'Paraguay', 'Brasil', 'Bolivia',
+      'Perú', 'Ecuador', 'Colombia', 'Venezuela', 'Guyana', 'Surinam'
+    ]
+  },
+  CENTROAMERICA: {
+    id: 'REGION_CENTROAMERICA',
+    label: 'Centroamérica y Caribe',
+    emoji: '🌴',
+    paises: [
+      'México', 'Guatemala', 'Belice', 'Honduras', 'El Salvador', 'Nicaragua',
+      'Costa Rica', 'Panamá', 'Cuba', 'República Dominicana', 'Puerto Rico',
+      'Jamaica', 'Haití'
+    ]
+  }
+}
+
+// Helper para obtener el nombre legible del filtro de país
+export function getNombreFiltro(valor: string): string {
+  if (!valor) return 'Todos los países'
+  if (valor === REGIONES.EUROPA.id) return REGIONES.EUROPA.label
+  if (valor === REGIONES.SUDAMERICA.id) return REGIONES.SUDAMERICA.label
+  if (valor === REGIONES.CENTROAMERICA.id) return REGIONES.CENTROAMERICA.label
+  return valor
+}
+
+// Helper para verificar si un país pertenece al filtro
+export function paisPerteneceAFiltro(pais: string, filtro: string): boolean {
+  if (!filtro) return true // Todos
+  if (filtro === REGIONES.EUROPA.id) return REGIONES.EUROPA.paises.includes(pais)
+  if (filtro === REGIONES.SUDAMERICA.id) return REGIONES.SUDAMERICA.paises.includes(pais)
+  if (filtro === REGIONES.CENTROAMERICA.id) return REGIONES.CENTROAMERICA.paises.includes(pais)
+  return pais === filtro // País específico
+}
+
 export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, totalResultados, paisesDisponibles }: FiltrosMapaProps) {
   const [busquedaLocal, setBusquedaLocal] = useState(filtros.busqueda)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -174,10 +229,10 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
           </div>
         </div>
 
-        {/* PAÍS - BOTÓN QUE ABRE MODAL */}
+        {/* PAÍS/REGIÓN - BOTÓN QUE ABRE MODAL */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            País ({paisesDisponibles.length} disponibles)
+            País / Región ({paisesDisponibles.length} países)
           </label>
           <button
             type="button"
@@ -187,7 +242,7 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
             <div className="flex items-center gap-2">
               <GlobeAltIcon className="w-4 h-4 text-gray-400" />
               <span className={filtros.pais ? 'text-gray-900 font-medium' : 'text-gray-500'}>
-                {filtros.pais || 'Todos los países'}
+                {getNombreFiltro(filtros.pais)}
               </span>
             </div>
             <ChevronRightIcon className="w-4 h-4 text-gray-400" />
@@ -270,13 +325,13 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
         </button>
       </div>
 
-      {/* ========== MODAL DE PAÍSES ========== */}
+      {/* ========== MODAL DE PAÍSES Y REGIONES ========== */}
       {modalPaisesOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl">
             {/* Header del Modal */}
             <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-bold text-gray-900">Seleccionar País</h3>
+              <h3 className="text-lg font-bold text-gray-900">Seleccionar País o Región</h3>
               <button
                 onClick={() => setModalPaisesOpen(false)}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -293,36 +348,112 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
                   type="text"
                   value={paisSearch}
                   onChange={(e) => setPaisSearch(e.target.value)}
-                  placeholder="Buscar país..."
+                  placeholder="Buscar país o región..."
                   className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   autoFocus
                 />
               </div>
             </div>
 
-            {/* Lista de Países - CON SCROLL */}
+            {/* Lista de Países y Regiones - CON SCROLL */}
             <div className="flex-1 overflow-y-auto">
-              {/* Opción: Todos los países */}
-              <button
-                type="button"
-                onClick={() => setPaisSeleccionadoTemp('')}
-                className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b ${
-                  paisSeleccionadoTemp === '' ? 'bg-primary-50' : ''
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <GlobeAltIcon className="w-5 h-5 text-primary-600" />
-                  <span className="font-medium text-gray-900">Todos los países</span>
-                </div>
-                {paisSeleccionadoTemp === '' && (
-                  <CheckIcon className="w-5 h-5 text-primary-600" />
-                )}
-              </button>
+              
+              {/* ===== OPCIONES GENERALES ===== */}
+              {!paisSearch && (
+                <>
+                  {/* Todos los países */}
+                  <button
+                    type="button"
+                    onClick={() => setPaisSeleccionadoTemp('')}
+                    className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b ${
+                      paisSeleccionadoTemp === '' ? 'bg-primary-50' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">🌍</span>
+                      <span className="font-medium text-gray-900">Todos los países</span>
+                    </div>
+                    {paisSeleccionadoTemp === '' && (
+                      <CheckIcon className="w-5 h-5 text-primary-600" />
+                    )}
+                  </button>
+
+                  {/* Separador - Regiones */}
+                  <div className="px-4 py-2 bg-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Regiones
+                  </div>
+
+                  {/* Europa */}
+                  <button
+                    type="button"
+                    onClick={() => setPaisSeleccionadoTemp(REGIONES.EUROPA.id)}
+                    className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b ${
+                      paisSeleccionadoTemp === REGIONES.EUROPA.id ? 'bg-primary-50' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{REGIONES.EUROPA.emoji}</span>
+                      <div>
+                        <span className="font-medium text-gray-900">{REGIONES.EUROPA.label}</span>
+                        <p className="text-xs text-gray-500">{REGIONES.EUROPA.paises.length} países</p>
+                      </div>
+                    </div>
+                    {paisSeleccionadoTemp === REGIONES.EUROPA.id && (
+                      <CheckIcon className="w-5 h-5 text-primary-600" />
+                    )}
+                  </button>
+
+                  {/* Sudamérica */}
+                  <button
+                    type="button"
+                    onClick={() => setPaisSeleccionadoTemp(REGIONES.SUDAMERICA.id)}
+                    className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b ${
+                      paisSeleccionadoTemp === REGIONES.SUDAMERICA.id ? 'bg-primary-50' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{REGIONES.SUDAMERICA.emoji}</span>
+                      <div>
+                        <span className="font-medium text-gray-900">{REGIONES.SUDAMERICA.label}</span>
+                        <p className="text-xs text-gray-500">{REGIONES.SUDAMERICA.paises.length} países</p>
+                      </div>
+                    </div>
+                    {paisSeleccionadoTemp === REGIONES.SUDAMERICA.id && (
+                      <CheckIcon className="w-5 h-5 text-primary-600" />
+                    )}
+                  </button>
+
+                  {/* Centroamérica */}
+                  <button
+                    type="button"
+                    onClick={() => setPaisSeleccionadoTemp(REGIONES.CENTROAMERICA.id)}
+                    className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b ${
+                      paisSeleccionadoTemp === REGIONES.CENTROAMERICA.id ? 'bg-primary-50' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{REGIONES.CENTROAMERICA.emoji}</span>
+                      <div>
+                        <span className="font-medium text-gray-900">{REGIONES.CENTROAMERICA.label}</span>
+                        <p className="text-xs text-gray-500">{REGIONES.CENTROAMERICA.paises.length} países</p>
+                      </div>
+                    </div>
+                    {paisSeleccionadoTemp === REGIONES.CENTROAMERICA.id && (
+                      <CheckIcon className="w-5 h-5 text-primary-600" />
+                    )}
+                  </button>
+
+                  {/* Separador - Países */}
+                  <div className="px-4 py-2 bg-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Países ({paisesDisponibles.length})
+                  </div>
+                </>
+              )}
 
               {/* Lista de países */}
               {paisesFiltrados.length === 0 ? (
                 <div className="p-4 text-center text-gray-500 text-sm">
-                  No se encontraron países con "{paisSearch}"
+                  No se encontraron resultados para "{paisSearch}"
                 </div>
               ) : (
                 paisesFiltrados.map((pais, index) => (

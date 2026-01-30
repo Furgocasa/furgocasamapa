@@ -1,7 +1,7 @@
 'use client'
 
 import { MapaInteractivo } from '@/components/mapa/MapaInteractivo'
-import { FiltrosMapa, Filtros } from '@/components/mapa/FiltrosMapa'
+import { FiltrosMapa, Filtros, paisPerteneceAFiltro } from '@/components/mapa/FiltrosMapa'
 import { ListaResultados } from '@/components/mapa/ListaResultados'
 import { Navbar } from '@/components/layout/Navbar'
 import BottomSheet from '@/components/mobile/BottomSheet'
@@ -347,24 +347,12 @@ export default function MapaPage() {
         if (!coincide) return false
       }
 
-      // Filtro de país (normalizado)
+      // Filtro de país/región (soporta regiones como REGION_EUROPA, REGION_SUDAMERICA)
       if (paisFiltroLista) {
         const paisArea = area.pais?.trim() || ''
-        const paisFiltro = paisFiltroLista.trim()
-
-        // Log para depuración (solo en desarrollo)
-        if (process.env.NODE_ENV === 'development') {
-          if (paisArea !== paisFiltro && paisArea.toLowerCase().includes('port')) {
-            console.log('País no coincide:', {
-              areaNombre: area.nombre,
-              paisArea: `"${paisArea}"`,
-              paisFiltro: `"${paisFiltro}"`,
-              iguales: paisArea === paisFiltro
-            })
-          }
-        }
-
-        if (paisArea !== paisFiltro) {
+        
+        // Usar función que soporta regiones
+        if (!paisPerteneceAFiltro(paisArea, paisFiltroLista)) {
           return false
         }
       }
@@ -414,17 +402,17 @@ export default function MapaPage() {
     })
   }, [areas, filtros, paisFiltroLista])
 
-  // ✅ ÁREAS PARA EL MAPA: usar mismo país objetivo
+  // ✅ ÁREAS PARA EL MAPA: usar mismo país/región objetivo
   const areasParaMapa = useMemo(() => {
     if (!paisObjetivo) {
       // Si no hay país objetivo, mostrar todas las áreas (fallback)
       return areas
     }
 
-    // Filtrar solo las áreas del país objetivo
+    // Filtrar áreas usando la función que soporta regiones
     return areas.filter((area: any) => {
       const paisArea = area.pais?.trim() || ''
-      return paisArea === paisObjetivo.trim()
+      return paisPerteneceAFiltro(paisArea, paisObjetivo)
     })
   }, [areas, paisObjetivo])
 
