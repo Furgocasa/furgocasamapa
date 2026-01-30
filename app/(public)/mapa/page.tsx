@@ -588,7 +588,7 @@ export default function MapaPage() {
       {/* Layout principal - difuminado si no hay usuario */}
       <main className={`flex-1 relative flex overflow-hidden min-h-0 ${!user ? 'blur-sm pointer-events-none select-none' : ''}`}>
         {/* Panel de Filtros - Desktop y Tablet */}
-        <aside className="hidden md:block md:w-72 lg:w-80 bg-white shadow-lg border-r overflow-y-auto">
+        <aside className="hidden md:block md:w-72 lg:w-80 bg-white shadow-lg border-r overflow-y-auto overflow-x-hidden">
           <FiltrosMapa
             filtros={filtros}
             onFiltrosChange={setFiltros}

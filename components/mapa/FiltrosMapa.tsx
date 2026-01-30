@@ -127,8 +127,8 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados
         )}
       </div>
 
-      {/* Contenido con scroll */}
-      <div className="flex-1 overflow-y-auto px-2 py-0.5 space-y-1">
+      {/* Contenido con scroll - usando overflow-y-scroll para mejor control */}
+      <div className="flex-1 overflow-y-scroll overflow-x-hidden px-2 py-0.5 space-y-1" style={{ WebkitOverflowScrolling: 'touch' }}>
         {/* Búsqueda */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-0.5">
@@ -155,8 +155,8 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados
           </div>
         </div>
 
-        {/* País - Select HTML nativo (funciona perfectamente) */}
-        <div>
+        {/* País - Select HTML nativo */}
+        <div className="relative" style={{ overflow: 'visible', zIndex: 1000 }}>
           <label className="block text-xs font-medium text-gray-600 mb-0.5">
             País
           </label>
@@ -164,6 +164,10 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados
             value={filtros.pais}
             onChange={(e) => handlePaisChange(e.target.value)}
             className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white"
+            style={{ 
+              position: 'relative',
+              zIndex: 1001
+            }}
           >
             <option value="">Todos los países</option>
             {paisesDisponibles.map((pais) => (

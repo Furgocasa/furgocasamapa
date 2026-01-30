@@ -217,7 +217,8 @@ export function MapLibreMap({
             closeOnClick: true,     // ✅ Cerrar al hacer click fuera
             closeOnMove: false,     // No cerrar al mover el mapa
             maxWidth: '360px',      // Ancho consistente
-            className: 'maplibre-popup-custom'
+            className: 'maplibre-popup-custom',
+            anchor: 'bottom'        // ✅ Siempre arriba del marcador para mejor visibilidad
           })
             .setHTML(createPopupContent(area))
 
@@ -228,14 +229,20 @@ export function MapLibreMap({
 
           el.addEventListener('click', () => {
             onAreaClick(area)
-            // ✅ Centrar mapa en el marcador al abrir popup
+            
+            // ✅ Centrar el mapa con padding para que el popup quede completamente visible
+            // Esto asegura que la X de cerrar siempre se vea, como en Google Maps
             map.flyTo({
               center: [lng, lat],
-              zoom: Math.max(map.getZoom(), 12), // Zoom mínimo 12 para ver detalles
-              duration: 800
+              zoom: Math.max(map.getZoom(), 12),
+              duration: 800,
+              padding: { top: 100, bottom: 250, left: 50, right: 50 } // ✅ Espacio para el popup
             })
-            // ✅ Abrir el popup explícitamente
-            marker.togglePopup()
+            
+            // ✅ Abrir el popup después de un pequeño delay para que el centrado funcione bien
+            setTimeout(() => {
+              marker.togglePopup()
+            }, 400)
           })
 
           markersRef.current[areaId] = marker
@@ -270,14 +277,15 @@ export function MapLibreMap({
 
   }, [areas, mapLoaded, onAreaClick])
 
-  // Centrar en área seleccionada
+  // Centrar en área seleccionada con padding para que el popup se vea completo
   useEffect(() => {
     if (!mapRef.current || !areaSeleccionada) return
 
     mapRef.current.flyTo({
       center: [Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)],
       zoom: 14,
-      duration: 1000
+      duration: 1000,
+      padding: { top: 100, bottom: 250, left: 50, right: 50 } // ✅ Espacio para el popup
     })
   }, [areaSeleccionada])
 
