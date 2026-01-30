@@ -29,9 +29,29 @@ export default function MapaPage() {
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [detectedCountry, setDetectedCountry] = useState<string | null>(null)
-  const [paisesDisponibles, setPaisesDisponibles] = useState<string[]>([]) // NUEVO: Lista completa de países
   const mapRef = useRef<any>(null) // Referencia al mapa para controlarlo
   const skipMapCenterRef = useRef(false) // Evitar centrado automático después de búsqueda geográfica
+
+  // Lista hardcodeada de países disponibles (más eficiente que consultar Supabase)
+  const paisesDisponibles = [
+    'Albania', 'Alemania', 'Almogía', 'Andorra', 'Argentina', 'Austria', 
+    'Bélgica', 'Belice', 'Bolivia', 'Bosnia y Herzegovina', 'Brasil', 'Bulgaria',
+    'Chile', 'Chipre', 'Colombia', 'Costa Rica', 'Croacia', 'Cuba',
+    'Dinamarca', 'Ecuador', 'El Salvador', 'Eslovaquia', 'Eslovenia', 'España', 'Estonia',
+    'Finlandia', 'Francia',
+    'Grecia', 'Guatemala', 'Guyana',
+    'Haití', 'Holanda', 'Honduras', 'Hungría',
+    'Irlanda', 'Islandia', 'Italia',
+    'Jamaica',
+    'Letonia', 'Lituania', 'Luxemburgo',
+    'Macedonia', 'Malta', 'Montenegro', 'Mónaco', 'México',
+    'Nicaragua', 'Noruega',
+    'Países Bajos', 'Panamá', 'Paraguay', 'Perú', 'Polonia', 'Portugal', 'Puerto Rico',
+    'Reino Unido', 'República Checa', 'República Dominicana', 'Rumanía',
+    'Serbia', 'Suecia', 'Suiza', 'Surinam',
+    'Uruguay',
+    'Venezuela'
+  ]
 
   // Hook de filtros persistentes (reemplaza el useState anterior)
   const { filtros, setFiltros, metadata, setMetadata, limpiarFiltros, contarFiltrosActivos } = usePersistentFilters()
@@ -62,45 +82,6 @@ export default function MapaPage() {
 
     return () => subscription.unsubscribe()
   }, [])
-
-  // ✅ CARGAR LISTA COMPLETA DE PAÍSES (SIN CACHÉ - siempre fresco)
-  useEffect(() => {
-    const loadPaises = async () => {
-      try {
-        // Cargar DIRECTO desde Supabase - sin caché
-        const supabase = createClient()
-        
-        console.log('📥 Cargando países desde Supabase...')
-
-        // Query simple: obtener todos los países únicos
-        const { data, error } = await supabase
-          .from('areas')
-          .select('pais')
-          .eq('activo', true)
-          .not('pais', 'is', null)
-          .neq('pais', '')
-
-        if (error) throw error
-
-        // Extraer países únicos
-        const paisesSet = new Set<string>()
-        data?.forEach((area: any) => {
-          if (area.pais) {
-            paisesSet.add(area.pais.trim())
-          }
-        })
-
-        const paisesArray = Array.from(paisesSet).sort()
-        console.log(`✅ ${paisesArray.length} países únicos cargados`)
-        console.log('📋 Lista completa:', paisesArray)
-        setPaisesDisponibles(paisesArray)
-      } catch (err) {
-        console.error('❌ Error cargando países:', err)
-      }
-    }
-
-    loadPaises()
-  }, []) // Solo ejecutar una vez al montar
 
   // ✅ CARGAR TODAS LAS ÁREAS (SIN CACHÉ - siempre fresco)
   useEffect(() => {
