@@ -277,16 +277,52 @@ export function MapLibreMap({
 
   }, [areas, mapLoaded, onAreaClick])
 
-  // Centrar en área seleccionada con padding para que el popup se vea completo
+  // Centrar en área seleccionada y abrir popup
   useEffect(() => {
     if (!mapRef.current || !areaSeleccionada) return
 
-    mapRef.current.flyTo({
-      center: [Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)],
-      zoom: 14,
-      duration: 1000,
-      padding: { top: 100, bottom: 250, left: 50, right: 50 } // ✅ Espacio para el popup
-    })
+    const areaId = `area-${areaSeleccionada.id}`
+    const marker = markersRef.current[areaId]
+
+    if (marker) {
+      // Si el marcador existe, centrar y abrir popup
+      mapRef.current.flyTo({
+        center: [Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)],
+        zoom: 14,
+        duration: 1000,
+        padding: { top: 100, bottom: 250, left: 50, right: 50 }
+      })
+      
+      // Abrir popup después del centrado
+      setTimeout(() => {
+        const popup = marker.getPopup()
+        if (popup && !popup.isOpen()) {
+          marker.togglePopup()
+        }
+      }, 600)
+    } else {
+      // Si no hay marcador visible (área filtrada), crear popup temporal
+      mapRef.current.flyTo({
+        center: [Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)],
+        zoom: 14,
+        duration: 1000,
+        padding: { top: 100, bottom: 250, left: 50, right: 50 }
+      })
+      
+      // Crear popup temporal
+      setTimeout(() => {
+        new maplibregl.Popup({
+          offset: 25,
+          closeButton: true,
+          closeOnClick: true,
+          maxWidth: '360px',
+          className: 'maplibre-popup-custom'
+        })
+          .setLngLat([Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)])
+          .setHTML(createPopupContent(areaSeleccionada))
+          .addTo(mapRef.current!)
+      }, 600)
+    }
   }, [areaSeleccionada])
 
   // Handler para búsqueda geográfica
