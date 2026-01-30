@@ -688,7 +688,7 @@ export default function MapaPage() {
           filtros={filtros}
           onFiltrosChange={setFiltros}
           onClose={() => setMostrarFiltros(false)}
-          totalResultados={areasFiltradas.length}
+          totalResultados={areasParaLista.length}
           paisesDisponibles={paisesDisponibles}
         />
       </BottomSheet>
