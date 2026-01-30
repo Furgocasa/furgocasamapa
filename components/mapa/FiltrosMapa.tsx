@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, XMarkIcon, ChevronRightIcon, CheckIcon, GlobeAltIcon } from '@heroicons/react/24/outline'
 
 export interface Filtros {
   busqueda: string
@@ -49,13 +49,20 @@ const CARACTERISTICAS = [
 export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, totalResultados, paisesDisponibles }: FiltrosMapaProps) {
   const [busquedaLocal, setBusquedaLocal] = useState(filtros.busqueda)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
-  const [paisDropdownOpen, setPaisDropdownOpen] = useState(false)
+  
+  // Estado para el MODAL de países
+  const [modalPaisesOpen, setModalPaisesOpen] = useState(false)
   const [paisSearch, setPaisSearch] = useState('')
-  const paisDropdownRef = useRef<HTMLDivElement | null>(null)
+  const [paisSeleccionadoTemp, setPaisSeleccionadoTemp] = useState(filtros.pais)
 
   useEffect(() => {
     setBusquedaLocal(filtros.busqueda)
   }, [filtros.busqueda])
+
+  // Sincronizar país seleccionado cuando cambia desde fuera
+  useEffect(() => {
+    setPaisSeleccionadoTemp(filtros.pais)
+  }, [filtros.pais])
 
   const handleBusquedaChange = (valor: string) => {
     setBusquedaLocal(valor)
@@ -75,22 +82,18 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
     }
   }, [])
 
-  useEffect(() => {
-    if (!paisDropdownOpen) return
+  // Abrir modal de países
+  const abrirModalPaises = () => {
+    setPaisSeleccionadoTemp(filtros.pais)
+    setPaisSearch('')
+    setModalPaisesOpen(true)
+  }
 
-    const handleClickOutside = (event: MouseEvent) => {
-      if (paisDropdownRef.current && !paisDropdownRef.current.contains(event.target as Node)) {
-        setPaisDropdownOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [paisDropdownOpen])
-
-  const handlePaisChange = (valor: string) => {
-    onFiltrosChange({ ...filtros, pais: valor })
-    onPaisChange?.(valor)
+  // Aplicar selección de país
+  const aplicarPais = () => {
+    onFiltrosChange({ ...filtros, pais: paisSeleccionadoTemp })
+    onPaisChange?.(paisSeleccionadoTemp)
+    setModalPaisesOpen(false)
   }
 
   const handlePrecioChange = (valor: string) => {
@@ -121,6 +124,7 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
     })
   }
 
+  // Filtrar países por búsqueda
   const paisesFiltrados = useMemo(() => {
     const term = paisSearch.trim().toLowerCase()
     if (!term) return paisesDisponibles
@@ -170,72 +174,24 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
           </div>
         </div>
 
-        {/* PAÍS - SELECT PERSONALIZADO CON SCROLL */}
-        <div className="relative" ref={paisDropdownRef}>
+        {/* PAÍS - BOTÓN QUE ABRE MODAL */}
+        <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
             País ({paisesDisponibles.length} disponibles)
           </label>
           <button
             type="button"
-            onClick={() => {
-              setPaisDropdownOpen((prev) => !prev)
-              if (!paisDropdownOpen) setPaisSearch('')
-            }}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white cursor-pointer text-left flex items-center justify-between"
-            aria-expanded={paisDropdownOpen}
-            aria-haspopup="listbox"
+            onClick={abrirModalPaises}
+            className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg bg-white hover:bg-gray-50 cursor-pointer text-left flex items-center justify-between transition-colors"
           >
-            <span className={filtros.pais ? 'text-gray-900' : 'text-gray-500'}>
-              {filtros.pais || '🌍 Todos los países'}
-            </span>
-            <span className="text-gray-400">▾</span>
-          </button>
-
-          {paisDropdownOpen && (
-            <div className="absolute z-30 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
-              <div className="p-2 border-b border-gray-100">
-                <input
-                  type="text"
-                  value={paisSearch}
-                  onChange={(e) => setPaisSearch(e.target.value)}
-                  placeholder="Buscar país..."
-                  className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
-              <div className="max-h-60 overflow-y-auto py-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    handlePaisChange('')
-                    setPaisDropdownOpen(false)
-                  }}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
-                    filtros.pais === '' ? 'bg-primary-50 text-primary-700' : 'text-gray-700'
-                  }`}
-                >
-                  🌍 Todos los países
-                </button>
-                {paisesFiltrados.length === 0 && (
-                  <div className="px-3 py-2 text-xs text-gray-500">Sin resultados</div>
-                )}
-                {paisesFiltrados.map((pais) => (
-                  <button
-                    key={pais}
-                    type="button"
-                    onClick={() => {
-                      handlePaisChange(pais)
-                      setPaisDropdownOpen(false)
-                    }}
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
-                      filtros.pais === pais ? 'bg-primary-50 text-primary-700' : 'text-gray-700'
-                    }`}
-                  >
-                    {pais}
-                  </button>
-                ))}
-              </div>
+            <div className="flex items-center gap-2">
+              <GlobeAltIcon className="w-4 h-4 text-gray-400" />
+              <span className={filtros.pais ? 'text-gray-900 font-medium' : 'text-gray-500'}>
+                {filtros.pais || 'Todos los países'}
+              </span>
             </div>
-          )}
+            <ChevronRightIcon className="w-4 h-4 text-gray-400" />
+          </button>
         </div>
 
         {/* Servicios */}
@@ -313,6 +269,98 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
           Restablecer Filtros
         </button>
       </div>
+
+      {/* ========== MODAL DE PAÍSES ========== */}
+      {modalPaisesOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl">
+            {/* Header del Modal */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-bold text-gray-900">Seleccionar País</h3>
+              <button
+                onClick={() => setModalPaisesOpen(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <XMarkIcon className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Buscador */}
+            <div className="p-3 border-b">
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={paisSearch}
+                  onChange={(e) => setPaisSearch(e.target.value)}
+                  placeholder="Buscar país..."
+                  className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            {/* Lista de Países - CON SCROLL */}
+            <div className="flex-1 overflow-y-auto">
+              {/* Opción: Todos los países */}
+              <button
+                type="button"
+                onClick={() => setPaisSeleccionadoTemp('')}
+                className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b ${
+                  paisSeleccionadoTemp === '' ? 'bg-primary-50' : ''
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <GlobeAltIcon className="w-5 h-5 text-primary-600" />
+                  <span className="font-medium text-gray-900">Todos los países</span>
+                </div>
+                {paisSeleccionadoTemp === '' && (
+                  <CheckIcon className="w-5 h-5 text-primary-600" />
+                )}
+              </button>
+
+              {/* Lista de países */}
+              {paisesFiltrados.length === 0 ? (
+                <div className="p-4 text-center text-gray-500 text-sm">
+                  No se encontraron países con "{paisSearch}"
+                </div>
+              ) : (
+                paisesFiltrados.map((pais, index) => (
+                  <button
+                    key={pais}
+                    type="button"
+                    onClick={() => setPaisSeleccionadoTemp(pais)}
+                    className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                      index < paisesFiltrados.length - 1 ? 'border-b border-gray-100' : ''
+                    } ${paisSeleccionadoTemp === pais ? 'bg-primary-50' : ''}`}
+                  >
+                    <span className="text-gray-900">{pais}</span>
+                    {paisSeleccionadoTemp === pais && (
+                      <CheckIcon className="w-5 h-5 text-primary-600" />
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
+
+            {/* Footer del Modal */}
+            <div className="p-4 border-t bg-gray-50 flex gap-3">
+              <button
+                onClick={() => setModalPaisesOpen(false)}
+                className="flex-1 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={aplicarPais}
+                className="flex-1 py-2.5 px-4 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
