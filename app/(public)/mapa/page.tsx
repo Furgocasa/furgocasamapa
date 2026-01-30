@@ -56,7 +56,7 @@ export default function MapaPage() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // ✅ CARGAR LISTA COMPLETA DE PAÍSES (una sola vez, al inicio)
+  // ✅ CARGAR LISTA COMPLETA DE PAÍSES (una sola vez, al inicio) - CON PAGINACIÓN
   useEffect(() => {
     const loadPaises = async () => {
       try {
@@ -78,25 +78,47 @@ export default function MapaPage() {
           }
         }
 
-        // Cargar desde Supabase: query ligero solo para obtener países únicos
+        // Cargar desde Supabase CON PAGINACIÓN para obtener TODOS los países
         const supabase = createClient()
-        const { data, error } = await supabase
-          .from('areas')
-          .select('pais')
-          .eq('activo', true)
-
-        if (error) throw error
-
-        // Extraer países únicos
         const paisesSet = new Set<string>()
-        data?.forEach((area: any) => {
-          if (area.pais) {
-            paisesSet.add(area.pais.trim())
+        const pageSize = 1000
+        let page = 0
+        let hasMore = true
+
+        console.log('📥 Cargando países con paginación...')
+
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from('areas')
+            .select('pais')
+            .eq('activo', true)
+            .range(page * pageSize, (page + 1) * pageSize - 1)
+
+          if (error) throw error
+
+          if (data && data.length > 0) {
+            // Extraer países únicos de esta página
+            data.forEach((area: any) => {
+              if (area.pais) {
+                paisesSet.add(area.pais.trim())
+              }
+            })
+
+            console.log(`   Página ${page + 1}: ${data.length} áreas procesadas`)
+
+            // Si hay menos registros que el tamaño de página, es la última página
+            if (data.length < pageSize) {
+              hasMore = false
+            } else {
+              page++
+            }
+          } else {
+            hasMore = false
           }
-        })
+        }
 
         const paisesArray = Array.from(paisesSet).sort()
-        console.log(`✅ ${paisesArray.length} países disponibles cargados`)
+        console.log(`✅ ${paisesArray.length} países únicos cargados (de ${page + 1} página(s))`)
         console.log('📋 Lista completa de países:', paisesArray)
         setPaisesDisponibles(paisesArray)
 
@@ -115,16 +137,16 @@ export default function MapaPage() {
     loadPaises()
   }, []) // Solo ejecutar una vez al montar
 
-  // Cargar áreas desde Supabase (OPTIMIZADO: Solo carga el país seleccionado)
+  // ✅ CARGAR TODAS LAS ÁREAS (para lista y filtros) - SIN FILTRO DE PAÍS
+  // El mapa usará solo las del país detectado por GPS para optimizar
   useEffect(() => {
     const loadAreas = async () => {
       try {
         setLoading(true)
         
-        // Clave de caché basada en el país seleccionado (o 'global' si no hay filtro)
-        const paisKey = filtros.pais ? filtros.pais.replace(/\s+/g, '_').toLowerCase() : 'global'
-        const CACHE_KEY = `mapa_areas_${paisKey}`
-        const CACHE_TIMESTAMP_KEY = `mapa_areas_${paisKey}_timestamp`
+        // Cache global de TODAS las áreas
+        const CACHE_KEY = 'mapa_areas_todas'
+        const CACHE_TIMESTAMP_KEY = 'mapa_areas_todas_timestamp'
         const CACHE_MAX_AGE = 1000 * 60 * 60 // 1 hora
 
         // 🚀 INTENTAR CARGAR DESDE CACHE PRIMERO
@@ -134,7 +156,7 @@ export default function MapaPage() {
         if (cachedAreas && cachedTimestamp) {
           const age = Date.now() - parseInt(cachedTimestamp)
           if (age < CACHE_MAX_AGE) {
-            console.log(`⚡ Cargando áreas de ${paisKey} desde cache (instantáneo)...`)
+            console.log(`⚡ Cargando TODAS las áreas desde cache (instantáneo)...`)
             const parsedAreas = JSON.parse(cachedAreas)
             setAreas(parsedAreas)
             setLoadingProgress({ loaded: parsedAreas.length, total: parsedAreas.length })
@@ -144,29 +166,22 @@ export default function MapaPage() {
           }
         }
 
-        // Si no hay cache válido, cargar desde Supabase
+        // Si no hay cache válido, cargar TODAS desde Supabase (con paginación)
         const supabase = createClient()
         const allAreas: Area[] = []
         const pageSize = 1000
         let page = 0
         let hasMore = true
 
-        console.log(`🔄 Cargando áreas de ${filtros.pais || 'todo el mundo'} desde Supabase...`)
+        console.log(`🔄 Cargando TODAS las áreas desde Supabase...`)
 
         while (hasMore) {
-          let query = supabase
+          const { data, error } = await supabase
             .from('areas')
             .select('id, nombre, slug, latitud, longitud, ciudad, provincia, pais, tipo_area, precio_noche, foto_principal, servicios, plazas_totales, acceso_24h, barrera_altura')
             .eq('activo', true)
             .order('nombre')
             .range(page * pageSize, (page + 1) * pageSize - 1)
-
-          // ✅ APLICAR FILTRO DE PAÍS EN EL SERVIDOR (OPTIMIZACIÓN CRÍTICA)
-          if (filtros.pais) {
-            query = query.eq('pais', filtros.pais)
-          }
-
-          const { data, error } = await query
 
           if (error) throw error
 
@@ -180,11 +195,11 @@ export default function MapaPage() {
           }
         }
 
-        console.log(`✅ Total cargadas: ${allAreas.length} áreas`)
+        console.log(`✅ Total cargadas: ${allAreas.length} áreas (TODAS)`)
         setAreas(allAreas)
         setLoadingProgress({ loaded: allAreas.length, total: allAreas.length })
 
-        // 💾 GUARDAR EN CACHE ESPECÍFICO
+        // 💾 GUARDAR EN CACHE GLOBAL
         try {
           localStorage.setItem(CACHE_KEY, JSON.stringify(allAreas))
           localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString())
@@ -200,13 +215,8 @@ export default function MapaPage() {
       }
     }
 
-    // Debounce para evitar recargas rápidas al cambiar filtros
-    const timeoutId = setTimeout(() => {
-      loadAreas()
-    }, 300)
-
-    return () => clearTimeout(timeoutId)
-  }, [filtros.pais]) // Recargar cuando cambie el país
+    loadAreas()
+  }, []) // Solo cargar una vez al inicio
 
   // ✅ OPTIMIZACIÓN #3: Obtener ubicación del usuario CON REVERSE GEOCODING (con cache)
   useEffect(() => {
@@ -385,8 +395,8 @@ export default function MapaPage() {
   // Obtener países únicos de las áreas
   // Ya no necesitamos comunidades ni provincias
 
-  // Filtrar áreas según los filtros aplicados
-  const areasFiltradas = useMemo(() => {
+  // ✅ ÁREAS PARA LA LISTA: Todas o filtradas por país seleccionado en filtros
+  const areasParaLista = useMemo(() => {
     return areas.filter((area: any) => {
       // Filtro de búsqueda
       if (filtros.busqueda) {
@@ -466,6 +476,20 @@ export default function MapaPage() {
       return true
     })
   }, [areas, filtros])
+
+  // ✅ ÁREAS PARA EL MAPA: Solo las del país detectado por GPS (optimización)
+  const areasParaMapa = useMemo(() => {
+    if (!detectedCountry) {
+      // Si no hay país detectado, mostrar todas las áreas (fallback)
+      return areas
+    }
+    
+    // Filtrar solo las áreas del país detectado por GPS
+    return areas.filter((area: any) => {
+      const paisArea = area.pais?.trim() || ''
+      return paisArea === detectedCountry.trim()
+    })
+  }, [areas, detectedCountry])
 
   const handleAreaClick = (area: Area) => {
     setAreaSeleccionada(area)
@@ -593,7 +617,7 @@ export default function MapaPage() {
             filtros={filtros}
             onFiltrosChange={setFiltros}
             onClose={() => {}}
-            totalResultados={areasFiltradas.length}
+            totalResultados={areasParaLista.length}
             paisesDisponibles={paisesDisponibles}
           />
         </aside>
@@ -601,19 +625,22 @@ export default function MapaPage() {
         {/* Mapa - Centro */}
         <div className="flex-1 relative">
           <MapaInteractivo
-            areas={areasFiltradas}
+            areas={areasParaMapa}
             areaSeleccionada={areaSeleccionada}
             onAreaClick={handleAreaClick}
             mapRef={mapRef}
             onCountryChange={handleCountryChange}
-            currentCountry={filtros.pais}
+            currentCountry={detectedCountry || filtros.pais}
           />
 
 
           {/* Contador de resultados con indicador de carga */}
           <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg px-3 py-2 z-10">
             <p className="text-sm font-semibold text-gray-700">
-              {areasFiltradas.length} {areasFiltradas.length === 1 ? 'área' : 'áreas'}
+              {areasParaMapa.length} {areasParaMapa.length === 1 ? 'área' : 'áreas'}
+              {detectedCountry && (
+                <span className="ml-2 text-xs text-gray-500">({detectedCountry})</span>
+              )}
               {loading && (
                 <span className="ml-2 inline-flex items-center">
                   <span className="animate-spin rounded-full h-3 w-3 border-b-2 border-sky-600"></span>
@@ -627,7 +654,7 @@ export default function MapaPage() {
         {/* Panel de Resultados - Desktop y Tablet */}
         <aside className="hidden md:block md:w-80 lg:w-96 bg-white shadow-lg border-l overflow-y-auto">
           <ListaResultados
-            areas={areasFiltradas}
+            areas={areasParaLista}
             onAreaClick={handleAreaClick}
             onClose={() => {}}
             userLocation={userLocation}
@@ -670,11 +697,11 @@ export default function MapaPage() {
       <BottomSheet
         isOpen={mostrarLista}
         onClose={() => setMostrarLista(false)}
-        title={`${areasFiltradas.length} Lugares`}
+        title={`${areasParaLista.length} Lugares`}
         snapPoints={['full', 'half']}
       >
         <ListaResultados
-          areas={areasFiltradas}
+          areas={areasParaLista}
           onAreaClick={handleAreaClick}
           onClose={() => setMostrarLista(false)}
           userLocation={userLocation}
@@ -719,9 +746,9 @@ export default function MapaPage() {
           >
             <div className="relative">
               <ListBulletIcon className="w-6 h-6 mb-1" />
-              {areasFiltradas.length > 0 && (
+              {areasParaLista.length > 0 && (
                 <span className="absolute -top-1 -right-2 bg-primary-600 text-white text-xs rounded-full px-1.5 py-0.5 font-bold min-w-[20px] text-center">
-                  {areasFiltradas.length > 99 ? '99+' : areasFiltradas.length}
+                  {areasParaLista.length > 99 ? '99+' : areasParaLista.length}
                 </span>
               )}
             </div>

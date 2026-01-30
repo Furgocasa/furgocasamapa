@@ -46,31 +46,23 @@ const CARACTERISTICAS = [
 ]
 
 export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados, paisesDisponibles }: FiltrosMapaProps) {
-  // ✅ OPTIMIZACIÓN #2: Estado local para el input con debounce
   const [busquedaLocal, setBusquedaLocal] = useState(filtros.busqueda)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Sincronizar con filtros externos cuando cambian
   useEffect(() => {
     setBusquedaLocal(filtros.busqueda)
   }, [filtros.busqueda])
 
   const handleBusquedaChange = (valor: string) => {
-    // Actualizar estado local inmediatamente (UI responsive)
     setBusquedaLocal(valor)
-
-    // Cancelar timer anterior
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current)
     }
-
-    // Aplicar el filtro después de 300ms sin cambios (evita filtrados excesivos)
     debounceTimerRef.current = setTimeout(() => {
       onFiltrosChange({ ...filtros, busqueda: valor })
     }, 300)
   }
 
-  // Cleanup del timer al desmontar
   useEffect(() => {
     return () => {
       if (debounceTimerRef.current) {
@@ -89,14 +81,14 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados
 
   const handleServicioToggle = (servicio: string) => {
     const nuevos = filtros.servicios.includes(servicio)
-      ? filtros.servicios.filter((s: any) => s !== servicio)
+      ? filtros.servicios.filter((s: string) => s !== servicio)
       : [...filtros.servicios, servicio]
     onFiltrosChange({ ...filtros, servicios: nuevos })
   }
 
   const handleCaracteristicaToggle = (caracteristica: string) => {
     const nuevas = filtros.caracteristicas.includes(caracteristica)
-      ? filtros.caracteristicas.filter((c: any) => c !== caracteristica)
+      ? filtros.caracteristicas.filter((c: string) => c !== caracteristica)
       : [...filtros.caracteristicas, caracteristica]
     onFiltrosChange({ ...filtros, caracteristicas: nuevas })
   }
@@ -113,7 +105,7 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados
 
   return (
     <div className="h-full flex flex-col bg-white">
-      {/* Header Azulado */}
+      {/* Header */}
       <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary-50 to-blue-50 border-b border-primary-200">
         <h2 className="text-lg font-bold text-primary-900">Filtros de Búsqueda</h2>
         {onClose && (
@@ -127,11 +119,11 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados
         )}
       </div>
 
-      {/* Contenido con scroll - usando overflow-y-scroll para mejor control */}
-      <div className="flex-1 overflow-y-scroll overflow-x-hidden px-2 py-0.5 space-y-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+      {/* Contenido con scroll */}
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-3">
         {/* Búsqueda */}
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-0.5">
+          <label className="block text-xs font-medium text-gray-600 mb-1">
             Buscar dirección o lugar
           </label>
           <div className="relative">
@@ -140,14 +132,13 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados
               value={busquedaLocal}
               onChange={(e) => handleBusquedaChange(e.target.value)}
               placeholder="Nombre, ciudad, dirección..."
-              className="w-full pl-8 pr-8 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+              className="w-full pl-8 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
-            <MagnifyingGlassIcon className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             {busquedaLocal && (
               <button
                 onClick={() => handleBusquedaChange('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
-                aria-label="Limpiar búsqueda"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full"
               >
                 <XMarkIcon className="w-4 h-4 text-gray-400" />
               </button>
@@ -155,21 +146,17 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados
           </div>
         </div>
 
-        {/* País - Select HTML nativo */}
-        <div className="relative" style={{ overflow: 'visible', zIndex: 1000 }}>
-          <label className="block text-xs font-medium text-gray-600 mb-0.5">
-            País
+        {/* PAÍS - SELECT NATIVO HTML - FUNCIONA PERFECTO */}
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            País ({paisesDisponibles.length} disponibles)
           </label>
           <select
             value={filtros.pais}
             onChange={(e) => handlePaisChange(e.target.value)}
-            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-primary-500 focus:border-transparent bg-white"
-            style={{ 
-              position: 'relative',
-              zIndex: 1001
-            }}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white cursor-pointer"
           >
-            <option value="">Todos los países</option>
+            <option value="">🌍 Todos los países</option>
             {paisesDisponibles.map((pais) => (
               <option key={pais} value={pais}>
                 {pais}
@@ -180,17 +167,17 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados
 
         {/* Servicios */}
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-0.5">
+          <label className="block text-xs font-medium text-gray-600 mb-1">
             Servicios
           </label>
-          <div className="space-y-0.5">
-            {SERVICIOS.map((servicio: any) => (
-              <label key={servicio.id} className="flex items-center cursor-pointer hover:bg-gray-50 py-1 px-1.5 rounded transition-colors">
+          <div className="space-y-1 bg-gray-50 rounded-lg p-2">
+            {SERVICIOS.map((servicio) => (
+              <label key={servicio.id} className="flex items-center cursor-pointer hover:bg-white py-1.5 px-2 rounded transition-colors">
                 <input
                   type="checkbox"
                   checked={filtros.servicios.includes(servicio.id)}
                   onChange={() => handleServicioToggle(servicio.id)}
-                  className="w-3.5 h-3.5 text-primary-600 rounded focus:ring-1 focus:ring-primary-500"
+                  className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
                 />
                 <span className="ml-2 text-sm text-gray-700">{servicio.label}</span>
               </label>
@@ -200,19 +187,19 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados
 
         {/* Precio */}
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-0.5">
+          <label className="block text-xs font-medium text-gray-600 mb-1">
             Precio
           </label>
-          <div className="space-y-0.5">
-            {PRECIOS.map((precio: any) => (
-              <label key={precio.value} className="flex items-center cursor-pointer hover:bg-gray-50 py-1 px-1.5 rounded transition-colors">
+          <div className="space-y-1 bg-gray-50 rounded-lg p-2">
+            {PRECIOS.map((precio) => (
+              <label key={precio.value} className="flex items-center cursor-pointer hover:bg-white py-1.5 px-2 rounded transition-colors">
                 <input
                   type="radio"
                   name="precio"
                   value={precio.value}
                   checked={filtros.precio === precio.value}
                   onChange={(e) => handlePrecioChange(e.target.value)}
-                  className="w-3.5 h-3.5 text-primary-600 focus:ring-1 focus:ring-primary-500"
+                  className="w-4 h-4 text-primary-600 focus:ring-primary-500"
                 />
                 <span className="ml-2 text-sm text-gray-700">{precio.label}</span>
               </label>
@@ -222,17 +209,17 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados
 
         {/* Características */}
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-0.5">
+          <label className="block text-xs font-medium text-gray-600 mb-1">
             Características
           </label>
-          <div className="space-y-0.5">
-            {CARACTERISTICAS.map((caracteristica: any) => (
-              <label key={caracteristica.id} className="flex items-center cursor-pointer hover:bg-gray-50 py-1 px-1.5 rounded transition-colors">
+          <div className="space-y-1 bg-gray-50 rounded-lg p-2">
+            {CARACTERISTICAS.map((caracteristica) => (
+              <label key={caracteristica.id} className="flex items-center cursor-pointer hover:bg-white py-1.5 px-2 rounded transition-colors">
                 <input
                   type="checkbox"
                   checked={filtros.caracteristicas.includes(caracteristica.id)}
                   onChange={() => handleCaracteristicaToggle(caracteristica.id)}
-                  className="w-3.5 h-3.5 text-primary-600 rounded focus:ring-1 focus:ring-primary-500"
+                  className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
                 />
                 <span className="ml-2 text-sm text-gray-700">{caracteristica.label}</span>
               </label>
@@ -241,14 +228,14 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados
         </div>
       </div>
 
-      {/* Footer con acciones */}
-      <div className="border-t px-3 py-2 space-y-2 bg-gray-50">
-        <div className="text-xs text-gray-600 text-center">
-          <span className="font-semibold text-gray-900">{totalResultados}</span> {totalResultados === 1 ? 'área encontrada' : 'áreas encontradas'}
+      {/* Footer */}
+      <div className="border-t px-3 py-3 space-y-2 bg-gray-50">
+        <div className="text-sm text-gray-600 text-center">
+          <span className="font-bold text-gray-900">{totalResultados}</span> {totalResultados === 1 ? 'área encontrada' : 'áreas encontradas'}
         </div>
         <button
           onClick={limpiarFiltros}
-          className="w-full py-1.5 px-3 border border-gray-300 rounded text-xs text-gray-700 hover:bg-gray-100 transition-colors font-medium"
+          className="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-100 transition-colors font-medium"
         >
           Restablecer Filtros
         </button>
