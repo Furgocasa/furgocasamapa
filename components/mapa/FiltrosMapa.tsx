@@ -46,7 +46,7 @@ const CARACTERISTICAS = [
   { id: 'verificado', label: '✓ Verificado oficialmente' }
 ]
 
-export function FiltrosMapa({ filtros, onFiltrosChange, onClose, totalResultados, paisesDisponibles }: FiltrosMapaProps) {
+export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, totalResultados, paisesDisponibles }: FiltrosMapaProps) {
   const [busquedaLocal, setBusquedaLocal] = useState(filtros.busqueda)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
   const [paisDropdownOpen, setPaisDropdownOpen] = useState(false)
