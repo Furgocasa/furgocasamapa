@@ -63,87 +63,37 @@ export default function MapaPage() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // ✅ CARGAR LISTA COMPLETA DE PAÍSES (una sola vez, al inicio) - CON PAGINACIÓN
+  // ✅ CARGAR LISTA COMPLETA DE PAÍSES (SIN CACHÉ - siempre fresco)
   useEffect(() => {
     const loadPaises = async () => {
       try {
-        // Cache de países (válido por 1 hora) - v2 fuerza recarga con paginación
-        const PAISES_CACHE_KEY = 'mapa_paises_v2'
-        const PAISES_TIMESTAMP_KEY = 'mapa_paises_v2_timestamp'
-        const CACHE_MAX_AGE = 1000 * 60 * 60 // 1 hora
-
-        // Intentar desde cache
-        const cachedPaises = localStorage.getItem(PAISES_CACHE_KEY)
-        const cachedTimestamp = localStorage.getItem(PAISES_TIMESTAMP_KEY)
-
-        if (cachedPaises && cachedTimestamp) {
-          const age = Date.now() - parseInt(cachedTimestamp)
-          if (age < CACHE_MAX_AGE) {
-            console.log('⚡ Países cargados desde cache')
-            setPaisesDisponibles(JSON.parse(cachedPaises))
-            return
-          }
-        }
-
-        // Cargar desde Supabase CON PAGINACIÓN para obtener TODOS los países
+        // Cargar DIRECTO desde Supabase - sin caché
         const supabase = createClient()
+        
+        console.log('📥 Cargando países desde Supabase...')
+
+        // Query simple: obtener todos los países únicos
+        const { data, error } = await supabase
+          .from('areas')
+          .select('pais')
+          .eq('activo', true)
+          .not('pais', 'is', null)
+          .neq('pais', '')
+
+        if (error) throw error
+
+        // Extraer países únicos
         const paisesSet = new Set<string>()
-        const pageSize = 1000
-        let page = 0
-        let hasMore = true
-        let totalCount: number | null = null
-
-        console.log('📥 Cargando países con paginación...')
-
-        while (hasMore) {
-          const { data, error, count } = await supabase
-            .from('areas')
-            .select('pais', { count: 'exact' })
-            .eq('activo', true)
-            .not('pais', 'is', null)
-            .neq('pais', '')
-            .order('pais')
-            .range(page * pageSize, (page + 1) * pageSize - 1)
-
-          if (error) throw error
-          if (totalCount === null && typeof count === 'number') {
-            totalCount = count
+        data?.forEach((area: any) => {
+          if (area.pais) {
+            paisesSet.add(area.pais.trim())
           }
-
-          if (data && data.length > 0) {
-            // Extraer países únicos de esta página
-            data.forEach((area: any) => {
-              if (area.pais) {
-                paisesSet.add(area.pais.trim())
-              }
-            })
-
-            console.log(`   Página ${page + 1}: ${data.length} áreas procesadas`)
-
-            // Si hay menos registros que el tamaño de página, es la última página
-            const loaded = (page + 1) * pageSize
-            if (data.length < pageSize || (totalCount !== null && loaded >= totalCount)) {
-              hasMore = false
-            } else {
-              page++
-            }
-          } else {
-            hasMore = false
-          }
-        }
+        })
 
         const paisesArray = Array.from(paisesSet).sort()
-        console.log(`✅ ${paisesArray.length} países únicos cargados (de ${page + 1} página(s))`)
-        console.log('📋 Lista completa de países:', paisesArray)
+        console.log(`✅ ${paisesArray.length} países únicos cargados`)
+        console.log('📋 Lista completa:', paisesArray)
         setPaisesDisponibles(paisesArray)
-
-        // Guardar en cache
-        try {
-          localStorage.setItem(PAISES_CACHE_KEY, JSON.stringify(paisesArray))
-          localStorage.setItem(PAISES_TIMESTAMP_KEY, Date.now().toString())
-        } catch (e) {
-          console.warn('⚠️ No se pudo guardar cache de países', e)
-        }
       } catch (err) {
         console.error('❌ Error cargando países:', err)
       }
@@ -152,43 +102,20 @@ export default function MapaPage() {
     loadPaises()
   }, []) // Solo ejecutar una vez al montar
 
-  // ✅ CARGAR TODAS LAS ÁREAS (para lista y filtros) - SIN FILTRO DE PAÍS
-  // El mapa usará solo las del país detectado por GPS para optimizar
+  // ✅ CARGAR TODAS LAS ÁREAS (SIN CACHÉ - siempre fresco)
   useEffect(() => {
     const loadAreas = async () => {
       try {
         setLoading(true)
         
-        // Cache global de TODAS las áreas
-        const CACHE_KEY = 'mapa_areas_todas'
-        const CACHE_TIMESTAMP_KEY = 'mapa_areas_todas_timestamp'
-        const CACHE_MAX_AGE = 1000 * 60 * 60 // 1 hora
-
-        // 🚀 INTENTAR CARGAR DESDE CACHE PRIMERO
-        const cachedAreas = localStorage.getItem(CACHE_KEY)
-        const cachedTimestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY)
-
-        if (cachedAreas && cachedTimestamp) {
-          const age = Date.now() - parseInt(cachedTimestamp)
-          if (age < CACHE_MAX_AGE) {
-            console.log(`⚡ Cargando TODAS las áreas desde cache (instantáneo)...`)
-            const parsedAreas = JSON.parse(cachedAreas)
-            setAreas(parsedAreas)
-            setLoadingProgress({ loaded: parsedAreas.length, total: parsedAreas.length })
-            setLoading(false)
-            setInitialLoading(false)
-            return
-          }
-        }
-
-        // Si no hay cache válido, cargar TODAS desde Supabase (con paginación)
+        // Cargar DIRECTO desde Supabase - sin caché
         const supabase = createClient()
         const allAreas: Area[] = []
         const pageSize = 1000
         let page = 0
         let hasMore = true
 
-        console.log(`🔄 Cargando TODAS las áreas desde Supabase...`)
+        console.log(`🔄 Cargando áreas desde Supabase...`)
 
         while (hasMore) {
           const { data, error } = await supabase
@@ -202,7 +129,7 @@ export default function MapaPage() {
 
           if (data && data.length > 0) {
             allAreas.push(...(data as Area[]))
-            console.log(`📦 Cargadas ${data.length} áreas (página ${page + 1})`)
+            console.log(`📦 Página ${page + 1}: ${data.length} áreas`)
             page++
             if (data.length < pageSize) hasMore = false
           } else {
@@ -210,17 +137,9 @@ export default function MapaPage() {
           }
         }
 
-        console.log(`✅ Total cargadas: ${allAreas.length} áreas (TODAS)`)
+        console.log(`✅ Total: ${allAreas.length} áreas cargadas`)
         setAreas(allAreas)
         setLoadingProgress({ loaded: allAreas.length, total: allAreas.length })
-
-        // 💾 GUARDAR EN CACHE GLOBAL
-        try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify(allAreas))
-          localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString())
-        } catch (e) {
-          console.warn('⚠️ No se pudo guardar en cache', e)
-        }
 
       } catch (err) {
         console.error('Error cargando áreas:', err)
