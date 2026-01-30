@@ -38,20 +38,22 @@ export function MapLibreMap({
 
   // Obtener URL de estilo según configuración
   const getStyleUrl = () => {
-    // MapTiler API Key - Obtén tu clave gratis en: https://www.maptiler.com/cloud/
-    // Free tier: 100,000 tile loads/month (suficiente para empezar)
     const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_API_KEY || 'get_your_own_key'
     
     switch (estilo) {
       case 'waze':
-      case 'default':
-        return `https://api.maptiler.com/maps/streets/style.json?key=${MAPTILER_KEY}`
+        // Estilo minimalista tipo Waze con colores vibrantes
+        return `https://api.maptiler.com/maps/bright-v2/style.json?key=${MAPTILER_KEY}`
       case 'satellite':
+        // Vista satélite híbrida
         return `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}`
       case 'dark':
-        return `https://api.maptiler.com/maps/dark/style.json?key=${MAPTILER_KEY}`
+        // Modo oscuro
+        return `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${MAPTILER_KEY}`
+      case 'default':
       default:
-        return `https://api.maptiler.com/maps/streets/style.json?key=${MAPTILER_KEY}`
+        // Estilo estándar de calles
+        return `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`
     }
   }
 

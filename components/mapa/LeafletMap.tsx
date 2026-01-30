@@ -60,33 +60,43 @@ export function LeafletMap({
 
   // Obtener URL de tiles según estilo
   const getTileUrl = () => {
+    const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_API_KEY || 'get_your_own_key'
+    
     switch (estilo) {
-      case 'satellite':
-        return 'https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'
-      case 'dark':
-        return 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
       case 'waze':
+        // Estilo minimalista tipo Waze con colores vibrantes
+        return `https://api.maptiler.com/maps/bright-v2/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`
+      case 'satellite':
+        // Vista satélite híbrida
+        return `https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=${MAPTILER_KEY}`
+      case 'dark':
+        // Modo oscuro
+        return `https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`
       case 'default':
       default:
+        // Estilo estándar OpenStreetMap
         return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
     }
   }
 
   const getTileOptions = () => {
+    const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_API_KEY || 'get_your_own_key'
+    
     const baseOptions = {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
     }
 
-    if (estilo === 'satellite') {
+    if (estilo === 'default') {
       return {
         ...baseOptions,
-        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-        attribution: '&copy; Google'
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       }
     }
 
-    return baseOptions
+    return {
+      ...baseOptions,
+      attribution: '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a>'
+    }
   }
 
   // Inicializar mapa
