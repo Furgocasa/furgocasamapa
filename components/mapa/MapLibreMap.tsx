@@ -628,14 +628,6 @@ export function MapLibreMap({
         </div>
       )}
 
-      {/* Badge MapLibre */}
-      <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg px-3 py-2 z-[1000]">
-        <p className="text-xs font-semibold text-gray-700 flex items-center gap-2">
-          <span className="text-green-600">⚡</span>
-          MapLibre GL (OSM)
-        </p>
-      </div>
-
       {/* Contador de áreas */}
       <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg px-3 py-2 z-[1000]">
         <p className="text-sm font-semibold text-gray-700">
