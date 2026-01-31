@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { InstallAppCTA } from '@/components/ui/InstallAppCTA'
+import { BackToTop } from '@/components/area/BackToTop'
 import {
   MapIcon,
   MapPinIcon,
@@ -632,6 +633,9 @@ export default function HomePage() {
       <InstallAppCTA />
 
       <Footer />
+      
+      {/* Botón volver arriba */}
+      <BackToTop />
     </div>
   )
 }
