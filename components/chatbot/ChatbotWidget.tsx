@@ -310,10 +310,10 @@ export default function ChatbotWidget() {
       {isHidden && (
         <button
           onClick={handleShow}
-          className="fixed bottom-24 right-6 md:bottom-6 bg-blue-600 text-white rounded-full w-12 h-12 shadow-lg hover:scale-110 transition-transform z-50 flex items-center justify-center"
+          className="fixed bottom-24 right-6 md:bottom-6 bg-blue-600 text-white rounded-full w-8 h-8 shadow-lg hover:bg-blue-700 transition-all z-50 flex items-center justify-center text-xl font-bold"
           title="Mostrar Tío Viajero IA"
         >
-          <span className="text-2xl">💬</span>
+          +
         </button>
       )}
 
