@@ -249,23 +249,38 @@ export function MapLibreMap({
             .setPopup(popup)
             .addTo(map)
 
-          el.addEventListener('click', () => {
-            onAreaClick(area)
+          // ✅ CRÍTICO: Ejecutar acciones en orden seguro
+          el.addEventListener('click', (e) => {
+            e.stopPropagation()
             
-            // ✅ Verificar que el marcador aún existe antes de abrir popup
-            if (!markersRef.current[areaId]) {
-              console.warn('⚠️ Marcador eliminado, no se puede abrir popup')
-              return
+            // 1️⃣ SIEMPRE notificar click (esto debe funcionar siempre)
+            try {
+              onAreaClick(area)
+            } catch (err) {
+              console.error('Error en onAreaClick:', err)
             }
             
-            // ✅ CORREGIDO: Solo centrar (panTo), NO cambiar zoom
-            map.panTo([lng, lat])
-            
-            // ✅ CORREGIDO: Abrir popup INMEDIATAMENTE (sin setTimeout)
-            const currentMarker = markersRef.current[areaId]
-            if (currentMarker && currentMarker.getPopup()) {
-              currentMarker.togglePopup()
+            // 2️⃣ SIEMPRE centrar en el área (independiente del popup)
+            try {
+              map.panTo([lng, lat])
+            } catch (err) {
+              console.error('Error en panTo:', err)
             }
+            
+            // 3️⃣ INTENTAR abrir popup (puede fallar, pero no bloquea lo anterior)
+            setTimeout(() => {
+              try {
+                const currentMarker = markersRef.current[areaId]
+                if (currentMarker) {
+                  const currentPopup = currentMarker.getPopup()
+                  if (currentPopup && !currentPopup.isOpen()) {
+                    currentMarker.togglePopup()
+                  }
+                }
+              } catch (err) {
+                console.warn('⚠️ No se pudo abrir popup, pero área centrada correctamente')
+              }
+            }, 100) // Pequeño delay para asegurar que el mapa está listo
           })
 
           markersRef.current[areaId] = marker
