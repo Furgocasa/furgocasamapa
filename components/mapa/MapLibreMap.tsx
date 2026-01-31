@@ -105,7 +105,17 @@ export function MapLibreMap({
 
   // Añadir marcadores CON CLUSTERING cuando el mapa esté listo
   useEffect(() => {
-    if (!mapRef.current || !mapLoaded || areas.length === 0) return
+    if (!mapRef.current || !mapLoaded) return
+
+    // ✅ CRÍTICO: Limpiar marcadores anteriores PRIMERO
+    Object.values(markersRef.current).forEach(marker => marker.remove())
+    markersRef.current = {}
+    
+    // Si no hay áreas, terminar aquí (mapa limpio)
+    if (areas.length === 0) {
+      clusterIndexRef.current = null
+      return
+    }
 
     console.log(`📍 Inicializando clustering para ${areas.length} áreas...`)
 

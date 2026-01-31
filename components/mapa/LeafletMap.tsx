@@ -143,14 +143,20 @@ export function LeafletMap({
 
   // Añadir marcadores (SIN CLUSTERING por ahora - pendiente npm install)
   useEffect(() => {
-    if (!mapRef.current || !mapLoaded || areas.length === 0 || !L) return
+    if (!mapRef.current || !mapLoaded || !L) return
 
     console.log(`📍 Añadiendo ${areas.length} marcadores a Leaflet...`)
 
-    // Limpiar marcadores anteriores
-    if (markerClusterGroupRef.current) {
-      mapRef.current.removeLayer(markerClusterGroupRef.current)
-      markerClusterGroupRef.current = null
+    // ✅ CRÍTICO: Limpiar marcadores anteriores SIEMPRE
+    if (markerClusterGroupRef.current?.markers) {
+      markerClusterGroupRef.current.markers.forEach((m: any) => m.remove())
+    }
+    markerClusterGroupRef.current = null
+
+    // Si no hay áreas, terminar aquí (mapa limpio)
+    if (areas.length === 0) {
+      console.log('✅ Mapa limpio (sin áreas)')
+      return
     }
 
     // Crear marcadores directamente (sin clustering)
