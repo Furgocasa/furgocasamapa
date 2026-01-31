@@ -477,32 +477,30 @@ export function MapLibreMap({
     const serviciosRestantes = serviciosDisponibles.length - 6
 
     return `
-      <div style="max-width: 360px; font-family: system-ui, -apple-system, sans-serif;">
+      <div class="popup-container">
         ${area.foto_principal ? `
-          <div style="margin: -20px -20px 12px -20px; width: calc(100% + 40px); height: 180px; overflow: hidden; position: relative;">
+          <div class="popup-image-container">
             <img 
               src="${area.foto_principal}" 
               alt="${area.nombre}"
-              style="width: 100%; height: 100%; object-fit: cover;"
-              onerror="this.style.display='none'"
+              class="popup-image"
+              onerror="this.parentElement.style.display='none'"
             />
             ${area.google_rating ? `
-              <div style="position: absolute; top: 12px; right: 12px; display: flex; align-items: center; background: rgba(255, 255, 255, 0.95); padding: 6px 12px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); backdrop-filter: blur(4px);">
-                <span style="color: #F59E0B; font-size: 16px; margin-right: 4px;">⭐</span>
-                <span style="font-weight: 700; font-size: 15px; color: #111827;">${area.google_rating}</span>
+              <div class="popup-rating">
+                <span class="popup-rating-star">⭐</span>
+                <span class="popup-rating-value">${area.google_rating}</span>
               </div>
             ` : ''}
           </div>
         ` : ''}
         
-        <div style="padding: ${area.foto_principal ? '0' : '8px 0'};">
-          <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700; color: #111827; line-height: 1.3;">
-            ${area.nombre}
-          </h3>
+        <div class="popup-content">
+          <h3 class="popup-title">${area.nombre}</h3>
 
           ${area.ciudad || area.provincia ? `
-            <div style="display: flex; align-items: center; color: #6B7280; font-size: 14px; margin-bottom: 10px;">
-              <svg style="width: 16px; height: 16px; margin-right: 6px; flex-shrink: 0;" fill="currentColor" viewBox="0 0 20 20">
+            <div class="popup-location">
+              <svg class="popup-location-icon" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
               </svg>
               <span>${[area.ciudad, area.provincia].filter(Boolean).join(', ')}</span>
@@ -510,59 +508,48 @@ export function MapLibreMap({
           ` : ''}
 
           ${area.descripcion ? `
-            <p style="margin: 0 0 12px 0; color: #4B5563; font-size: 14px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-              ${area.descripcion.replace(/'/g, "&#39;")}
-            </p>
+            <p class="popup-description">${area.descripcion.replace(/'/g, "&#39;")}</p>
           ` : ''}
 
-          <div style="display: flex; gap: 6px; margin: 12px 0; flex-wrap: wrap;">
-            <span style="background: ${getTipoAreaColor(area.tipo_area)}20; color: ${getTipoAreaColor(area.tipo_area)}; padding: 6px 12px; border-radius: 14px; font-size: 12px; font-weight: 600; border: 1px solid ${getTipoAreaColor(area.tipo_area)}30;">
+          <div class="popup-badges">
+            <span class="popup-badge" style="background: ${getTipoAreaColor(area.tipo_area)}15; color: ${getTipoAreaColor(area.tipo_area)}; border-color: ${getTipoAreaColor(area.tipo_area)}30;">
               ${tipoLabels[area.tipo_area] || 'Pública'}
             </span>
             ${area.precio_noche !== null && area.precio_noche !== undefined ? `
-              <span style="background: #F3F4F6; color: #374151; padding: 6px 12px; border-radius: 14px; font-size: 12px; font-weight: 600; border: 1px solid #E5E7EB;">
+              <span class="popup-badge popup-badge-price">
                 ${area.precio_noche === 0 ? '🎉 Gratis' : `💰 ${area.precio_noche}€/noche`}
               </span>
             ` : ''}
             ${area.verificado ? `
-              <span style="background: #D1FAE5; color: #059669; padding: 6px 12px; border-radius: 14px; font-size: 12px; font-weight: 600; border: 1px solid #A7F3D0;">
-                ✓ Verificado
-              </span>
+              <span class="popup-badge popup-badge-verified">✓ Verificado</span>
             ` : ''}
           </div>
 
           ${mostrarServicios.length > 0 ? `
-            <div style="background: #F9FAFB; border-radius: 12px; padding: 12px; margin: 12px 0;">
-              <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                <svg style="width: 16px; height: 16px; margin-right: 6px; color: #6B7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="popup-services">
+              <div class="popup-services-header">
+                <svg class="popup-services-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
-                <span style="font-size: 12px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.5px;">Servicios Disponibles</span>
+                <span>Servicios</span>
               </div>
-              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+              <div class="popup-services-grid">
                 ${mostrarServicios.map((s: any) => `
-                  <div style="display: flex; align-items: center; font-size: 11px; color: #6B7280;">
-                    <span style="font-size: 16px; margin-right: 4px;">${s.icon}</span>
+                  <div class="popup-service-item">
+                    <span class="popup-service-icon">${s.icon}</span>
                     <span>${s.label}</span>
                   </div>
                 `).join('')}
               </div>
               ${serviciosRestantes > 0 ? `
-                <div style="margin-top: 8px; text-align: center; font-size: 11px; color: #0284c7; font-weight: 600;">
-                  +${serviciosRestantes} servicio${serviciosRestantes > 1 ? 's' : ''} más
-                </div>
+                <div class="popup-services-more">+${serviciosRestantes} más</div>
               ` : ''}
             </div>
           ` : ''}
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px;">
-            <a 
-              href="/area/${area.slug}"
-              style="text-align: center; background: #0284c7; color: white; padding: 12px 16px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(2, 132, 199, 0.3);"
-              onmouseover="this.style.background='#0369a1'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 6px rgba(2, 132, 199, 0.4)'"
-              onmouseout="this.style.background='#0284c7'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(2, 132, 199, 0.3)'"
-            >
-              <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="popup-buttons-primary">
+            <a href="/area/${area.slug}" class="popup-btn popup-btn-primary">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
               </svg>
@@ -574,11 +561,9 @@ export function MapLibreMap({
                 href="${area.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${area.latitud},${area.longitud}`}"
                 target="_blank"
                 rel="noopener noreferrer"
-                style="text-align: center; background: #34A853; color: white; padding: 12px 16px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(52, 168, 83, 0.3);"
-                onmouseover="this.style.background='#2d8e47'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 6px rgba(52, 168, 83, 0.4)'"
-                onmouseout="this.style.background='#34A853'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(52, 168, 83, 0.3)'"
+                class="popup-btn popup-btn-maps"
               >
-                <svg style="width: 16px; height: 16px;" fill="currentColor" viewBox="0 0 20 20">
+                <svg fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
                 </svg>
                 Google Maps
@@ -586,30 +571,19 @@ export function MapLibreMap({
             ` : ''}
           </div>
 
-          <!-- Botones secundarios -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
-            <a
-              href="/area/${area.slug}"
-              style="background: #FEF3C7; color: #92400E; padding: 10px 12px; border: 1px solid #FDE68A; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; text-decoration: none;"
-              onmouseover="this.style.background='#FDE68A'"
-              onmouseout="this.style.background='#FEF3C7'"
-            >
-              <svg style="width: 14px; height: 14px;" fill="currentColor" viewBox="0 0 20 20">
+          <div class="popup-buttons-secondary">
+            <a href="/area/${area.slug}" class="popup-btn popup-btn-fav">
+              <svg fill="currentColor" viewBox="0 0 20 20">
                 <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"/>
               </svg>
               Favorito
             </a>
             
-            <a
-              href="/area/${area.slug}"
-              style="background: #DBEAFE; color: #1E40AF; padding: 10px 12px; border: 1px solid #BFDBFE; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; text-decoration: none;"
-              onmouseover="this.style.background='#BFDBFE'"
-              onmouseout="this.style.background='#DBEAFE'"
-            >
-              <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <a href="/area/${area.slug}" class="popup-btn popup-btn-visit">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
-              Registrar Visita
+              Visita
             </a>
           </div>
         </div>
@@ -719,55 +693,348 @@ export function MapLibreMap({
     <div className="relative w-full h-full">
       {/* Estilos personalizados para popups de MapLibre */}
       <style jsx global>{`
+        /* ========== CONTENEDOR PRINCIPAL DEL POPUP ========== */
         .maplibregl-popup-content {
           padding: 0 !important;
-          border-radius: 16px !important;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+          border-radius: 20px !important;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25), 0 8px 20px rgba(0, 0, 0, 0.1) !important;
           overflow: hidden !important;
-          max-width: 360px !important;
+          max-width: 340px !important;
+          width: 340px !important;
+          border: 1px solid rgba(0, 0, 0, 0.05) !important;
         }
+        
         .maplibregl-popup-close-button {
-          font-size: 24px !important;
-          width: 32px !important;
-          height: 32px !important;
+          font-size: 20px !important;
+          width: 36px !important;
+          height: 36px !important;
           color: #6B7280 !important;
-          background: white !important;
+          background: rgba(255, 255, 255, 0.95) !important;
           border-radius: 50% !important;
-          right: 12px !important;
-          top: 12px !important;
-          z-index: 10 !important;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
-          transition: all 0.2s !important;
-          line-height: 28px !important;
+          right: 10px !important;
+          top: 10px !important;
+          z-index: 20 !important;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.2) !important;
+          transition: all 0.2s ease !important;
+          line-height: 34px !important;
           text-align: center !important;
           padding: 0 !important;
+          backdrop-filter: blur(8px) !important;
         }
+        
         .maplibregl-popup-close-button:hover {
-          background: #F3F4F6 !important;
+          background: white !important;
           color: #111827 !important;
           transform: scale(1.1) !important;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.25) !important;
         }
+        
         .maplibregl-popup-tip {
           border-top-color: white !important;
         }
-        .maplibre-popup-custom .maplibregl-popup-content {
-          max-width: 380px !important;
+
+        /* ========== CONTENEDOR INTERNO ========== */
+        .popup-container {
+          font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+          max-width: 100%;
+          overflow: hidden;
+        }
+
+        /* ========== IMAGEN ========== */
+        .popup-image-container {
+          position: relative;
+          width: 100%;
+          height: 160px;
+          overflow: hidden;
+          background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
         }
         
-        /* ✅ Estilos responsive para móvil */
-        @media (max-width: 640px) {
-          .maplibregl-popup-content {
-            max-width: 90vw !important;
-            width: 320px !important;
-          }
-          .maplibregl-popup {
-            max-width: 90vw !important;
-          }
+        .popup-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center;
+          display: block;
         }
         
-        /* ✅ Mejorar interacción táctil en móvil */
-        .maplibregl-popup a {
+        .popup-rating {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          display: flex;
+          align-items: center;
+          background: rgba(255, 255, 255, 0.95);
+          padding: 5px 10px;
+          border-radius: 16px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+          backdrop-filter: blur(8px);
+        }
+        
+        .popup-rating-star {
+          font-size: 14px;
+          margin-right: 3px;
+        }
+        
+        .popup-rating-value {
+          font-weight: 700;
+          font-size: 13px;
+          color: #111827;
+        }
+
+        /* ========== CONTENIDO ========== */
+        .popup-content {
+          padding: 16px;
+        }
+        
+        .popup-title {
+          margin: 0 0 8px 0;
+          font-size: 17px;
+          font-weight: 700;
+          color: #111827;
+          line-height: 1.3;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        
+        .popup-location {
+          display: flex;
+          align-items: center;
+          color: #6B7280;
+          font-size: 13px;
+          margin-bottom: 8px;
+        }
+        
+        .popup-location-icon {
+          width: 14px;
+          height: 14px;
+          margin-right: 5px;
+          flex-shrink: 0;
+        }
+        
+        .popup-description {
+          margin: 0 0 10px 0;
+          color: #4B5563;
+          font-size: 13px;
+          line-height: 1.5;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        /* ========== BADGES ========== */
+        .popup-badges {
+          display: flex;
+          gap: 6px;
+          margin: 10px 0;
+          flex-wrap: wrap;
+        }
+        
+        .popup-badge {
+          padding: 5px 10px;
+          border-radius: 12px;
+          font-size: 11px;
+          font-weight: 600;
+          border: 1px solid;
+          white-space: nowrap;
+        }
+        
+        .popup-badge-price {
+          background: #F3F4F6;
+          color: #374151;
+          border-color: #E5E7EB;
+        }
+        
+        .popup-badge-verified {
+          background: #D1FAE5;
+          color: #059669;
+          border-color: #A7F3D0;
+        }
+
+        /* ========== SERVICIOS ========== */
+        .popup-services {
+          background: #F8FAFC;
+          border-radius: 12px;
+          padding: 10px 12px;
+          margin: 10px 0;
+          border: 1px solid #E2E8F0;
+        }
+        
+        .popup-services-header {
+          display: flex;
+          align-items: center;
+          margin-bottom: 8px;
+          font-size: 11px;
+          font-weight: 600;
+          color: #475569;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        
+        .popup-services-icon {
+          width: 14px;
+          height: 14px;
+          margin-right: 5px;
+          color: #0284c7;
+        }
+        
+        .popup-services-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 6px;
+        }
+        
+        .popup-service-item {
+          display: flex;
+          align-items: center;
+          font-size: 10px;
+          color: #64748B;
+        }
+        
+        .popup-service-icon {
+          font-size: 13px;
+          margin-right: 3px;
+        }
+        
+        .popup-services-more {
+          margin-top: 6px;
+          text-align: center;
+          font-size: 10px;
+          color: #0284c7;
+          font-weight: 600;
+        }
+
+        /* ========== BOTONES ========== */
+        .popup-buttons-primary {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+          margin-top: 12px;
+        }
+        
+        .popup-buttons-secondary {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+          margin-top: 8px;
+        }
+        
+        .popup-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 5px;
+          padding: 10px 12px;
+          border-radius: 10px;
+          text-decoration: none;
+          font-weight: 600;
+          font-size: 12px;
+          transition: all 0.2s ease;
+          cursor: pointer;
           -webkit-tap-highlight-color: transparent;
+        }
+        
+        .popup-btn svg {
+          width: 14px;
+          height: 14px;
+        }
+        
+        .popup-btn-primary {
+          background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+          color: white;
+          box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+        }
+        
+        .popup-btn-primary:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(2, 132, 199, 0.45);
+        }
+        
+        .popup-btn-maps {
+          background: linear-gradient(135deg, #34A853 0%, #2d8e47 100%);
+          color: white;
+          box-shadow: 0 2px 8px rgba(52, 168, 83, 0.35);
+        }
+        
+        .popup-btn-maps:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(52, 168, 83, 0.45);
+        }
+        
+        .popup-btn-fav {
+          background: #FEF3C7;
+          color: #92400E;
+          border: 1px solid #FDE68A;
+        }
+        
+        .popup-btn-fav:hover {
+          background: #FDE68A;
+        }
+        
+        .popup-btn-visit {
+          background: #DBEAFE;
+          color: #1E40AF;
+          border: 1px solid #BFDBFE;
+        }
+        
+        .popup-btn-visit:hover {
+          background: #BFDBFE;
+        }
+
+        /* ========== RESPONSIVE MÓVIL ========== */
+        @media (max-width: 640px) {
+          .maplibregl-popup {
+            max-width: 92vw !important;
+          }
+          
+          .maplibregl-popup-content {
+            max-width: 92vw !important;
+            width: 92vw !important;
+            max-height: 70vh !important;
+            overflow-y: auto !important;
+            border-radius: 16px !important;
+          }
+          
+          .popup-image-container {
+            height: 140px;
+          }
+          
+          .popup-content {
+            padding: 14px;
+          }
+          
+          .popup-title {
+            font-size: 16px;
+          }
+          
+          .popup-services-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+          
+          .popup-buttons-primary,
+          .popup-buttons-secondary {
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+          }
+          
+          .popup-btn {
+            padding: 10px 8px;
+            font-size: 11px;
+          }
+          
+          .popup-btn svg {
+            width: 12px;
+            height: 12px;
+          }
+        }
+        
+        /* ========== MÓVIL MUY PEQUEÑO ========== */
+        @media (max-width: 380px) {
+          .popup-buttons-secondary {
+            grid-template-columns: 1fr;
+          }
         }
       `}</style>
 
