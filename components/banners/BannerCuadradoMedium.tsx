@@ -10,7 +10,7 @@ export function BannerCuadradoMedium({ position }: BannerCuadradoMediumProps) {
       <div className="w-full max-w-[350px] aspect-square bg-gradient-to-br from-[#063971] to-[#052d5a] rounded-3xl overflow-hidden relative shadow-[0_10px_40px_rgba(0,0,0,0.3)] transition-all duration-300 hover:translate-y-[-6px] hover:shadow-[0_16px_50px_rgba(0,0,0,0.4)]">
         {/* Fondo decorativo */}
         <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 50%, rgba(255, 217, 53, 0.1) 0%, transparent 70%)' }} />
-
+        
         <a
           href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=cuadrado_medium"
           target="_blank"
@@ -24,12 +24,12 @@ export function BannerCuadradoMedium({ position }: BannerCuadradoMediumProps) {
               Casi Cinco
             </div>
           </div>
-
+          
           {/* Tagline */}
           <div className="text-xs md:text-sm lg:text-[15px] text-[rgba(255,255,255,0.95)] leading-[1.5] font-medium max-w-[260px]">
             Los mejores lugares + Planificador de Rutas IA
           </div>
-
+          
           {/* Stats Grid */}
           <div className="grid grid-cols-3 gap-2 md:gap-4 w-full">
             <div className="flex flex-col items-center gap-0.5 md:gap-1">
@@ -45,7 +45,7 @@ export function BannerCuadradoMedium({ position }: BannerCuadradoMediumProps) {
               <span className="text-[8px] md:text-[10px] text-[rgba(255,255,255,0.7)] uppercase tracking-[0.5px]">Ciudades</span>
             </div>
           </div>
-
+          
           {/* CTA Button */}
           <div className="bg-gradient-to-br from-[#ffd935] to-[#ffe566] text-[#063971] px-6 md:px-10 py-3 md:py-4 rounded-[14px] font-black text-sm md:text-base transition-all duration-300 shadow-[0_6px_20px_rgba(255,217,53,0.4)] relative overflow-hidden inline-block group hover:translate-y-[-3px] hover:shadow-[0_10px_30px_rgba(255,217,53,0.6)]">
             <span className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-[rgba(255,255,255,0.4)] to-transparent transition-[left] duration-500 group-hover:left-[100%]" />

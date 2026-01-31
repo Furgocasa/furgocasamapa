@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casi Cinco - Premium Banner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+        }
+        
+        .banner-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #063971 0%, #052d5a 50%, #042143 100%);
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Efecto de brillo animado */
+        .banner-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255, 217, 53, 0.1) 50%,
+                transparent 70%
+            );
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .banner-content {
+            position: relative;
+            z-index: 1;
+            padding: 40px 50px;
+            display: flex;
+            align-items: center;
+            gap: 50px;
+        }
+        
+        /* Sección Izquierda */
+        .banner-left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .logo-icon {
+            font-size: 56px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .logo-title {
+            font-size: 42px;
+            font-weight: 900;
+            color: #ffd935;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+        
+        .logo-badge {
+            display: inline-block;
+            background: rgba(255, 217, 53, 0.2);
+            border: 2px solid #ffd935;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #ffd935;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: pulse-badge 2s ease-in-out infinite;
+            width: fit-content;
+        }
+        
+        @keyframes pulse-badge {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 217, 53, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255, 217, 53, 0); }
+        }
+        
+        .tagline {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.95);
+            line-height: 1.5;
+            font-weight: 500;
+        }
+        
+        .highlight {
+            color: #ffd935;
+            font-weight: 700;
+        }
+        
+        .features-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            border: 1px solid transparent;
+        }
+        
+        .feature-item:hover {
+            background: rgba(255, 217, 53, 0.1);
+            border-color: rgba(255, 217, 53, 0.3);
+            transform: translateX(8px);
+        }
+        
+        .feature-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .feature-text {
+            font-size: 15px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .cta-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #ffd935 0%, #ffe566 100%);
+            color: #063971;
+            padding: 18px 40px;
+            border-radius: 12px;
+            font-weight: 900;
+            font-size: 18px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(255, 217, 53, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(255, 217, 53, 0.6);
+        }
+        
+        .cta-button:hover::before {
+            left: 100%;
+        }
+        
+        .cta-arrow {
+            transition: transform 0.3s ease;
+        }
+        
+        .cta-button:hover .cta-arrow {
+            transform: translateX(4px);
+        }
+        
+        .cta-stats {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .cta-stats-number {
+            font-size: 20px;
+            font-weight: 800;
+            color: #ffd935;
+        }
+        
+        /* Sección Derecha - Categorías */
+        .banner-right {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        
+        .category-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 24px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            animation: fadeInUp 0.6s ease backwards;
+        }
+        
+        .category-card:nth-child(1) { animation-delay: 0.1s; }
+        .category-card:nth-child(2) { animation-delay: 0.2s; }
+        .category-card:nth-child(3) { animation-delay: 0.3s; }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .category-card:hover {
+            background: rgba(255, 255, 255, 0.14);
+            border-color: rgba(255, 217, 53, 0.4);
+            transform: translateY(-8px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+        
+        .category-icon {
+            font-size: 48px;
+            margin-bottom: 4px;
+        }
+        
+        .category-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 4px;
+        }
+        
+        .category-count {
+            font-size: 24px;
+            font-weight: 900;
+            color: #ffd935;
+            margin-bottom: 4px;
+        }
+        
+        .category-desc {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .category-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            color: #ffd935;
+            margin-top: 8px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .banner-content {
+                flex-direction: column;
+                padding: 32px 40px;
+                gap: 32px;
+            }
+            
+            .banner-right {
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .banner-content {
+                padding: 24px 20px;
+            }
+            
+            .logo-icon {
+                font-size: 42px;
+            }
+            
+            .logo-title {
+                font-size: 32px;
+            }
+            
+            .tagline {
+                font-size: 16px;
+            }
+            
+            .banner-right {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .cta-button {
+                width: 100%;
+                justify-content: center;
+                padding: 16px 32px;
+                font-size: 16px;
+            }
+            
+            .cta-wrapper {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="banner-container">
+        <div class="banner-content">
+            <!-- Sección Izquierda -->
+            <div class="banner-left">
+                <a href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=premium_animated" 
+                   target="_blank" 
+                   rel="nofollow sponsored noopener noreferrer"
+                   style="text-decoration: none; color: inherit;">
+                    <div class="logo-section">
+                        <div class="logo-icon">⭐</div>
+                        <div class="logo-text">
+                            <div class="logo-title">Casi Cinco</div>
+                            <div class="logo-badge">✓ Verificado Google</div>
+                        </div>
+                    </div>
+                </a>
+                
+                <div class="tagline">
+                    Descubre los <span class="highlight">mejores lugares de España</span>. Solo establecimientos con +4.7★ en Google Maps.
+                </div>
+                
+                <div class="features-list">
+                    <a href="https://www.casicinco.com/ruta?utm_source=furgocasa&utm_medium=banner&utm_campaign=premium_animated" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       class="feature-item">
+                        <span class="feature-icon">🛣️</span>
+                        <span class="feature-text">Planificador de rutas para tu viaje perfecto</span>
+                    </a>
+                    <a href="https://www.casicinco.com/mapa?utm_source=furgocasa&utm_medium=banner&utm_campaign=premium_animated" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       class="feature-item">
+                        <span class="feature-icon">🤖</span>
+                        <span class="feature-text">Chat IA con recomendaciones personalizadas</span>
+                    </a>
+                    <a href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=premium_animated" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       class="feature-item">
+                        <span class="feature-icon">⭐</span>
+                        <span class="feature-text">+3500 lugares verificados con +4.7★</span>
+                    </a>
+                </div>
+                
+                <div class="cta-wrapper">
+                    <a href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=premium_animated" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       class="cta-button">
+                        <span>Explorar Ahora</span>
+                        <span class="cta-arrow">→</span>
+                    </a>
+                    <div class="cta-stats">
+                        <div class="cta-stats-number">+3500</div>
+                        <div>lugares premium</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección Derecha - Categorías -->
+            <div class="banner-right">
+                <a href="https://www.casicinco.com/restaurante?utm_source=furgocasa&utm_medium=banner&utm_campaign=premium_animated" 
+                   target="_blank" 
+                   rel="nofollow sponsored noopener noreferrer"
+                   class="category-card">
+                    <div class="category-icon">🍽️</div>
+                    <div class="category-title">Restaurantes</div>
+                    <div class="category-count">+2000</div>
+                    <div class="category-desc">Gastronomía excepcional</div>
+                    <div class="category-rating">
+                        <span>★★★★★</span>
+                        <span>4.7+</span>
+                    </div>
+                </a>
+                
+                <a href="https://www.casicinco.com/bar?utm_source=furgocasa&utm_medium=banner&utm_campaign=premium_animated" 
+                   target="_blank" 
+                   rel="nofollow sponsored noopener noreferrer"
+                   class="category-card">
+                    <div class="category-icon">🍺</div>
+                    <div class="category-title">Bares</div>
+                    <div class="category-count">+700</div>
+                    <div class="category-desc">Ambiente único</div>
+                    <div class="category-rating">
+                        <span>★★★★★</span>
+                        <span>4.7+</span>
+                    </div>
+                </a>
+                
+                <a href="https://www.casicinco.com/hotel?utm_source=furgocasa&utm_medium=banner&utm_campaign=premium_animated" 
+                   target="_blank" 
+                   rel="nofollow sponsored noopener noreferrer"
+                   class="category-card">
+                    <div class="category-icon">🏨</div>
+                    <div class="category-title">Hoteles</div>
+                    <div class="category-count">+800</div>
+                    <div class="category-desc">Alojamiento 5★</div>
+                    <div class="category-rating">
+                        <span>★★★★★</span>
+                        <span>4.7+</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

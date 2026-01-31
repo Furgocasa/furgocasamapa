@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banner Lateral Mapa Furgocasa</title>
+    <style>
+        .furgocasa-sidebar {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 350px;
+            background: white;
+            border: 3px solid #0ea5e9;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+        }
+
+        .sidebar-header {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .sidebar-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-header h3 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .sidebar-header p {
+            font-size: 13px;
+            opacity: 0.95;
+        }
+
+        .sidebar-body {
+            padding: 20px;
+        }
+
+        .sidebar-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+
+        .sidebar-features li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        .sidebar-features li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-emoji {
+            font-size: 20px;
+        }
+
+        .sidebar-cta {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: #0ea5e9;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: background 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-cta:hover {
+            background: #0284c7;
+        }
+
+        .sidebar-cta.secondary {
+            background: white;
+            color: #0284c7;
+            border: 2px solid #0ea5e9;
+        }
+
+        .sidebar-cta.secondary:hover {
+            background: #f0f9ff;
+        }
+
+        .sidebar-footer {
+            padding: 15px 20px;
+            background: #f9fafb;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .sidebar-badge {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- BANNER LATERAL / SIDEBAR -->
+<div class="furgocasa-sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-icon">🚐</div>
+        <h3>Mapa Furgocasa</h3>
+        <p>Tu compañero de viaje en autocaravana</p>
+    </div>
+
+    <div class="sidebar-body">
+        <ul class="sidebar-features">
+            <li>
+                <span class="feature-emoji">🗺️</span>
+                <span>+3,600 áreas en Europa y LATAM</span>
+            </li>
+            <li>
+                <span class="feature-emoji">📍</span>
+                <span>Encuentra áreas cercanas con GPS</span>
+            </li>
+            <li>
+                <span class="feature-emoji">🛣️</span>
+                <span>Planifica tu ruta completa</span>
+            </li>
+            <li>
+                <span class="feature-emoji">🤖</span>
+                <span>Chatbot IA para recomendaciones</span>
+            </li>
+            <li>
+                <span class="feature-emoji">💙</span>
+                <span>Guarda tus favoritos</span>
+            </li>
+        </ul>
+
+        <a href="https://www.mapafurgocasa.com/mapa" class="sidebar-cta" target="_blank">
+            🚀 Explorar el Mapa
+        </a>
+
+        <a href="https://www.mapafurgocasa.com/auth/login" class="sidebar-cta secondary" target="_blank">
+            Crear Cuenta Gratis
+        </a>
+    </div>
+
+    <div class="sidebar-footer">
+        Servicio 100% gratuito
+        <div class="sidebar-badge">🚀 EN VIVO</div>
+    </div>
+</div>
+
+</body>
+</html>

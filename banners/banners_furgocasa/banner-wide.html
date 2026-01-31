@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banner Wide Furgocasa - 1200px</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            padding: 2rem;
+            background: #f3f4f6;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .demo-info {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="max-w-7xl mx-auto">
+        <div class="demo-info">
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">🖼️ Banner Wide Furgocasa</h1>
+            <p class="text-gray-600 mb-1"><strong>Dimensiones:</strong> 1200px × 280px (responsive)</p>
+            <p class="text-gray-600 mb-1"><strong>Uso:</strong> Banner ancho para páginas principales</p>
+            <p class="text-gray-600"><strong>Imagen:</strong> Lateral 40% del ancho, totalmente visible</p>
+        </div>
+
+        <!-- BANNER WIDE -->
+        <div class="w-full max-w-[1200px] mx-auto">
+            <a
+                href="https://www.furgocasa.com/es?utm_source=mapafurgocasa&utm_medium=banner&utm_campaign=furgocasa_wide_test"
+                target="_blank"
+                rel="noopener noreferrer sponsored nofollow"
+                class="block no-underline"
+            >
+                <div class="bg-gradient-to-br from-[#003d7a] to-[#002855] rounded-2xl overflow-hidden shadow-2xl transition-all hover:-translate-y-1 hover:shadow-[0_25px_60px_rgba(0,61,122,0.4)]">
+                    <div class="flex flex-col lg:flex-row items-stretch h-auto lg:h-[280px]">
+                        <!-- Imagen visible - 40% del ancho -->
+                        <div class="w-full lg:w-[40%] h-[220px] lg:h-full flex-shrink-0">
+                            <img 
+                                src="../../public/images/furgocasa/camper-wide-1.jpg"
+                                alt="Camper Premium Furgocasa España"
+                                class="w-full h-full object-cover"
+                            />
+                        </div>
+
+                        <!-- Contenido -->
+                        <div class="flex-1 text-white p-6 md:p-8 flex flex-col justify-between">
+                            <div>
+                                <div class="text-3xl md:text-4xl font-black text-[#ff6b35] mb-3 flex items-center gap-2">
+                                    🚐 <span>Furgocasa</span>
+                                </div>
+                                <p class="text-base md:text-lg text-white/95 mb-4 leading-relaxed">
+                                    <strong>Alquiler y Venta</strong> de Campers de Gran Volumen<br/>
+                                    <span class="text-white/80">Tu hotel sobre ruedas · Todo incluido</span>
+                                </p>
+                                
+                                <div class="flex flex-wrap gap-3 mb-5">
+                                    <div class="bg-white/10 px-4 py-2 rounded-lg">
+                                        <div class="text-[#ff6b35] font-bold">95€/día</div>
+                                        <div class="text-white/70 text-xs">Alquiler</div>
+                                    </div>
+                                    <div class="bg-white/10 px-4 py-2 rounded-lg">
+                                        <div class="text-[#ff6b35] font-bold">49.000€</div>
+                                        <div class="text-white/70 text-xs">Venta</div>
+                                    </div>
+                                    <div class="bg-white/10 px-4 py-2 rounded-lg">
+                                        <div class="text-[#ff6b35] font-bold">4.9★</div>
+                                        <div class="text-white/70 text-xs">Rating</div>
+                                    </div>
+                                    <div class="bg-white/10 px-4 py-2 rounded-lg">
+                                        <div class="text-[#ff6b35] font-bold">14+</div>
+                                        <div class="text-white/70 text-xs">Años</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <div class="bg-white text-[#003d7a] font-bold py-3 px-8 rounded-lg text-center hover:bg-gray-100 transition-colors">
+                                    Ver Campers Disponibles →
+                                </div>
+                                <div class="border-2 border-white text-white font-semibold py-3 px-8 rounded-lg text-center hover:bg-white/10 transition-colors">
+                                    Reservar Ahora
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="demo-info mt-8">
+            <h3 class="font-bold text-lg mb-2">📝 Características</h3>
+            <ul class="text-sm text-gray-700 space-y-1">
+                <li>✅ Imagen lateral amplia (40% ancho)</li>
+                <li>✅ Grid de características en pills</li>
+                <li>✅ Dos botones de acción principales</li>
+                <li>✅ Diseño premium con espacio generoso</li>
+                <li>✅ Perfecto para hero sections</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

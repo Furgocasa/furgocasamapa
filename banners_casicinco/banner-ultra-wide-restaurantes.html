@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casi Cinco - Los Mejores Restaurantes de España</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+        }
+        
+        .banner-container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #063971;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+        
+        /* Gradiente animado de fondo - tonos cálidos para restaurantes */
+        .banner-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #8B0000 0%, #063971 25%, #052d5a 50%, #8B0000 75%, #063971 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        /* Elementos decorativos flotantes */
+        .floating-element {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 217, 53, 0.1);
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .floating-element:nth-child(1) {
+            width: 100px;
+            height: 100px;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        
+        .floating-element:nth-child(2) {
+            width: 150px;
+            height: 150px;
+            top: 60%;
+            right: 15%;
+            animation-delay: 2s;
+        }
+        
+        .floating-element:nth-child(3) {
+            width: 80px;
+            height: 80px;
+            bottom: 20%;
+            left: 50%;
+            animation-delay: 4s;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.1); }
+        }
+        
+        .banner-content {
+            position: relative;
+            z-index: 10;
+            padding: 50px 60px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+        
+        .banner-left {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        
+        .banner-logo-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .logo-star {
+            font-size: 64px;
+            animation: rotate-pulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes rotate-pulse {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-15deg) scale(1.1); }
+            75% { transform: rotate(15deg) scale(1.1); }
+        }
+        
+        .logo-text-wrapper h1 {
+            font-size: 52px;
+            font-weight: 900;
+            color: #ffd935;
+            margin: 0;
+            line-height: 1;
+            letter-spacing: -2px;
+            text-shadow: 3px 3px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .logo-badge {
+            display: inline-block;
+            background: rgba(255, 100, 100, 0.3);
+            border: 2px solid #ff6464;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #ff9999;
+            text-transform: uppercase;
+            margin-top: 8px;
+            letter-spacing: 1px;
+        }
+        
+        .banner-description {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.95);
+            line-height: 1.6;
+            font-weight: 500;
+        }
+        
+        .highlight-text {
+            color: #ffd935;
+            font-weight: 700;
+        }
+        
+        .banner-features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        
+        .feature-item {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 20px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .feature-item:hover {
+            background: rgba(255, 100, 100, 0.15);
+            border-color: rgba(255, 100, 100, 0.4);
+            transform: translateX(8px);
+        }
+        
+        .feature-icon {
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+        
+        .feature-text {
+            flex: 1;
+        }
+        
+        .feature-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 2px;
+        }
+        
+        .feature-desc {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .banner-cta-wrapper {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .banner-cta-primary {
+            display: inline-block;
+            background: linear-gradient(135deg, #ffd935 0%, #ffe566 100%);
+            color: #063971;
+            padding: 20px 48px;
+            border-radius: 16px;
+            font-weight: 900;
+            font-size: 20px;
+            text-decoration: none;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 32px rgba(255, 217, 53, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .banner-cta-primary::after {
+            content: '→';
+            margin-left: 8px;
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+        
+        .banner-cta-primary:hover::after {
+            transform: translateX(6px);
+        }
+        
+        .banner-cta-primary::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .banner-cta-primary:hover::before {
+            width: 400px;
+            height: 400px;
+        }
+        
+        .banner-cta-primary:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 48px rgba(255, 217, 53, 0.7);
+        }
+        
+        .cta-text {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .banner-cta-secondary {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .cta-secondary-number {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffd935;
+        }
+        
+        /* Sección derecha - Showcase de restaurantes */
+        .banner-right {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .showcase-title {
+            font-size: 16px;
+            color: #ffd935;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        
+        .places-showcase {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        
+        .place-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease backwards;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        
+        .place-card:nth-child(1) { animation-delay: 0.1s; }
+        .place-card:nth-child(2) { animation-delay: 0.2s; }
+        .place-card:nth-child(3) { animation-delay: 0.3s; }
+        .place-card:nth-child(4) { animation-delay: 0.4s; }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .place-card:hover {
+            background: rgba(255, 255, 255, 0.14);
+            border-color: rgba(255, 217, 53, 0.4);
+            transform: translateY(-6px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+        
+        .place-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+            display: block;
+        }
+        
+        .place-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 6px;
+        }
+        
+        .place-location {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 8px;
+        }
+        
+        .place-cuisine {
+            display: inline-block;
+            background: rgba(255, 100, 100, 0.2);
+            border: 1px solid rgba(255, 100, 100, 0.4);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            color: #ff9999;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .place-rating {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .rating-stars {
+            color: #ffd935;
+            font-size: 14px;
+        }
+        
+        .rating-number {
+            font-size: 18px;
+            font-weight: 800;
+            color: #ffd935;
+        }
+        
+        .rating-count {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .banner-content {
+                grid-template-columns: 1fr;
+                padding: 40px 32px;
+                gap: 40px;
+            }
+            
+            .logo-text-wrapper h1 {
+                font-size: 40px;
+            }
+            
+            .banner-description {
+                font-size: 18px;
+            }
+            
+            .places-showcase {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .banner-content {
+                padding: 32px 24px;
+            }
+            
+            .logo-star {
+                font-size: 48px;
+            }
+            
+            .logo-text-wrapper h1 {
+                font-size: 32px;
+            }
+            
+            .banner-description {
+                font-size: 16px;
+            }
+            
+            .banner-features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .places-showcase {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .banner-cta-primary {
+                width: 100%;
+                text-align: center;
+                padding: 18px 32px;
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="banner-container">
+        <div class="banner-background"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        
+        <div class="banner-content">
+            <!-- Sección Izquierda -->
+            <div class="banner-left">
+                <a href="https://www.casicinco.com/restaurante?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes" 
+                   target="_blank" 
+                   rel="nofollow sponsored noopener noreferrer"
+                   style="text-decoration: none; color: inherit;">
+                    <div class="banner-logo-section">
+                        <div class="logo-star">🍽️</div>
+                        <div class="logo-text-wrapper">
+                            <h1>Casi Cinco</h1>
+                            <span class="logo-badge">🔥 Restaurantes Top</span>
+                        </div>
+                    </div>
+                </a>
+                
+                <div class="banner-description">
+                    Descubre los <span class="highlight-text">mejores restaurantes de España</span>. Gastronomía excepcional verificada con +4.7★ en Google Maps.
+                </div>
+                
+                <div class="banner-features-grid">
+                    <a href="https://www.casicinco.com/restaurante?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       class="feature-item">
+                        <div class="feature-icon">⭐</div>
+                        <div class="feature-text">
+                            <div class="feature-title">+2000 Restaurantes</div>
+                            <div class="feature-desc">Solo +4.7 estrellas</div>
+                        </div>
+                    </a>
+                    <a href="https://www.casicinco.com/restaurante?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       class="feature-item">
+                        <div class="feature-icon">🍷</div>
+                        <div class="feature-text">
+                            <div class="feature-title">Todas las Cocinas</div>
+                            <div class="feature-desc">Mediterránea, Italiana, Japonesa...</div>
+                        </div>
+                    </a>
+                    <a href="https://www.casicinco.com/mapa?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       class="feature-item">
+                        <div class="feature-icon">🗺️</div>
+                        <div class="feature-text">
+                            <div class="feature-title">Búsqueda por Mapa</div>
+                            <div class="feature-desc">Encuentra cerca de ti</div>
+                        </div>
+                    </a>
+                    <a href="https://www.casicinco.com/ruta?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       class="feature-item">
+                        <div class="feature-icon">🛣️</div>
+                        <div class="feature-text">
+                            <div class="feature-title">Ruta Gastronómica</div>
+                            <div class="feature-desc">Planifica tu recorrido culinario</div>
+                        </div>
+                    </a>
+                </div>
+                
+                <div class="banner-cta-wrapper">
+                    <a href="https://www.casicinco.com/restaurante?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       class="banner-cta-primary">
+                        <span class="cta-text">Ver Restaurantes</span>
+                    </a>
+                    <div class="banner-cta-secondary">
+                        <span>🔥</span>
+                        <span><span class="cta-secondary-number">+2000</span> restaurantes verificados</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección Derecha - Showcase -->
+            <div class="banner-right">
+                <div class="showcase-title">🌟 Restaurantes Destacados</div>
+                <div class="places-showcase">
+                    <a href="https://www.casicinco.com/restaurante/madrid?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       class="place-card">
+                        <div class="place-icon">🍽️</div>
+                        <div class="place-name">DiverXO</div>
+                        <div class="place-location">📍 Madrid</div>
+                        <div class="place-cuisine">Cocina Fusión</div>
+                        <div class="place-rating">
+                            <span class="rating-stars">★★★★★</span>
+                            <span class="rating-number">4.9</span>
+                            <span class="rating-count">(1.2k)</span>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.casicinco.com/restaurante/valencia?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       class="place-card">
+                        <div class="place-icon">🥘</div>
+                        <div class="place-name">Quique Dacosta</div>
+                        <div class="place-location">📍 Valencia</div>
+                        <div class="place-cuisine">Alta Cocina</div>
+                        <div class="place-rating">
+                            <span class="rating-stars">★★★★★</span>
+                            <span class="rating-number">4.8</span>
+                            <span class="rating-count">(980)</span>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.casicinco.com/restaurante/barcelona?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       class="place-card">
+                        <div class="place-icon">🍜</div>
+                        <div class="place-name">Moments</div>
+                        <div class="place-location">📍 Barcelona</div>
+                        <div class="place-cuisine">Mediterránea</div>
+                        <div class="place-rating">
+                            <span class="rating-stars">★★★★★</span>
+                            <span class="rating-number">4.9</span>
+                            <span class="rating-count">(1.5k)</span>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.casicinco.com/restaurante/sevilla?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       class="place-card">
+                        <div class="place-icon">🍤</div>
+                        <div class="place-name">Az-Zait</div>
+                        <div class="place-location">📍 Sevilla</div>
+                        <div class="place-cuisine">Andaluza</div>
+                        <div class="place-rating">
+                            <span class="rating-stars">★★★★★</span>
+                            <span class="rating-number">4.8</span>
+                            <span class="rating-count">(876)</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

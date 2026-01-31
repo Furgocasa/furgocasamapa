@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banner Compacto Mapa Furgocasa</title>
+    <style>
+        .furgocasa-compact {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 700px;
+            margin: 20px auto;
+            background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%);
+            border-radius: 12px;
+            padding: 20px 28px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 6px 25px rgba(14, 165, 233, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .furgocasa-compact:hover {
+            transform: translateY(-3px);
+        }
+
+        .compact-icon {
+            font-size: 48px;
+            flex-shrink: 0;
+        }
+
+        .compact-content {
+            flex: 1;
+            color: white;
+        }
+
+        .compact-content h3 {
+            font-size: 22px;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .compact-content p {
+            font-size: 14px;
+            opacity: 0.95;
+            margin-bottom: 0;
+        }
+
+        .compact-button {
+            background: white;
+            color: #0284c7;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .compact-button:hover {
+            background: #f0f9ff;
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 600px) {
+            .furgocasa-compact {
+                flex-direction: column;
+                text-align: center;
+                padding: 20px;
+            }
+
+            .compact-button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- BANNER COMPACTO -->
+<div class="furgocasa-compact">
+    <div class="compact-icon">🚐</div>
+    <div class="compact-content">
+        <h3>Mapa Furgocasa</h3>
+        <p>+3,600 áreas de pernocta en Europa y Latinoamérica • 100% Gratis</p>
+    </div>
+    <a href="https://www.mapafurgocasa.com/mapa" class="compact-button" target="_blank">
+        Ver Mapa
+    </a>
+</div>
+
+</body>
+</html>

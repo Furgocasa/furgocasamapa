@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casi Cinco - Wide Carousel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+        }
+        
+        .banner-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #063971 0%, #052d5a 50%, #042143 100%);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        /* Efecto de partículas de fondo */
+        .banner-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255, 217, 53, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(255, 217, 53, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        .banner-content {
+            position: relative;
+            z-index: 1;
+            padding: 40px 50px;
+        }
+        
+        .banner-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+        }
+        
+        .banner-left-section {
+            flex: 1;
+        }
+        
+        .banner-logo {
+            font-size: 42px;
+            font-weight: 900;
+            color: #ffd935;
+            margin-bottom: 8px;
+            letter-spacing: -1px;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .banner-tagline {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 12px;
+        }
+        
+        .banner-stats {
+            display: flex;
+            gap: 24px;
+            margin-top: 16px;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+        
+        .stat-number {
+            font-size: 28px;
+            font-weight: 900;
+            color: #ffd935;
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .banner-cta-section {
+            text-align: center;
+        }
+        
+        .banner-cta {
+            display: inline-block;
+            background: linear-gradient(135deg, #ffd935 0%, #ffe566 100%);
+            color: #063971;
+            padding: 20px 48px;
+            border-radius: 14px;
+            font-weight: 900;
+            font-size: 18px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(255, 217, 53, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .banner-cta::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .banner-cta:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 12px 32px rgba(255, 217, 53, 0.6);
+        }
+        
+        .banner-cta:hover::before {
+            left: 100%;
+        }
+        
+        .cta-subtext {
+            display: block;
+            font-size: 12px;
+            margin-top: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+        }
+        
+        /* Carrusel de lugares */
+        .places-carousel {
+            position: relative;
+            overflow: hidden;
+            margin-top: 20px;
+            padding: 20px 0;
+        }
+        
+        .carousel-track {
+            display: flex;
+            gap: 16px;
+            animation: scroll 30s linear infinite;
+        }
+        
+        .carousel-track:hover {
+            animation-play-state: paused;
+        }
+        
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        
+        .place-card {
+            min-width: 280px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .place-card:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 217, 53, 0.4);
+            transform: translateY(-4px);
+        }
+        
+        .place-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .place-icon {
+            font-size: 32px;
+        }
+        
+        .place-info {
+            flex: 1;
+        }
+        
+        .place-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 4px;
+        }
+        
+        .place-location {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .place-rating {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        
+        .rating-stars {
+            color: #ffd935;
+            font-size: 14px;
+        }
+        
+        .rating-number {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffd935;
+        }
+        
+        .rating-reviews {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .place-category {
+            display: inline-block;
+            background: rgba(255, 217, 53, 0.15);
+            border: 1px solid rgba(255, 217, 53, 0.3);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #ffd935;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .banner-content {
+                padding: 32px 24px;
+            }
+            
+            .banner-header {
+                flex-direction: column;
+                gap: 24px;
+                text-align: center;
+            }
+            
+            .banner-logo {
+                font-size: 32px;
+            }
+            
+            .banner-tagline {
+                font-size: 15px;
+            }
+            
+            .banner-stats {
+                justify-content: center;
+            }
+            
+            .banner-cta {
+                padding: 16px 32px;
+                font-size: 16px;
+            }
+            
+            .place-card {
+                min-width: 240px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="banner-container">
+        <div class="banner-content">
+            <div class="banner-header">
+                <div class="banner-left-section">
+                    <a href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       style="text-decoration: none; color: inherit;">
+                        <div class="banner-logo">⭐ Casi Cinco</div>
+                    </a>
+                    <div class="banner-tagline">Descubre los mejores restaurantes, bares y hoteles de España</div>
+                    <div class="banner-stats">
+                        <a href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel" 
+                           target="_blank" 
+                           rel="nofollow sponsored noopener noreferrer"
+                           style="text-decoration: none; color: inherit;">
+                            <div class="stat-item">
+                                <span class="stat-number">+3500</span>
+                                <span class="stat-label">lugares verificados</span>
+                            </div>
+                        </a>
+                        <a href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel" 
+                           target="_blank" 
+                           rel="nofollow sponsored noopener noreferrer"
+                           style="text-decoration: none; color: inherit;">
+                            <div class="stat-item">
+                                <span class="stat-number">4.7★</span>
+                                <span class="stat-label">mínimo rating</span>
+                            </div>
+                        </a>
+                        <a href="https://www.casicinco.com/mapa?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel" 
+                           target="_blank" 
+                           rel="nofollow sponsored noopener noreferrer"
+                           style="text-decoration: none; color: inherit;">
+                            <div class="stat-item">
+                                <span class="stat-number">50+</span>
+                                <span class="stat-label">ciudades</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="banner-cta-section">
+                    <a href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       class="banner-cta">
+                        Explorar Ahora →
+                    </a>
+                    <a href="https://www.casicinco.com/ruta?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       style="text-decoration: none; color: inherit;">
+                        <span class="cta-subtext">🛣️ Planificador de Rutas + Chat IA</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Carrusel de lugares -->
+            <div class="places-carousel">
+                <div class="carousel-track">
+                    <!-- Duplicamos las tarjetas para efecto infinito -->
+                    <a href="https://www.casicinco.com/restaurante/madrid?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       style="text-decoration: none; color: inherit;">
+                        <div class="place-card">
+                            <div class="place-header">
+                                <div class="place-icon">🍽️</div>
+                                <div class="place-info">
+                                    <div class="place-name">DiverXO</div>
+                                    <div class="place-location">📍 Madrid</div>
+                                </div>
+                            </div>
+                            <div class="place-rating">
+                                <span class="rating-stars">★★★★★</span>
+                                <span class="rating-number">4.9</span>
+                                <span class="rating-reviews">(1.2k reseñas)</span>
+                            </div>
+                            <div class="place-category">Restaurante</div>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.casicinco.com/bar/barcelona?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       style="text-decoration: none; color: inherit;">
+                        <div class="place-card">
+                            <div class="place-header">
+                                <div class="place-icon">🍺</div>
+                                <div class="place-info">
+                                    <div class="place-name">Bobby's Free</div>
+                                    <div class="place-location">📍 Barcelona</div>
+                                </div>
+                            </div>
+                            <div class="place-rating">
+                                <span class="rating-stars">★★★★★</span>
+                                <span class="rating-number">4.8</span>
+                                <span class="rating-reviews">(856 reseñas)</span>
+                            </div>
+                            <div class="place-category">Bar</div>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.casicinco.com/hotel/barcelona?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       style="text-decoration: none; color: inherit;">
+                        <div class="place-card">
+                            <div class="place-header">
+                                <div class="place-icon">🏨</div>
+                                <div class="place-info">
+                                    <div class="place-name">Hotel Arts</div>
+                                    <div class="place-location">📍 Barcelona</div>
+                                </div>
+                            </div>
+                            <div class="place-rating">
+                                <span class="rating-stars">★★★★★</span>
+                                <span class="rating-number">4.9</span>
+                                <span class="rating-reviews">(2.3k reseñas)</span>
+                            </div>
+                            <div class="place-category">Hotel</div>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.casicinco.com/restaurante/valencia?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       style="text-decoration: none; color: inherit;">
+                        <div class="place-card">
+                            <div class="place-header">
+                                <div class="place-icon">🍽️</div>
+                                <div class="place-info">
+                                    <div class="place-name">Quique Dacosta</div>
+                                    <div class="place-location">📍 Valencia</div>
+                                </div>
+                            </div>
+                            <div class="place-rating">
+                                <span class="rating-stars">★★★★★</span>
+                                <span class="rating-number">4.8</span>
+                                <span class="rating-reviews">(980 reseñas)</span>
+                            </div>
+                            <div class="place-category">Restaurante</div>
+                        </div>
+                    </a>
+                    
+                    <!-- Duplicado para loop infinito -->
+                    <a href="https://www.casicinco.com/restaurante/madrid?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       style="text-decoration: none; color: inherit;">
+                        <div class="place-card">
+                            <div class="place-header">
+                                <div class="place-icon">🍽️</div>
+                                <div class="place-info">
+                                    <div class="place-name">DiverXO</div>
+                                    <div class="place-location">📍 Madrid</div>
+                                </div>
+                            </div>
+                            <div class="place-rating">
+                                <span class="rating-stars">★★★★★</span>
+                                <span class="rating-number">4.9</span>
+                                <span class="rating-reviews">(1.2k reseñas)</span>
+                            </div>
+                            <div class="place-category">Restaurante</div>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.casicinco.com/bar/barcelona?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       style="text-decoration: none; color: inherit;">
+                        <div class="place-card">
+                            <div class="place-header">
+                                <div class="place-icon">🍺</div>
+                                <div class="place-info">
+                                    <div class="place-name">Bobby's Free</div>
+                                    <div class="place-location">📍 Barcelona</div>
+                                </div>
+                            </div>
+                            <div class="place-rating">
+                                <span class="rating-stars">★★★★★</span>
+                                <span class="rating-number">4.8</span>
+                                <span class="rating-reviews">(856 reseñas)</span>
+                            </div>
+                            <div class="place-category">Bar</div>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.casicinco.com/hotel/barcelona?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       style="text-decoration: none; color: inherit;">
+                        <div class="place-card">
+                            <div class="place-header">
+                                <div class="place-icon">🏨</div>
+                                <div class="place-info">
+                                    <div class="place-name">Hotel Arts</div>
+                                    <div class="place-location">📍 Barcelona</div>
+                                </div>
+                            </div>
+                            <div class="place-rating">
+                                <span class="rating-stars">★★★★★</span>
+                                <span class="rating-number">4.9</span>
+                                <span class="rating-reviews">(2.3k reseñas)</span>
+                            </div>
+                            <div class="place-category">Hotel</div>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.casicinco.com/restaurante/valencia?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel" 
+                       target="_blank" 
+                       rel="nofollow sponsored noopener noreferrer"
+                       style="text-decoration: none; color: inherit;">
+                        <div class="place-card">
+                            <div class="place-header">
+                                <div class="place-icon">🍽️</div>
+                                <div class="place-info">
+                                    <div class="place-name">Quique Dacosta</div>
+                                    <div class="place-location">📍 Valencia</div>
+                                </div>
+                            </div>
+                            <div class="place-rating">
+                                <span class="rating-stars">★★★★★</span>
+                                <span class="rating-number">4.8</span>
+                                <span class="rating-reviews">(980 reseñas)</span>
+                            </div>
+                            <div class="place-category">Restaurante</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
