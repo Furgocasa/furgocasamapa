@@ -394,7 +394,7 @@ export default function MapaPage() {
 
   // ✅ ÁREAS PARA EL MAPA: aplicar TODOS los filtros (igual que la lista)
   const areasParaMapa = useMemo(() => {
-    return areas.filter((area: any) => {
+    const filtradas = areas.filter((area: any) => {
       // Filtro de búsqueda
       if (filtros.busqueda) {
         const busqueda = filtros.busqueda.toLowerCase()
@@ -455,6 +455,19 @@ export default function MapaPage() {
 
       return true
     })
+    
+    console.log(`🗺️ MAPA: ${filtradas.length} áreas después de filtros`, { 
+      total: areas.length,
+      filtros: {
+        busqueda: filtros.busqueda,
+        pais: paisFiltroLista,
+        precio: filtros.precio,
+        servicios: filtros.servicios,
+        caracteristicas: filtros.caracteristicas
+      }
+    })
+    
+    return filtradas
   }, [areas, filtros, paisFiltroLista])
 
   const handleAreaClick = (area: Area) => {
