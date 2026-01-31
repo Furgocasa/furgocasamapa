@@ -249,11 +249,16 @@ export function MapLibreMap({
             .setPopup(popup)
             .addTo(map)
 
-          // ✅ SIMPLE: Como funcionaba antes
+          // ✅ SIMPLE: Como funcionaba antes, con verificación
           el.addEventListener('click', () => {
             onAreaClick(area)
             map.panTo([lng, lat])
-            marker.togglePopup()
+            
+            // Verificar que el marker y popup existen antes de togglear
+            const popup = marker.getPopup()
+            if (popup) {
+              marker.togglePopup()
+            }
           })
 
           markersRef.current[areaId] = marker
@@ -297,32 +302,43 @@ export function MapLibreMap({
     if (!mapRef.current || !areaSeleccionada) return
 
     const areaId = `area-${areaSeleccionada.id}`
-    const marker = markersRef.current[areaId]
+    
+    // ✅ CRÍTICO: Esperar a que updateMarkers() termine antes de buscar el marker
+    const tryOpenPopup = (attempts = 0) => {
+      const marker = markersRef.current[areaId]
 
-    if (marker) {
-      mapRef.current.panTo([Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)])
-      mapRef.current.setZoom(14)
-      
-      const popup = marker.getPopup()
-      if (popup && !popup.isOpen()) {
-        marker.togglePopup()
+      if (marker) {
+        // Marker encontrado, abrir popup
+        mapRef.current!.panTo([Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)])
+        mapRef.current!.setZoom(14)
+        
+        const popup = marker.getPopup()
+        if (popup && !popup.isOpen()) {
+          marker.togglePopup()
+        }
+      } else if (attempts < 3) {
+        // Marker aún no existe, reintentar después de 100ms
+        setTimeout(() => tryOpenPopup(attempts + 1), 100)
+      } else {
+        // Después de 3 intentos, crear popup temporal
+        mapRef.current!.panTo([Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)])
+        mapRef.current!.setZoom(14)
+        
+        new maplibregl.Popup({
+          offset: 25,
+          closeButton: true,
+          closeOnClick: true,
+          maxWidth: '360px',
+          className: 'maplibre-popup-custom'
+        })
+          .setLngLat([Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)])
+          .setHTML(createPopupContent(areaSeleccionada))
+          .addTo(mapRef.current!)
       }
-    } else {
-      // Si no hay marcador visible, crear popup temporal
-      mapRef.current.panTo([Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)])
-      mapRef.current.setZoom(14)
-      
-      new maplibregl.Popup({
-        offset: 25,
-        closeButton: true,
-        closeOnClick: true,
-        maxWidth: '360px',
-        className: 'maplibre-popup-custom'
-      })
-        .setLngLat([Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)])
-        .setHTML(createPopupContent(areaSeleccionada))
-        .addTo(mapRef.current!)
     }
+
+    // Intentar abrir el popup
+    tryOpenPopup()
   }, [areaSeleccionada])
 
   // Handler para búsqueda geográfica
