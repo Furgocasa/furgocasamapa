@@ -1,16 +1,19 @@
-# 🎨 Sistema de Banners Rotativos Casi Cinco
+# 🎨 Sistema de Banners Rotativos - Casi Cinco & Furgocasa
 
-Sistema inteligente de banners publicitarios que promocionan **Casi Cinco** en las páginas de detalle de áreas de **Furgocasa**.
+Sistema inteligente de banners publicitarios que promocionan **Casi Cinco** (restaurantes, bares, hoteles) y **Furgocasa** (alquiler y venta de campers) en las páginas de detalle de áreas.
 
 ## 📋 Descripción
 
-Este sistema muestra banners de forma **aleatoria y adaptativa** según el dispositivo del usuario, creando una experiencia dinámica que:
+Este sistema muestra banners de **dos marcas** (Casi Cinco y Furgocasa) de forma **aleatoria y adaptativa** según el dispositivo del usuario, creando una experiencia dinámica que:
 
-- ✅ Evita la ceguera publicitaria (banner blindness)
-- ✅ Realiza A/B testing automático
-- ✅ Maximiza el engagement con variedad visual
-- ✅ Genera link building de calidad entre propiedades web
-- ✅ Ofrece tracking detallado con UTM parameters
+- ✅ **Mezcla aleatoria**: Banners de Casi Cinco y Furgocasa en la misma página
+- ✅ **No repetición**: NUNCA se repite el mismo banner en la misma página
+- ✅ **SEO-Friendly**: Todos los enlaces incluyen `rel="sponsored nofollow"` (directrices Google)
+- ✅ **Evita banner blindness**: Variedad visual y rotación inteligente
+- ✅ **A/B testing automático**: Diferentes diseños para optimizar conversión
+- ✅ **Link building de calidad**: Cross-promotion entre propiedades web
+- ✅ **Tracking completo**: UTM parameters por banner, posición y campaña
+- ✅ **Imágenes reales**: Fotos de campers para mayor atractivo
 
 ---
 
@@ -36,26 +39,47 @@ Los banners se muestran en **3 ubicaciones estratégicas** en cada página de á
 
 ---
 
-## 📱 Banners por Dispositivo
+## 📱 Banners Disponibles
 
-### **MÓVIL** (< 768px)
-- `BannerMobile` - Compacto 320x100px ⭐ **Peso: 1.0**
-- `BannerHeroHorizontal` - También responsive ⭐ **Peso: 0.5**
+### 🌟 **CASI CINCO** (12 banners)
+Promocionan restaurantes, bares y hoteles con rating +4.7★
 
-### **TABLET** (768px - 1024px)
-- `BannerHeroHorizontal` - 728x90px ⭐ **Peso: 1.0**
-- `BannerCuadradoMedium` - 300x250px ⭐ **Peso: 1.0**
-- `BannerLeaderboardFull` - 970x90px ⭐ **Peso: 1.0**
+#### Mobile (< 768px)
+- `BannerMobile` ⭐ **Peso: 1.5**
+- `BannerCuadradoMedium` ⭐ **Peso: 1.3**
+- `BannerVerticalSidebar` ⭐ **Peso: 1.2**
+- `BannerHeroHorizontal` ⭐ **Peso: 0.8**
+- Banners UltraWide (Bares, Hoteles, Restaurantes) ⭐ **Peso: 1.0**
 
-### **DESKTOP** (> 1024px)
-- `BannerPremiumAnimated` - 600x400px ⭐ **Peso: 1.5** (favorito)
-- `BannerWideCarousel` - 1200px ⭐ **Peso: 1.2**
-- `BannerUltraWideModern` - 1400px ⭐ **Peso: 1.3**
-- `BannerVerticalSidebar` - 300x600px ⭐ **Peso: 1.0**
-- `BannerLeaderboardFull` - Desktop también ⭐ **Peso: 0.8**
-- `BannerCuadradoMedium` - Desktop también ⭐ **Peso: 0.7**
+#### Desktop (≥ 1024px)
+- `BannerUltraWideBares/Hoteles/Restaurantes` ⭐ **Peso: 1.6** (categorías)
+- `BannerPremiumAnimated` ⭐ **Peso: 1.4** (con animaciones)
+- `BannerMegaWideSlider` ⭐ **Peso: 1.4** (slider)
+- `BannerUltraWideModern` ⭐ **Peso: 1.3**
+- `BannerWideCarousel` ⭐ **Peso: 1.3**
+- `BannerVerticalSidebar` ⭐ **Peso: 1.1**
+- `BannerLeaderboardFull` ⭐ **Peso: 0.9**
+- `BannerHeroHorizontal` ⭐ **Peso: 0.8**
 
-> **Nota**: Los pesos determinan la frecuencia de aparición. Mayor peso = más frecuente.
+### 🚐 **FURGOCASA** (8 banners)
+Promocionan alquiler (desde 95€/día) y venta (desde 49.000€) de campers
+
+#### Mobile (< 768px)
+- `BannerFurgocasaMobile` ⭐ **Peso: 1.5**
+- `BannerFurgocasaHero` ⭐ **Peso: 1.3**
+- `BannerFurgocasaVertical` ⭐ **Peso: 1.2**
+
+#### Desktop (≥ 1024px)
+- `BannerFurgocasaImageAlquiler` 📸 ⭐ **Peso: 1.7** (con foto real - ALQUILER)
+- `BannerFurgocasaImageVenta` 📸 ⭐ **Peso: 1.7** (con foto real - VENTA)
+- `BannerFurgocasaPremium` ⭐ **Peso: 1.6**
+- `BannerFurgocasaWide` ⭐ **Peso: 1.5**
+- `BannerFurgocasaLeaderboard` ⭐ **Peso: 1.4**
+- `BannerFurgocasaHero` ⭐ **Peso: 1.3**
+- `BannerFurgocasaVertical` ⭐ **Peso: 1.1**
+
+> **Total: 20 banners** (12 Casi Cinco + 8 Furgocasa)  
+> **Nota**: Mayor peso = mayor probabilidad de aparecer
 
 ---
 
@@ -171,22 +195,43 @@ utm_campaign={banner_type}_{position}_area_detail
 
 ---
 
-## 🌐 SEO y Link Building
+## 🌐 SEO y Cumplimiento Google
 
-### Ventajas SEO:
+### ✅ Atributos SEO Correctos
 
-1. **Link Juice**: Enlaces desde Furgocasa (tu propio sitio) hacia Casi Cinco
-2. **Relevancia temática**: Ambos sitios relacionados con viajes
-3. **Anchor text variado**: Diferentes textos de enlace en cada banner
-4. **DoFollow links**: Pasan autoridad de dominio
-5. **Enlaces contextuales**: Dentro de contenido relevante
+**TODOS los enlaces publicitarios incluyen:**
+```html
+rel="noopener noreferrer sponsored nofollow"
+```
 
-### Mejores Prácticas:
+| Atributo | Propósito |
+|----------|-----------|
+| `noopener` | Seguridad: previene ataques tabnabbing |
+| `noreferrer` | No envía cabecera HTTP Referer |
+| `sponsored` | **CRÍTICO**: Indica a Google que es publicidad |
+| `nofollow` | **CRÍTICO**: No transfiere PageRank |
 
-- ✅ **No saturar**: Máximo 2-3 banners por página
-- ✅ **Variar diseños**: Rotar cada 2-3 semanas
-- ✅ **A/B Testing**: Probar versiones y medir CTR
-- ✅ **Monitorear Analytics**: Ajustar según datos reales
+### 🛡️ Protección contra Penalizaciones
+
+Según las [directrices de Google sobre esquemas de enlaces](https://developers.google.com/search/docs/essentials/spam-policies#link-spam):
+
+- ❌ **SIN estos atributos**: Riesgo de penalización por "venta de enlaces" no declarados
+- ✅ **CON estos atributos**: Cumplimiento total de las políticas de Google
+
+### 🔗 Ventajas SEO
+
+1. **Cross-promotion legítima**: Entre propiedades relacionadas con viajes
+2. **Anchor text variado**: Diferentes textos de enlace en cada banner
+3. **Enlaces contextuales**: Dentro de contenido relevante para el usuario
+4. **Tráfico de calidad**: Usuarios interesados en viajes y áreas de autocaravanas
+
+### 📊 Mejores Prácticas
+
+- ✅ **3 banners por página**: Balance perfecto sin saturar
+- ✅ **No repetir**: Sistema garantiza variedad en cada página
+- ✅ **Mezcla de marcas**: Casi Cinco + Furgocasa para diversidad
+- ✅ **Tracking UTM**: Medir conversiones y ajustar estrategia
+- ✅ **Imágenes reales**: Mayor CTR con fotos de productos reales
 
 ---
 
@@ -261,22 +306,70 @@ const BANNERS_CONFIG = {
 
 ---
 
+## 🎯 Distribución en Páginas
+
+Cada página de detalle de área muestra **3 banners**:
+
+| Posición | Estrategia | Marcas Posibles | Ejemplo |
+|----------|-----------|-----------------|---------|
+| **Banner 1** (after-info) | `weighted` | Casi Cinco o Furgocasa | Furgocasa Premium |
+| **Banner 2** (after-gallery) | `weighted` | Casi Cinco o Furgocasa | Casi Cinco Bares |
+| **Banner 3** (after-related) | `deterministic` | Casi Cinco o Furgocasa | Furgocasa Venta |
+
+### Ejemplos Reales de Distribución
+
+**Ejemplo 1: Equilibrado**
+- 🚐 Furgocasa Alquiler (con imagen)
+- 🍽️ Casi Cinco Restaurantes
+- 🚐 Furgocasa Venta (con imagen)
+
+**Ejemplo 2: Casi Cinco predominante**
+- ⭐ Casi Cinco Premium Animated
+- 🍺 Casi Cinco Bares
+- 🚐 Furgocasa Hero
+
+**Ejemplo 3: Furgocasa predominante**
+- 🚐 Furgocasa Wide
+- ⭐ Casi Cinco Hoteles
+- 🚐 Furgocasa Leaderboard
+
 ## 📈 Roadmap Futuro
 
-- [ ] Añadir banners temáticos por categoría (Restaurantes, Bares, Hoteles)
-- [ ] Implementar rotación temporal (cambiar cada X días)
-- [ ] Sistema de A/B testing con métricas en tiempo real
+- [x] ✅ Banners temáticos por categoría (Restaurantes, Bares, Hoteles)
+- [x] ✅ Banners de Furgocasa (alquiler + venta)
+- [x] ✅ Sistema de no repetición en misma página
+- [x] ✅ Banners con imágenes reales
+- [x] ✅ Atributos SEO correctos (sponsored nofollow)
 - [ ] Dashboard interno para ver performance de banners
 - [ ] Integración con Google Optimize para experimentos
-- [ ] Banners personalizados por ubicación del usuario
+- [ ] Banners personalizados por ubicación del usuario (geo-targeting)
+- [ ] Más banners con imágenes de diferentes campers
 
 ---
 
-## 📞 Soporte
+## 📞 Información del Proyecto
 
-**Proyecto**: Mapa Furgocasa  
-**Promociona**: Casi Cinco (www.casicinco.com)  
-**Objetivo**: Link building + cross-promotion + mejor UX para usuarios
+**Proyecto**: Mapa Furgocasa (www.mapafurgocasa.com)  
+**Promociona**:
+- 🌟 **Casi Cinco** (www.casicinco.com) - Restaurantes, bares y hoteles +4.7★
+- 🚐 **Furgocasa** (www.furgocasa.com/es) - Alquiler y venta de campers
+
+**Objetivos**:
+- ✅ Cross-promotion entre propiedades relacionadas con viajes
+- ✅ Mejor UX: ofrecer valor adicional al usuario (dónde comer, alquilar camper)
+- ✅ Monetización: conversiones de alquiler y venta de campers
+- ✅ SEO: cumplimiento de directrices Google con enlaces sponsored
+- ✅ Métricas: tracking completo con UTM para optimización continua
+
+## 📊 Estadísticas del Sistema
+
+- **Total banners**: 20 (12 Casi Cinco + 8 Furgocasa)
+- **Banners por página**: 3 (sin repetición)
+- **Combinaciones posibles**: 1,140 (20 × 19 × 18 / 6)
+- **Imágenes reales**: 4 (campers de Furgocasa)
+- **Enlaces actualizados**: 69 (todos con rel="sponsored nofollow")
+- **Dispositivos soportados**: Mobile, Tablet, Desktop
+- **Marcas promocionadas**: 2 (Casi Cinco + Furgocasa)
 
 ---
 
