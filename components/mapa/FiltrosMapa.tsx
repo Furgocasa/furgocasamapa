@@ -83,6 +83,54 @@ const REGIONES = {
   }
 }
 
+// ✅ MAPEO DE SINÓNIMOS - Normalizar variaciones de nombres de países
+const SINONIMOS_PAISES: Record<string, string> = {
+  // Países Bajos / Holanda
+  'Holanda': 'Países Bajos',
+  'Holland': 'Países Bajos',
+  'Netherlands': 'Países Bajos',
+  'The Netherlands': 'Países Bajos',
+  
+  // Chequia / República Checa
+  'República Checa': 'Chequia',
+  'Czech Republic': 'Chequia',
+  'Czechia': 'Chequia',
+  
+  // Reino Unido
+  'UK': 'Reino Unido',
+  'United Kingdom': 'Reino Unido',
+  'Gran Bretaña': 'Reino Unido',
+  'Great Britain': 'Reino Unido',
+  'Inglaterra': 'Reino Unido',
+  'Escocia': 'Reino Unido',
+  'Gales': 'Reino Unido',
+  
+  // Estados Unidos
+  'USA': 'Estados Unidos',
+  'United States': 'Estados Unidos',
+  'US': 'Estados Unidos',
+  'EEUU': 'Estados Unidos',
+  'EE.UU.': 'Estados Unidos',
+  
+  // Brasil
+  'Brazil': 'Brasil',
+  
+  // Perú
+  'Peru': 'Perú',
+  
+  // Otros sinónimos comunes
+  'Suiza': 'Suiza',
+  'Switzerland': 'Suiza',
+  'Bélgica': 'Bélgica',
+  'Belgium': 'Bélgica'
+}
+
+// ✅ Normalizar nombre de país (aplicar sinónimos)
+export function normalizarPais(pais: string): string {
+  const paisTrimmed = pais.trim()
+  return SINONIMOS_PAISES[paisTrimmed] || paisTrimmed
+}
+
 // Helper para obtener el nombre legible del filtro de país
 export function getNombreFiltro(valor: string): string {
   if (!valor) return 'Todos los países'
@@ -95,10 +143,14 @@ export function getNombreFiltro(valor: string): string {
 // Helper para verificar si un país pertenece al filtro
 export function paisPerteneceAFiltro(pais: string, filtro: string): boolean {
   if (!filtro) return true // Todos
-  if (filtro === REGIONES.EUROPA.id) return REGIONES.EUROPA.paises.includes(pais)
-  if (filtro === REGIONES.SUDAMERICA.id) return REGIONES.SUDAMERICA.paises.includes(pais)
-  if (filtro === REGIONES.CENTROAMERICA.id) return REGIONES.CENTROAMERICA.paises.includes(pais)
-  return pais === filtro // País específico
+  
+  // ✅ Normalizar el nombre del país antes de comparar
+  const paisNormalizado = normalizarPais(pais)
+  
+  if (filtro === REGIONES.EUROPA.id) return REGIONES.EUROPA.paises.includes(paisNormalizado)
+  if (filtro === REGIONES.SUDAMERICA.id) return REGIONES.SUDAMERICA.paises.includes(paisNormalizado)
+  if (filtro === REGIONES.CENTROAMERICA.id) return REGIONES.CENTROAMERICA.paises.includes(paisNormalizado)
+  return paisNormalizado === filtro // País específico
 }
 
 export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, totalResultados, paisesDisponibles }: FiltrosMapaProps) {
