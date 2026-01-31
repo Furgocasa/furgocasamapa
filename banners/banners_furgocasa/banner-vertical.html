@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banner Vertical Furgocasa - 300px</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            padding: 2rem;
+            background: #f3f4f6;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .demo-info {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="max-w-4xl mx-auto">
+        <div class="demo-info">
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">📍 Banner Vertical Furgocasa</h1>
+            <p class="text-gray-600 mb-1"><strong>Dimensiones:</strong> 300px × ~600px</p>
+            <p class="text-gray-600 mb-1"><strong>Uso:</strong> Sidebar lateral, columnas verticales</p>
+            <p class="text-gray-600"><strong>Imagen:</strong> Superior 240px, destacada</p>
+        </div>
+
+        <!-- BANNER VERTICAL -->
+        <div class="w-full max-w-[300px] mx-auto">
+            <a
+                href="https://www.furgocasa.com/es?utm_source=mapafurgocasa&utm_medium=banner&utm_campaign=furgocasa_vertical_test"
+                target="_blank"
+                rel="noopener noreferrer sponsored nofollow"
+                class="block no-underline"
+            >
+                <div class="bg-gradient-to-b from-[#003d7a] to-[#002855] rounded-xl overflow-hidden shadow-2xl transition-all hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(0,61,122,0.4)]">
+                    <!-- Imagen visible - 45% altura -->
+                    <div class="relative h-[240px] overflow-hidden">
+                        <img 
+                            src="../../public/images/furgocasa/camper-vertical-1.jpg"
+                            alt="Camper Furgocasa Gandía"
+                            class="w-full h-full object-cover"
+                        />
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#002855]/70 via-transparent to-transparent"></div>
+                        <div class="absolute top-3 left-3">
+                            <span class="text-xs bg-white/90 text-[#003d7a] px-2 py-1 rounded-full font-bold">Publicidad</span>
+                        </div>
+                    </div>
+
+                    <!-- Contenido -->
+                    <div class="p-5 text-white text-center">
+                        <div class="text-2xl font-black text-[#ff6b35] mb-1 flex items-center justify-center gap-2">
+                            🚐 <span>Furgocasa</span>
+                        </div>
+                        <p class="text-xs text-white/90 mb-4">
+                            Alquiler y Venta de Campers
+                        </p>
+                    </div>
+
+                    <div class="px-5 pb-4 space-y-3">
+                        <div class="flex items-center gap-3 bg-white/10 px-3 py-2 rounded-lg text-white hover:bg-white/15 transition-colors cursor-pointer">
+                            <div class="text-2xl">💰</div>
+                            <div class="flex-1">
+                                <div class="text-base font-bold text-[#ff6b35]">95€/día</div>
+                                <div class="text-xs text-white/70">Desde</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 bg-white/10 px-3 py-2 rounded-lg text-white hover:bg-white/15 transition-colors cursor-pointer">
+                            <div class="text-2xl">🚗</div>
+                            <div class="flex-1">
+                                <div class="text-base font-bold text-[#ff6b35]">Ilimitados</div>
+                                <div class="text-xs text-white/70">Kilómetros</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 bg-white/10 px-3 py-2 rounded-lg text-white hover:bg-white/15 transition-colors cursor-pointer">
+                            <div class="text-2xl">⭐</div>
+                            <div class="flex-1">
+                                <div class="text-base font-bold text-[#ff6b35]">4.9 / 5.0</div>
+                                <div class="text-xs text-white/70">Valoración</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 bg-white/10 px-3 py-2 rounded-lg text-white hover:bg-white/15 transition-colors cursor-pointer">
+                            <div class="text-2xl">🏷️</div>
+                            <div class="flex-1">
+                                <div class="text-base font-bold text-[#ff6b35]">49.000€</div>
+                                <div class="text-xs text-white/70">Venta desde</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="px-5 pb-5">
+                        <div class="block bg-white text-[#003d7a] p-3 rounded-lg font-bold text-base text-center hover:bg-gray-100 transition-colors cursor-pointer">
+                            Reservar →
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="demo-info mt-8">
+            <h3 class="font-bold text-lg mb-2">📝 Características</h3>
+            <ul class="text-sm text-gray-700 space-y-1">
+                <li>✅ Imagen superior destacada (240px)</li>
+                <li>✅ Lista de características con iconos</li>
+                <li>✅ Items interactivos con hover</li>
+                <li>✅ Formato vertical compacto</li>
+                <li>✅ Ideal para sidebars laterales</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

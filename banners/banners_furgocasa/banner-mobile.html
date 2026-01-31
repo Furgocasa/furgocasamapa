@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banner Mobile Furgocasa - 320px</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            padding: 2rem;
+            background: #f3f4f6;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .demo-info {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="max-w-4xl mx-auto">
+        <div class="demo-info">
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">📱 Banner Mobile Furgocasa</h1>
+            <p class="text-gray-600 mb-1"><strong>Dimensiones:</strong> 320px × ~380px</p>
+            <p class="text-gray-600 mb-1"><strong>Uso:</strong> Banner vertical para móviles</p>
+            <p class="text-gray-600"><strong>Imagen:</strong> Superior 200px, completamente visible</p>
+        </div>
+
+        <!-- BANNER MOBILE -->
+        <div class="w-full max-w-[320px] mx-auto">
+            <a
+                href="https://www.furgocasa.com/es?utm_source=mapafurgocasa&utm_medium=banner&utm_campaign=furgocasa_mobile_test"
+                target="_blank"
+                rel="noopener noreferrer sponsored nofollow"
+                class="block no-underline"
+            >
+                <div class="bg-gradient-to-br from-[#003d7a] to-[#002855] rounded-xl overflow-hidden shadow-2xl hover:shadow-[0_15px_40px_rgba(0,61,122,0.4)] transition-all">
+                    <!-- Imagen visible - 40% altura -->
+                    <div class="relative h-[200px] overflow-hidden">
+                        <img 
+                            src="../../public/images/furgocasa/camper-mobile-1.jpg"
+                            alt="Camper Furgocasa"
+                            class="w-full h-full object-cover"
+                        />
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#002855]/60 via-transparent to-transparent"></div>
+                        <div class="absolute top-3 left-3">
+                            <span class="text-xs bg-white/90 text-[#003d7a] px-2 py-1 rounded-full font-bold">Publicidad</span>
+                        </div>
+                    </div>
+
+                    <!-- Contenido -->
+                    <div class="p-5 text-center text-white">
+                        <div class="text-2xl font-black text-[#ff6b35] mb-1">
+                            🚐 Furgocasa
+                        </div>
+                        <p class="text-xs text-white/90 mb-3">
+                            Alquiler y Venta de Campers Premium
+                        </p>
+                        
+                        <div class="flex justify-center gap-3 mb-4 text-xs">
+                            <div class="bg-white/10 px-3 py-2 rounded-lg">
+                                <div class="text-[#ff6b35] font-bold">95€/día</div>
+                                <div class="text-white/70">Alquiler</div>
+                            </div>
+                            <div class="bg-white/10 px-3 py-2 rounded-lg">
+                                <div class="text-[#ff6b35] font-bold">49k€</div>
+                                <div class="text-white/70">Venta</div>
+                            </div>
+                            <div class="bg-white/10 px-3 py-2 rounded-lg">
+                                <div class="text-[#ff6b35] font-bold">4.9★</div>
+                                <div class="text-white/70">Rating</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white text-[#003d7a] px-6 py-3 rounded-lg font-bold text-sm hover:bg-gray-100 transition-colors">
+                            Ver Campers →
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="demo-info mt-8">
+            <h3 class="font-bold text-lg mb-2">📝 Características</h3>
+            <ul class="text-sm text-gray-700 space-y-1">
+                <li>✅ Imagen superior destacada (200px altura)</li>
+                <li>✅ Badge "Publicidad" sobre imagen</li>
+                <li>✅ Grid de características compacto</li>
+                <li>✅ Optimizado para pantallas móviles</li>
+                <li>✅ Gradiente mínimo para legibilidad</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
