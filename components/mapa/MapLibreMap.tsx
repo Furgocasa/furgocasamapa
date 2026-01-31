@@ -107,7 +107,7 @@ export function MapLibreMap({
     popupRef.current = new maplibregl.Popup({
       offset: 25,
       closeButton: true,
-      closeOnClick: false, // No cerrar al hacer click en el mapa
+      closeOnClick: true,  // ✅ Cerrar al hacer click fuera (sobre el mapa)
       closeOnMove: false,  // No cerrar al mover el mapa
       maxWidth: '360px',
       className: 'maplibre-popup-custom',
