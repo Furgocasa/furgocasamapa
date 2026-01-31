@@ -10,6 +10,7 @@ import { ContactoInfo } from '@/components/area/ContactoInfo'
 import { GaleriaFotos } from '@/components/area/GaleriaFotos'
 import { ValoracionesCompleto } from '@/components/area/ValoracionesCompleto'
 import { AreasRelacionadas } from '@/components/area/AreasRelacionadas'
+import { BackToTop } from '@/components/area/BackToTop'
 import { BannerRotativo } from '@/components/banners/BannerRotativo'
 import { BannerProvider } from '@/components/banners/BannerContext'
 import type { Metadata } from 'next'
@@ -172,6 +173,9 @@ export default async function AreaPage({ params }: PageProps) {
 
       {/* Footer - Solo en páginas de detalle para SEO */}
       <Footer />
+
+      {/* Botón volver arriba */}
+      <BackToTop />
     </BannerProvider>
   )
 }
