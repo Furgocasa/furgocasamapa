@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { BackToTop } from '@/components/area/BackToTop'
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
 
 interface FAQ {
@@ -474,6 +475,7 @@ export default function FAQsPage() {
       </main>
 
       <Footer />
+      <BackToTop />
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { BackToTop } from '@/components/area/BackToTop'
 
 export default function PrivacidadPage() {
   return (
@@ -206,6 +207,7 @@ export default function PrivacidadPage() {
       </section>
 
       <Footer />
+      <BackToTop />
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { BackToTop } from '@/components/area/BackToTop'
 
 export default function CondicionesPage() {
   return (
@@ -168,6 +169,7 @@ export default function CondicionesPage() {
       </section>
 
       <Footer />
+      <BackToTop />
     </div>
   )
 }
