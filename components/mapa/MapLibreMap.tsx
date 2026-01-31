@@ -155,16 +155,10 @@ export function MapLibreMap({
       // Obtener clusters y puntos para el viewport actual
       const clusters = clusterIndexRef.current.getClusters(bbox, zoom)
 
-      // Limpiar marcadores que ya no están visibles
-      const newMarkerIds = new Set(clusters.map(c => 
-        c.properties.cluster ? `cluster-${c.properties.cluster_id}` : `area-${c.properties.area.id}`
-      ))
-
+      // ✅ CRÍTICO: Limpiar TODOS los marcadores primero antes de crear nuevos
       Object.keys(markersRef.current).forEach(id => {
-        if (!newMarkerIds.has(id)) {
-          markersRef.current[id].remove()
-          delete markersRef.current[id]
-        }
+        markersRef.current[id].remove()
+        delete markersRef.current[id]
       })
 
       // Añadir/actualizar marcadores
@@ -219,8 +213,6 @@ export function MapLibreMap({
           // Marcador individual
           const area = cluster.properties.area
           const areaId = `area-${area.id}`
-
-          if (markersRef.current[areaId]) return
 
           const el = document.createElement('div')
           el.className = 'marker'
