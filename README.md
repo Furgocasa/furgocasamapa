@@ -42,8 +42,17 @@
 - ⚙️ **Panel de administración** completo (`/admin`)
 - 📊 **Analytics por pestañas**: usuarios, áreas, rutas, engagement
 - 🤖 **Editor de prompts IA** configurable
-- 🖼️ **Sistema de banners** para publicidad
+- 🖼️ **Sistema de banners** con alternancia inteligente CasiCinco/Furgocasa
 - 🗺️ **Selector de proveedor de mapa** (Google/MapLibre/Leaflet)
+
+### Sistema de Banners Publicitarios
+- 🎯 **Alternancia inteligente**: Garantiza balance 50/50 entre CasiCinco y Furgocasa
+- 🚫 **Sin repeticiones**: No se repite el mismo banner en una página
+- 📱 **8 formatos diferentes**: Hero, Mobile, Wide, Leaderboard, Vertical, Premium, + 2 con imágenes
+- 🖼️ **Imágenes protagonistas**: Fotos reales ocupan 30-45% del banner (100% visibles)
+- 🎨 **Diseño publicitario**: Estilo banner profesional, no página web
+- 🔄 **Responsive**: Adaptados automáticamente según dispositivo
+- 📁 **Archivos HTML**: Ejemplos editables en `banners/banners_furgocasa/`
 
 ---
 
@@ -76,8 +85,12 @@
 │   └── api/               # API Routes
 ├── components/
 │   ├── mapa/              # MapaInteractivoGoogle, MapLibreMap, LeafletMap
+│   ├── banners/           # Sistema de banners CasiCinco + Furgocasa
 │   ├── perfil/            # Tabs del dashboard
 │   └── ui/                # Componentes reutilizables
+├── banners/
+│   ├── banners_furgocasa/ # Archivos HTML editables de banners
+│   └── banners_casicinco/ # Archivos HTML editables de banners
 ├── hooks/                 # useMapConfig, useToast, etc.
 ├── lib/                   # Supabase clients, utilidades
 ├── supabase/migrations/   # Migraciones SQL
@@ -144,6 +157,50 @@ El admin puede cambiar el proveedor desde `/admin/configuracion`.
 
 ---
 
+## 🖼️ Sistema de Banners
+
+### Alternancia Inteligente
+
+El sistema garantiza que **nunca aparecen 3 banners del mismo anunciante** en una misma página:
+
+```typescript
+// Ejemplo en página de área con 3 banners:
+Banner 1 (after-info):     CasiCinco   → Count: CC=1, FC=0
+Banner 2 (after-services): Furgocasa   → Count: CC=1, FC=1  
+Banner 3 (after-gallery):  CasiCinco   → Count: CC=2, FC=1
+```
+
+### Características
+
+| Aspecto | Descripción |
+|---------|-------------|
+| **Alternancia** | Balance automático 50/50 entre CasiCinco y Furgocasa |
+| **Sin repetición** | Cada banner se muestra solo una vez por página |
+| **Imágenes** | Fotos reales visibles (30-45% del espacio) |
+| **Formatos** | 8 tamaños: 320px, 728px, 850px, 970px, 1100px, 1200px |
+| **Responsive** | Adaptación automática móvil/tablet/desktop |
+| **Colores** | Azul navy (#003d7a) para Furgocasa, neutros para CasiCinco |
+
+### Banners Furgocasa
+
+1. **BannerFurgocasaHero** - 728px × 200px (horizontal)
+2. **BannerFurgocasaMobile** - 320px × 380px (vertical móvil)
+3. **BannerFurgocasaWide** - 1200px × 280px (ancho premium)
+4. **BannerFurgocasaLeaderboard** - 970px × 140px (compacto)
+5. **BannerFurgocasaVertical** - 300px × 600px (sidebar)
+6. **BannerFurgocasaPremium** - 850px × 380px (grid 4x)
+7. **BannerFurgocasaImageAlquiler** - 1100px × 320px (2 fotos alquiler)
+8. **BannerFurgocasaImageVenta** - 1100px × 320px (2 fotos venta)
+
+Todos los banners tienen:
+- ✅ Imágenes reales de campers Furgocasa
+- ✅ Sin opacidad (fotos 100% visibles)
+- ✅ Gradientes mínimos solo para legibilidad
+- ✅ Efectos hover interactivos
+- ✅ Ejemplos HTML editables en `banners/banners_furgocasa/`
+
+---
+
 ## 👨‍💻 Autor
 
 **Narciso Pardo Buendía**
@@ -152,6 +209,7 @@ El admin puede cambiar el proveedor desde `/admin/configuracion`.
 
 | Versión | Fecha | Cambios principales |
 |---------|-------|---------------------|
+| v4.1 | Enero 2026 | Sistema de banners con alternancia inteligente CasiCinco/Furgocasa |
 | v4.0 | Enero 2026 | Migración Vercel, MapLibre/Leaflet, clustering Supercluster |
 | v3.7 | Nov 2025 | Limpieza BD automática, PDF valoración |
 | v3.0 | Nov 2025 | Analytics avanzado por pestañas |
