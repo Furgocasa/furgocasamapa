@@ -9,47 +9,47 @@ export function BannerFurgocasaVertical({ position }: BannerProps) {
 
   return (
     <div className="w-full max-w-[300px] mx-auto">
-      <div className="relative bg-gradient-to-b from-[#1a5490] to-[#0d3a6b] rounded-[15px] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.2)] transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:-translate-y-1">
-        <a
-          href={`https://www.furgocasa.com/es?utm_source=mapafurgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
-          target="_blank"
-          rel="noopener noreferrer sponsored nofollow"
-          className="block no-underline text-white"
-        >
-          {/* Imagen de camper */}
-          <div className="relative h-[200px] overflow-hidden">
+      <a
+        href={`https://www.furgocasa.com/es?utm_source=mapafurgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
+        target="_blank"
+        rel="noopener noreferrer sponsored nofollow"
+        className="block no-underline"
+      >
+        <div className="bg-gradient-to-b from-[#003d7a] to-[#002855] rounded-xl overflow-hidden shadow-2xl transition-all hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(0,61,122,0.4)]">
+          {/* Imagen visible - 45% altura */}
+          <div className="relative h-[240px] overflow-hidden">
             <img 
               src="/images/furgocasa/camper-vertical-1.jpg"
-              alt="Camper Furgocasa"
+              alt="Camper Furgocasa Gandía"
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0d3a6b] via-[#0d3a6b]/50 to-transparent"></div>
-            <div className="absolute bottom-4 left-0 right-0 text-center">
-              <div className="text-4xl animate-pulse drop-shadow-lg">🚐</div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#002855]/70 via-transparent to-transparent"></div>
+            <div className="absolute top-3 left-3">
+              <span className="text-xs bg-white/90 text-[#003d7a] px-2 py-1 rounded-full font-bold">Publicidad</span>
             </div>
           </div>
 
-          <div className="relative p-6 text-center">
-            <div className="text-2xl font-black text-[#ff6b35] mb-2 tracking-tight">
-              Furgocasa
+          {/* Contenido */}
+          <div className="p-5 text-white text-center">
+            <div className="text-2xl font-black text-[#ff6b35] mb-1 flex items-center justify-center gap-2">
+              🚐 <span>Furgocasa</span>
             </div>
-            <div className="text-sm text-white/90 mb-4">
+            <p className="text-xs text-white/90 mb-4">
               Alquiler y Venta de Campers
-            </div>
+            </p>
           </div>
-        </a>
         
-        <div className="px-6 pb-4 space-y-4">
+        <div className="px-5 pb-4 space-y-3">
           <a
             href={`https://www.furgocasa.com/es?utm_source=mapafurgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
             target="_blank"
             rel="noopener noreferrer sponsored nofollow"
-            className="flex items-start gap-3 mb-5 no-underline text-white"
+            className="flex items-center gap-3 bg-white/10 px-3 py-2 rounded-lg no-underline text-white hover:bg-white/15 transition-colors"
           >
             <div className="text-2xl">💰</div>
-            <div className="flex-1 text-left">
-              <div className="text-xs text-white/70 mb-0.5">Desde</div>
+            <div className="flex-1">
               <div className="text-base font-bold text-[#ff6b35]">95€/día</div>
+              <div className="text-xs text-white/70">Desde</div>
             </div>
           </a>
 
@@ -57,12 +57,12 @@ export function BannerFurgocasaVertical({ position }: BannerProps) {
             href={`https://www.furgocasa.com/es?utm_source=mapafurgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
             target="_blank"
             rel="noopener noreferrer sponsored nofollow"
-            className="flex items-start gap-3 mb-5 no-underline text-white"
+            className="flex items-center gap-3 bg-white/10 px-3 py-2 rounded-lg no-underline text-white hover:bg-white/15 transition-colors"
           >
             <div className="text-2xl">🚗</div>
-            <div className="flex-1 text-left">
-              <div className="text-xs text-white/70 mb-0.5">Kilómetros</div>
+            <div className="flex-1">
               <div className="text-base font-bold text-[#ff6b35]">Ilimitados</div>
+              <div className="text-xs text-white/70">Kilómetros</div>
             </div>
           </a>
 
@@ -70,12 +70,12 @@ export function BannerFurgocasaVertical({ position }: BannerProps) {
             href={`https://www.furgocasa.com/es?utm_source=mapafurgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
             target="_blank"
             rel="noopener noreferrer sponsored nofollow"
-            className="flex items-start gap-3 mb-5 no-underline text-white"
+            className="flex items-center gap-3 bg-white/10 px-3 py-2 rounded-lg no-underline text-white hover:bg-white/15 transition-colors"
           >
             <div className="text-2xl">⭐</div>
-            <div className="flex-1 text-left">
-              <div className="text-xs text-white/70 mb-0.5">Valoración</div>
+            <div className="flex-1">
               <div className="text-base font-bold text-[#ff6b35]">4.9 / 5.0</div>
+              <div className="text-xs text-white/70">Valoración</div>
             </div>
           </a>
 
@@ -83,27 +83,27 @@ export function BannerFurgocasaVertical({ position }: BannerProps) {
             href={`https://www.furgocasa.com/es/ventas?utm_source=mapafurgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
             target="_blank"
             rel="noopener noreferrer sponsored nofollow"
-            className="flex items-start gap-3 mb-0 no-underline text-white"
+            className="flex items-center gap-3 bg-white/10 px-3 py-2 rounded-lg no-underline text-white hover:bg-white/15 transition-colors"
           >
             <div className="text-2xl">🏷️</div>
-            <div className="flex-1 text-left">
-              <div className="text-xs text-white/70 mb-0.5">Venta desde</div>
+            <div className="flex-1">
               <div className="text-base font-bold text-[#ff6b35]">49.000€</div>
+              <div className="text-xs text-white/70">Venta desde</div>
             </div>
           </a>
         </div>
 
-        <div className="px-6 pb-6">
+        <div className="px-5 pb-5">
           <a
             href={`https://www.furgocasa.com/es?utm_source=mapafurgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
             target="_blank"
             rel="noopener noreferrer sponsored nofollow"
-            className="block bg-[#ff6b35] text-white p-4 rounded-[10px] font-extrabold text-base text-center transition-all duration-300 no-underline hover:bg-[#ff8555] hover:shadow-[0_4px_16px_rgba(255,107,53,0.4)]"
+            className="block bg-white text-[#003d7a] p-3 rounded-lg font-bold text-base text-center no-underline hover:bg-gray-100 transition-colors"
           >
             Reservar →
           </a>
         </div>
-      </div>
+      </a>
     </div>
   )
 }
