@@ -118,6 +118,21 @@ function simpleHash(str: string): number {
   return Math.abs(hash)
 }
 
+// 🎯 Detectar el anunciante del banner (CasiCinco o Furgocasa)
+function getAdvertiser(bannerId: string): 'casicinco' | 'furgocasa' {
+  return bannerId.includes('furgocasa') ? 'furgocasa' : 'casicinco'
+}
+
+// 🎯 Contar cuántos banners de cada anunciante ya están usados
+function countAdvertiserUsage(usedBannerIds: string[]): { casicinco: number; furgocasa: number } {
+  const count = { casicinco: 0, furgocasa: 0 }
+  usedBannerIds.forEach(id => {
+    const advertiser = getAdvertiser(id)
+    count[advertiser]++
+  })
+  return count
+}
+
 function selectBanner(
   banners: BannerConfig[],
   areaId: number,
@@ -131,11 +146,44 @@ function selectBanner(
     return null
   }
 
+  // 🎯 PASO 1: Determinar qué anunciante debe mostrarse ahora para mantener alternancia
+  const advertiserCount = countAdvertiserUsage(usedBannerIds)
+  const totalUsed = advertiserCount.casicinco + advertiserCount.furgocasa
+  
+  // Determinar el anunciante preferido para esta posición
+  let preferredAdvertiser: 'casicinco' | 'furgocasa' | null = null
+  
+  if (totalUsed > 0) {
+    // Si hay desbalance de más de 1 banner, forzar el anunciante menos usado
+    const difference = Math.abs(advertiserCount.casicinco - advertiserCount.furgocasa)
+    
+    if (difference > 0) {
+      // Preferir el anunciante que tiene menos banners mostrados
+      preferredAdvertiser = advertiserCount.casicinco < advertiserCount.furgocasa ? 'casicinco' : 'furgocasa'
+    } else {
+      // Si están balanceados, alternar basado en el último banner usado
+      const lastBannerId = usedBannerIds[usedBannerIds.length - 1]
+      const lastAdvertiser = getAdvertiser(lastBannerId)
+      preferredAdvertiser = lastAdvertiser === 'casicinco' ? 'furgocasa' : 'casicinco'
+    }
+  }
+
   // 🎯 FILTRO 1: Excluir banners ya usados en esta página
   const notUsedBanners = banners.filter((b) => !usedBannerIds.includes(b.id))
   
   // 🎯 FILTRO 2: Excluir banners específicos (parámetro exclude)
-  const availableBanners = notUsedBanners.filter((b) => !exclude.includes(b.id))
+  let availableBanners = notUsedBanners.filter((b) => !exclude.includes(b.id))
+  
+  // 🎯 FILTRO 3: Preferir banners del anunciante correcto para mantener alternancia
+  if (preferredAdvertiser && availableBanners.length > 0) {
+    const preferredBanners = availableBanners.filter((b) => getAdvertiser(b.id) === preferredAdvertiser)
+    
+    // Si hay banners del anunciante preferido disponibles, usarlos
+    if (preferredBanners.length > 0) {
+      availableBanners = preferredBanners
+    }
+    // Si no hay del preferido, continuar con los disponibles (fallback)
+  }
   
   // Si todos están excluidos/usados, usar los no usados (ignorar exclude)
   // Si todos fueron usados, resetear y usar todos
@@ -201,8 +249,14 @@ function selectBanner(
 
 /**
  * Componente que rota banners inteligentemente según el dispositivo
- * ✅ MEZCLA: Banners de Casi Cinco y Furgocasa aleatoriamente
- * ✅ GARANTIZA: No repetir banners en la misma página
+ * ✅ ALTERNANCIA: Alterna entre banners de Casi Cinco y Furgocasa
+ * ✅ NO REPETIR: Garantiza que no se repita el mismo banner en la misma página
+ * ✅ BALANCEO: Mantiene un equilibrio 50/50 entre ambos anunciantes
+ * 
+ * Ejemplo: Si hay 3 posiciones de banners en una página:
+ * - Posición 1: CasiCinco
+ * - Posición 2: Furgocasa
+ * - Posición 3: CasiCinco (o Furgocasa si ya hay 2 de CasiCinco)
  */
 export function BannerRotativo({
   position,
@@ -239,7 +293,9 @@ export function BannerRotativo({
         return
       }
       
-      console.log(`[Priority ${priority} - ${position}] Selected: ${selected.id}, Used:`, usedBannerIds)
+      const advertiserCount = countAdvertiserUsage(usedBannerIds)
+      const selectedAdvertiser = getAdvertiser(selected.id)
+      console.log(`[Priority ${priority} - ${position}] Selected: ${selected.id} (${selectedAdvertiser}), Count: CC=${advertiserCount.casicinco} FC=${advertiserCount.furgocasa}`)
       
       // ✅ Marcar este banner como usado
       markBannerAsUsed(selected.id)
