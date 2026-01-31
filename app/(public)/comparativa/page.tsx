@@ -1,6 +1,7 @@
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { BackToTop } from '@/components/area/BackToTop'
+import { FAQAccordion } from '@/components/comparativa/FAQAccordion'
 import Link from 'next/link'
 import { Metadata } from 'next'
 import { SparklesIcon, TruckIcon, MapIcon, ShieldCheckIcon, ChartBarIcon, WrenchScrewdriverIcon } from '@heroicons/react/24/outline'
@@ -650,83 +651,49 @@ export default function ComparativaPage() {
         {/* FAQs */}
         <section className="py-16 bg-gray-50">
           <div className="max-w-4xl mx-auto px-4">
-            <h2 className="text-4xl font-bold text-center mb-12 text-gray-900">
+            <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
               ❓ Preguntas Frecuentes
             </h2>
+            <p className="text-center text-gray-600 mb-12 text-lg">
+              Resolvemos todas tus dudas sobre Mapa Furgocasa
+            </p>
 
-            <div className="space-y-6">
-              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
-                  ¿Es Mapa Furgocasa mejor que Park4Night?
-                </h3>
-                <p className="text-gray-700 leading-relaxed text-lg">
-                  Depende de lo que busques. Si solo necesitas un <strong>mapa de áreas para autocaravanas</strong>, ambas apps funcionan bien. Pero si quieres <strong>gestionar tu vehículo completo</strong>, saber <strong>cuánto vale tu autocaravana</strong>, tener <strong>alertas de accidentes</strong>, <strong>exportar rutas a tu GPS</strong>, y <strong>controlar todos tus gastos</strong>, entonces Mapa Furgocasa es muy superior. Y además, es <strong>100% gratis</strong> (Park4Night cobra 4.99€/mes por premium).
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
-                  ¿Qué NO tiene Park4Night que sí tiene Mapa Furgocasa?
-                </h3>
-                <p className="text-gray-700 leading-relaxed text-lg">
-                  Park4Night NO tiene: <strong>gestión de vehículos</strong>, <strong>registro de mantenimientos y averías</strong>, <strong>valoración automática con IA</strong>, <strong>alertas de accidentes por QR</strong>, <strong>control de gastos y coste por kilómetro</strong>, <strong>exportación de rutas a GPS</strong>, ni <strong>drag-and-drop para reordenar paradas</strong>. Mapa Furgocasa tiene TODAS estas funcionalidades y más.
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
-                  ¿Por qué cambiar de Park4Night a Mapa Furgocasa?
-                </h3>
-                <p className="text-gray-700 leading-relaxed text-lg">
-                  Porque tendrás <strong>TODO en una sola app</strong>: el mapa de áreas que ya conoces (con 4,900+ ubicaciones verificadas) PLUS gestión completa de tu autocaravana, valoración profesional con IA, sistema de seguridad con QR, análisis económico completo, y exportación de rutas. Todo <strong>gratis</strong>. Es como tener Park4Night + 6 apps más en una sola plataforma.
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
-                  ¿Sirve para particulares y para empresas de alquiler?
-                </h3>
-                <p className="text-gray-700 leading-relaxed text-lg">
-                  <strong>Sí, para ambos.</strong> Los usuarios particulares pueden ver gastos reales del viaje, coste por kilómetro, estado económico del vehículo y valor estimado actualizado gracias a un modelo de IA. Para quienes gestionan una <strong>flota de alquiler</strong>, estas funciones son directamente esenciales para el control de su negocio.
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
-                  ¿Cómo funciona la valoración con IA de mi autocaravana?
-                </h3>
-                <p className="text-gray-700 leading-relaxed text-lg">
-                  Utilizamos <strong>GPT-4 combinado con SerpAPI</strong> para buscar en tiempo real vehículos similares al tuyo en el mercado actual. El sistema analiza marca, modelo, año, kilometraje, estado y características para darte una <strong>valoración precisa y actualizada</strong> de cuánto vale tu autocaravana en este momento. Es como tener un tasador profesional disponible 24/7.
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
-                  ¿Puedo exportar mis rutas al GPS de mi vehículo?
-                </h3>
-                <p className="text-gray-700 leading-relaxed text-lg">
-                  <strong>¡Sí!</strong> Mapa Furgocasa te permite <strong>exportar tus rutas en formato GPX</strong>, compatible con dispositivos Garmin, TomTom y la mayoría de navegadores GPS. Planifica tu ruta con todas las paradas en nuestra app, exporta el archivo GPX y cárgalo directamente en tu navegador. Park4Night NO tiene esta funcionalidad.
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
-                  ¿Qué ventajas tiene Mapa Furgocasa siendo de España?
-                </h3>
-                <p className="text-gray-700 leading-relaxed text-lg">
-                  Al ser una empresa española (<strong>Furgocasa</strong> con base en Murcia), conocemos perfectamente las necesidades del mercado español y europeo. Nuestro <strong>soporte es en español</strong>, entendemos la idiosincrasia del caravaning en España, y constantemente añadimos áreas verificadas en la península y baleares. Además, al estar en el sector del alquiler de campers desde hace años, sabemos exactamente qué funcionalidades son realmente útiles.
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
-                  ¿Tiene Mapa Furgocasa app móvil?
-                </h3>
-                <p className="text-gray-700 leading-relaxed text-lg">
-                  Actualmente Mapa Furgocasa funciona como <strong>Progressive Web App (PWA)</strong>, lo que significa que puedes acceder desde cualquier navegador móvil y <strong>añadirla a tu pantalla de inicio</strong> para usarla como una app nativa. Funciona perfectamente en iPhone y Android, con todas las funcionalidades disponibles sin necesidad de descargar nada desde las tiendas de apps.
-                </p>
-              </div>
-            </div>
+            <FAQAccordion 
+              items={[
+                {
+                  question: '¿Es Mapa Furgocasa mejor que Park4Night?',
+                  answer: 'Depende de lo que busques. Si solo necesitas un mapa de áreas para autocaravanas, ambas apps funcionan bien. Pero si quieres gestionar tu vehículo completo, saber cuánto vale tu autocaravana, tener alertas de accidentes, exportar rutas a tu GPS, y controlar todos tus gastos, entonces Mapa Furgocasa es muy superior. Y además, es 100% gratis (Park4Night cobra 4.99€/mes por premium).'
+                },
+                {
+                  question: '¿Qué NO tiene Park4Night que sí tiene Mapa Furgocasa?',
+                  answer: 'Park4Night NO tiene: gestión de vehículos, registro de mantenimientos y averías, valoración automática con IA, alertas de accidentes por QR, control de gastos y coste por kilómetro, exportación de rutas a GPS, ni drag-and-drop para reordenar paradas. Mapa Furgocasa tiene TODAS estas funcionalidades y más.'
+                },
+                {
+                  question: '¿Por qué cambiar de Park4Night a Mapa Furgocasa?',
+                  answer: 'Porque tendrás TODO en una sola app: el mapa de áreas que ya conoces (con 4,900+ ubicaciones verificadas) PLUS gestión completa de tu autocaravana, valoración profesional con IA, sistema de seguridad con QR, análisis económico completo, y exportación de rutas. Todo gratis. Es como tener Park4Night + 6 apps más en una sola plataforma.'
+                },
+                {
+                  question: '¿Sirve para particulares y para empresas de alquiler?',
+                  answer: 'Sí, para ambos. Los usuarios particulares pueden ver gastos reales del viaje, coste por kilómetro, estado económico del vehículo y valor estimado actualizado gracias a un modelo de IA. Para quienes gestionan una flota de alquiler, estas funciones son directamente esenciales para el control de su negocio.'
+                },
+                {
+                  question: '¿Cómo funciona la valoración con IA de mi autocaravana?',
+                  answer: 'Utilizamos GPT-4 combinado con SerpAPI para buscar en tiempo real vehículos similares al tuyo en el mercado actual. El sistema analiza marca, modelo, año, kilometraje, estado y características para darte una valoración precisa y actualizada de cuánto vale tu autocaravana en este momento. Es como tener un tasador profesional disponible 24/7.'
+                },
+                {
+                  question: '¿Puedo exportar mis rutas al GPS de mi vehículo?',
+                  answer: '¡Sí! Mapa Furgocasa te permite exportar tus rutas en formato GPX, compatible con dispositivos Garmin, TomTom y la mayoría de navegadores GPS. Planifica tu ruta con todas las paradas en nuestra app, exporta el archivo GPX y cárgalo directamente en tu navegador. Park4Night NO tiene esta funcionalidad.'
+                },
+                {
+                  question: '¿Qué ventajas tiene Mapa Furgocasa siendo de España?',
+                  answer: 'Al ser una empresa española (Furgocasa con base en Murcia), conocemos perfectamente las necesidades del mercado español y europeo. Nuestro soporte es en español, entendemos la idiosincrasia del caravaning en España, y constantemente añadimos áreas verificadas en la península y baleares. Además, al estar en el sector del alquiler de campers desde hace años, sabemos exactamente qué funcionalidades son realmente útiles.'
+                },
+                {
+                  question: '¿Tiene Mapa Furgocasa app móvil?',
+                  answer: 'Actualmente Mapa Furgocasa funciona como Progressive Web App (PWA), lo que significa que puedes acceder desde cualquier navegador móvil y añadirla a tu pantalla de inicio para usarla como una app nativa. Funciona perfectamente en iPhone y Android, con todas las funcionalidades disponibles sin necesidad de descargar nada desde las tiendas de apps.'
+                }
+              ]}
+            />
           </div>
         </section>
 
