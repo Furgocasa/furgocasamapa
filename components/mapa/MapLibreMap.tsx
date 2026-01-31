@@ -249,38 +249,18 @@ export function MapLibreMap({
             .setPopup(popup)
             .addTo(map)
 
-          // ✅ CRÍTICO: Ejecutar acciones en orden seguro
-          el.addEventListener('click', (e) => {
-            e.stopPropagation()
+          // ✅ IGUAL QUE GOOGLE MAPS: usar marker del closure
+          el.addEventListener('click', () => {
+            // 1. Notificar click
+            onAreaClick(area)
             
-            // 1️⃣ SIEMPRE notificar click (esto debe funcionar siempre)
-            try {
-              onAreaClick(area)
-            } catch (err) {
-              console.error('Error en onAreaClick:', err)
+            // 2. Abrir popup (usando marker del closure, como Google Maps)
+            if (popup && !popup.isOpen()) {
+              popup.addTo(map)
             }
             
-            // 2️⃣ SIEMPRE centrar en el área (independiente del popup)
-            try {
-              map.panTo([lng, lat])
-            } catch (err) {
-              console.error('Error en panTo:', err)
-            }
-            
-            // 3️⃣ INTENTAR abrir popup (puede fallar, pero no bloquea lo anterior)
-            setTimeout(() => {
-              try {
-                const currentMarker = markersRef.current[areaId]
-                if (currentMarker) {
-                  const currentPopup = currentMarker.getPopup()
-                  if (currentPopup && !currentPopup.isOpen()) {
-                    currentMarker.togglePopup()
-                  }
-                }
-              } catch (err) {
-                console.warn('⚠️ No se pudo abrir popup, pero área centrada correctamente')
-              }
-            }, 100) // Pequeño delay para asegurar que el mapa está listo
+            // 3. Centrar mapa
+            map.panTo([lng, lat])
           })
 
           markersRef.current[areaId] = marker
