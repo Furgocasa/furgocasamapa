@@ -16,6 +16,7 @@ interface MapLibreMapProps {
   onCountryChange?: (country: string, previousCountry: string | null) => void
   currentCountry?: string
   estilo?: 'default' | 'waze' | 'satellite' | 'dark'
+  paisFiltro?: string // Filtro de país/región activo
 }
 
 export function MapLibreMap({ 
@@ -25,7 +26,8 @@ export function MapLibreMap({
   mapRef: externalMapRef,
   onCountryChange,
   currentCountry,
-  estilo = 'default'
+  estilo = 'default',
+  paisFiltro = ''
 }: MapLibreMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<maplibregl.Map | null>(null)
@@ -515,11 +517,38 @@ export function MapLibreMap({
     }
   }
 
-  // Función para restablecer zoom
+  // Función para restablecer zoom según el filtro activo
   const resetZoom = () => {
-    if (map) {
-      map.flyTo({ center: [-3.7038, 40.4168], zoom: 6, duration: 1500 })
+    if (!map) return
+
+    // Coordenadas según el filtro
+    const vistas: Record<string, { center: [number, number], zoom: number }> = {
+      // Sin filtro: ver todo (Europa + Latinoamérica)
+      '': { center: [-20, 20], zoom: 2 },
+      // Regiones
+      'REGION_EUROPA': { center: [10, 48], zoom: 4 },
+      'REGION_SUDAMERICA': { center: [-60, -15], zoom: 3 },
+      'REGION_CENTROAMERICA': { center: [-85, 15], zoom: 5 },
+      // Países principales
+      'España': { center: [-3.7, 40.4], zoom: 6 },
+      'Portugal': { center: [-8.2, 39.4], zoom: 6 },
+      'Francia': { center: [2.2, 46.2], zoom: 5 },
+      'Italia': { center: [12.6, 41.9], zoom: 5 },
+      'Alemania': { center: [10.5, 51.2], zoom: 5 },
+      'Argentina': { center: [-64, -34], zoom: 4 },
+      'Chile': { center: [-71, -33], zoom: 4 },
+      'Colombia': { center: [-74, 4.6], zoom: 5 },
+      'Perú': { center: [-75, -9], zoom: 5 },
+      'Uruguay': { center: [-56, -33], zoom: 6 },
+      'Ecuador': { center: [-78, -2], zoom: 6 },
+      'Paraguay': { center: [-58, -23], zoom: 6 },
+      'Costa Rica': { center: [-84, 10], zoom: 7 },
+      'Panamá': { center: [-80, 9], zoom: 7 },
+      'Puerto Rico': { center: [-66, 18], zoom: 8 }
     }
+
+    const vista = vistas[paisFiltro] || vistas['']
+    map.flyTo({ center: vista.center, zoom: vista.zoom, duration: 1500 })
   }
 
   if (error) {

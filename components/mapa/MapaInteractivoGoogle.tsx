@@ -21,9 +21,10 @@ interface MapaInteractivoGoogleProps {
   onCountryChange?: (country: string, previousCountry: string | null) => void
   currentCountry?: string
   estilo?: 'default' | 'waze' | 'satellite' | 'dark'
+  paisFiltro?: string
 }
 
-export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, mapRef: externalMapRef, onCountryChange, currentCountry, estilo }: MapaInteractivoGoogleProps) {
+export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, mapRef: externalMapRef, onCountryChange, currentCountry, estilo, paisFiltro = '' }: MapaInteractivoGoogleProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<GoogleMap | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -729,12 +730,39 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
     }
   }
 
-  // Funci├│n para restablecer zoom
+  // Función para restablecer zoom según el filtro activo
   const resetZoom = () => {
-    if (map) {
-      map.setCenter({ lat: 40.4168, lng: -3.7038 }) // Madrid
-      map.setZoom(6)
+    if (!map) return
+
+    // Coordenadas según el filtro
+    const vistas: Record<string, { center: { lat: number, lng: number }, zoom: number }> = {
+      // Sin filtro: ver todo (Europa + Latinoamérica)
+      '': { center: { lat: 20, lng: -20 }, zoom: 2 },
+      // Regiones
+      'REGION_EUROPA': { center: { lat: 48, lng: 10 }, zoom: 4 },
+      'REGION_SUDAMERICA': { center: { lat: -15, lng: -60 }, zoom: 3 },
+      'REGION_CENTROAMERICA': { center: { lat: 15, lng: -85 }, zoom: 5 },
+      // Países principales
+      'España': { center: { lat: 40.4, lng: -3.7 }, zoom: 6 },
+      'Portugal': { center: { lat: 39.4, lng: -8.2 }, zoom: 6 },
+      'Francia': { center: { lat: 46.2, lng: 2.2 }, zoom: 5 },
+      'Italia': { center: { lat: 41.9, lng: 12.6 }, zoom: 5 },
+      'Alemania': { center: { lat: 51.2, lng: 10.5 }, zoom: 5 },
+      'Argentina': { center: { lat: -34, lng: -64 }, zoom: 4 },
+      'Chile': { center: { lat: -33, lng: -71 }, zoom: 4 },
+      'Colombia': { center: { lat: 4.6, lng: -74 }, zoom: 5 },
+      'Perú': { center: { lat: -9, lng: -75 }, zoom: 5 },
+      'Uruguay': { center: { lat: -33, lng: -56 }, zoom: 6 },
+      'Ecuador': { center: { lat: -2, lng: -78 }, zoom: 6 },
+      'Paraguay': { center: { lat: -23, lng: -58 }, zoom: 6 },
+      'Costa Rica': { center: { lat: 10, lng: -84 }, zoom: 7 },
+      'Panamá': { center: { lat: 9, lng: -80 }, zoom: 7 },
+      'Puerto Rico': { center: { lat: 18, lng: -66 }, zoom: 8 }
     }
+
+    const vista = vistas[paisFiltro] || vistas['']
+    map.setCenter(vista.center)
+    map.setZoom(vista.zoom)
   }
 
   // Limpiar GPS al desmontar

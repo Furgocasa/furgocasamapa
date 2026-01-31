@@ -13,6 +13,7 @@ interface MapaInteractivoProps {
   mapRef?: React.MutableRefObject<any>
   onCountryChange?: (country: string, previousCountry: string | null) => void
   currentCountry?: string
+  paisFiltro?: string
 }
 
 /**

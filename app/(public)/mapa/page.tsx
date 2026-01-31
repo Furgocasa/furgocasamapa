@@ -639,6 +639,7 @@ export default function MapaPage() {
             mapRef={mapRef}
             onCountryChange={handleCountryChange}
             currentCountry={paisObjetivo || undefined}
+            paisFiltro={filtros.pais}
           />
 
 
