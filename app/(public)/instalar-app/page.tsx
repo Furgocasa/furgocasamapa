@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { BackToTop } from '@/components/area/BackToTop'
 import Link from 'next/link'
 import {
   DevicePhoneMobileIcon,
@@ -542,6 +543,7 @@ export default function InstalarAppPage() {
       </div>
 
       <Footer />
+      <BackToTop />
     </div>
   )
 }
