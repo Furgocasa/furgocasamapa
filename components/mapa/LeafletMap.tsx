@@ -58,6 +58,14 @@ export function LeafletMap({
   const [gpsActive, setGpsActive] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
 
+  // ✅ CRÍTICO 4: GPS persiste en localStorage
+  useEffect(() => {
+    const gpsStored = localStorage.getItem('gps_active')
+    if (gpsStored === 'true') {
+      setGpsActive(true)
+    }
+  }, [])
+
   // Obtener URL de tiles según estilo
   const getTileUrl = () => {
     const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_API_KEY || 'get_your_own_key'
@@ -170,16 +178,17 @@ export function LeafletMap({
       const marker = L.marker([area.latitud, area.longitud], { icon: customIcon })
         .addTo(mapRef.current)
         .bindPopup(createPopupContent(area), {
-          maxWidth: 360,              // ✅ Ancho consistente
-          minWidth: 300,              // Ancho mínimo
-          closeButton: true,          // ✅ Botón X para cerrar
-          closeOnClick: true,         // ✅ Cerrar al hacer click fuera
-          autoClose: true,            // Cerrar automáticamente al abrir otro
-          autoPan: true,              // ✅ Centrar en el popup
-          autoPanPadding: [50, 50],   // Padding al centrar
+          maxWidth: 360,
+          minWidth: 300,
+          closeButton: true,
+          closeOnClick: true,
+          autoClose: true,
+          autoPan: true,
+          autoPanPadding: [50, 50],
           className: 'leaflet-popup-custom'
         })
         .on('click', () => {
+          // ✅ CRÍTICO 5 & 6: Solo hacer click, sin zoom ni delays
           onAreaClick(area)
         })
 
@@ -199,13 +208,12 @@ export function LeafletMap({
 
   }, [areas, mapLoaded, onAreaClick])
 
-  // Centrar en área seleccionada
+  // ✅ CRÍTICO 5 & 6: Centrar en área seleccionada (sin zoom, sin delay, con panTo)
   useEffect(() => {
     if (!mapRef.current || !areaSeleccionada) return
 
-    mapRef.current.flyTo([areaSeleccionada.latitud, areaSeleccionada.longitud], 14, {
-      duration: 1
-    })
+    // Usar panTo en lugar de flyTo (más rápido, sin animación larga)
+    mapRef.current.panTo([areaSeleccionada.latitud, areaSeleccionada.longitud])
   }, [areaSeleccionada])
 
   // Handler para búsqueda geográfica
@@ -372,16 +380,43 @@ export function LeafletMap({
                 <svg style="width: 16px; height: 16px;" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
                 </svg>
-                Cómo Llegar
+                Google Maps
               </a>
             ` : ''}
+          </div>
+
+          <!-- ✅ CRÍTICO 7: Botones secundarios Favorito + Registrar Visita -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+            <button
+              onclick="alert('Funcionalidad de favoritos próximamente')"
+              style="text-align: center; background: #F3F4F6; color: #374151; padding: 10px 12px; border-radius: 8px; text-decoration: none; font-weight: 500; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; border: 1px solid #E5E7EB; cursor: pointer;"
+              onmouseover="this.style.background='#E5E7EB'; this.style.borderColor='#D1D5DB'"
+              onmouseout="this.style.background='#F3F4F6'; this.style.borderColor='#E5E7EB'"
+            >
+              <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+              </svg>
+              Favorito
+            </button>
+            
+            <button
+              onclick="alert('Funcionalidad de registro próximamente')"
+              style="text-align: center; background: #F3F4F6; color: #374151; padding: 10px 12px; border-radius: 8px; text-decoration: none; font-weight: 500; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; border: 1px solid #E5E7EB; cursor: pointer;"
+              onmouseover="this.style.background='#E5E7EB'; this.style.borderColor='#D1D5DB'"
+              onmouseout="this.style.background='#F3F4F6'; this.style.borderColor='#E5E7EB'"
+            >
+              <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+              Registrar Visita
+            </button>
           </div>
         </div>
       </div>
     `
   }
 
-  // Función GPS - Igual que Google Maps
+  // Función GPS - Igual que Google Maps y MapLibre
   const toggleGPS = () => {
     if (!gpsActive && L) {
       // Activar GPS
@@ -396,28 +431,31 @@ export function LeafletMap({
             
             // Crear o actualizar marcador de usuario
             if (!userMarkerRef.current) {
-              // Crear icono GPS personalizado
+              // ✅ CRÍTICO 3: Color GPS naranja + 24px
               const gpsIcon = L.divIcon({
                 html: `<div style="
-                  width: 20px;
-                  height: 20px;
+                  width: 24px;
+                  height: 24px;
                   border-radius: 50%;
-                  background-color: #4285F4;
+                  background-color: #FF6B35;
                   border: 3px solid white;
-                  box-shadow: 0 0 0 4px rgba(66, 133, 244, 0.3);
+                  box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.3);
                 "></div>`,
                 className: 'gps-marker',
-                iconSize: [20, 20],
-                iconAnchor: [10, 10]
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
               })
 
               userMarkerRef.current = L.marker([pos.lat, pos.lng], { icon: gpsIcon })
                 .addTo(mapRef.current)
               
-              // Centrar en la primera ubicación
-              mapRef.current.flyTo([pos.lat, pos.lng], 14, {
-                duration: 1.5
-              })
+              // Solo centrar cuando se activa manualmente (no desde localStorage)
+              const gpsFromStorage = localStorage.getItem('gps_active') === 'true'
+              if (!gpsFromStorage) {
+                mapRef.current.flyTo([pos.lat, pos.lng], 14, {
+                  duration: 1.5
+                })
+              }
             } else {
               // Actualizar posición
               userMarkerRef.current.setLatLng([pos.lat, pos.lng])
@@ -435,6 +473,7 @@ export function LeafletMap({
         )
         watchIdRef.current = watchId
         setGpsActive(true)
+        localStorage.setItem('gps_active', 'true') // ✅ Guardar estado
       }
     } else {
       // Desactivar GPS
@@ -448,6 +487,7 @@ export function LeafletMap({
       }
       setGpsActive(false)
       setUserLocation(null)
+      localStorage.setItem('gps_active', 'false') // ✅ Guardar estado
     }
   }
 
@@ -554,7 +594,7 @@ export function LeafletMap({
         onClick={() => toggleGPS()}
         className={`absolute bottom-20 md:bottom-20 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full shadow-lg font-semibold transition-all z-[1000] flex items-center gap-2 mb-16 md:mb-0 ${
           gpsActive
-            ? 'bg-primary-600 text-white hover:bg-primary-700'
+            ? 'bg-orange-500 text-white hover:bg-orange-600'
             : 'bg-white text-gray-700 hover:bg-gray-50'
         }`}
         aria-label={gpsActive ? "Desactivar GPS" : "Activar GPS"}
@@ -578,7 +618,7 @@ export function LeafletMap({
             d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
           />
         </svg>
-        <span className="text-sm">{gpsActive ? 'GPS Activado' : 'Ver ubicación'}</span>
+        <span className="text-sm">{gpsActive ? 'GPS Activo' : 'Ver ubicación'}</span>
       </button>
 
       {/* Botón Restablecer Zoom - Igual que Google Maps */}
