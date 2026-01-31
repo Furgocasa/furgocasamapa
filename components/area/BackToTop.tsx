@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ChevronUp } from 'lucide-react'
+import { ChevronUpIcon } from '@heroicons/react/24/outline'
 
 export function BackToTop() {
   const [isVisible, setIsVisible] = useState(false)
@@ -41,7 +41,7 @@ export function BackToTop() {
       aria-label="Volver arriba"
       title="Volver arriba"
     >
-      <ChevronUp className="w-6 h-6" />
+      <ChevronUpIcon className="w-6 h-6" />
     </button>
   )
 }
