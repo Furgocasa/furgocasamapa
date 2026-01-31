@@ -37,8 +37,8 @@ export function BuscadorGeografico({ map, onLocationFound, currentCountry }: Bus
     }
 
     // Extraer coordenadas INMEDIATAMENTE (antes de cualquier otra operación)
-    const lat = typeof place.geometry.location.lat === 'function' 
-      ? place.geometry.location.lat() 
+    const lat = typeof place.geometry.location.lat === 'function'
+      ? place.geometry.location.lat()
       : place.geometry.location.lat
     const lng = typeof place.geometry.location.lng === 'function'
       ? place.geometry.location.lng()
@@ -72,23 +72,23 @@ export function BuscadorGeografico({ map, onLocationFound, currentCountry }: Bus
     // Mover mapa si está disponible
     if (mapRef.current) {
       const mapInstance = mapRef.current
-      
+
       // Calcular zoom apropiado según el viewport
       let calculatedZoom = 12
-      
+
       if (viewport) {
         const ne = typeof viewport.getNorthEast === 'function' ? viewport.getNorthEast() : viewport
         const sw = typeof viewport.getSouthWest === 'function' ? viewport.getSouthWest() : viewport
-        
+
         const neLat = typeof ne.lat === 'function' ? ne.lat() : ne.lat
         const neLng = typeof ne.lng === 'function' ? ne.lng() : ne.lng
         const swLat = typeof sw.lat === 'function' ? sw.lat() : sw.lat
         const swLng = typeof sw.lng === 'function' ? sw.lng() : sw.lng
-        
+
         const latDiff = Math.abs(neLat - swLat)
         const lngDiff = Math.abs(neLng - swLng)
         const maxDiff = Math.max(latDiff, lngDiff)
-        
+
         // Calcular zoom basado en el tamaño del viewport
         if (maxDiff > 30) {
           calculatedZoom = 4
@@ -111,7 +111,7 @@ export function BuscadorGeografico({ map, onLocationFound, currentCountry }: Bus
         } else {
           calculatedZoom = 14
         }
-        
+
         console.log('🔍 Viewport info:', {
           latDiff: latDiff.toFixed(4),
           lngDiff: lngDiff.toFixed(4),
@@ -119,15 +119,15 @@ export function BuscadorGeografico({ map, onLocationFound, currentCountry }: Bus
           calculatedZoom
         })
       }
-      
+
       // Detectar tipo de mapa y aplicar la acción correspondiente
       console.log('📍 Centrando en coordenadas exactas:', lat, lng, '(', address, ')')
-      
+
       // Google Maps
       if (typeof mapInstance.setCenter === 'function' && typeof mapInstance.setZoom === 'function') {
         mapInstance.setCenter({ lat, lng })
         mapInstance.setZoom(calculatedZoom)
-      } 
+      }
       // MapLibre GL
       else if (typeof mapInstance.flyTo === 'function' && mapInstance.getCanvas) {
         mapInstance.flyTo({
@@ -142,7 +142,7 @@ export function BuscadorGeografico({ map, onLocationFound, currentCountry }: Bus
           duration: 1.5
         })
       }
-      
+
       console.log('✅ Mapa centrado en:', address)
     }
 
@@ -188,10 +188,10 @@ export function BuscadorGeografico({ map, onLocationFound, currentCountry }: Bus
           }
 
           console.log('✅ Encontrados', predictions.length, 'resultados, usando el primero')
-          
+
           // Obtener detalles del primer resultado
           const firstPrediction = predictions[0]
-          
+
           placesServiceRef.current.getDetails(
             {
               placeId: firstPrediction.place_id,
@@ -224,11 +224,11 @@ export function BuscadorGeografico({ map, onLocationFound, currentCountry }: Bus
 
     const initAutocomplete = () => {
       // Verificar que window.google.maps.places esté disponible
-      if (typeof window === 'undefined' || 
-          !window.google || 
-          !window.google.maps || 
-          !window.google.maps.places ||
-          !window.google.maps.places.Autocomplete) {
+      if (typeof window === 'undefined' ||
+        !window.google ||
+        !window.google.maps ||
+        !window.google.maps.places ||
+        !window.google.maps.places.Autocomplete) {
         retryCount++
         if (retryCount < maxRetries) {
           timeoutId = setTimeout(initAutocomplete, 500)
@@ -301,7 +301,7 @@ export function BuscadorGeografico({ map, onLocationFound, currentCountry }: Bus
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current)
     }
-    
+
     // Delay para permitir clic en autocomplete
     blurTimeoutRef.current = setTimeout(() => {
       if (!searchValue) {
@@ -371,7 +371,7 @@ export function BuscadorGeografico({ map, onLocationFound, currentCountry }: Bus
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
           <MagnifyingGlassIcon className={`h-5 w-5 ${isExpanded ? 'text-gray-400' : 'text-gray-500'}`} />
         </div>
-        
+
         <input
           ref={inputRef}
           type="text"
@@ -387,8 +387,8 @@ export function BuscadorGeografico({ map, onLocationFound, currentCountry }: Bus
           }}
           placeholder={isExpanded ? "Ciudad, región o país..." : "¿A dónde ir?"}
           className={`w-full bg-white rounded-lg shadow-lg py-2.5 md:py-3 pl-10 text-sm transition-all
-            ${isExpanded 
-              ? 'pr-10 border-2 border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400' 
+            ${isExpanded
+              ? 'pr-10 border-2 border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400'
               : 'pr-4 border border-gray-200 hover:shadow-xl hover:border-gray-300 cursor-pointer'
             }`}
           autoComplete="off"
@@ -400,7 +400,7 @@ export function BuscadorGeografico({ map, onLocationFound, currentCountry }: Bus
           inputMode="text"
           enterKeyHint="search"
         />
-        
+
         {/* Botón de limpiar - solo visible cuando está expandido y hay texto */}
         {isExpanded && searchValue && (
           <button
@@ -413,7 +413,7 @@ export function BuscadorGeografico({ map, onLocationFound, currentCountry }: Bus
           </button>
         )}
       </div>
-      
+
       {/* Hint text - Solo en desktop cuando está expandido */}
       {isExpanded && (
         <p className="hidden md:block text-[11px] text-green-600 mt-1 px-2 bg-green-50/80 rounded py-0.5">

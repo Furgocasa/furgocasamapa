@@ -25,7 +25,7 @@ export function useMapConfig() {
 
   useEffect(() => {
     const supabase = createClient()
-    
+
     // Cargar configuración inicial
     fetchConfig()
 
@@ -56,7 +56,7 @@ export function useMapConfig() {
   const fetchConfig = async () => {
     try {
       const supabase = createClient()
-      
+
       const { data, error } = await supabase
         .from('configuracion_mapas')
         .select('*')
