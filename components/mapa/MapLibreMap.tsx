@@ -32,6 +32,7 @@ export function MapLibreMap({
   const clusterIndexRef = useRef<Supercluster | null>(null)
   const userMarkerRef = useRef<maplibregl.Marker | null>(null)
   const watchIdRef = useRef<number | null>(null)
+  const isUpdatingRef = useRef(false) // ✅ Bandera para evitar actualizaciones concurrentes
   const [mapLoaded, setMapLoaded] = useState(false)
   const [gpsActive, setGpsActive] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
@@ -141,6 +142,14 @@ export function MapLibreMap({
     // Función para actualizar marcadores según el zoom/bounds
     const updateMarkers = () => {
       if (!mapRef.current || !clusterIndexRef.current) return
+      
+      // ✅ Evitar actualizaciones concurrentes
+      if (isUpdatingRef.current) {
+        console.log('⚠️ Actualización en progreso, ignorando...')
+        return
+      }
+      
+      isUpdatingRef.current = true
 
       const map = mapRef.current
       const zoom = Math.floor(map.getZoom())
@@ -255,6 +264,9 @@ export function MapLibreMap({
       })
 
       console.log(`✅ ${Object.keys(markersRef.current).length} marcadores visibles (clusters + áreas)`)
+      
+      // ✅ Liberar bandera al finalizar
+      isUpdatingRef.current = false
     }
 
     // Actualizar marcadores inicialmente
@@ -273,6 +285,7 @@ export function MapLibreMap({
       Object.values(markersRef.current).forEach(marker => marker.remove())
       markersRef.current = {}
       clusterIndexRef.current = null
+      isUpdatingRef.current = false // ✅ Resetear bandera
 
       if (mapRef.current) {
         mapRef.current.off('moveend', handleUpdate)
