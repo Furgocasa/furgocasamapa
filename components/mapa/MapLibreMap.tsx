@@ -546,12 +546,23 @@ export function MapLibreMap({
           overflow: hidden !important;
         }
         .maplibregl-popup-close-button {
-          font-size: 20px !important;
-          padding: 4px 8px !important;
-          color: #666 !important;
+          font-size: 18px !important;
+          width: 28px !important;
+          height: 28px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          padding: 0 !important;
+          margin: 8px !important;
+          color: #374151 !important;
+          background: rgba(255, 255, 255, 0.95) !important;
+          border-radius: 50% !important;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+          line-height: 1 !important;
         }
         .maplibregl-popup-close-button:hover {
           background: #f3f4f6 !important;
+          color: #111827 !important;
         }
         @media (max-width: 640px) {
           .maplibregl-popup-content {
