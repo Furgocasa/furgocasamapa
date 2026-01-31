@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import Supercluster from 'supercluster'
@@ -32,7 +32,15 @@ export function MapLibreMap({
   const clusterIndexRef = useRef<Supercluster | null>(null)
   const userMarkerRef = useRef<maplibregl.Marker | null>(null)
   const watchIdRef = useRef<number | null>(null)
-  const isUpdatingRef = useRef(false) // ✅ Bandera para evitar actualizaciones concurrentes
+  const isUpdatingRef = useRef(false)
+  
+  // ✅ NUEVO: Popup singleton como Google Maps InfoWindow
+  const popupRef = useRef<maplibregl.Popup | null>(null)
+  // ✅ NUEVO: Mapa de áreas para acceso rápido por ID
+  const areasMapRef = useRef<Map<string, Area>>(new Map())
+  // ✅ NUEVO: Bandera para evitar updateMarkers durante interacciones
+  const isInteractingRef = useRef(false)
+  
   const [mapLoaded, setMapLoaded] = useState(false)
   const [gpsActive, setGpsActive] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
@@ -45,6 +53,14 @@ export function MapLibreMap({
       setGpsActive(true)
     }
   }, [])
+  
+  // ✅ NUEVO: Actualizar mapa de áreas cuando cambian
+  useEffect(() => {
+    areasMapRef.current.clear()
+    areas.forEach(area => {
+      areasMapRef.current.set(area.id, area)
+    })
+  }, [areas])
 
   // Obtener URL de estilo según configuración
   const getStyleUrl = () => {
@@ -77,7 +93,7 @@ export function MapLibreMap({
       container: mapContainerRef.current,
       style: getStyleUrl(),
       center: [-3.7038, 40.4168], // Madrid (lng, lat - orden inverso a Google)
-      zoom: 6, // ✅ CORREGIDO: Era 5, ahora 6 como Google Maps
+      zoom: 6,
       attributionControl: false
     })
 
@@ -86,6 +102,17 @@ export function MapLibreMap({
     map.addControl(new maplibregl.AttributionControl({
       compact: true
     }), 'bottom-right')
+
+    // ✅ NUEVO: Crear popup singleton (como InfoWindow de Google Maps)
+    popupRef.current = new maplibregl.Popup({
+      offset: 25,
+      closeButton: true,
+      closeOnClick: false, // No cerrar al hacer click en el mapa
+      closeOnMove: false,  // No cerrar al mover el mapa
+      maxWidth: '360px',
+      className: 'maplibre-popup-custom',
+      anchor: 'bottom'
+    })
 
     map.on('load', () => {
       console.log('✅ MapLibre cargado')
@@ -100,15 +127,32 @@ export function MapLibreMap({
     }
 
     return () => {
+      if (popupRef.current) {
+        popupRef.current.remove()
+        popupRef.current = null
+      }
       map.remove()
     }
   }, [estilo])
+
+  // ✅ NUEVO: Función para mostrar popup singleton (como InfoWindow de Google)
+  const showPopup = useCallback((area: Area, lngLat: [number, number]) => {
+    if (!mapRef.current || !popupRef.current) return
+    
+    console.log('📍 Mostrando popup para:', area.nombre)
+    
+    // Actualizar contenido y posición del popup singleton
+    popupRef.current
+      .setLngLat(lngLat)
+      .setHTML(createPopupContent(area))
+      .addTo(mapRef.current)
+  }, [])
 
   // Añadir marcadores CON CLUSTERING cuando el mapa esté listo
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return
 
-    // ✅ CRÍTICO: Limpiar marcadores anteriores PRIMERO
+    // Limpiar marcadores anteriores
     Object.values(markersRef.current).forEach(marker => marker.remove())
     markersRef.current = {}
     
@@ -121,9 +165,9 @@ export function MapLibreMap({
     console.log(`📍 Inicializando clustering para ${areas.length} áreas...`)
 
     // Convertir áreas a formato GeoJSON para Supercluster
-    const points: Supercluster.PointFeature<{ area: Area }>[] = areas.map(area => ({
+    const points: Supercluster.PointFeature<{ areaId: string }>[] = areas.map(area => ({
       type: 'Feature',
-      properties: { area },
+      properties: { areaId: area.id }, // ✅ Solo guardamos el ID, no el área completa
       geometry: {
         type: 'Point',
         coordinates: [Number(area.longitud), Number(area.latitud)]
@@ -139,16 +183,18 @@ export function MapLibreMap({
     cluster.load(points)
     clusterIndexRef.current = cluster
 
-    // Función para actualizar marcadores según el zoom/bounds
+    // ✅ Función para actualizar marcadores según el zoom/bounds
     const updateMarkers = () => {
       if (!mapRef.current || !clusterIndexRef.current) return
       
-      // ✅ Evitar actualizaciones concurrentes
-      if (isUpdatingRef.current) {
-        console.log('⚠️ Actualización en progreso, ignorando...')
+      // ✅ No actualizar si estamos en medio de una interacción
+      if (isInteractingRef.current) {
+        console.log('⏸️ Interacción en progreso, posponiendo actualización...')
         return
       }
       
+      // Evitar actualizaciones concurrentes
+      if (isUpdatingRef.current) return
       isUpdatingRef.current = true
 
       const map = mapRef.current
@@ -164,47 +210,63 @@ export function MapLibreMap({
       // Obtener clusters y puntos para el viewport actual
       const clusters = clusterIndexRef.current.getClusters(bbox, zoom)
 
-      // ✅ CRÍTICO: Limpiar TODOS los marcadores primero antes de crear nuevos
-      Object.keys(markersRef.current).forEach(id => {
-        markersRef.current[id].remove()
-        delete markersRef.current[id]
+      // ✅ NUEVO: Identificar qué marcadores necesitamos
+      const neededMarkerIds = new Set<string>()
+      
+      clusters.forEach(clusterFeature => {
+        const isCluster = clusterFeature.properties.cluster
+        if (isCluster) {
+          neededMarkerIds.add(`cluster-${clusterFeature.properties.cluster_id}`)
+        } else {
+          neededMarkerIds.add(`area-${clusterFeature.properties.areaId}`)
+        }
       })
 
-      // Añadir/actualizar marcadores
-      clusters.forEach(cluster => {
-        const [lng, lat] = cluster.geometry.coordinates
-        const isCluster = cluster.properties.cluster
+      // ✅ NUEVO: Eliminar solo los marcadores que ya no necesitamos
+      Object.keys(markersRef.current).forEach(id => {
+        if (!neededMarkerIds.has(id)) {
+          markersRef.current[id].remove()
+          delete markersRef.current[id]
+        }
+      })
+
+      // ✅ NUEVO: Crear solo los marcadores que faltan
+      clusters.forEach(clusterFeature => {
+        const [lng, lat] = clusterFeature.geometry.coordinates
+        const isCluster = clusterFeature.properties.cluster
 
         if (isCluster) {
-          const clusterId = `cluster-${cluster.properties.cluster_id}`
-          const count = cluster.properties.point_count
-
-          // ✅ CORREGIDO: Escala DINÁMICA como Google Maps
-          const scale = count < 10 ? 22 : 
-                       count < 50 ? 30 : 
-                       count < 100 ? 38 : 45
+          const clusterId = `cluster-${clusterFeature.properties.cluster_id}`
           
-          // Crear elemento del cluster
+          // Si ya existe, no recrear
+          if (markersRef.current[clusterId]) return
+          
+          const count = clusterFeature.properties.point_count
+          const scale = count < 10 ? 22 : count < 50 ? 30 : count < 100 ? 38 : 45
+          
           const el = document.createElement('div')
           el.className = 'marker-cluster'
-          el.style.width = `${scale}px` // ✅ DINÁMICO
-          el.style.height = `${scale}px` // ✅ DINÁMICO
-          el.style.borderRadius = '50%'
-          el.style.backgroundColor = 'rgba(2, 132, 199, 0.85)' // ✅ Con opacidad 0.85 como Google
-          el.style.color = 'white'
-          el.style.display = 'flex'
-          el.style.alignItems = 'center'
-          el.style.justifyContent = 'center'
-          el.style.fontWeight = '700'
-          el.style.fontSize = count < 100 ? '14px' : '16px' // ✅ DINÁMICO
-          el.style.cursor = 'pointer'
-          el.style.border = '3px solid white'
-          el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)'
+          el.style.cssText = `
+            width: ${scale}px;
+            height: ${scale}px;
+            border-radius: 50%;
+            background-color: rgba(2, 132, 199, 0.85);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: ${count < 100 ? '14px' : '16px'};
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+          `
           el.textContent = count.toString()
 
           // Click en cluster: hacer zoom
-          el.addEventListener('click', () => {
-            const expansionZoom = clusterIndexRef.current!.getClusterExpansionZoom(cluster.properties.cluster_id!)
+          el.addEventListener('click', (e) => {
+            e.stopPropagation()
+            const expansionZoom = clusterIndexRef.current!.getClusterExpansionZoom(clusterFeature.properties.cluster_id!)
             map.flyTo({
               center: [lng, lat],
               zoom: Math.min(expansionZoom, 16),
@@ -220,125 +282,137 @@ export function MapLibreMap({
 
         } else {
           // Marcador individual
-          const area = cluster.properties.area
-          const areaId = `area-${area.id}`
+          const areaId = clusterFeature.properties.areaId
+          const markerId = `area-${areaId}`
+          
+          // Si ya existe, no recrear
+          if (markersRef.current[markerId]) return
+          
+          // ✅ Obtener el área desde el mapa de áreas
+          const area = areasMapRef.current.get(areaId)
+          if (!area) return
 
           const el = document.createElement('div')
-          el.className = 'marker'
-          el.style.width = '20px'
-          el.style.height = '20px'
-          el.style.borderRadius = '50%'
-          el.style.backgroundColor = getTipoAreaColor(area.tipo_area)
-          el.style.border = '2px solid white'
-          el.style.cursor = 'pointer'
-          el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)'
-
-          const popup = new maplibregl.Popup({ 
-            offset: 25,
-            closeButton: true,      // ✅ Botón X para cerrar
-            closeOnClick: true,     // ✅ Cerrar al hacer click fuera
-            closeOnMove: false,     // No cerrar al mover el mapa
-            maxWidth: '360px',      // Ancho consistente
-            className: 'maplibre-popup-custom',
-            anchor: 'bottom'        // ✅ Siempre arriba del marcador para mejor visibilidad
+          el.className = 'marker-area'
+          el.dataset.areaId = areaId // ✅ Guardar ID en el elemento
+          el.style.cssText = `
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: ${getTipoAreaColor(area.tipo_area)};
+            border: 2px solid white;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            transition: transform 0.15s ease;
+          `
+          
+          // Hover effect
+          el.addEventListener('mouseenter', () => {
+            el.style.transform = 'scale(1.2)'
           })
-            .setHTML(createPopupContent(area))
+          el.addEventListener('mouseleave', () => {
+            el.style.transform = 'scale(1)'
+          })
+
+          // ✅ NUEVO: Click handler que usa popup singleton
+          el.addEventListener('click', (e) => {
+            e.stopPropagation()
+            
+            // Marcar que estamos interactuando
+            isInteractingRef.current = true
+            
+            // Notificar al padre
+            onAreaClick(area)
+            
+            // Mostrar popup singleton (sin depender del marker)
+            showPopup(area, [lng, lat])
+            
+            // Centrar mapa suavemente
+            map.panTo([lng, lat], { duration: 300 })
+            
+            // Liberar interacción después de que termine la animación
+            setTimeout(() => {
+              isInteractingRef.current = false
+            }, 350)
+          })
 
           const marker = new maplibregl.Marker({ element: el })
             .setLngLat([lng, lat])
-            .setPopup(popup)
             .addTo(map)
 
-          // ✅ SIMPLE: Como funcionaba antes, con verificación
-          el.addEventListener('click', () => {
-            onAreaClick(area)
-            map.panTo([lng, lat])
-            
-            // Verificar que el marker y popup existen antes de togglear
-            const popup = marker.getPopup()
-            if (popup) {
-              marker.togglePopup()
-            }
-          })
-
-          markersRef.current[areaId] = marker
+          markersRef.current[markerId] = marker
         }
       })
 
-      console.log(`✅ ${Object.keys(markersRef.current).length} marcadores visibles (clusters + áreas)`)
-      
-      // ✅ Liberar bandera al finalizar
+      console.log(`✅ ${Object.keys(markersRef.current).length} marcadores visibles`)
       isUpdatingRef.current = false
     }
 
     // Actualizar marcadores inicialmente
     updateMarkers()
 
-    // Actualizar marcadores al mover/zoom
-    const handleUpdate = () => {
-      updateMarkers()
+    // ✅ NUEVO: Debounce para evitar actualizaciones excesivas
+    let updateTimeout: NodeJS.Timeout | null = null
+    const debouncedUpdate = () => {
+      if (updateTimeout) clearTimeout(updateTimeout)
+      updateTimeout = setTimeout(updateMarkers, 100)
     }
 
-    mapRef.current.on('moveend', handleUpdate)
-    mapRef.current.on('zoomend', handleUpdate)
+    mapRef.current.on('moveend', debouncedUpdate)
+    mapRef.current.on('zoomend', debouncedUpdate)
 
     return () => {
-      // Limpiar todos los marcadores
+      if (updateTimeout) clearTimeout(updateTimeout)
       Object.values(markersRef.current).forEach(marker => marker.remove())
       markersRef.current = {}
       clusterIndexRef.current = null
-      isUpdatingRef.current = false // ✅ Resetear bandera
+      isUpdatingRef.current = false
+      isInteractingRef.current = false
 
       if (mapRef.current) {
-        mapRef.current.off('moveend', handleUpdate)
-        mapRef.current.off('zoomend', handleUpdate)
+        mapRef.current.off('moveend', debouncedUpdate)
+        mapRef.current.off('zoomend', debouncedUpdate)
       }
     }
 
-  }, [areas, mapLoaded, onAreaClick])
+  }, [areas, mapLoaded, onAreaClick, showPopup])
 
-  // Centrar en área seleccionada y abrir popup
+  // ✅ NUEVO: Centrar en área seleccionada y abrir popup singleton
   useEffect(() => {
-    if (!mapRef.current || !areaSeleccionada) return
+    if (!mapRef.current || !areaSeleccionada || !popupRef.current) return
 
-    const areaId = `area-${areaSeleccionada.id}`
+    console.log('📍 Área seleccionada desde lista:', areaSeleccionada.nombre)
     
-    // ✅ CRÍTICO: Esperar a que updateMarkers() termine antes de buscar el marker
-    const tryOpenPopup = (attempts = 0) => {
-      const marker = markersRef.current[areaId]
-
-      if (marker) {
-        // Marker encontrado, abrir popup
-        mapRef.current!.panTo([Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)])
-        mapRef.current!.setZoom(14)
-        
-        const popup = marker.getPopup()
-        if (popup && !popup.isOpen()) {
-          marker.togglePopup()
-        }
-      } else if (attempts < 3) {
-        // Marker aún no existe, reintentar después de 100ms
-        setTimeout(() => tryOpenPopup(attempts + 1), 100)
-      } else {
-        // Después de 3 intentos, crear popup temporal
-        mapRef.current!.panTo([Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)])
-        mapRef.current!.setZoom(14)
-        
-        new maplibregl.Popup({
-          offset: 25,
-          closeButton: true,
-          closeOnClick: true,
-          maxWidth: '360px',
-          className: 'maplibre-popup-custom'
-        })
-          .setLngLat([Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)])
+    // Marcar que estamos interactuando para evitar updateMarkers
+    isInteractingRef.current = true
+    
+    const lngLat: [number, number] = [
+      Number(areaSeleccionada.longitud), 
+      Number(areaSeleccionada.latitud)
+    ]
+    
+    // Centrar mapa y hacer zoom
+    mapRef.current.flyTo({
+      center: lngLat,
+      zoom: 14,
+      duration: 800
+    })
+    
+    // Mostrar popup singleton después de un pequeño delay para que el mapa se centre
+    setTimeout(() => {
+      if (popupRef.current && mapRef.current) {
+        popupRef.current
+          .setLngLat(lngLat)
           .setHTML(createPopupContent(areaSeleccionada))
-          .addTo(mapRef.current!)
+          .addTo(mapRef.current)
       }
-    }
-
-    // Intentar abrir el popup
-    tryOpenPopup()
+      
+      // Liberar interacción después de que termine la animación
+      setTimeout(() => {
+        isInteractingRef.current = false
+      }, 200)
+    }, 400)
+    
   }, [areaSeleccionada])
 
   // Handler para búsqueda geográfica
