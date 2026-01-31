@@ -14,6 +14,7 @@ interface Message {
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
+  const [isHidden, setIsHidden] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [messages, setMessages] = useState<Message[]>([])
@@ -123,6 +124,7 @@ export default function ChatbotWidget() {
   const handleOpen = () => {
     setIsOpen(true)
     setIsMinimized(false)
+    setIsHidden(false)
     if (user && !conversacionId) {
       iniciarConversacion()
     }
@@ -136,6 +138,18 @@ export default function ChatbotWidget() {
   // Expandir chat desde minimizado
   const handleExpand = () => {
     setIsMinimized(false)
+  }
+  
+  // Ocultar avatar temporalmente
+  const handleHide = () => {
+    setIsHidden(true)
+    setIsOpen(false)
+    setIsMinimized(false)
+  }
+  
+  // Mostrar avatar de nuevo
+  const handleShow = () => {
+    setIsHidden(false)
   }
   
   // Enviar mensaje
@@ -292,46 +306,77 @@ export default function ChatbotWidget() {
   
   return (
     <>
-      {/* Botón flotante con avatar - cuando el chat está cerrado */}
-      {!isOpen && (
+      {/* Botón pequeño para mostrar avatar cuando está oculto */}
+      {isHidden && (
         <button
-          onClick={handleOpen}
-          className="fixed bottom-24 right-6 md:bottom-6 bg-gradient-to-r from-blue-600 to-gray-700 rounded-full p-2 shadow-2xl hover:scale-110 transition-transform z-50 group"
-          title="Tío Viajero IA"
+          onClick={handleShow}
+          className="fixed bottom-24 right-6 md:bottom-6 bg-blue-600 text-white rounded-full w-12 h-12 shadow-lg hover:scale-110 transition-transform z-50 flex items-center justify-center"
+          title="Mostrar Tío Viajero IA"
         >
-          <img 
-            src="/tio-viajero-avatar.png" 
-            alt="Tío Viajero IA" 
-            className="w-14 h-14 object-cover rounded-full border-2 border-white"
-          />
-          {/* Badge "IA" */}
-          <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg">
-            IA
-          </span>
+          <span className="text-2xl">💬</span>
         </button>
+      )}
+
+      {/* Botón flotante con avatar - cuando el chat está cerrado */}
+      {!isOpen && !isHidden && (
+        <div className="fixed bottom-24 right-6 md:bottom-6 z-50 group">
+          <button
+            onClick={handleOpen}
+            className="bg-gradient-to-r from-blue-600 to-gray-700 rounded-full p-2 shadow-2xl hover:scale-110 transition-transform relative"
+            title="Tío Viajero IA"
+          >
+            <img 
+              src="/tio-viajero-avatar.png" 
+              alt="Tío Viajero IA" 
+              className="w-14 h-14 object-cover rounded-full border-2 border-white"
+            />
+            {/* Badge "IA" */}
+            <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg">
+              IA
+            </span>
+          </button>
+          {/* Botón minimizar superpuesto */}
+          <button
+            onClick={handleHide}
+            className="absolute -top-1 -left-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold hover:bg-red-600 transition-colors shadow-lg"
+            title="Ocultar temporalmente"
+          >
+            −
+          </button>
+        </div>
       )}
       
       {/* Avatar minimizado con botón de expandir */}
-      {isOpen && user && isMinimized && (
-        <button
-          onClick={handleExpand}
-          className="fixed bottom-24 right-6 md:bottom-6 bg-gradient-to-r from-blue-600 to-gray-700 rounded-full p-2 shadow-2xl hover:scale-110 transition-transform z-50 group"
-          title="Expandir Tío Viajero IA"
-        >
-          <img 
-            src="/tio-viajero-avatar.png" 
-            alt="Tío Viajero IA" 
-            className="w-14 h-14 object-cover rounded-full border-2 border-white"
-          />
-          {/* Badge "IA" */}
-          <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg">
-            IA
-          </span>
-        </button>
+      {isOpen && user && isMinimized && !isHidden && (
+        <div className="fixed bottom-24 right-6 md:bottom-6 z-50 group">
+          <button
+            onClick={handleExpand}
+            className="bg-gradient-to-r from-blue-600 to-gray-700 rounded-full p-2 shadow-2xl hover:scale-110 transition-transform relative"
+            title="Expandir Tío Viajero IA"
+          >
+            <img 
+              src="/tio-viajero-avatar.png" 
+              alt="Tío Viajero IA" 
+              className="w-14 h-14 object-cover rounded-full border-2 border-white"
+            />
+            {/* Badge "IA" */}
+            <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg">
+              IA
+            </span>
+          </button>
+          {/* Botón ocultar superpuesto */}
+          <button
+            onClick={handleHide}
+            className="absolute -top-1 -left-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold hover:bg-red-600 transition-colors shadow-lg"
+            title="Ocultar temporalmente"
+          >
+            −
+          </button>
+        </div>
       )}
       
       {/* Ventana del chat */}
-      {isOpen && user && !isMinimized && (
+      {isOpen && user && !isMinimized && !isHidden && (
         <div className="fixed bottom-24 right-6 md:bottom-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200 max-w-[calc(100vw-3rem)] max-h-[calc(100vh-3rem)]">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-gray-700 text-white p-4 rounded-t-2xl flex justify-between items-center">

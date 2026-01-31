@@ -91,9 +91,7 @@ export function LeafletMap({
       // Añadir capa de tiles
       L.tileLayer(getTileUrl(), {
         maxZoom: 19,
-        attribution: estilo === 'default' 
-          ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          : '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a>'
+        attribution: ''
       }).addTo(mapInstance)
 
       // Crear popup singleton
@@ -587,6 +585,9 @@ export function LeafletMap({
         .leaflet-popup-close-button:hover {
           background: #f3f4f6 !important;
           color: #111827 !important;
+        }
+        .leaflet-control-attribution {
+          display: none !important;
         }
         @media (max-width: 640px) {
           .leaflet-popup-content-wrapper {
