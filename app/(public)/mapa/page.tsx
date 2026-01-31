@@ -320,9 +320,10 @@ export default function MapaPage() {
   // Ya no necesitamos comunidades ni provincias
 
   const paisObjetivo = filtros.pais || (metadata.paisSource === 'gps' ? detectedCountry : '')
-  const paisFiltroLista = metadata.paisSource === 'manual' ? filtros.pais : ''
+  // ✅ Usar el mismo país para filtrar lista Y mapa (incluye GPS y manual)
+  const paisFiltroLista = filtros.pais || (metadata.paisSource === 'gps' ? detectedCountry : '')
 
-  // ✅ ÁREAS PARA LA LISTA: Solo filtrar por país si es manual
+  // ✅ ÁREAS PARA LA LISTA: filtrar por país (GPS o manual) + otros filtros
   const areasParaLista = useMemo(() => {
     return areas.filter((area: any) => {
       // Filtro de búsqueda
