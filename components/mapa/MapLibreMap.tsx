@@ -35,6 +35,15 @@ export function MapLibreMap({
   const [mapLoaded, setMapLoaded] = useState(false)
   const [gpsActive, setGpsActive] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [showInfoTooltip, setShowInfoTooltip] = useState(false)
+  
+  // Cargar estado del GPS desde localStorage DESPUÉS de montar (solo cliente)
+  useEffect(() => {
+    const savedGpsState = localStorage.getItem('gpsActive') === 'true'
+    if (savedGpsState) {
+      setGpsActive(true)
+    }
+  }, [])
 
   // Obtener URL de estilo según configuración
   const getStyleUrl = () => {
@@ -67,7 +76,7 @@ export function MapLibreMap({
       container: mapContainerRef.current,
       style: getStyleUrl(),
       center: [-3.7038, 40.4168], // Madrid (lng, lat - orden inverso a Google)
-      zoom: 5,
+      zoom: 6, // ✅ CORREGIDO: Era 5, ahora 6 como Google Maps
       attributionControl: false
     })
 
@@ -157,22 +166,24 @@ export function MapLibreMap({
           const clusterId = `cluster-${cluster.properties.cluster_id}`
           const count = cluster.properties.point_count
 
-          // Si el cluster ya existe, no recrearlo
-          if (markersRef.current[clusterId]) return
-
+          // ✅ CORREGIDO: Escala DINÁMICA como Google Maps
+          const scale = count < 10 ? 22 : 
+                       count < 50 ? 30 : 
+                       count < 100 ? 38 : 45
+          
           // Crear elemento del cluster
           const el = document.createElement('div')
           el.className = 'marker-cluster'
-          el.style.width = '40px'
-          el.style.height = '40px'
+          el.style.width = `${scale}px` // ✅ DINÁMICO
+          el.style.height = `${scale}px` // ✅ DINÁMICO
           el.style.borderRadius = '50%'
-          el.style.backgroundColor = '#0284c7'
+          el.style.backgroundColor = 'rgba(2, 132, 199, 0.85)' // ✅ Con opacidad 0.85 como Google
           el.style.color = 'white'
           el.style.display = 'flex'
           el.style.alignItems = 'center'
           el.style.justifyContent = 'center'
           el.style.fontWeight = '700'
-          el.style.fontSize = '14px'
+          el.style.fontSize = count < 100 ? '14px' : '16px' // ✅ DINÁMICO
           el.style.cursor = 'pointer'
           el.style.border = '3px solid white'
           el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)'
@@ -230,19 +241,11 @@ export function MapLibreMap({
           el.addEventListener('click', () => {
             onAreaClick(area)
             
-            // ✅ Centrar el mapa con padding para que el popup quede completamente visible
-            // Esto asegura que la X de cerrar siempre se vea, como en Google Maps
-            map.flyTo({
-              center: [lng, lat],
-              zoom: Math.max(map.getZoom(), 12),
-              duration: 800,
-              padding: { top: 100, bottom: 250, left: 50, right: 50 } // ✅ Espacio para el popup
-            })
+            // ✅ CORREGIDO: Solo centrar (panTo), NO cambiar zoom
+            map.panTo([lng, lat])
             
-            // ✅ Abrir el popup después de un pequeño delay para que el centrado funcione bien
-            setTimeout(() => {
-              marker.togglePopup()
-            }, 400)
+            // ✅ CORREGIDO: Abrir popup INMEDIATAMENTE (sin setTimeout)
+            marker.togglePopup()
           })
 
           markersRef.current[areaId] = marker
@@ -285,43 +288,31 @@ export function MapLibreMap({
     const marker = markersRef.current[areaId]
 
     if (marker) {
-      // Si el marcador existe, centrar y abrir popup
-      mapRef.current.flyTo({
-        center: [Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)],
-        zoom: 14,
-        duration: 1000,
-        padding: { top: 100, bottom: 250, left: 50, right: 50 }
-      })
+      // ✅ CORREGIDO: panTo en vez de flyTo, sin delays
+      mapRef.current.panTo([Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)])
+      mapRef.current.setZoom(14)
       
-      // Abrir popup después del centrado
-      setTimeout(() => {
-        const popup = marker.getPopup()
-        if (popup && !popup.isOpen()) {
-          marker.togglePopup()
-        }
-      }, 600)
+      // ✅ CORREGIDO: Abrir popup INMEDIATAMENTE
+      const popup = marker.getPopup()
+      if (popup && !popup.isOpen()) {
+        marker.togglePopup()
+      }
     } else {
       // Si no hay marcador visible (área filtrada), crear popup temporal
-      mapRef.current.flyTo({
-        center: [Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)],
-        zoom: 14,
-        duration: 1000,
-        padding: { top: 100, bottom: 250, left: 50, right: 50 }
-      })
+      mapRef.current.panTo([Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)])
+      mapRef.current.setZoom(14)
       
-      // Crear popup temporal
-      setTimeout(() => {
-        new maplibregl.Popup({
-          offset: 25,
-          closeButton: true,
-          closeOnClick: true,
-          maxWidth: '360px',
-          className: 'maplibre-popup-custom'
-        })
-          .setLngLat([Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)])
-          .setHTML(createPopupContent(areaSeleccionada))
-          .addTo(mapRef.current!)
-      }, 600)
+      // ✅ CORREGIDO: Sin setTimeout
+      new maplibregl.Popup({
+        offset: 25,
+        closeButton: true,
+        closeOnClick: true,
+        maxWidth: '360px',
+        className: 'maplibre-popup-custom'
+      })
+        .setLngLat([Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)])
+        .setHTML(createPopupContent(areaSeleccionada))
+        .addTo(mapRef.current!)
     }
   }, [areaSeleccionada])
 
@@ -491,9 +482,36 @@ export function MapLibreMap({
                 <svg style="width: 16px; height: 16px;" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
                 </svg>
-                Cómo Llegar
+                Google Maps
               </a>
             ` : ''}
+          </div>
+
+          <!-- Botones secundarios -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+            <a
+              href="/area/${area.slug}"
+              style="background: #FEF3C7; color: #92400E; padding: 10px 12px; border: 1px solid #FDE68A; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; text-decoration: none;"
+              onmouseover="this.style.background='#FDE68A'"
+              onmouseout="this.style.background='#FEF3C7'"
+            >
+              <svg style="width: 14px; height: 14px;" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"/>
+              </svg>
+              Favorito
+            </a>
+            
+            <a
+              href="/area/${area.slug}"
+              style="background: #DBEAFE; color: #1E40AF; padding: 10px 12px; border: 1px solid #BFDBFE; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; text-decoration: none;"
+              onmouseover="this.style.background='#BFDBFE'"
+              onmouseout="this.style.background='#DBEAFE'"
+            >
+              <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Registrar Visita
+            </a>
           </div>
         </div>
       </div>
@@ -515,25 +533,29 @@ export function MapLibreMap({
             
             // Crear o actualizar marcador de usuario
             if (!userMarkerRef.current) {
-              // Crear elemento HTML para el marcador GPS
+              // ✅ CORREGIDO: Marcador GPS con color NARANJA (#FF6B35) y tamaño 24px
               const el = document.createElement('div')
-              el.style.width = '20px'
-              el.style.height = '20px'
+              el.style.width = '24px' // ✅ CORREGIDO: Era 20px, ahora 24px
+              el.style.height = '24px'
               el.style.borderRadius = '50%'
-              el.style.backgroundColor = '#4285F4'
+              el.style.backgroundColor = '#FF6B35' // ✅ CORREGIDO: Era azul #4285F4, ahora naranja
               el.style.border = '3px solid white'
-              el.style.boxShadow = '0 0 0 4px rgba(66, 133, 244, 0.3)'
+              el.style.boxShadow = '0 0 0 4px rgba(255, 107, 53, 0.3)' // ✅ CORREGIDO: Sombra naranja
 
               userMarkerRef.current = new maplibregl.Marker({ element: el })
                 .setLngLat([pos.lng, pos.lat])
                 .addTo(mapRef.current!)
               
-              // Centrar en la primera ubicación
-              mapRef.current!.flyTo({
-                center: [pos.lng, pos.lat],
-                zoom: 14,
-                duration: 1500
-              })
+              // ✅ CORREGIDO: Solo centrar si es activación MANUAL (no auto-activación)
+              const savedGpsState = localStorage.getItem('gpsActive') === 'true'
+              if (!savedGpsState) {
+                // Centrar solo en activación manual
+                mapRef.current!.flyTo({
+                  center: [pos.lng, pos.lat],
+                  zoom: 14,
+                  duration: 1500
+                })
+              }
             } else {
               // Actualizar posición
               userMarkerRef.current.setLngLat([pos.lng, pos.lat])
@@ -542,6 +564,8 @@ export function MapLibreMap({
           (error) => {
             console.error('Error GPS:', error)
             alert('No se pudo obtener tu ubicación. Verifica los permisos.')
+            setGpsActive(false)
+            localStorage.setItem('gpsActive', 'false') // ✅ Guardar estado
           },
           {
             enableHighAccuracy: true,
@@ -551,6 +575,7 @@ export function MapLibreMap({
         )
         watchIdRef.current = watchId
         setGpsActive(true)
+        localStorage.setItem('gpsActive', 'true') // ✅ Guardar estado
       }
     } else {
       // Desactivar GPS
@@ -564,6 +589,7 @@ export function MapLibreMap({
       }
       setGpsActive(false)
       setUserLocation(null)
+      localStorage.setItem('gpsActive', 'false') // ✅ Guardar estado
     }
   }
 
@@ -671,12 +697,12 @@ export function MapLibreMap({
         </p>
       </div>
 
-      {/* Botón GPS - Igual que Google Maps */}
+      {/* Botón GPS - ✅ CORREGIDO: Color naranja cuando activo */}
       <button
         onClick={() => toggleGPS()}
         className={`absolute bottom-20 md:bottom-20 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full shadow-lg font-semibold transition-all z-[1000] flex items-center gap-2 mb-16 md:mb-0 ${
           gpsActive
-            ? 'bg-primary-600 text-white hover:bg-primary-700'
+            ? 'bg-orange-500 text-white hover:bg-orange-600' // ✅ CORREGIDO: Naranja en vez de primary
             : 'bg-white text-gray-700 hover:bg-gray-50'
         }`}
         aria-label={gpsActive ? "Desactivar GPS" : "Activar GPS"}
@@ -700,7 +726,7 @@ export function MapLibreMap({
             d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
           />
         </svg>
-        <span className="text-sm">{gpsActive ? 'GPS Activado' : 'Ver ubicación'}</span>
+        <span className="text-sm">{gpsActive ? 'GPS Activo' : 'Ver ubicación'}</span> {/* ✅ CORREGIDO: "GPS Activo" */}
       </button>
 
       {/* Botón Restablecer Zoom - Igual que Google Maps */}
