@@ -320,11 +320,21 @@ export default function MapaPage() {
   // Ya no necesitamos comunidades ni provincias
 
   const paisObjetivo = filtros.pais || (metadata.paisSource === 'gps' ? detectedCountry : '')
-  // ✅ Usar el mismo país para filtrar lista Y mapa (incluye GPS y manual)
-  const paisFiltroLista = filtros.pais || (metadata.paisSource === 'gps' ? detectedCountry : '')
+  // ✅ Aplicar GPS SOLO si no hay selección manual
+  // Si paisSource === 'manual' y filtros.pais === '', significa "Todos los países" (sin filtro)
+  const paisFiltroLista = metadata.paisSource === 'manual' 
+    ? filtros.pais  // Manual: usar exactamente lo seleccionado (puede ser '' = todos)
+    : (filtros.pais || detectedCountry || '')  // GPS: usar país detectado si no hay manual
 
   // ✅ ÁREAS PARA LA LISTA: filtrar por país (GPS o manual) + otros filtros
   const areasParaLista = useMemo(() => {
+    console.log('🔍 Filtrando lista:', {
+      paisSource: metadata.paisSource,
+      filtros_pais: filtros.pais,
+      detectedCountry,
+      paisFiltroLista
+    })
+    
     return areas.filter((area: any) => {
       // Filtro de búsqueda
       if (filtros.busqueda) {
