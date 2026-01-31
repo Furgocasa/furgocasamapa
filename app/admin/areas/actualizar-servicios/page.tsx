@@ -87,7 +87,11 @@ export default function ActualizarServiciosPage() {
     throw new Error('Máximo de reintentos alcanzado')
   }
 
-  // Función para analizar servicios con búsqueda multi-etapa y caché
+  // Función para analizar servicios con búsqueda multi-etapa optimizada y caché
+  // MEJORAS 2026-01-31:
+  // - Búsqueda 1: Añadidos términos específicos (agua, electricidad, vaciado) para mejores resultados
+  // - Búsqueda 2: Ampliado a 6 plataformas especializadas (Park4night, Camperstop, Caramaps, iOverlander, Campercontact, Womo-Stellplatz)
+  // - Búsqueda 3: Optimizada con términos multiidioma (motorhome, camper, facilities) para capturar más información
   const analizarServiciosArea = async (areaId: string): Promise<Record<string, boolean> | null> => {
     const startTime = Date.now()
     
@@ -123,9 +127,10 @@ export default function ActualizarServiciosPage() {
 
       // 3. BÚSQUEDA MULTI-ETAPA: 3 búsquedas especializadas
       
-      // BÚSQUEDA 1: Información general y web oficial
+      // BÚSQUEDA 1: Información general y web oficial (optimizada)
       console.log('🔍 [1/3] Búsqueda general y web oficial...')
-      const query1 = `"${area.nombre}" ${area.ciudad} ${area.provincia} servicios autocaravanas`
+      // Query mejorada: menciona servicios específicos para mejores resultados
+      const query1 = `"${area.nombre}" ${area.ciudad} ${area.provincia} servicios autocaravanas agua electricidad vaciado`
       try {
         const resp1 = await fetchWithRetry('/api/admin/serpapi-proxy', {
           method: 'POST',
@@ -153,9 +158,21 @@ export default function ActualizarServiciosPage() {
       // Pausa breve entre búsquedas
       await new Promise(r => setTimeout(r, 500))
 
-      // BÚSQUEDA 2: Plataformas especializadas (Park4night, Campercontact, etc.)
+      // BÚSQUEDA 2: Plataformas especializadas (ampliado con más fuentes)
       console.log('🏕️  [2/3] Búsqueda en plataformas especializadas...')
-      const query2 = `"${area.nombre}" ${area.ciudad} Park4night Campercontact servicios camping`
+      
+      // Lista ampliada de plataformas especializadas en autocaravanas
+      const plataformas = [
+        'Park4night',
+        'Camperstop',
+        'Caramaps',
+        'iOverlander',
+        'Campercontact',
+        'Womo-Stellplatz'
+      ]
+      
+      // Query optimizada con operador OR para buscar en múltiples plataformas
+      const query2 = `"${area.nombre}" ${area.ciudad} (${plataformas.join(' OR ')}) servicios autocaravanas camping`
       try {
         const resp2 = await fetchWithRetry('/api/admin/serpapi-proxy', {
           method: 'POST',
@@ -180,9 +197,10 @@ export default function ActualizarServiciosPage() {
       // Pausa breve
       await new Promise(r => setTimeout(r, 500))
 
-      // BÚSQUEDA 3: Google Maps y opiniones de usuarios
+      // BÚSQUEDA 3: Google Maps, reviews y experiencias de usuarios
       console.log('⭐ [3/3] Búsqueda de opiniones y reviews...')
-      const query3 = `"${area.nombre}" ${area.ciudad} Google Maps opiniones reseñas reviews`
+      // Query optimizada para capturar experiencias reales de usuarios
+      const query3 = `"${area.nombre}" ${area.ciudad} opiniones servicios motorhome camper facilities reviews`
       try {
         const resp3 = await fetchWithRetry('/api/admin/serpapi-proxy', {
           method: 'POST',
