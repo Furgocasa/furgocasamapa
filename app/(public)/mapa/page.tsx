@@ -32,35 +32,17 @@ export default function MapaPage() {
   const mapRef = useRef<any>(null) // Referencia al mapa para controlarlo
   const skipMapCenterRef = useRef(false) // Evitar centrado automático después de búsqueda geográfica
 
-  // Lista hardcodeada de países reales con áreas en la base de datos
+  // Lista de países con áreas en la base de datos (26 países)
   const paisesDisponibles = [
-    'Alemania',
-    'Andorra',
-    'Argentina',
-    'Austria',
-    'Bélgica',
-    'Chequia',
-    'Chile',
-    'Colombia',
-    'Costa Rica',
-    'Dinamarca',
-    'Ecuador',
-    'Eslovenia',
-    'España',
-    'Francia',
-    'Italia',
-    'Luxemburgo',
-    'Noruega',
-    'Países Bajos',
-    'Panamá',
-    'Paraguay',
-    'Perú',
-    'Portugal',
-    'Puerto Rico',
-    'Suecia',
-    'Suiza',
-    'Uruguay'
+    'Alemania', 'Andorra', 'Argentina', 'Austria', 'Bélgica', 'Chequia',
+    'Chile', 'Colombia', 'Costa Rica', 'Dinamarca', 'Ecuador', 'Eslovenia',
+    'España', 'Francia', 'Italia', 'Luxemburgo', 'Noruega', 'Países Bajos',
+    'Panamá', 'Paraguay', 'Perú', 'Portugal', 'Puerto Rico', 'Suecia',
+    'Suiza', 'Uruguay'
   ]
+
+  // Conteo de países por región (hardcodeado - actualizar si se añaden países)
+  const conteoPaisesRegion = { europa: 16, sudamerica: 7, centroamerica: 3 }
 
   // Hook de filtros persistentes (reemplaza el useState anterior)
   const { filtros, setFiltros, metadata, setMetadata, limpiarFiltros, contarFiltrosActivos } = usePersistentFilters()
@@ -621,6 +603,7 @@ export default function MapaPage() {
             onClose={() => {}}
             totalResultados={areasParaLista.length}
             paisesDisponibles={paisesDisponibles}
+            conteoPaisesRegion={conteoPaisesRegion}
           />
         </aside>
 
@@ -693,6 +676,7 @@ export default function MapaPage() {
           onClose={() => setMostrarFiltros(false)}
           totalResultados={areasParaLista.length}
           paisesDisponibles={paisesDisponibles}
+          conteoPaisesRegion={conteoPaisesRegion}
         />
       </BottomSheet>
 

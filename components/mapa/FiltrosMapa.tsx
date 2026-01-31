@@ -18,6 +18,11 @@ interface FiltrosMapaProps {
   onClose?: () => void
   totalResultados: number
   paisesDisponibles: string[]
+  conteoPaisesRegion?: {
+    europa: number
+    sudamerica: number
+    centroamerica: number
+  }
 }
 
 const SERVICIOS = [
@@ -46,8 +51,8 @@ const CARACTERISTICAS = [
   { id: 'verificado', label: '✓ Verificado oficialmente' }
 ]
 
-// Regiones para filtrar
-const REGIONES = {
+// Regiones para filtrar - EXPORTAR para uso en page.tsx
+export const REGIONES = {
   EUROPA: {
     id: 'REGION_EUROPA',
     label: 'Europa',
@@ -153,7 +158,7 @@ export function paisPerteneceAFiltro(pais: string, filtro: string): boolean {
   return paisNormalizado === filtro // País específico
 }
 
-export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, totalResultados, paisesDisponibles }: FiltrosMapaProps) {
+export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, totalResultados, paisesDisponibles, conteoPaisesRegion }: FiltrosMapaProps) {
   const [busquedaLocal, setBusquedaLocal] = useState(filtros.busqueda)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
   
@@ -447,7 +452,7 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
                       <span className="text-xl">{REGIONES.EUROPA.emoji}</span>
                       <div>
                         <span className="font-medium text-gray-900">{REGIONES.EUROPA.label}</span>
-                        <p className="text-xs text-gray-500">{REGIONES.EUROPA.paises.length} países</p>
+                        <p className="text-xs text-gray-500">{conteoPaisesRegion?.europa || 0} países con áreas</p>
                       </div>
                     </div>
                     {paisSeleccionadoTemp === REGIONES.EUROPA.id && (
@@ -467,7 +472,7 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
                       <span className="text-xl">{REGIONES.SUDAMERICA.emoji}</span>
                       <div>
                         <span className="font-medium text-gray-900">{REGIONES.SUDAMERICA.label}</span>
-                        <p className="text-xs text-gray-500">{REGIONES.SUDAMERICA.paises.length} países</p>
+                        <p className="text-xs text-gray-500">{conteoPaisesRegion?.sudamerica || 0} países con áreas</p>
                       </div>
                     </div>
                     {paisSeleccionadoTemp === REGIONES.SUDAMERICA.id && (
@@ -487,7 +492,7 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
                       <span className="text-xl">{REGIONES.CENTROAMERICA.emoji}</span>
                       <div>
                         <span className="font-medium text-gray-900">{REGIONES.CENTROAMERICA.label}</span>
-                        <p className="text-xs text-gray-500">{REGIONES.CENTROAMERICA.paises.length} países</p>
+                        <p className="text-xs text-gray-500">{conteoPaisesRegion?.centroamerica || 0} países con áreas</p>
                       </div>
                     </div>
                     {paisSeleccionadoTemp === REGIONES.CENTROAMERICA.id && (
