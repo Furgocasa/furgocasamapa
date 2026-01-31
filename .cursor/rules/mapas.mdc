@@ -1,0 +1,31 @@
+# Reglas de Mapas - Sincronización Obligatoria
+
+## REGLA CRÍTICA: Cambios en Mapas
+
+Cada vez que se modifique cualquier componente de mapa, **OBLIGATORIAMENTE** replicar el cambio en TODOS los proveedores:
+
+1. `components/mapa/MapaInteractivoGoogle.tsx` - Google Maps
+2. `components/mapa/MapLibreMap.tsx` - MapLibre GL
+3. `components/mapa/LeafletMap.tsx` - Leaflet
+
+## Cambios que SIEMPRE deben sincronizarse:
+
+- Props del componente (añadir/modificar)
+- Funciones de interacción (resetZoom, toggleGPS, etc.)
+- Estilos de popup/InfoWindow
+- Lógica de clustering
+- Manejo de marcadores
+- Eventos de click
+- Botones y controles UI
+
+## Proceso de cambio:
+
+1. Hacer el cambio en el mapa principal
+2. **INMEDIATAMENTE** replicar en los otros dos
+3. Verificar que las props coincidan en `MapaInteractivo.tsx`
+4. Commit con todos los archivos juntos
+
+## Referencia de implementación:
+
+- **MapLibreMap.tsx** es el modelo de referencia actual
+- Copiar lógica y adaptar APIs específicas de cada librería
