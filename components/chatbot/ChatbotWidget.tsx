@@ -13,6 +13,7 @@ interface Message {
 
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isMinimized, setIsMinimized] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [messages, setMessages] = useState<Message[]>([])
@@ -121,9 +122,20 @@ export default function ChatbotWidget() {
   // Abrir chat
   const handleOpen = () => {
     setIsOpen(true)
+    setIsMinimized(false)
     if (user && !conversacionId) {
       iniciarConversacion()
     }
+  }
+  
+  // Minimizar chat
+  const handleMinimize = () => {
+    setIsMinimized(true)
+  }
+  
+  // Expandir chat desde minimizado
+  const handleExpand = () => {
+    setIsMinimized(false)
   }
   
   // Enviar mensaje
@@ -280,7 +292,7 @@ export default function ChatbotWidget() {
   
   return (
     <>
-      {/* Botón flotante con avatar */}
+      {/* Botón flotante con avatar - cuando el chat está cerrado */}
       {!isOpen && (
         <button
           onClick={handleOpen}
@@ -299,8 +311,27 @@ export default function ChatbotWidget() {
         </button>
       )}
       
+      {/* Avatar minimizado con botón de expandir */}
+      {isOpen && user && isMinimized && (
+        <button
+          onClick={handleExpand}
+          className="fixed bottom-24 right-6 md:bottom-6 bg-gradient-to-r from-blue-600 to-gray-700 rounded-full p-2 shadow-2xl hover:scale-110 transition-transform z-50 group"
+          title="Expandir Tío Viajero IA"
+        >
+          <img 
+            src="/tio-viajero-avatar.png" 
+            alt="Tío Viajero IA" 
+            className="w-14 h-14 object-cover rounded-full border-2 border-white"
+          />
+          {/* Badge "IA" */}
+          <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg">
+            IA
+          </span>
+        </button>
+      )}
+      
       {/* Ventana del chat */}
-      {isOpen && user && (
+      {isOpen && user && !isMinimized && (
         <div className="fixed bottom-24 right-6 md:bottom-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200 max-w-[calc(100vw-3rem)] max-h-[calc(100vh-3rem)]">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-gray-700 text-white p-4 rounded-t-2xl flex justify-between items-center">
@@ -318,10 +349,11 @@ export default function ChatbotWidget() {
               </div>
             </div>
             <button 
-              onClick={() => setIsOpen(false)} 
-              className="text-white hover:bg-white/20 rounded-full p-1 transition-colors"
+              onClick={handleMinimize} 
+              className="text-white hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-colors text-2xl font-bold leading-none pb-1"
+              title="Minimizar"
             >
-              ✕
+              −
             </button>
           </div>
           
