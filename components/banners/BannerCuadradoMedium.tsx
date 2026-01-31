@@ -14,7 +14,7 @@ export function BannerCuadradoMedium({ position }: BannerCuadradoMediumProps) {
         <a
           href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=cuadrado_medium"
           target="_blank"
-          rel="noopener noreferrer"
+          rel="noopener noreferrer sponsored nofollow"
           className="relative flex flex-col items-center justify-center h-full p-5 md:p-8 no-underline text-white z-[1] text-center gap-4 md:gap-6"
         >
           {/* Logo Section */}

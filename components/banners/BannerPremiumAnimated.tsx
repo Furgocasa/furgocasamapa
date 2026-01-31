@@ -16,7 +16,7 @@ export function BannerPremiumAnimated({ position }: BannerPremiumAnimatedProps) 
           {/* Sección Izquierda */}
           <div className="flex-1 flex flex-col gap-6">
             <a href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=premium_animated"
-               target="_blank" rel="noopener noreferrer" className="no-underline">
+               target="_blank" rel="noopener noreferrer sponsored nofollow" className="no-underline">
               <div className="flex items-center gap-4">
                 <div className="text-[56px] animate-float-banner">⭐</div>
                 <div className="flex flex-col gap-1">
@@ -54,7 +54,7 @@ export function BannerPremiumAnimated({ position }: BannerPremiumAnimatedProps) 
           {/* Sección Derecha */}
           <div className="flex flex-col gap-4 w-full lg:w-auto">
             <a href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=premium_animated"
-               target="_blank" rel="noopener noreferrer"
+               target="_blank" rel="noopener noreferrer sponsored nofollow"
                className="bg-gradient-to-r from-[#ffd935] to-[#ffe566] text-[#063971] px-12 py-5 rounded-2xl font-black text-xl text-center transition-all duration-300 shadow-[0_8px_24px_rgba(255,217,53,0.5)] hover:shadow-[0_12px_36px_rgba(255,217,53,0.7)] hover:translate-y-[-4px] no-underline group">
               <span className="relative z-[1]">Explorar Lugares →</span>
             </a>

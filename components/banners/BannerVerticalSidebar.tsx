@@ -11,7 +11,7 @@ export function BannerVerticalSidebar({ position }: BannerVerticalSidebarProps) 
         <a
           href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=vertical_sidebar"
           target="_blank"
-          rel="noopener noreferrer"
+          rel="noopener noreferrer sponsored nofollow"
           className="block no-underline text-white"
         >
           <div className="bg-[#ffd935] p-6 text-center">
@@ -26,7 +26,7 @@ export function BannerVerticalSidebar({ position }: BannerVerticalSidebarProps) 
           <a
             href="https://www.casicinco.com/restaurante?utm_source=furgocasa&utm_medium=banner&utm_campaign=vertical_sidebar"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noopener noreferrer sponsored nofollow"
             className="flex items-start gap-3 mb-5 no-underline text-white"
           >
             <div className="text-2xl flex-shrink-0">🍽️</div>
@@ -41,7 +41,7 @@ export function BannerVerticalSidebar({ position }: BannerVerticalSidebarProps) 
           <a
             href="https://www.casicinco.com/bar?utm_source=furgocasa&utm_medium=banner&utm_campaign=vertical_sidebar"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noopener noreferrer sponsored nofollow"
             className="flex items-start gap-3 mb-5 no-underline text-white"
           >
             <div className="text-2xl flex-shrink-0">🍺</div>
@@ -56,7 +56,7 @@ export function BannerVerticalSidebar({ position }: BannerVerticalSidebarProps) 
           <a
             href="https://www.casicinco.com/hotel?utm_source=furgocasa&utm_medium=banner&utm_campaign=vertical_sidebar"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noopener noreferrer sponsored nofollow"
             className="flex items-start gap-3 mb-5 no-underline text-white"
           >
             <div className="text-2xl flex-shrink-0">🏨</div>
@@ -71,7 +71,7 @@ export function BannerVerticalSidebar({ position }: BannerVerticalSidebarProps) 
           <a
             href="https://www.casicinco.com/ruta?utm_source=furgocasa&utm_medium=banner&utm_campaign=vertical_sidebar"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noopener noreferrer sponsored nofollow"
             className="flex items-start gap-3 mb-0 no-underline text-white"
           >
             <div className="text-2xl flex-shrink-0">🛣️</div>
@@ -88,7 +88,7 @@ export function BannerVerticalSidebar({ position }: BannerVerticalSidebarProps) 
           <a
             href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=vertical_sidebar"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noopener noreferrer sponsored nofollow"
             className="block bg-[#ffd935] text-[#063971] p-4 rounded-[10px] font-extrabold text-base text-center transition-all duration-300 no-underline hover:bg-[#ffe566] hover:shadow-[0_4px_16px_rgba(255,217,53,0.4)]"
           >
             Explorar Lugares →

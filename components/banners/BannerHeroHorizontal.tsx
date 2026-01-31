@@ -14,7 +14,7 @@ export function BannerHeroHorizontal({ position }: BannerProps) {
           <a
             href={`https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noopener noreferrer sponsored nofollow"
             className="flex-1 no-underline text-white"
           >
             <div className="text-3xl font-extrabold text-[#ffd935] mb-2 tracking-tight">
@@ -31,7 +31,7 @@ export function BannerHeroHorizontal({ position }: BannerProps) {
           <a
             href={`https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noopener noreferrer sponsored nofollow"
             className="bg-[#ffd935] text-[#063971] px-6 py-3 rounded-lg font-bold text-sm whitespace-nowrap transition-all hover:bg-[#ffe566] hover:scale-105 no-underline"
           >
             Descubrir Ahora →

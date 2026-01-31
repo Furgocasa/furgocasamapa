@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
+// Banners Casi Cinco
 import { BannerHeroHorizontal } from './BannerHeroHorizontal'
 import { BannerCuadradoMedium } from './BannerCuadradoMedium'
 import { BannerLeaderboardFull } from './BannerLeaderboardFull'
@@ -13,6 +14,15 @@ import { BannerUltraWideBares } from './BannerUltraWideBares'
 import { BannerUltraWideHoteles } from './BannerUltraWideHoteles'
 import { BannerUltraWideRestaurantes } from './BannerUltraWideRestaurantes'
 import { BannerMegaWideSlider } from './BannerMegaWideSlider'
+// Banners Furgocasa
+import { BannerFurgocasaHero } from './BannerFurgocasaHero'
+import { BannerFurgocasaLeaderboard } from './BannerFurgocasaLeaderboard'
+import { BannerFurgocasaVertical } from './BannerFurgocasaVertical'
+import { BannerFurgocasaMobile } from './BannerFurgocasaMobile'
+import { BannerFurgocasaWide } from './BannerFurgocasaWide'
+import { BannerFurgocasaPremium } from './BannerFurgocasaPremium'
+import { BannerFurgocasaImageAlquiler } from './BannerFurgocasaImageAlquiler'
+import { BannerFurgocasaImageVenta } from './BannerFurgocasaImageVenta'
 import { useBannerContext } from './BannerContext'
 
 interface BannerConfig {
@@ -23,6 +33,7 @@ interface BannerConfig {
 
 const BANNERS_CONFIG = {
   mobile: [
+    // Casi Cinco
     { id: 'banner-mobile', component: BannerMobile, weight: 1.5 },
     { id: 'cuadrado-medium-mobile', component: BannerCuadradoMedium, weight: 1.3 },
     { id: 'vertical-sidebar-mobile', component: BannerVerticalSidebar, weight: 1.2 },
@@ -30,8 +41,13 @@ const BANNERS_CONFIG = {
     { id: 'ultra-wide-bares-mobile', component: BannerUltraWideBares, weight: 1 },
     { id: 'ultra-wide-hoteles-mobile', component: BannerUltraWideHoteles, weight: 1 },
     { id: 'ultra-wide-restaurantes-mobile', component: BannerUltraWideRestaurantes, weight: 1 },
+    // Furgocasa
+    { id: 'furgocasa-mobile', component: BannerFurgocasaMobile, weight: 1.5 },
+    { id: 'furgocasa-hero-mobile', component: BannerFurgocasaHero, weight: 1.3 },
+    { id: 'furgocasa-vertical-mobile', component: BannerFurgocasaVertical, weight: 1.2 },
   ] as BannerConfig[],
   tablet: [
+    // Casi Cinco
     { id: 'cuadrado-medium-tablet', component: BannerCuadradoMedium, weight: 1.3 },
     { id: 'hero-horizontal', component: BannerHeroHorizontal, weight: 1 },
     { id: 'leaderboard-full', component: BannerLeaderboardFull, weight: 1 },
@@ -39,24 +55,39 @@ const BANNERS_CONFIG = {
     { id: 'ultra-wide-hoteles-tablet', component: BannerUltraWideHoteles, weight: 1.4 },
     { id: 'ultra-wide-restaurantes-tablet', component: BannerUltraWideRestaurantes, weight: 1.4 },
     { id: 'wide-carousel-tablet', component: BannerWideCarousel, weight: 1.2 },
+    // Furgocasa
+    { id: 'furgocasa-hero-tablet', component: BannerFurgocasaHero, weight: 1.4 },
+    { id: 'furgocasa-leaderboard-tablet', component: BannerFurgocasaLeaderboard, weight: 1.4 },
+    { id: 'furgocasa-wide-tablet', component: BannerFurgocasaWide, weight: 1.3 },
+    { id: 'furgocasa-premium-tablet', component: BannerFurgocasaPremium, weight: 1.3 },
+    { id: 'furgocasa-img-alquiler-tablet', component: BannerFurgocasaImageAlquiler, weight: 1.5 },
   ] as BannerConfig[],
   desktop: [
-    // 🎯 Banners específicos por categoría (mayor peso)
+    // 🎯 Casi Cinco - Banners específicos por categoría
     { id: 'ultra-wide-bares-desktop', component: BannerUltraWideBares, weight: 1.6 },
     { id: 'ultra-wide-hoteles-desktop', component: BannerUltraWideHoteles, weight: 1.6 },
     { id: 'ultra-wide-restaurantes-desktop', component: BannerUltraWideRestaurantes, weight: 1.6 },
     
-    // 🎨 Banners premium con animaciones
+    // 🎨 Casi Cinco - Banners premium con animaciones
     { id: 'premium-animated-desktop', component: BannerPremiumAnimated, weight: 1.4 },
     { id: 'mega-wide-slider-desktop', component: BannerMegaWideSlider, weight: 1.4 },
     { id: 'ultra-wide-modern-desktop', component: BannerUltraWideModern, weight: 1.3 },
     { id: 'wide-carousel-desktop', component: BannerWideCarousel, weight: 1.3 },
     
-    // 📐 Banners estándar
+    // 📐 Casi Cinco - Banners estándar
     { id: 'vertical-sidebar-desktop', component: BannerVerticalSidebar, weight: 1.1 },
     { id: 'leaderboard-full-desktop', component: BannerLeaderboardFull, weight: 0.9 },
     { id: 'hero-horizontal-desktop', component: BannerHeroHorizontal, weight: 0.8 },
     { id: 'cuadrado-medium-desktop', component: BannerCuadradoMedium, weight: 0.8 },
+    
+    // 🚐 Furgocasa - Banners premium (mismo peso que Casi Cinco para 50/50)
+    { id: 'furgocasa-img-alquiler-desktop', component: BannerFurgocasaImageAlquiler, weight: 1.7 },
+    { id: 'furgocasa-img-venta-desktop', component: BannerFurgocasaImageVenta, weight: 1.7 },
+    { id: 'furgocasa-premium-desktop', component: BannerFurgocasaPremium, weight: 1.6 },
+    { id: 'furgocasa-wide-desktop', component: BannerFurgocasaWide, weight: 1.5 },
+    { id: 'furgocasa-leaderboard-desktop', component: BannerFurgocasaLeaderboard, weight: 1.4 },
+    { id: 'furgocasa-hero-desktop', component: BannerFurgocasaHero, weight: 1.3 },
+    { id: 'furgocasa-vertical-desktop', component: BannerFurgocasaVertical, weight: 1.1 },
   ] as BannerConfig[],
 }
 
@@ -170,6 +201,7 @@ function selectBanner(
 
 /**
  * Componente que rota banners inteligentemente según el dispositivo
+ * ✅ MEZCLA: Banners de Casi Cinco y Furgocasa aleatoriamente
  * ✅ GARANTIZA: No repetir banners en la misma página
  */
 export function BannerRotativo({

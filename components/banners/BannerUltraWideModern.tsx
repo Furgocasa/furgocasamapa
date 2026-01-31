@@ -34,7 +34,7 @@ export function BannerUltraWideModern({ position }: BannerProps) {
                 <a
                   href={`https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener noreferrer sponsored nofollow"
                   className="text-6xl font-black text-[#ffd935] leading-none tracking-[-2px] no-underline hover:text-[#ffe566] transition-colors"
                 >
                   Casi Cinco
@@ -54,7 +54,7 @@ export function BannerUltraWideModern({ position }: BannerProps) {
               <a
                 href={`https://www.casicinco.com/ruta?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noopener noreferrer sponsored nofollow"
                 className="flex items-center gap-3 bg-white/6 backdrop-blur-sm border border-white/10 p-5 rounded-2xl transition-all hover:bg-[#ffd935]/10 hover:border-[#ffd935]/30 hover:translate-x-2 no-underline"
               >
                 <div className="text-3xl">🛣️</div>
@@ -69,7 +69,7 @@ export function BannerUltraWideModern({ position }: BannerProps) {
               <a
                 href={`https://www.casicinco.com/mapa?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noopener noreferrer sponsored nofollow"
                 className="flex items-center gap-3 bg-white/6 backdrop-blur-sm border border-white/10 p-5 rounded-2xl transition-all hover:bg-[#ffd935]/10 hover:border-[#ffd935]/30 hover:translate-x-2 no-underline"
               >
                 <div className="text-3xl">🤖</div>
@@ -82,7 +82,7 @@ export function BannerUltraWideModern({ position }: BannerProps) {
               <a
                 href={`https://www.casicinco.com/mapa?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noopener noreferrer sponsored nofollow"
                 className="flex items-center gap-3 bg-white/6 backdrop-blur-sm border border-white/10 p-5 rounded-2xl transition-all hover:bg-[#ffd935]/10 hover:border-[#ffd935]/30 hover:translate-x-2 no-underline"
               >
                 <div className="text-3xl">🗺️</div>
@@ -95,7 +95,7 @@ export function BannerUltraWideModern({ position }: BannerProps) {
               <a
                 href={`https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noopener noreferrer sponsored nofollow"
                 className="flex items-center gap-3 bg-white/6 backdrop-blur-sm border border-white/10 p-5 rounded-2xl transition-all hover:bg-[#ffd935]/10 hover:border-[#ffd935]/30 hover:translate-x-2 no-underline"
               >
                 <div className="text-3xl">⭐</div>
@@ -110,7 +110,7 @@ export function BannerUltraWideModern({ position }: BannerProps) {
               <a
                 href={`https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noopener noreferrer sponsored nofollow"
                 className="relative bg-gradient-to-br from-[#ffd935] to-[#ffe566] text-[#063971] px-14 py-6 rounded-2xl font-black text-2xl transition-all hover:-translate-y-1 hover:shadow-[0_12px_48px_rgba(255,217,53,0.7)] shadow-[0_8px_32px_rgba(255,217,53,0.5)] no-underline"
               >
                 <span className="relative z-10">Explorar Ahora →</span>
@@ -134,7 +134,7 @@ export function BannerUltraWideModern({ position }: BannerProps) {
               <a
                 href={`https://www.casicinco.com/restaurante/madrid?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noopener noreferrer sponsored nofollow"
                 className="bg-white/8 backdrop-blur-sm border border-white/12 rounded-2xl p-5 transition-all hover:bg-white/14 hover:border-[#ffd935]/40 hover:-translate-y-1.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] no-underline"
               >
                 <div className="text-4xl mb-3">🍽️</div>
@@ -150,7 +150,7 @@ export function BannerUltraWideModern({ position }: BannerProps) {
               <a
                 href={`https://www.casicinco.com/bar/barcelona?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noopener noreferrer sponsored nofollow"
                 className="bg-white/8 backdrop-blur-sm border border-white/12 rounded-2xl p-5 transition-all hover:bg-white/14 hover:border-[#ffd935]/40 hover:-translate-y-1.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] no-underline"
               >
                 <div className="text-4xl mb-3">🍺</div>
@@ -166,7 +166,7 @@ export function BannerUltraWideModern({ position }: BannerProps) {
               <a
                 href={`https://www.casicinco.com/hotel/barcelona?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noopener noreferrer sponsored nofollow"
                 className="bg-white/8 backdrop-blur-sm border border-white/12 rounded-2xl p-5 transition-all hover:bg-white/14 hover:border-[#ffd935]/40 hover:-translate-y-1.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] no-underline"
               >
                 <div className="text-4xl mb-3">🏨</div>
@@ -182,7 +182,7 @@ export function BannerUltraWideModern({ position }: BannerProps) {
               <a
                 href={`https://www.casicinco.com/restaurante/valencia?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noopener noreferrer sponsored nofollow"
                 className="bg-white/8 backdrop-blur-sm border border-white/12 rounded-2xl p-5 transition-all hover:bg-white/14 hover:border-[#ffd935]/40 hover:-translate-y-1.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] no-underline"
               >
                 <div className="text-4xl mb-3">🍽️</div>

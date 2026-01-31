@@ -28,7 +28,7 @@ export function BannerUltraWideBares({ position }: BannerUltraWideBaresProps) {
           <a
             href="https://www.casicinco.com/bar?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_bares"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noopener noreferrer sponsored nofollow"
             className="no-underline text-inherit"
           >
             <div className="flex items-center gap-3 md:gap-4">
@@ -59,7 +59,7 @@ export function BannerUltraWideBares({ position }: BannerUltraWideBaresProps) {
             <a
               href="https://www.casicinco.com/bar?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_bares"
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noopener noreferrer sponsored nofollow"
               className="bg-[rgba(255,255,255,0.06)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.1)] p-4 rounded-2xl flex items-center gap-3 transition-all duration-300 hover:bg-[rgba(218,112,214,0.15)] hover:border-[rgba(218,112,214,0.4)] hover:translate-x-2 no-underline text-inherit"
             >
               <div className="text-[28px] flex-shrink-0">⭐</div>
@@ -75,7 +75,7 @@ export function BannerUltraWideBares({ position }: BannerUltraWideBaresProps) {
             <a
               href="https://www.casicinco.com/bar?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_bares"
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noopener noreferrer sponsored nofollow"
               className="bg-[rgba(255,255,255,0.06)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.1)] p-4 rounded-2xl flex items-center gap-3 transition-all duration-300 hover:bg-[rgba(218,112,214,0.15)] hover:border-[rgba(218,112,214,0.4)] hover:translate-x-2 no-underline text-inherit"
             >
               <div className="text-[28px] flex-shrink-0">🍸</div>
@@ -91,7 +91,7 @@ export function BannerUltraWideBares({ position }: BannerUltraWideBaresProps) {
             <a
               href="https://www.casicinco.com/mapa?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_bares"
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noopener noreferrer sponsored nofollow"
               className="bg-[rgba(255,255,255,0.06)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.1)] p-4 rounded-2xl flex items-center gap-3 transition-all duration-300 hover:bg-[rgba(218,112,214,0.15)] hover:border-[rgba(218,112,214,0.4)] hover:translate-x-2 no-underline text-inherit"
             >
               <div className="text-[28px] flex-shrink-0">🗺️</div>
@@ -107,7 +107,7 @@ export function BannerUltraWideBares({ position }: BannerUltraWideBaresProps) {
             <a
               href="https://www.casicinco.com/ruta?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_bares"
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noopener noreferrer sponsored nofollow"
               className="bg-[rgba(255,255,255,0.06)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.1)] p-4 rounded-2xl flex items-center gap-3 transition-all duration-300 hover:bg-[rgba(218,112,214,0.15)] hover:border-[rgba(218,112,214,0.4)] hover:translate-x-2 no-underline text-inherit"
             >
               <div className="text-[28px] flex-shrink-0">🛣️</div>
@@ -126,7 +126,7 @@ export function BannerUltraWideBares({ position }: BannerUltraWideBaresProps) {
             <a
               href="https://www.casicinco.com/bar?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_bares"
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noopener noreferrer sponsored nofollow"
               className="inline-block bg-gradient-to-br from-[#ffd935] to-[#ffe566] text-[#063971] px-12 py-5 rounded-2xl font-black text-xl no-underline transition-all duration-[0.4s] shadow-[0_8px_32px_rgba(255,217,53,0.5)] relative overflow-hidden hover:translate-y-[-4px] hover:shadow-[0_12px_48px_rgba(255,217,53,0.7)] group"
             >
               <span className="relative z-[1]">Ver Bares →</span>
@@ -151,7 +151,7 @@ export function BannerUltraWideBares({ position }: BannerUltraWideBaresProps) {
             <a
               href="https://www.casicinco.com/bar/barcelona?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_bares"
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noopener noreferrer sponsored nofollow"
               className="bg-[rgba(255,255,255,0.08)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.12)] rounded-[20px] p-5 transition-all duration-300 hover:bg-[rgba(255,255,255,0.14)] hover:border-[rgba(255,217,53,0.4)] hover:translate-y-[-6px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] no-underline text-inherit block animate-fadeInUp"
             >
               <div className="text-[36px] mb-3">🍸</div>
@@ -178,7 +178,7 @@ export function BannerUltraWideBares({ position }: BannerUltraWideBaresProps) {
             <a
               href="https://www.casicinco.com/bar/madrid?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_bares"
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noopener noreferrer sponsored nofollow"
               className="bg-[rgba(255,255,255,0.08)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.12)] rounded-[20px] p-5 transition-all duration-300 hover:bg-[rgba(255,255,255,0.14)] hover:border-[rgba(255,217,53,0.4)] hover:translate-y-[-6px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] no-underline text-inherit block animate-fadeInUp"
               style={{ animationDelay: "0.1s" }}
             >
@@ -206,7 +206,7 @@ export function BannerUltraWideBares({ position }: BannerUltraWideBaresProps) {
             <a
               href="https://www.casicinco.com/bar/sevilla?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_bares"
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noopener noreferrer sponsored nofollow"
               className="bg-[rgba(255,255,255,0.08)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.12)] rounded-[20px] p-5 transition-all duration-300 hover:bg-[rgba(255,255,255,0.14)] hover:border-[rgba(255,217,53,0.4)] hover:translate-y-[-6px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] no-underline text-inherit block animate-fadeInUp"
               style={{ animationDelay: "0.2s" }}
             >
@@ -234,7 +234,7 @@ export function BannerUltraWideBares({ position }: BannerUltraWideBaresProps) {
             <a
               href="https://www.casicinco.com/bar/valencia?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_bares"
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noopener noreferrer sponsored nofollow"
               className="bg-[rgba(255,255,255,0.08)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.12)] rounded-[20px] p-5 transition-all duration-300 hover:bg-[rgba(255,255,255,0.14)] hover:border-[rgba(255,217,53,0.4)] hover:translate-y-[-6px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] no-underline text-inherit block animate-fadeInUp"
               style={{ animationDelay: "0.3s" }}
             >

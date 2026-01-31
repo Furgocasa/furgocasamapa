@@ -156,7 +156,7 @@ utm_campaign={banner_type}_{position}_area_detail
 - ✅ **Animaciones CSS** (hover, pulse, float)
 - ✅ **Enlaces UTM** para tracking
 - ✅ **Target="_blank"** (nueva pestaña)
-- ✅ **rel="noopener noreferrer"** (seguridad)
+- ✅ **rel="noopener noreferrer sponsored nofollow"** (seguridad + SEO publicidad)
 - ✅ **Glassmorphism** y efectos modernos
 - ✅ **Transiciones suaves** 
 - ✅ **Colores de marca** Casi Cinco (#063971, #ffd935)
@@ -213,7 +213,7 @@ export function BannerNuevo({ position }: BannerProps) {
       <a
         href={`https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
         target="_blank"
-        rel="noopener noreferrer"
+        rel="noopener noreferrer sponsored nofollow"
       >
         {/* Contenido del banner */}
       </a>

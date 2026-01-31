@@ -47,7 +47,7 @@ export function BannerMegaWideSlider({ position }: BannerMegaWideSliderProps) {
           {/* Categorías Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
             <a href="https://www.casicinco.com/restaurante?utm_source=furgocasa&utm_medium=banner&utm_campaign=mega_wide"
-               target="_blank" rel="noopener noreferrer"
+               target="_blank" rel="noopener noreferrer sponsored nofollow"
                className="bg-[rgba(255,255,255,0.08)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.12)] p-6 rounded-2xl transition-all duration-300 hover:bg-[rgba(255,255,255,0.14)] hover:border-[rgba(255,217,53,0.4)] hover:translate-y-[-6px] no-underline">
               <div className="text-5xl mb-3">🍽️</div>
               <div className="text-xl font-bold text-white mb-2">Restaurantes</div>
@@ -56,7 +56,7 @@ export function BannerMegaWideSlider({ position }: BannerMegaWideSliderProps) {
             </a>
 
             <a href="https://www.casicinco.com/bar?utm_source=furgocasa&utm_medium=banner&utm_campaign=mega_wide"
-               target="_blank" rel="noopener noreferrer"
+               target="_blank" rel="noopener noreferrer sponsored nofollow"
                className="bg-[rgba(255,255,255,0.08)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.12)] p-6 rounded-2xl transition-all duration-300 hover:bg-[rgba(255,255,255,0.14)] hover:border-[rgba(255,217,53,0.4)] hover:translate-y-[-6px] no-underline">
               <div className="text-5xl mb-3">🍺</div>
               <div className="text-xl font-bold text-white mb-2">Bares</div>
@@ -65,7 +65,7 @@ export function BannerMegaWideSlider({ position }: BannerMegaWideSliderProps) {
             </a>
 
             <a href="https://www.casicinco.com/hotel?utm_source=furgocasa&utm_medium=banner&utm_campaign=mega_wide"
-               target="_blank" rel="noopener noreferrer"
+               target="_blank" rel="noopener noreferrer sponsored nofollow"
                className="bg-[rgba(255,255,255,0.08)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.12)] p-6 rounded-2xl transition-all duration-300 hover:bg-[rgba(255,255,255,0.14)] hover:border-[rgba(255,217,53,0.4)] hover:translate-y-[-6px] no-underline col-span-2 md:col-span-1">
               <div className="text-5xl mb-3">🏨</div>
               <div className="text-xl font-bold text-white mb-2">Hoteles</div>
@@ -77,7 +77,7 @@ export function BannerMegaWideSlider({ position }: BannerMegaWideSliderProps) {
           {/* CTA */}
           <div className="text-center">
             <a href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=mega_wide"
-               target="_blank" rel="noopener noreferrer"
+               target="_blank" rel="noopener noreferrer sponsored nofollow"
                className="inline-block bg-gradient-to-r from-[#ffd935] to-[#ffe566] text-[#063971] px-16 py-6 rounded-2xl font-black text-2xl transition-all duration-300 shadow-[0_10px_40px_rgba(255,217,53,0.5)] hover:shadow-[0_15px_50px_rgba(255,217,53,0.7)] hover:translate-y-[-4px] no-underline">
               Explorar Casi Cinco →
             </a>

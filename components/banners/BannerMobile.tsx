@@ -12,7 +12,7 @@ export function BannerMobile({ position }: BannerMobileProps) {
           <a
             href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=mobile"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noopener noreferrer sponsored nofollow"
             className="flex items-center gap-3 flex-1 no-underline text-white"
           >
             <div className="flex items-center gap-3 flex-1">
@@ -32,7 +32,7 @@ export function BannerMobile({ position }: BannerMobileProps) {
           <a
             href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=mobile"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noopener noreferrer sponsored nofollow"
             className="bg-[#ffd935] text-[#063971] px-4 py-2.5 rounded-lg font-extrabold text-[13px] whitespace-nowrap transition-all duration-300 shadow-[0_2px_8px_rgba(255,217,53,0.3)] hover:bg-[#ffe566] hover:scale-105 no-underline"
           >
             Ver →

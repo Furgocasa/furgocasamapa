@@ -15,7 +15,7 @@ export function BannerLeaderboardFull({ position }: BannerProps) {
             <a
               href={`https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noopener noreferrer sponsored nofollow"
               className="no-underline"
             >
               <div className="text-5xl md:text-6xl animate-pulse">⭐</div>
@@ -24,7 +24,7 @@ export function BannerLeaderboardFull({ position }: BannerProps) {
               <a
                 href={`https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noopener noreferrer sponsored nofollow"
                 className="no-underline"
               >
                 <div className="text-3xl md:text-4xl font-black text-[#ffd935] mb-1 tracking-tighter">
@@ -44,7 +44,7 @@ export function BannerLeaderboardFull({ position }: BannerProps) {
                 <a
                   href={`https://www.casicinco.com/ruta?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener noreferrer sponsored nofollow"
                   className="flex items-center gap-1.5 text-[13px] text-white/85 no-underline hover:text-[#ffd935] transition-colors"
                 >
                   <span className="text-lg">🛣️</span>
@@ -65,7 +65,7 @@ export function BannerLeaderboardFull({ position }: BannerProps) {
             <a
               href={`https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noopener noreferrer sponsored nofollow"
               className="bg-[#ffd935] text-[#063971] px-8 py-4 rounded-xl font-extrabold text-base whitespace-nowrap transition-all hover:bg-[#ffe566] hover:scale-105 hover:shadow-[0_6px_20px_rgba(255,217,53,0.5)] shadow-[0_4px_12px_rgba(255,217,53,0.3)] no-underline w-full md:w-auto text-center"
             >
               Explorar Ahora →
