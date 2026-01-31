@@ -342,9 +342,13 @@ export default function MapaPage() {
       if (paisFiltroLista) {
         const paisArea = area.pais?.trim() || ''
         
-        // Usar función que soporta regiones
-        if (!paisPerteneceAFiltro(paisArea, paisFiltroLista)) {
+        // DEBUG: Ver qué países se están comparando
+        const perteneceAlFiltro = paisPerteneceAFiltro(paisArea, paisFiltroLista)
+        if (!perteneceAlFiltro) {
+          // console.log(`❌ ${paisArea} NO pertenece a ${paisFiltroLista}`)
           return false
+        } else {
+          // console.log(`✅ ${paisArea} SÍ pertenece a ${paisFiltroLista}`)
         }
       }
 
@@ -411,7 +415,8 @@ export default function MapaPage() {
       // Filtro de país/región
       if (paisFiltroLista) {
         const paisArea = area.pais?.trim() || ''
-        if (!paisPerteneceAFiltro(paisArea, paisFiltroLista)) {
+        const perteneceAlFiltro = paisPerteneceAFiltro(paisArea, paisFiltroLista)
+        if (!perteneceAlFiltro) {
           return false
         }
       }
@@ -465,7 +470,9 @@ export default function MapaPage() {
         precio: filtros.precio,
         servicios: filtros.servicios,
         caracteristicas: filtros.caracteristicas
-      }
+      },
+      // DEBUG: Muestra de países en las áreas filtradas
+      paisesEnResultado: [...new Set(filtradas.map(a => a.pais))].slice(0, 10)
     })
     
     return filtradas
