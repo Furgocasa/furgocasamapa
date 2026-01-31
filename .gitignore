@@ -61,3 +61,6 @@ AppData/
 .rustup/
 .ssh/
 .wdm/
+
+# Archivos de trabajo e imágenes de desarrollo
+/images/
