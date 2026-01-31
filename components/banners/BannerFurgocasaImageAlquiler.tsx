@@ -66,16 +66,27 @@ export function BannerFurgocasaImageAlquiler({ position }: BannerProps) {
                 </div>
               </div>
 
-              <div className="w-full md:w-[320px] lg:w-[400px]">
+              <div className="w-full md:w-[320px] lg:w-[400px] space-y-3">
                 <div className="relative rounded-xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-500">
                   <img 
                     src="/images/furgocasa/camper-interior-1.jpg"
                     alt="Interior Camper Furgocasa"
-                    className="w-full h-[240px] object-cover"
+                    className="w-full h-[180px] object-cover"
                   />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                    <div className="text-white font-bold text-sm">Desde 95€/día</div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                    <div className="text-white font-bold text-xs">Interior Equipado</div>
                     <div className="text-white/80 text-xs">Todo incluido</div>
+                  </div>
+                </div>
+                <div className="relative rounded-xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-500">
+                  <img 
+                    src="/images/furgocasa/camper-exterior-2.jpg"
+                    alt="Exterior Camper Furgocasa"
+                    className="w-full h-[140px] object-cover"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                    <div className="text-white font-bold text-xs">Gran Volumen</div>
+                    <div className="text-white/80 text-xs">Desde 95€/día</div>
                   </div>
                 </div>
               </div>

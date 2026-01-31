@@ -9,15 +9,27 @@ export function BannerFurgocasaVertical({ position }: BannerProps) {
 
   return (
     <div className="w-full max-w-[300px] mx-auto">
-      <div className="bg-gradient-to-b from-[#1a5490] to-[#0d3a6b] rounded-[15px] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.2)] transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:-translate-y-1">
+      <div className="relative bg-gradient-to-b from-[#1a5490] to-[#0d3a6b] rounded-[15px] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.2)] transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:-translate-y-1">
         <a
           href={`https://www.furgocasa.com/es?utm_source=mapafurgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
           target="_blank"
           rel="noopener noreferrer sponsored nofollow"
           className="block no-underline text-white"
         >
-          <div className="p-6 text-center">
-            <div className="text-5xl mb-4 animate-pulse">🚐</div>
+          {/* Imagen de camper */}
+          <div className="relative h-[200px] overflow-hidden">
+            <img 
+              src="/images/furgocasa/camper-vertical-1.jpg"
+              alt="Camper Furgocasa"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0d3a6b] via-[#0d3a6b]/50 to-transparent"></div>
+            <div className="absolute bottom-4 left-0 right-0 text-center">
+              <div className="text-4xl animate-pulse drop-shadow-lg">🚐</div>
+            </div>
+          </div>
+
+          <div className="relative p-6 text-center">
             <div className="text-2xl font-black text-[#ff6b35] mb-2 tracking-tight">
               Furgocasa
             </div>

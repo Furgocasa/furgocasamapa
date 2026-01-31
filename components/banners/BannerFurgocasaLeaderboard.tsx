@@ -9,8 +9,18 @@ export function BannerFurgocasaLeaderboard({ position }: BannerProps) {
 
   return (
     <div className="w-full max-w-[970px] mx-auto">
-      <div className="bg-gradient-to-r from-[#1a5490] via-[#0d3a6b] to-[#1a5490] rounded-xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.25)] transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.35)] hover:-translate-y-0.5">
-        <div className="flex items-center justify-between p-5 md:p-8 lg:p-10 gap-8 md:flex-row flex-col text-center md:text-left">
+      <div className="relative bg-gradient-to-r from-[#1a5490] via-[#0d3a6b] to-[#1a5490] rounded-xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.25)] transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.35)] hover:-translate-y-0.5">
+        {/* Imagen de fondo */}
+        <div className="absolute inset-0">
+          <img 
+            src="/images/furgocasa/camper-leaderboard-1.jpg"
+            alt="Camper Furgocasa"
+            className="w-full h-full object-cover opacity-25"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#1a5490]/95 via-[#0d3a6b]/90 to-[#1a5490]/95"></div>
+        </div>
+
+        <div className="relative flex items-center justify-between p-5 md:p-8 lg:p-10 gap-8 md:flex-row flex-col text-center md:text-left">
           <div className="flex items-center gap-5 md:gap-8 md:flex-row flex-col">
             <a
               href={`https://www.furgocasa.com/es?utm_source=mapafurgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}

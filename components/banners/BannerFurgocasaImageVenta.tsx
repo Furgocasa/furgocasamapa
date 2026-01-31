@@ -66,16 +66,27 @@ export function BannerFurgocasaImageVenta({ position }: BannerProps) {
                 </div>
               </div>
 
-              <div className="w-full md:w-[320px] lg:w-[400px]">
+              <div className="w-full md:w-[320px] lg:w-[400px] space-y-3">
                 <div className="relative rounded-xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-500">
                   <img 
                     src="/images/furgocasa/camper-venta-1.jpg"
                     alt="Camper en Venta Furgocasa"
-                    className="w-full h-[240px] object-cover"
+                    className="w-full h-[180px] object-cover"
                   />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                    <div className="text-white font-bold text-sm">10 vehículos disponibles</div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                    <div className="text-white font-bold text-xs">Campers en Venta</div>
                     <div className="text-white/80 text-xs">Desde 49.000€</div>
+                  </div>
+                </div>
+                <div className="relative rounded-xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-500">
+                  <img 
+                    src="/images/furgocasa/camper-venta-2.jpg"
+                    alt="Camper Venta Garantizada"
+                    className="w-full h-[140px] object-cover"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                    <div className="text-white font-bold text-xs">Garantía Incluida</div>
+                    <div className="text-white/80 text-xs">Financiación 120 meses</div>
                   </div>
                 </div>
               </div>

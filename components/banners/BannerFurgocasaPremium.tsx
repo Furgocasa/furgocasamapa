@@ -10,6 +10,16 @@ export function BannerFurgocasaPremium({ position }: BannerProps) {
   return (
     <div className="w-full max-w-[850px] mx-auto">
       <div className="relative bg-gradient-to-br from-[#1a5490] via-[#0d3a6b] to-[#1a5490] rounded-2xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-500 hover:shadow-[0_12px_48px_rgba(0,0,0,0.4)] hover:-translate-y-1">
+        {/* Imagen de fondo */}
+        <div className="absolute inset-0">
+          <img 
+            src="/images/furgocasa/camper-premium-1.jpg"
+            alt="Camper Premium Furgocasa"
+            className="w-full h-full object-cover opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1a5490]/95 via-[#0d3a6b]/90 to-[#1a5490]/95"></div>
+        </div>
+        
         {/* Efecto de brillo animado */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"></div>
         
