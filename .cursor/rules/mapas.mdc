@@ -1,31 +1,56 @@
-# Reglas de Mapas - Sincronización Obligatoria
+# Reglas de Mapas - SINCRONIZACIÓN OBLIGATORIA
 
-## REGLA CRÍTICA: Cambios en Mapas
+## ⚠️ REGLA CRÍTICA: Los 3 mapas son UNO SOLO
 
-Cada vez que se modifique cualquier componente de mapa, **OBLIGATORIAMENTE** replicar el cambio en TODOS los proveedores:
+Los siguientes archivos son **3 IMPLEMENTACIONES DEL MISMO COMPONENTE**:
 
-1. `components/mapa/MapaInteractivoGoogle.tsx` - Google Maps
-2. `components/mapa/MapLibreMap.tsx` - MapLibre GL
+1. `components/mapa/MapaInteractivoGoogle.tsx` - Google Maps API
+2. `components/mapa/MapLibreMap.tsx` - MapLibre GL JS
 3. `components/mapa/LeafletMap.tsx` - Leaflet
 
-## Cambios que SIEMPRE deben sincronizarse:
+**El admin puede cambiar entre ellos en cualquier momento desde la base de datos.
+TODO debe funcionar IDÉNTICO en los 3.**
 
-- Props del componente (añadir/modificar)
-- Funciones de interacción (resetZoom, toggleGPS, etc.)
-- Estilos de popup/InfoWindow
-- Lógica de clustering
-- Manejo de marcadores
-- Eventos de click
-- Botones y controles UI
+## 🔴 ANTES de modificar CUALQUIER mapa:
 
-## Proceso de cambio:
+1. **LEER los 3 archivos** para entender el estado actual
+2. **PLANIFICAR el cambio** para los 3 simultáneamente
+3. **IMPLEMENTAR en los 3** en el mismo commit
+4. **VERIFICAR** que las props coincidan en `MapaInteractivo.tsx`
 
-1. Hacer el cambio en el mapa principal
-2. **INMEDIATAMENTE** replicar en los otros dos
-3. Verificar que las props coincidan en `MapaInteractivo.tsx`
-4. Commit con todos los archivos juntos
+## ✅ Funcionalidades que DEBEN ser idénticas:
 
-## Referencia de implementación:
+| Funcionalidad | Descripción |
+|---------------|-------------|
+| `props` | Mismas props en la interface (areas, areaSeleccionada, onAreaClick, mapRef, onCountryChange, currentCountry, estilo, paisFiltro) |
+| `clustering` | Supercluster con mismos parámetros (radius: 100, maxZoom: 13, minPoints: 3) |
+| `popup/InfoWindow` | Singleton, mismo HTML (createInfoWindowContent), mismos estilos |
+| `resetZoom` | Inteligente según paisFiltro (mismas coordenadas y zoom por región/país) |
+| `toggleGPS` | Mismo comportamiento, localStorage 'gpsActive', marcador naranja #FF6B35 |
+| `BuscadorGeografico` | Mismo componente, misma posición |
+| `Botones UI` | GPS y Restablecer Zoom en mismas posiciones |
+| `Estilos popup` | Botón X circular blanco con sombra, visible sobre fotos |
+| `colores marcadores` | getTipoAreaColor() con mismos colores |
 
-- **MapLibreMap.tsx** es el modelo de referencia actual
-- Copiar lógica y adaptar APIs específicas de cada librería
+## 📋 Proceso de cambio:
+
+```
+1. Hacer cambio en MapLibreMap.tsx (referencia)
+2. Copiar/adaptar a MapaInteractivoGoogle.tsx
+3. Copiar/adaptar a LeafletMap.tsx
+4. Verificar MapaInteractivo.tsx (wrapper)
+5. git add los 3 (o 4) archivos
+6. git commit con mensaje descriptivo
+7. git push
+```
+
+## 🚫 PROHIBIDO:
+
+- Modificar UN solo mapa sin actualizar los otros 2
+- Añadir props a uno sin añadirlas a todos
+- Commits parciales que dejen mapas desincronizados
+- Funcionalidades exclusivas de un proveedor
+
+## 📁 Archivo de referencia:
+
+**MapLibreMap.tsx** es el modelo principal. Cuando haya dudas, copiar de ahí y adaptar las APIs específicas de cada librería.
