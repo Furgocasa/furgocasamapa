@@ -252,11 +252,20 @@ export function MapLibreMap({
           el.addEventListener('click', () => {
             onAreaClick(area)
             
+            // ✅ Verificar que el marcador aún existe antes de abrir popup
+            if (!markersRef.current[areaId]) {
+              console.warn('⚠️ Marcador eliminado, no se puede abrir popup')
+              return
+            }
+            
             // ✅ CORREGIDO: Solo centrar (panTo), NO cambiar zoom
             map.panTo([lng, lat])
             
             // ✅ CORREGIDO: Abrir popup INMEDIATAMENTE (sin setTimeout)
-            marker.togglePopup()
+            const currentMarker = markersRef.current[areaId]
+            if (currentMarker && currentMarker.getPopup()) {
+              currentMarker.togglePopup()
+            }
           })
 
           markersRef.current[areaId] = marker
@@ -307,10 +316,14 @@ export function MapLibreMap({
       mapRef.current.panTo([Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)])
       mapRef.current.setZoom(14)
       
-      // ✅ CORREGIDO: Abrir popup INMEDIATAMENTE
-      const popup = marker.getPopup()
-      if (popup && !popup.isOpen()) {
-        marker.togglePopup()
+      // ✅ CORREGIDO: Verificar que popup existe antes de abrirlo
+      try {
+        const popup = marker.getPopup()
+        if (popup && !popup.isOpen()) {
+          marker.togglePopup()
+        }
+      } catch (error) {
+        console.warn('⚠️ Error al abrir popup:', error)
       }
     } else {
       // Si no hay marcador visible (área filtrada), crear popup temporal
@@ -318,16 +331,20 @@ export function MapLibreMap({
       mapRef.current.setZoom(14)
       
       // ✅ CORREGIDO: Sin setTimeout
-      new maplibregl.Popup({
-        offset: 25,
-        closeButton: true,
-        closeOnClick: true,
-        maxWidth: '360px',
-        className: 'maplibre-popup-custom'
-      })
-        .setLngLat([Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)])
-        .setHTML(createPopupContent(areaSeleccionada))
-        .addTo(mapRef.current!)
+      try {
+        new maplibregl.Popup({
+          offset: 25,
+          closeButton: true,
+          closeOnClick: true,
+          maxWidth: '360px',
+          className: 'maplibre-popup-custom'
+        })
+          .setLngLat([Number(areaSeleccionada.longitud), Number(areaSeleccionada.latitud)])
+          .setHTML(createPopupContent(areaSeleccionada))
+          .addTo(mapRef.current!)
+      } catch (error) {
+        console.warn('⚠️ Error al crear popup temporal:', error)
+      }
     }
   }, [areaSeleccionada])
 
