@@ -260,6 +260,11 @@ export function MapLibreMap({
             cursor: pointer;
             border: 3px solid white;
             box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-user-drag: none;
+            -webkit-tap-highlight-color: transparent;
           `
           el.textContent = count.toString()
 
@@ -274,7 +279,7 @@ export function MapLibreMap({
             })
           })
 
-          const marker = new maplibregl.Marker({ element: el })
+          const marker = new maplibregl.Marker({ element: el, draggable: false })
             .setLngLat([lng, lat])
             .addTo(map)
 
@@ -304,6 +309,11 @@ export function MapLibreMap({
             cursor: pointer;
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             transition: transform 0.15s ease;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-user-drag: none;
+            -webkit-tap-highlight-color: transparent;
           `
           
           // Hover effect
@@ -336,7 +346,7 @@ export function MapLibreMap({
             }, 350)
           })
 
-          const marker = new maplibregl.Marker({ element: el })
+          const marker = new maplibregl.Marker({ element: el, draggable: false })
             .setLngLat([lng, lat])
             .addTo(map)
 
@@ -1042,7 +1052,7 @@ export function MapLibreMap({
       <div 
         ref={mapContainerRef} 
         className="w-full h-full min-h-[400px]"
-        style={{ touchAction: 'none' }}
+        style={{ touchAction: 'pan-x pan-y' }}
       />
 
       {/* Buscador Geográfico - Igual que en Google Maps */}
