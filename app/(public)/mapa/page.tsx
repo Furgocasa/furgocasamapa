@@ -212,9 +212,16 @@ export default function MapaPage() {
     }
   }, []) // Solo ejecutar al montar
 
-  // Centrar mapa cuando cambia el filtro de país
+  // Centrar mapa cuando cambia el filtro de país o región
   useEffect(() => {
     if (!filtros.pais || !mapRef.current) return
+
+    // Coordenadas de REGIONES (con zoom apropiado)
+    const regionCoordenadas: Record<string, { lat: number, lng: number, zoom: number }> = {
+      'REGION_EUROPA': { lat: 48.0, lng: 10.0, zoom: 4 },
+      'REGION_SUDAMERICA': { lat: -15.0, lng: -60.0, zoom: 3 },
+      'REGION_CENTROAMERICA': { lat: 15.0, lng: -85.0, zoom: 5 }
+    }
 
     // Coordenadas centrales de cada país (Europa + LATAM)
     const paisCoordenadas: Record<string, { lat: number, lng: number }> = {
@@ -282,8 +289,6 @@ export default function MapaPage() {
       'Jamaica': { lat: 18.1096, lng: -77.2975 },
     }
 
-    const coordenadas = paisCoordenadas[filtros.pais]
-
     // No centrar si el cambio viene del buscador geográfico
     if (skipMapCenterRef.current) {
       console.log('⏭️ Saltando centrado automático (cambio desde buscador geográfico)')
@@ -291,6 +296,24 @@ export default function MapaPage() {
       return
     }
 
+    // Verificar si es una región
+    const region = regionCoordenadas[filtros.pais]
+    if (region && mapRef.current) {
+      console.log(`🗺️ Centrando mapa en región: ${filtros.pais}`)
+      // Para regiones: flyTo con zoom específico
+      if (mapRef.current.flyTo) {
+        // MapLibre
+        mapRef.current.flyTo({ center: [region.lng, region.lat], zoom: region.zoom, duration: 1000 })
+      } else if (mapRef.current.setCenter) {
+        // Google Maps
+        mapRef.current.setCenter({ lat: region.lat, lng: region.lng })
+        mapRef.current.setZoom(region.zoom)
+      }
+      return
+    }
+
+    // Verificar si es un país
+    const coordenadas = paisCoordenadas[filtros.pais]
     if (coordenadas && mapRef.current) {
       console.log(`🗺️ Centrando mapa en ${filtros.pais}`)
       // Solo centrar (panTo), sin cambiar zoom
