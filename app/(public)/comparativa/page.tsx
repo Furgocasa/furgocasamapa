@@ -438,14 +438,184 @@ export default function ComparativaPage() {
           </div>
         </section>
 
-        {/* ¿Sigue siendo útil Park4Night? - NUEVA SECCIÓN */}
+        {/* Control Financiero y Valor del Vehículo - NUEVA SECCIÓN */}
+        <section className="py-16 bg-gradient-to-br from-blue-50 to-indigo-50">
+          <div className="max-w-5xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                💰 Control financiero y valor del vehículo
+              </h2>
+              <p className="text-xl text-gray-600">
+                Perfecto tanto para particulares como empresas de alquiler
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-8 md:p-10 shadow-xl border-2 border-blue-200">
+              <div className="mb-8">
+                <div className="inline-flex items-center gap-2 bg-yellow-100 text-yellow-900 px-4 py-2 rounded-full font-bold mb-6">
+                  <SparklesIcon className="w-5 h-5" />
+                  CARACTERÍSTICA TOTALMENTE DIFERENCIAL
+                </div>
+                
+                <p className="text-lg text-gray-700 leading-relaxed mb-6">
+                  Esta es una característica <strong>totalmente diferencial</strong> frente a Park4Night que ninguna otra app del sector ofrece.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-8 mb-8">
+                {/* Para Particulares */}
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-300">
+                  <h3 className="text-2xl font-bold text-blue-900 mb-4 flex items-center gap-2">
+                    <span>👤</span>
+                    Para Particulares
+                  </h3>
+                  <p className="text-gray-700 mb-4">Los usuarios pueden ver:</p>
+                  <ul className="space-y-3">
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 font-bold mt-1">✓</span>
+                      <span className="text-gray-700"><strong>Gastos reales del viaje</strong> - Todo lo que gastas durante tus rutas</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 font-bold mt-1">✓</span>
+                      <span className="text-gray-700"><strong>Coste por kilómetro</strong> - Saber exactamente cuánto te cuesta viajar</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 font-bold mt-1">✓</span>
+                      <span className="text-gray-700"><strong>Estado económico del vehículo</strong> - Inversión vs gastos acumulados</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 font-bold mt-1">✓</span>
+                      <span className="text-gray-700"><strong>Valor estimado actualizado</strong> gracias a un modelo de IA (GPT-4 + SerpAPI)</span>
+                    </li>
+                  </ul>
+                  <div className="mt-6 bg-white rounded-lg p-4 border border-blue-200">
+                    <p className="text-gray-800 font-medium">
+                      Para quienes tienen su propia autocaravana <span className="text-blue-600 font-bold">es oro</span>.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Para Empresas */}
+                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border-2 border-emerald-300">
+                  <h3 className="text-2xl font-bold text-emerald-900 mb-4 flex items-center gap-2">
+                    <span>🏢</span>
+                    Para Empresas de Alquiler
+                  </h3>
+                  <p className="text-gray-700 mb-4">Gestión profesional de flota:</p>
+                  <ul className="space-y-3">
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-600 font-bold mt-1">✓</span>
+                      <span className="text-gray-700"><strong>Control total de cada vehículo</strong> - Mantenimientos, averías, gastos</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-600 font-bold mt-1">✓</span>
+                      <span className="text-gray-700"><strong>ROI (retorno de inversión)</strong> - Rentabilidad real de tu flota</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-600 font-bold mt-1">✓</span>
+                      <span className="text-gray-700"><strong>Análisis económico completo</strong> - Toma decisiones basadas en datos</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-600 font-bold mt-1">✓</span>
+                      <span className="text-gray-700"><strong>Valoración automática</strong> - Conoce el valor de mercado de cada vehículo</span>
+                    </li>
+                  </ul>
+                  <div className="mt-6 bg-white rounded-lg p-4 border border-emerald-200">
+                    <p className="text-gray-800 font-medium">
+                      Para quienes gestionan una flota de alquiler como Furgocasa, <span className="text-emerald-600 font-bold">es directamente esencial</span>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 border-2 border-yellow-300">
+                <p className="text-lg text-gray-800 font-bold text-center">
+                  Park4Night NO ofrece NINGUNA de estas funcionalidades. Mapa Furgocasa es la ÚNICA plataforma del mercado con control financiero completo y valoración con IA.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Seguridad Extra - NUEVA SECCIÓN */}
         <section className="py-16 bg-white">
+          <div className="max-w-4xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                🛡️ Seguridad extra que Park4Night no ofrece
+              </h2>
+              <p className="text-xl text-gray-600">
+                Sistema QR de emergencia: tu protección en carretera
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-8 md:p-10 shadow-xl border-2 border-red-200">
+              <div className="flex items-center justify-center mb-8">
+                <div className="w-24 h-24 bg-red-600 rounded-full flex items-center justify-center">
+                  <ShieldCheckIcon className="w-16 h-16 text-white" />
+                </div>
+              </div>
+
+              <h3 className="text-2xl font-bold text-center text-gray-900 mb-6">
+                El sistema QR de emergencia permite:
+              </h3>
+
+              <div className="grid md:grid-cols-3 gap-6 mb-8">
+                <div className="bg-white rounded-xl p-6 shadow-lg">
+                  <div className="text-4xl mb-4 text-center">🆔</div>
+                  <h4 className="text-lg font-bold text-gray-900 mb-2 text-center">Identificación rápida</h4>
+                  <p className="text-gray-700 text-center">
+                    Identifica el vehículo inmediatamente en caso de emergencia
+                  </p>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-lg">
+                  <div className="text-4xl mb-4 text-center">🚑</div>
+                  <h4 className="text-lg font-bold text-gray-900 mb-2 text-center">Asistencia facilitada</h4>
+                  <p className="text-gray-700 text-center">
+                    Facilita la asistencia médica o mecánica cuando más lo necesitas
+                  </p>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-lg">
+                  <div className="text-4xl mb-4 text-center">📋</div>
+                  <h4 className="text-lg font-bold text-gray-900 mb-2 text-center">Protocolo claro</h4>
+                  <p className="text-gray-700 text-center">
+                    Un protocolo básico si ocurre algo inesperado en tu viaje
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl p-6 border-l-4 border-red-600">
+                <p className="text-lg text-gray-800 font-medium mb-4">
+                  <strong>Pequeños detalles que, en carretera, se agradecen mucho.</strong>
+                </p>
+                <p className="text-gray-700">
+                  Cuando viajas en autocaravana, especialmente por rutas remotas o países extranjeros, contar con un sistema de identificación y alertas puede marcar la diferencia entre una situación controlada y un problema mayor. Park4Night no ofrece ninguna funcionalidad de seguridad o emergencias.
+                </p>
+              </div>
+
+              <div className="mt-6 text-center">
+                <Link
+                  href="/reportar"
+                  className="inline-flex items-center gap-2 bg-red-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-red-700 transition-all shadow-lg hover:shadow-xl"
+                >
+                  <ShieldCheckIcon className="w-6 h-6" />
+                  Activar Sistema de Alertas
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ¿Sigue siendo útil Park4Night? - NUEVA SECCIÓN */}
+        <section className="py-16 bg-gray-50">
           <div className="max-w-4xl mx-auto px-4">
             <h2 className="text-4xl font-bold text-center mb-12 text-gray-900">
               🤔 ¿Sigue siendo útil Park4Night?
             </h2>
 
-            <div className="bg-gray-50 rounded-2xl p-8 border border-gray-200">
+            <div className="bg-white rounded-2xl p-8 border-2 border-gray-200 shadow-lg">
               <p className="text-lg text-gray-700 leading-relaxed mb-6">
                 <strong>Claro que sí.</strong> Su comunidad es enorme y su base de áreas es potente. Para consultar rápido dónde parar sigue siendo una herramienta conocida y práctica.
               </p>
@@ -454,7 +624,7 @@ export default function ComparativaPage() {
                 Pero si lo que buscas es algo <strong>más evolucionado</strong>, completo y adaptado al caravaning actual, entonces la diferencia es clara.
               </p>
 
-              <div className="bg-white rounded-xl p-6 border-l-4 border-[#0b3c74]">
+              <div className="bg-blue-50 rounded-xl p-6 border-l-4 border-[#0b3c74] mb-6">
                 <p className="text-lg text-gray-800 font-medium">
                   En Furgocasa llevamos años escuchando lo mismo: <strong>"Hay muchas apps, pero ninguna lo tiene todo"</strong>.
                 </p>
@@ -470,7 +640,7 @@ export default function ComparativaPage() {
                 </ul>
               </div>
 
-              <p className="text-xl font-bold text-[#0b3c74] text-center mt-8">
+              <p className="text-xl font-bold text-[#0b3c74] text-center">
                 No es solo un mapa. Es una solución completa.
               </p>
             </div>
@@ -518,6 +688,42 @@ export default function ComparativaPage() {
                 </h3>
                 <p className="text-gray-700 leading-relaxed text-lg">
                   <strong>Sí, para ambos.</strong> Los usuarios particulares pueden ver gastos reales del viaje, coste por kilómetro, estado económico del vehículo y valor estimado actualizado gracias a un modelo de IA. Para quienes gestionan una <strong>flota de alquiler</strong>, estas funciones son directamente esenciales para el control de su negocio.
+                </p>
+              </div>
+
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                  ¿Cómo funciona la valoración con IA de mi autocaravana?
+                </h3>
+                <p className="text-gray-700 leading-relaxed text-lg">
+                  Utilizamos <strong>GPT-4 combinado con SerpAPI</strong> para buscar en tiempo real vehículos similares al tuyo en el mercado actual. El sistema analiza marca, modelo, año, kilometraje, estado y características para darte una <strong>valoración precisa y actualizada</strong> de cuánto vale tu autocaravana en este momento. Es como tener un tasador profesional disponible 24/7.
+                </p>
+              </div>
+
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                  ¿Puedo exportar mis rutas al GPS de mi vehículo?
+                </h3>
+                <p className="text-gray-700 leading-relaxed text-lg">
+                  <strong>¡Sí!</strong> Mapa Furgocasa te permite <strong>exportar tus rutas en formato GPX</strong>, compatible con dispositivos Garmin, TomTom y la mayoría de navegadores GPS. Planifica tu ruta con todas las paradas en nuestra app, exporta el archivo GPX y cárgalo directamente en tu navegador. Park4Night NO tiene esta funcionalidad.
+                </p>
+              </div>
+
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                  ¿Qué ventajas tiene Mapa Furgocasa siendo de España?
+                </h3>
+                <p className="text-gray-700 leading-relaxed text-lg">
+                  Al ser una empresa española (<strong>Furgocasa</strong> con base en Murcia), conocemos perfectamente las necesidades del mercado español y europeo. Nuestro <strong>soporte es en español</strong>, entendemos la idiosincrasia del caravaning en España, y constantemente añadimos áreas verificadas en la península y baleares. Además, al estar en el sector del alquiler de campers desde hace años, sabemos exactamente qué funcionalidades son realmente útiles.
+                </p>
+              </div>
+
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                  ¿Tiene Mapa Furgocasa app móvil?
+                </h3>
+                <p className="text-gray-700 leading-relaxed text-lg">
+                  Actualmente Mapa Furgocasa funciona como <strong>Progressive Web App (PWA)</strong>, lo que significa que puedes acceder desde cualquier navegador móvil y <strong>añadirla a tu pantalla de inicio</strong> para usarla como una app nativa. Funciona perfectamente en iPhone y Android, con todas las funcionalidades disponibles sin necesidad de descargar nada desde las tiendas de apps.
                 </p>
               </div>
             </div>
