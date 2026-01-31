@@ -38,8 +38,8 @@ export function BannerFurgocasaVertical({ position }: BannerProps) {
               Alquiler y Venta de Campers
             </p>
           </div>
-        
-        <div className="px-5 pb-4 space-y-3">
+
+          <div className="px-5 pb-4 space-y-3">
           <a
             href={`https://www.furgocasa.com/es?utm_source=mapafurgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
             target="_blank"
@@ -102,6 +102,7 @@ export function BannerFurgocasaVertical({ position }: BannerProps) {
           >
             Reservar →
           </a>
+        </div>
         </div>
       </a>
     </div>
