@@ -181,6 +181,17 @@ export default function HomePage() {
               </p>
             </div>
           </div>
+
+          {/* CTA después de features */}
+          <div className="text-center mt-12">
+            <Link
+              href="/auth/register"
+              className="inline-flex items-center justify-center px-8 py-4 bg-[#0b3c74] text-white rounded-xl font-bold text-lg hover:bg-[#0d4a8f] transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+            >
+              Únete Gratis y Descubre Todo
+            </Link>
+            <p className="text-gray-500 mt-3 text-sm">Sin tarjeta de crédito · Acceso inmediato</p>
+          </div>
         </div>
       </section>
 
@@ -392,6 +403,17 @@ export default function HomePage() {
               </p>
             </div>
           </div>
+
+          {/* CTA después de IA */}
+          <div className="text-center mt-12">
+            <Link
+              href="/auth/register"
+              className="inline-flex items-center justify-center px-8 py-4 bg-[#0b3c74] text-white rounded-xl font-bold text-lg hover:bg-[#0d4a8f] transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+            >
+              <SparklesIcon className="w-5 h-5 mr-2" />
+              Prueba la IA Gratis
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -590,9 +612,17 @@ export default function HomePage() {
                   <div className="text-sm text-white/70">Infraestructura Segura</div>
                 </div>
               </div>
-              <p className="text-lg text-white/90">
+              <p className="text-lg text-white/90 mb-8">
                 Tecnología empresarial de primer nivel al servicio de los autocaravanistas
               </p>
+
+              {/* CTA final de confianza */}
+              <Link
+                href="/auth/register"
+                className="inline-flex items-center justify-center px-10 py-5 bg-yellow-400 text-[#0b3c74] rounded-xl font-bold text-xl hover:bg-yellow-300 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
+              >
+                Crear Mi Cuenta Gratis
+              </Link>
             </div>
           </div>
         </div>
