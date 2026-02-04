@@ -111,6 +111,12 @@ export default function RootLayout({
           `}
         </Script>
 
+        {/* Google Maps Places API - Necesario para el buscador geográfico */}
+        <Script
+          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&language=es`}
+          strategy="lazyOnload"
+        />
+
         <WelcomeModal />
         <ChatbotWidget />
         {children}
