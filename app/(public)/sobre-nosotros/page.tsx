@@ -50,7 +50,7 @@ export default function SobreNosotrosPage() {
               </p>
 
               <p>
-                Somos parte de <strong>Furgocasa</strong>, empresa especializada en el sector del caravaning desde hace años. Con nuestra experiencia en el sector y el feedback constante de miles de usuarios, hemos creado una plataforma que va mucho más allá de un simple mapa de áreas.
+                Somos parte de <strong>Furgocasa</strong>, empresa especializada en el alquiler de autocaravanas y campers desde hace años. Con nuestra experiencia en el sector y el feedback constante de miles de usuarios, hemos creado una plataforma que va mucho más allá de un simple mapa de áreas.
               </p>
 
               <p>
