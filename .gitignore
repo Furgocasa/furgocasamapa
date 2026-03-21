@@ -65,3 +65,6 @@ AppData/
 # Archivos de trabajo e imágenes de desarrollo
 /images/
 /banners/
+
+# Exportaciones con datos personales / listas de usuarios (no versionar)
+usuarios-nuevos.*
