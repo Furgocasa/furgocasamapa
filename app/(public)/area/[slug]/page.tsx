@@ -173,12 +173,11 @@ export default async function AreaPage({ params }: PageProps) {
                 return null
               })()}
 
-              {/* 🎯 Banner 2: Después de galería */}
+              {/* 🎯 Banner 2: Después de galería (Último banner) */}
               <BannerRotativo
                 areaId={area.id}
                 position="after-gallery"
                 strategy="weighted"
-                exclude={['mobile']}
                 priority={2}
               />
 
@@ -193,14 +192,6 @@ export default async function AreaPage({ params }: PageProps) {
               {areasRelacionadas && areasRelacionadas.length > 0 && (
                 <AreasRelacionadas areas={areasRelacionadas} />
               )}
-
-              {/* 🎯 Banner 3: Al final */}
-              <BannerRotativo
-                areaId={area.id}
-                position="after-related"
-                strategy="deterministic"
-                priority={3}
-              />
             </div>
 
             {/* Columna Derecha (Sticky) - 40% */}
