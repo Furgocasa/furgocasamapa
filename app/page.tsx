@@ -23,7 +23,8 @@ import {
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid'
 
 export default function HomePage() {
-  const [totalAreas, setTotalAreas] = useState(1000)
+  /** Fallback alineado con metadatos (+3600) hasta cargar el conteo real desde Supabase */
+  const [totalAreas, setTotalAreas] = useState(3600)
 
   useEffect(() => {
     // Cargar contador dinámico de áreas
@@ -35,7 +36,7 @@ export default function HomePage() {
           .select('*', { count: 'exact', head: true })
           .eq('activo', true)
 
-        if (!error && count) {
+        if (!error && typeof count === 'number') {
           setTotalAreas(count)
         }
       } catch (err) {

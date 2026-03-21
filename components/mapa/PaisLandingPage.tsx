@@ -22,7 +22,7 @@ interface PaisLandingPageProps {
 }
 
 export function PaisLandingPage({ pais }: PaisLandingPageProps) {
-  const [totalAreas, setTotalAreas] = useState(1000) // Total global de áreas
+  const [totalAreas, setTotalAreas] = useState(3600) // fallback hasta cargar conteo real
 
   useEffect(() => {
     cargarTotalAreas()
@@ -38,7 +38,7 @@ export function PaisLandingPage({ pais }: PaisLandingPageProps) {
         .select('*', { count: 'exact', head: true })
         .eq('activo', true)
 
-      if (!error && count) {
+      if (!error && typeof count === 'number') {
         setTotalAreas(count)
       }
     } catch (err) {

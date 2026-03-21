@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
-  const [totalAreas, setTotalAreas] = useState(500); // valor por defecto
+  const [totalAreas, setTotalAreas] = useState(3600); // fallback hasta cargar conteo real
 
   useEffect(() => {
     const loadTotalAreas = async () => {
@@ -18,7 +18,7 @@ export function Footer() {
           .select("*", { count: "exact", head: true })
           .eq("activo", true);
 
-        if (!error && count) {
+        if (!error && typeof count === "number") {
           setTotalAreas(count);
         }
       } catch (err) {
