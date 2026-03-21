@@ -100,22 +100,22 @@ export function DetalleAreaHeader({ area }: Props) {
 
   const getTipoAreaLabel = (tipo: string) => {
     const labels: Record<string, string> = {
-      publica: '🏛️ Pública',
-      privada: '🔒 Privada',
-      camping: '⛺ Camping',
-      parking: '🅿️ Parking',
+      publica: 'Pública',
+      privada: 'Privada',
+      camping: 'Camping',
+      parking: 'Parking',
     }
     return labels[tipo] || tipo
   }
 
   const getTipoAreaColor = (tipo: string) => {
     const colors: Record<string, string> = {
-      publica: 'bg-[#0b3c74]/90 text-white backdrop-blur-sm',
-      privada: 'bg-orange-500/90 text-white backdrop-blur-sm',
-      camping: 'bg-green-500/90 text-white backdrop-blur-sm',
-      parking: 'bg-gray-700/90 text-white backdrop-blur-sm',
+      publica: 'bg-sky-500/90 text-white backdrop-blur-md border border-sky-400/30',
+      privada: 'bg-orange-500/90 text-white backdrop-blur-md border border-orange-400/30',
+      camping: 'bg-emerald-500/90 text-white backdrop-blur-md border border-emerald-400/30',
+      parking: 'bg-slate-700/90 text-white backdrop-blur-md border border-slate-500/30',
     }
-    return colors[tipo] || 'bg-gray-700/90 text-white backdrop-blur-sm'
+    return colors[tipo] || 'bg-slate-700/90 text-white backdrop-blur-md border border-slate-500/30'
   }
 
   return (
@@ -127,102 +127,114 @@ export function DetalleAreaHeader({ area }: Props) {
           onClose={hideToast}
         />
       )}
-      <div className="relative">
-      {/* Imagen principal */}
-      <div className="relative h-64 md:h-96 bg-gray-200">
-        {area.foto_principal ? (
-          <Image
-            src={area.foto_principal}
-            alt={area.nombre}
-            fill
-            className="object-cover"
-            priority
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#0b3c74] to-[#0d4a8f]">
-            <MapPinIcon className="w-24 h-24 text-white/50" />
-          </div>
-        )}
-        
-        {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0b3c74]/60 to-transparent" />
-      </div>
+      <div className="relative w-full max-w-[1600px] mx-auto bg-gray-50">
+        {/* Contenedor principal con bordes redondeados en desktop */}
+        <div className="relative h-[400px] md:h-[500px] md:rounded-b-3xl overflow-hidden bg-slate-200 shadow-sm">
+          {area.foto_principal ? (
+            <Image
+              src={area.foto_principal}
+              alt={area.nombre}
+              fill
+              className="object-cover"
+              priority
+              quality={90}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-slate-200">
+              <MapPinIcon className="w-24 h-24 text-slate-400" />
+            </div>
+          )}
+          
+          {/* Overlay gradient más sutil y elegante */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-slate-900/10 mix-blend-multiply" />
+        </div>
 
-      {/* Botones flotantes */}
-      <div className="absolute top-4 left-0 right-0 px-4 flex justify-between items-center safe-top">
-        <Link
-          href="/mapa"
-          className="bg-white rounded-full p-2 shadow-lg hover:bg-gray-50 transition-colors"
-        >
-          <ArrowLeftIcon className="w-6 h-6 text-gray-700" />
-        </Link>
-
-        <div className="flex gap-2">
+        {/* Botones flotantes (Navegación) */}
+        <div className="absolute top-6 left-0 right-0 px-4 md:px-8 flex justify-between items-center safe-top max-w-[1600px] mx-auto z-10">
           <button
-            onClick={handleFavorite}
-            className="bg-white rounded-full p-2 shadow-lg hover:bg-gray-50 transition-colors"
-            aria-label={isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
+            onClick={() => router.back()}
+            className="w-11 h-11 bg-white/90 backdrop-blur-md flex items-center justify-center rounded-full shadow-sm hover:bg-white transition-all text-slate-700 border border-white/20"
+            aria-label="Volver"
           >
-            {isFavorite ? (
-              <HeartIconSolid className="w-6 h-6 text-red-500" />
-            ) : (
-              <HeartIcon className="w-6 h-6 text-gray-700" />
-            )}
+            <ArrowLeftIcon className="w-5 h-5" />
           </button>
 
-          <button
-            onClick={handleShare}
-            className="bg-white rounded-full p-2 shadow-lg hover:bg-gray-50 transition-colors"
-            aria-label="Compartir"
-          >
-            <ShareIcon className="w-6 h-6 text-gray-700" />
-          </button>
-        </div>
-      </div>
-
-      {/* Información superpuesta */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1">
-            <h1 className="text-2xl md:text-3xl font-bold mb-2 drop-shadow-lg">
-              {area.nombre}
-            </h1>
-            <p className="text-sm md:text-base text-white/90 drop-shadow">
-              📍 {area.direccion || `${area.ciudad}, ${area.provincia}`}
-            </p>
+          <div className="flex gap-3">
+            <button
+              onClick={handleShare}
+              className="w-11 h-11 bg-white/90 backdrop-blur-md flex items-center justify-center rounded-full shadow-sm hover:bg-white transition-all text-slate-700 border border-white/20"
+              aria-label="Compartir"
+            >
+              <ShareIcon className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleFavorite}
+              className="w-11 h-11 bg-white/90 backdrop-blur-md flex items-center justify-center rounded-full shadow-sm hover:bg-white transition-all border border-white/20"
+              aria-label={isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
+            >
+              {isFavorite ? (
+                <HeartIconSolid className="w-6 h-6 text-red-500" />
+              ) : (
+                <HeartIcon className="w-6 h-6 text-slate-700" />
+              )}
+            </button>
           </div>
-
-          {/* Badge tipo de área */}
-          <span className={`${getTipoAreaColor(area.tipo_area)} px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap`}>
-            {getTipoAreaLabel(area.tipo_area)}
-          </span>
         </div>
 
-        {/* Rating y precio */}
-        <div className="flex items-center gap-4 mt-3">
-          {area.google_rating && (
-            <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full">
-              <span className="text-yellow-300">⭐</span>
-              <span className="text-sm font-semibold">{area.google_rating.toFixed(1)}</span>
-            </div>
-          )}
+        {/* Información superpuesta (Glassmorphism) */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 max-w-[1200px] mx-auto z-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                {/* Badge tipo de área */}
+                <span className={`${getTipoAreaColor(area.tipo_area)} px-4 py-1.5 rounded-full text-xs font-bold tracking-wider shadow-sm`}>
+                  {getTipoAreaLabel(area.tipo_area)}
+                </span>
+                
+                {area.verificado && (
+                  <span className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 shadow-sm">
+                    <svg className="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    Verificado
+                  </span>
+                )}
+              </div>
 
-          {area.precio_noche && (
-            <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full">
-              <span className="text-sm font-semibold">
-                {area.precio_noche}€/{area.precio_24h ? '24h' : 'noche'}
-              </span>
+              <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-3 tracking-tight drop-shadow-md">
+                {area.nombre}
+              </h1>
+              
+              <div className="flex items-center gap-2 text-slate-200 text-sm md:text-base font-medium drop-shadow-sm">
+                <MapPinIcon className="w-5 h-5 text-slate-300" />
+                <span>{area.direccion || `${area.ciudad}, ${area.provincia}`}</span>
+              </div>
             </div>
-          )}
 
-          {area.verificado && (
-            <div className="flex items-center gap-1 bg-green-500/80 backdrop-blur-sm px-2 py-1 rounded-full">
-              <span className="text-sm font-semibold">✓ Verificado</span>
+            {/* Panel lateral derecho en hero (Rating y Precio) */}
+            <div className="flex items-center bg-black/40 backdrop-blur-lg border border-white/20 p-5 rounded-3xl shadow-xl">
+              {area.google_rating && (
+                <div className="flex flex-col items-center justify-center px-5 border-r border-white/20">
+                  <div className="flex items-center gap-1 text-white font-bold text-2xl">
+                    <span className="text-amber-400 text-xl">★</span>
+                    {area.google_rating.toFixed(1)}
+                  </div>
+                  <span className="text-xs text-slate-300 font-medium tracking-wider uppercase mt-1">Rating</span>
+                </div>
+              )}
+              
+              <div className="flex flex-col items-center justify-center px-5">
+                <div className="text-white font-bold text-2xl">
+                  {area.precio_noche === 0 ? 'Gratis' : `${area.precio_noche}€`}
+                </div>
+                <span className="text-xs text-slate-300 font-medium tracking-wider uppercase mt-1">
+                  /{area.precio_24h ? '24h' : 'noche'}
+                </span>
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
-    </div>
     </>
   )
 }

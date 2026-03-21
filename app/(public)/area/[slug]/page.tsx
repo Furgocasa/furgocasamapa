@@ -136,82 +136,89 @@ export default async function AreaPage({ params }: PageProps) {
         <DetalleAreaHeader area={area} />
 
         {/* Contenido principal */}
-        <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+        <div className="max-w-[1200px] mx-auto px-4 py-8">
+          <div className="flex flex-col lg:flex-row gap-8">
+            
+            {/* Columna Izquierda (Principal) - 65% */}
+            <div className="w-full lg:w-[65%] space-y-8">
+              {/* Información básica */}
+              <InformacionBasica area={area} />
 
-          {/* Información básica */}
-          <InformacionBasica area={area} />
+              {/* 🎯 Banner 1: Después de info básica */}
+              <BannerRotativo
+                areaId={area.id}
+                position="after-info"
+                strategy="weighted"
+                priority={1}
+              />
 
-          {/* 🎯 Banner 1: Después de info básica - Usuario ya está interesado */}
-          <BannerRotativo
-            areaId={area.id}
-            position="after-info"
-            strategy="weighted"
-            priority={1}
-          />
+              {/* Servicios */}
+              {area.servicios && (
+                <ServiciosGrid servicios={area.servicios as any} />
+              )}
 
-          {/* Servicios */}
-          {area.servicios && (
-            <ServiciosGrid servicios={area.servicios as any} />
-          )}
+              {/* Galería de fotos */}
+              {(() => {
+                let fotos = area.fotos_urls
+                if (typeof fotos === 'string' && fotos.trim()) {
+                  try {
+                    fotos = JSON.parse(fotos)
+                  } catch {
+                    fotos = fotos.split(',').map((url: string) => url.trim()).filter((url: string) => url)
+                  }
+                }
+                if (fotos && Array.isArray(fotos) && fotos.length > 0) {
+                  return <GaleriaFotos fotos={fotos} nombre={area.nombre} />
+                }
+                return null
+              })()}
 
-          {/* Galería de fotos */}
-          {(() => {
-            // Normalizar fotos_urls por si viene como string en lugar de array
-            let fotos = area.fotos_urls
-            if (typeof fotos === 'string' && fotos.trim()) {
-              try {
-                fotos = JSON.parse(fotos)
-              } catch {
-                // Si no es JSON válido, intentar dividir por comas
-                fotos = fotos.split(',').map((url: string) => url.trim()).filter((url: string) => url)
-              }
-            }
+              {/* 🎯 Banner 2: Después de galería */}
+              <BannerRotativo
+                areaId={area.id}
+                position="after-gallery"
+                strategy="weighted"
+                exclude={['mobile']}
+                priority={2}
+              />
 
-            // Verificar que sea un array válido y con elementos
-            if (fotos && Array.isArray(fotos) && fotos.length > 0) {
-              return <GaleriaFotos fotos={fotos} nombre={area.nombre} />
-            }
-            return null
-          })()}
+              {/* Valoraciones */}
+              <ValoracionesCompleto
+                areaId={area.id}
+                areaNombre={area.nombre}
+                valoraciones={valoraciones || []}
+              />
 
-          {/* 🎯 Banner 2: Después de galería - Usuario ya vio todo, pensando en ruta */}
-          <BannerRotativo
-            areaId={area.id}
-            position="after-gallery"
-            strategy="weighted"
-            exclude={['mobile']}
-            priority={2}
-          />
+              {/* Áreas relacionadas */}
+              {areasRelacionadas && areasRelacionadas.length > 0 && (
+                <AreasRelacionadas areas={areasRelacionadas} />
+              )}
 
-          {/* Mapa de ubicación */}
-          <MapaUbicacion
-            latitud={Number(area.latitud)}
-            longitud={Number(area.longitud)}
-            nombre={area.nombre}
-          />
+              {/* 🎯 Banner 3: Al final */}
+              <BannerRotativo
+                areaId={area.id}
+                position="after-related"
+                strategy="deterministic"
+                priority={3}
+              />
+            </div>
 
-          {/* Información de contacto */}
-          <ContactoInfo area={area} />
+            {/* Columna Derecha (Sticky) - 35% */}
+            <div className="w-full lg:w-[35%] relative">
+              <div className="sticky top-24 space-y-6">
+                {/* Mapa de ubicación */}
+                <MapaUbicacion
+                  latitud={Number(area.latitud)}
+                  longitud={Number(area.longitud)}
+                  nombre={area.nombre}
+                />
 
-          {/* Valoraciones */}
-          <ValoracionesCompleto
-            areaId={area.id}
-            areaNombre={area.nombre}
-            valoraciones={valoraciones || []}
-          />
-
-          {/* Áreas relacionadas */}
-          {areasRelacionadas && areasRelacionadas.length > 0 && (
-            <AreasRelacionadas areas={areasRelacionadas} />
-          )}
-
-          {/* 🎯 Banner 3: Al final - Última oportunidad de engagement */}
-          <BannerRotativo
-            areaId={area.id}
-            position="after-related"
-            strategy="deterministic"
-            priority={3}
-          />
+                {/* Información de contacto */}
+                <ContactoInfo area={area} />
+              </div>
+            </div>
+            
+          </div>
         </div>
       </div>
 

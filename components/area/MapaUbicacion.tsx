@@ -111,15 +111,15 @@ export function MapaUbicacion({ latitud, longitud, nombre }: Props) {
   }
 
   return (
-    <section className="bg-white rounded-lg shadow-mobile p-6 border-t-4 border-[#0b3c74]">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-[#0b3c74]">Ubicación</h2>
+    <section className="bg-white rounded-3xl shadow-[0_2px_24px_-8px_rgba(0,0,0,0.08)] border border-gray-100 p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <h2 className="text-xl font-bold text-gray-900">Mapa de Ubicación</h2>
         <button
           onClick={handleComoLlegar}
-          className="text-sm font-semibold text-[#0b3c74] hover:bg-sky-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 border border-[#0b3c74]"
+          className="text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
           </svg>
           Cómo llegar
         </button>
@@ -128,20 +128,20 @@ export function MapaUbicacion({ latitud, longitud, nombre }: Props) {
       {/* Mapa */}
       <div 
         ref={mapContainerRef} 
-        className="w-full h-64 md:h-80 rounded-lg overflow-hidden border border-gray-200"
+        className="w-full h-64 md:h-[400px] rounded-2xl overflow-hidden border border-gray-200"
       />
 
       {/* Coordenadas */}
-      <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-        <span>📍 {latitud.toFixed(6)}, {longitud.toFixed(6)}</span>
+      <div className="mt-4 flex items-center justify-between text-xs text-gray-500 bg-slate-50 px-4 py-3 rounded-xl border border-slate-100">
+        <span className="font-mono">📍 {latitud.toFixed(6)}, {longitud.toFixed(6)}</span>
         <button
           onClick={() => {
             navigator.clipboard.writeText(`${latitud},${longitud}`)
             alert('Coordenadas copiadas')
           }}
-          className="text-[#0b3c74] hover:text-[#0d4a8f] font-semibold"
+          className="text-blue-600 hover:text-blue-800 font-bold uppercase tracking-wider"
         >
-          Copiar coordenadas
+          Copiar GPS
         </button>
       </div>
     </section>
