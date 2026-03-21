@@ -14,6 +14,7 @@ import { BackToTop } from '@/components/area/BackToTop'
 import { BannerRotativo } from '@/components/banners/BannerRotativo'
 import { BannerProvider } from '@/components/banners/BannerContext'
 import type { Metadata } from 'next'
+import Script from 'next/script'
 
 interface PageProps {
   params: {
@@ -82,8 +83,51 @@ export default async function AreaPage({ params }: PageProps) {
     .order('google_rating', { ascending: false, nullsFirst: false })
     .limit(4)
 
+  // Preparar datos estructurados (JSON-LD)
+  const schemaData = {
+    "@context": "https://schema.org",
+    "@type": area.tipo_area === 'camping' ? "Campground" : "ParkingFacility",
+    "name": area.nombre,
+    "description": area.descripcion || `Área para autocaravanas en ${area.ciudad}`,
+    "url": `https://www.mapafurgocasa.com/area/${area.slug}`,
+    "image": area.foto_principal || "https://www.mapafurgocasa.com/og-image-v2.jpg",
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": area.latitud,
+      "longitude": area.longitud
+    },
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": area.ciudad,
+      "addressRegion": area.provincia,
+      "addressCountry": area.pais,
+      "streetAddress": area.direccion || ""
+    },
+    ...(area.google_rating && {
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": area.google_rating,
+        "bestRating": "5",
+        "ratingCount": area.google_ratings_total || 1
+      }
+    }),
+    ...(area.precio_noche !== null && {
+      "offers": {
+        "@type": "Offer",
+        "price": area.precio_noche,
+        "priceCurrency": "EUR"
+      }
+    })
+  }
+
   return (
     <BannerProvider>
+      {/* Schema.org JSON-LD para SEO */}
+      <Script
+        id="schema-area"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
+      />
       {/* Navbar */}
       <Navbar />
 

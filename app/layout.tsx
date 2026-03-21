@@ -5,6 +5,7 @@ import WelcomeModal from '@/components/ui/WelcomeModal'
 import ChatbotWidget from '@/components/chatbot/ChatbotWidget'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.mapafurgocasa.com'),
   title: 'Mapa Furgocasa - Áreas Autocaravanas + Gestión Inteligente con IA | +3600 Ubicaciones',
   description: '🚐 Descubre +3600 áreas para autocaravanas en Europa y LATAM. 🤖 Gestión inteligente con IA: valoración automática GPT-4, control de mantenimiento, gastos, ROI. 📍 Sistema QR anti-robos. 🗺️ Planifica rutas. ¡100% GRATIS!',
   keywords: [
