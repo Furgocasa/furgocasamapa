@@ -15,42 +15,43 @@ export function BannerFurgocasaMobile({ position }: BannerProps) {
         rel="noopener noreferrer sponsored nofollow"
         className="block no-underline group"
       >
-        <div className="relative rounded-2xl overflow-hidden h-[320px]">
-          {/* Foto full-bleed */}
-          <img
-            src="/images/banners/camper-7.jpg"
-            alt="Camper Furgocasa"
-            className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-[1200ms] ease-out"
-          />
+        <div className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_20px_-8px_rgba(0,0,0,0.1)] border border-gray-100 transition-all hover:shadow-[0_8px_30px_-12px_rgba(0,0,0,0.15)] hover:-translate-y-1">
+          {/* Foto limpia */}
+          <div className="relative h-[180px] overflow-hidden">
+            <img
+              src="/images/banners/camper-7.jpg"
+              alt="Camper Furgocasa"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+            />
+            <div className="absolute top-3 left-3 bg-white/90 backdrop-blur text-slate-800 text-[9px] font-bold px-2 py-1 rounded-md uppercase tracking-wider shadow-sm">
+              Alquiler de Campers
+            </div>
+          </div>
 
-          {/* Overlay de abajo a arriba */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent" />
-
-          {/* Contenido abajo */}
-          <div className="relative z-10 h-full flex flex-col justify-end p-6">
+          {/* Contenido abajo en blanco */}
+          <div className="p-5">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-[10px]">🚐</div>
-              <span className="text-white font-black text-lg tracking-tight">Furgocasa</span>
+              <span className="text-xl">🚐</span>
+              <span className="text-[#0b3c74] font-black text-lg tracking-tight">Furgocasa</span>
             </div>
 
-            <p className="text-white/60 text-xs mb-3 font-medium">
-              Campers de gran volumen · Todo incluido
+            <p className="text-slate-600 text-xs mb-4 font-medium leading-relaxed">
+              Campers de gran volumen totalmente equipadas. Tu hotel sobre ruedas.
             </p>
 
             <div className="flex items-center gap-2 mb-4">
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/10">
-                <span className="text-[#ff6b35] font-bold text-sm">95€</span><span className="text-white/40 text-[10px]">/día</span>
+              <div className="bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 flex-1 text-center">
+                <div className="text-[#ff6b35] font-black text-lg leading-none mb-0.5">95€</div>
+                <div className="text-slate-400 text-[9px] uppercase tracking-wider font-bold">por día</div>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/10">
-                <span className="text-emerald-400 font-bold text-sm">49k€</span><span className="text-white/40 text-[10px]"> venta</span>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/10">
-                <span className="text-white font-bold text-sm">4.9★</span>
+              <div className="bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 flex-1 text-center">
+                <div className="text-slate-800 font-black text-lg leading-none mb-0.5">4.9★</div>
+                <div className="text-slate-400 text-[9px] uppercase tracking-wider font-bold">google</div>
               </div>
             </div>
 
-            <div className="bg-[#ff6b35] text-white w-full py-3 rounded-xl font-bold text-sm text-center shadow-lg shadow-orange-500/25 group-hover:bg-[#e85a25] transition-colors">
-              Ver campers →
+            <div className="bg-[#0b3c74] text-white w-full py-3 rounded-xl font-bold text-sm text-center shadow-md group-hover:bg-[#154b8a] transition-colors">
+              Ver disponibilidad →
             </div>
           </div>
         </div>

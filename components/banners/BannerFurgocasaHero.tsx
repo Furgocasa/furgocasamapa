@@ -15,38 +15,46 @@ export function BannerFurgocasaHero({ position }: BannerProps) {
         rel="noopener noreferrer sponsored nofollow"
         className="block no-underline group"
       >
-        <div className="relative rounded-2xl overflow-hidden h-[180px] md:h-[200px]">
-          {/* Foto full-bleed */}
-          <img
-            src="/images/banners/camper-5.jpg"
-            alt="Camper Premium Furgocasa"
-            className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-[1200ms] ease-out"
-          />
-
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-950/50 to-transparent" />
-
-          {/* Contenido */}
-          <div className="relative z-10 h-full flex items-center p-6 md:p-8">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-[10px]">🚐</div>
-                <span className="text-white/80 font-semibold text-xs tracking-widest uppercase">Furgocasa</span>
-              </div>
-              <h3 className="text-white text-xl md:text-2xl font-black tracking-tight leading-tight mb-2">
-                Campers de Gran Volumen · Alquiler y Venta
-              </h3>
-              <div className="flex items-center gap-3 text-white/50 text-xs font-medium">
-                <span>Desde <span className="text-[#ff6b35] font-bold">95€/día</span></span>
-                <span className="text-white/20">·</span>
-                <span>KM ilimitados</span>
-                <span className="text-white/20">·</span>
-                <span><span className="text-[#ff6b35] font-bold">4.9★</span> Google</span>
-              </div>
+        <div className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_20px_-8px_rgba(0,0,0,0.1)] border border-gray-100 transition-all hover:shadow-[0_8px_30px_-12px_rgba(0,0,0,0.15)] hover:-translate-y-1">
+          <div className="flex flex-col md:flex-row items-stretch h-auto md:h-[180px]">
+            
+            {/* Foto limpia a un lado */}
+            <div className="w-full md:w-[35%] h-[180px] md:h-full flex-shrink-0 relative overflow-hidden group">
+              <img 
+                src="/images/banners/camper-5.jpg"
+                alt="Camper Premium Furgocasa"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
             </div>
-            <div className="hidden md:block">
-              <div className="bg-[#ff6b35] text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-orange-500/25 group-hover:shadow-orange-500/40 group-hover:bg-[#e85a25] transition-all whitespace-nowrap">
-                Ver campers →
+
+            {/* Contenido sobre fondo blanco */}
+            <div className="flex-1 p-5 md:p-6 lg:p-8 flex flex-col justify-center">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🚐</span>
+                  <div className="text-sm font-bold text-[#0b3c74] tracking-tight uppercase">Furgocasa</div>
+                </div>
+                <div className="bg-[#ff6b35] text-white px-5 py-2 rounded-lg font-bold text-sm shadow-md group-hover:bg-[#e85a25] transition-colors whitespace-nowrap hidden md:block">
+                  Ver campers →
+                </div>
+              </div>
+
+              <h3 className="text-lg md:text-xl font-extrabold text-slate-900 tracking-tight leading-tight mb-2">
+                Campers de Gran Volumen totalmente equipadas
+              </h3>
+              
+              <div className="flex flex-wrap items-center gap-3 md:gap-4 text-slate-500 text-[11px] md:text-xs font-medium uppercase tracking-wider mb-4 md:mb-0">
+                <span className="flex items-center gap-1.5"><span className="text-[#ff6b35] font-black text-sm">95€/día</span></span>
+                <span className="text-slate-300">|</span>
+                <span className="flex items-center gap-1">KM ilimitados</span>
+                <span className="text-slate-300">|</span>
+                <span className="flex items-center gap-1"><span className="text-[#fbbf24] text-sm">★</span> 4.9 Google</span>
+              </div>
+
+              <div className="md:hidden mt-2">
+                <div className="bg-[#0b3c74] text-white px-5 py-3 rounded-lg font-bold text-sm shadow-md text-center">
+                  Ver disponibilidad →
+                </div>
               </div>
             </div>
           </div>
