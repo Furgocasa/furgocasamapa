@@ -49,7 +49,7 @@ export function BannerWideCarousel({ position }: BannerWideCarouselProps) {
 
           {/* Categorías */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <a href="https://www.casicinco.com/restaurante?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel"
+            <a href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel"
                target="_blank" rel="noopener noreferrer sponsored nofollow"
                className="bg-[rgba(255,255,255,0.06)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.1)] p-3 rounded-xl transition-all duration-300 hover:bg-[rgba(255,217,53,0.1)] hover:border-[rgba(255,217,53,0.3)] hover:-translate-y-1 no-underline text-center">
               <div className="text-2xl mb-1">🍽️</div>
@@ -57,7 +57,7 @@ export function BannerWideCarousel({ position }: BannerWideCarouselProps) {
               <div className="text-[10px] text-[rgba(255,255,255,0.7)]">+2000 lugares</div>
             </a>
 
-            <a href="https://www.casicinco.com/bar?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel"
+            <a href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel"
                target="_blank" rel="noopener noreferrer sponsored nofollow"
                className="bg-[rgba(255,255,255,0.06)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.1)] p-3 rounded-xl transition-all duration-300 hover:bg-[rgba(255,217,53,0.1)] hover:border-[rgba(255,217,53,0.3)] hover:-translate-y-1 no-underline text-center">
               <div className="text-2xl mb-1">🍺</div>
@@ -65,7 +65,7 @@ export function BannerWideCarousel({ position }: BannerWideCarouselProps) {
               <div className="text-[10px] text-[rgba(255,255,255,0.7)]">+700 lugares</div>
             </a>
 
-            <a href="https://www.casicinco.com/hotel?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel"
+            <a href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=wide_carousel"
                target="_blank" rel="noopener noreferrer sponsored nofollow"
                className="bg-[rgba(255,255,255,0.06)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.1)] p-3 rounded-xl transition-all duration-300 hover:bg-[rgba(255,217,53,0.1)] hover:border-[rgba(255,217,53,0.3)] hover:-translate-y-1 no-underline text-center">
               <div className="text-2xl mb-1">🏨</div>

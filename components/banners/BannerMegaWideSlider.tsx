@@ -46,7 +46,7 @@ export function BannerMegaWideSlider({ position }: BannerMegaWideSliderProps) {
 
           {/* Categorías Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-            <a href="https://www.casicinco.com/restaurante?utm_source=furgocasa&utm_medium=banner&utm_campaign=mega_wide"
+            <a href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=mega_wide"
                target="_blank" rel="noopener noreferrer sponsored nofollow"
                className="bg-[rgba(255,255,255,0.08)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.12)] p-4 rounded-xl transition-all duration-300 hover:bg-[rgba(255,255,255,0.14)] hover:border-[rgba(255,217,53,0.4)] hover:-translate-y-1 no-underline">
               <div className="text-3xl mb-2">🍽️</div>
@@ -55,7 +55,7 @@ export function BannerMegaWideSlider({ position }: BannerMegaWideSliderProps) {
               <div className="text-[10px] text-[#ffd935] font-semibold">+2000 lugares →</div>
             </a>
 
-            <a href="https://www.casicinco.com/bar?utm_source=furgocasa&utm_medium=banner&utm_campaign=mega_wide"
+            <a href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=mega_wide"
                target="_blank" rel="noopener noreferrer sponsored nofollow"
                className="bg-[rgba(255,255,255,0.08)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.12)] p-4 rounded-xl transition-all duration-300 hover:bg-[rgba(255,255,255,0.14)] hover:border-[rgba(255,217,53,0.4)] hover:-translate-y-1 no-underline">
               <div className="text-3xl mb-2">🍺</div>
@@ -64,7 +64,7 @@ export function BannerMegaWideSlider({ position }: BannerMegaWideSliderProps) {
               <div className="text-[10px] text-[#ffd935] font-semibold">+700 lugares →</div>
             </a>
 
-            <a href="https://www.casicinco.com/hotel?utm_source=furgocasa&utm_medium=banner&utm_campaign=mega_wide"
+            <a href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=mega_wide"
                target="_blank" rel="noopener noreferrer sponsored nofollow"
                className="bg-[rgba(255,255,255,0.08)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.12)] p-4 rounded-xl transition-all duration-300 hover:bg-[rgba(255,255,255,0.14)] hover:border-[rgba(255,217,53,0.4)] hover:-translate-y-1 no-underline col-span-2 md:col-span-1">
               <div className="text-3xl mb-2">🏨</div>

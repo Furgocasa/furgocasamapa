@@ -72,7 +72,7 @@ export function BannerUltraWideModern({ position }: BannerProps) {
           <div className="flex flex-col gap-2">
             <div className="grid grid-cols-2 gap-2">
               <a
-                href={`https://www.casicinco.com/restaurante/madrid?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
+                href={`https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
                 rel="noopener noreferrer sponsored nofollow"
                 className="bg-white/8 backdrop-blur-sm border border-white/12 rounded-xl p-3 transition-all hover:bg-white/14 hover:border-[#ffd935]/40 hover:-translate-y-0.5 hover:shadow-lg no-underline flex flex-col justify-center"
@@ -86,7 +86,7 @@ export function BannerUltraWideModern({ position }: BannerProps) {
               </a>
 
               <a
-                href={`https://www.casicinco.com/bar/barcelona?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
+                href={`https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
                 rel="noopener noreferrer sponsored nofollow"
                 className="bg-white/8 backdrop-blur-sm border border-white/12 rounded-xl p-3 transition-all hover:bg-white/14 hover:border-[#ffd935]/40 hover:-translate-y-0.5 hover:shadow-lg no-underline flex flex-col justify-center"
@@ -100,7 +100,7 @@ export function BannerUltraWideModern({ position }: BannerProps) {
               </a>
 
               <a
-                href={`https://www.casicinco.com/hotel/barcelona?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
+                href={`https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
                 rel="noopener noreferrer sponsored nofollow"
                 className="bg-white/8 backdrop-blur-sm border border-white/12 rounded-xl p-3 transition-all hover:bg-white/14 hover:border-[#ffd935]/40 hover:-translate-y-0.5 hover:shadow-lg no-underline flex flex-col justify-center"
@@ -114,7 +114,7 @@ export function BannerUltraWideModern({ position }: BannerProps) {
               </a>
 
               <a
-                href={`https://www.casicinco.com/restaurante/valencia?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
+                href={`https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
                 rel="noopener noreferrer sponsored nofollow"
                 className="bg-white/8 backdrop-blur-sm border border-white/12 rounded-xl p-3 transition-all hover:bg-white/14 hover:border-[#ffd935]/40 hover:-translate-y-0.5 hover:shadow-lg no-underline flex flex-col justify-center"

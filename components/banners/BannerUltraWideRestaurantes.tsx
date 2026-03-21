@@ -25,7 +25,7 @@ export function BannerUltraWideRestaurantes({ position }: BannerUltraWideRestaur
         {/* Sección Izquierda */}
         <div className="flex flex-col gap-6">
           <a
-            href="https://www.casicinco.com/restaurante?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes"
+            href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes"
             target="_blank"
             rel="noopener noreferrer sponsored nofollow"
             className="no-underline text-inherit"
@@ -50,7 +50,7 @@ export function BannerUltraWideRestaurantes({ position }: BannerUltraWideRestaur
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <a
-              href="https://www.casicinco.com/restaurante?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes"
+              href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes"
               target="_blank"
               rel="noopener noreferrer sponsored nofollow"
               className="bg-[rgba(255,255,255,0.06)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.1)] p-4 rounded-2xl flex items-center gap-3 transition-all duration-300 hover:bg-[rgba(255,100,100,0.15)] hover:border-[rgba(255,100,100,0.4)] hover:translate-x-2 no-underline text-inherit"
@@ -62,7 +62,7 @@ export function BannerUltraWideRestaurantes({ position }: BannerUltraWideRestaur
               </div>
             </a>
             <a
-              href="https://www.casicinco.com/restaurante?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes"
+              href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes"
               target="_blank"
               rel="noopener noreferrer sponsored nofollow"
               className="bg-[rgba(255,255,255,0.06)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.1)] p-4 rounded-2xl flex items-center gap-3 transition-all duration-300 hover:bg-[rgba(255,100,100,0.15)] hover:border-[rgba(255,100,100,0.4)] hover:translate-x-2 no-underline text-inherit"
@@ -101,7 +101,7 @@ export function BannerUltraWideRestaurantes({ position }: BannerUltraWideRestaur
 
           <div className="flex gap-4 items-center flex-wrap">
             <a
-              href="https://www.casicinco.com/restaurante?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes"
+              href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes"
               target="_blank"
               rel="noopener noreferrer sponsored nofollow"
               className="inline-block bg-gradient-to-br from-[#ffd935] to-[#ffe566] text-[#063971] px-12 py-5 rounded-2xl font-black text-xl no-underline transition-all duration-[0.4s] shadow-[0_8px_32px_rgba(255,217,53,0.5)] relative overflow-hidden hover:translate-y-[-4px] hover:shadow-[0_12px_48px_rgba(255,217,53,0.7)] group"
@@ -125,7 +125,7 @@ export function BannerUltraWideRestaurantes({ position }: BannerUltraWideRestaur
           </div>
           <div className="grid grid-cols-2 gap-4">
             <a
-              href="https://www.casicinco.com/restaurante/madrid?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes"
+              href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes"
               target="_blank"
               rel="noopener noreferrer sponsored nofollow"
               className="bg-[rgba(255,255,255,0.08)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.12)] rounded-[20px] p-5 transition-all duration-300 hover:bg-[rgba(255,255,255,0.14)] hover:border-[rgba(255,217,53,0.4)] hover:translate-y-[-6px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] no-underline text-inherit block animate-fadeInUp"
@@ -144,7 +144,7 @@ export function BannerUltraWideRestaurantes({ position }: BannerUltraWideRestaur
             </a>
 
             <a
-              href="https://www.casicinco.com/restaurante/valencia?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes"
+              href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes"
               target="_blank"
               rel="noopener noreferrer sponsored nofollow"
               className="bg-[rgba(255,255,255,0.08)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.12)] rounded-[20px] p-5 transition-all duration-300 hover:bg-[rgba(255,255,255,0.14)] hover:border-[rgba(255,217,53,0.4)] hover:translate-y-[-6px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] no-underline text-inherit block animate-fadeInUp"
@@ -164,7 +164,7 @@ export function BannerUltraWideRestaurantes({ position }: BannerUltraWideRestaur
             </a>
 
             <a
-              href="https://www.casicinco.com/restaurante/barcelona?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes"
+              href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes"
               target="_blank"
               rel="noopener noreferrer sponsored nofollow"
               className="bg-[rgba(255,255,255,0.08)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.12)] rounded-[20px] p-5 transition-all duration-300 hover:bg-[rgba(255,255,255,0.14)] hover:border-[rgba(255,217,53,0.4)] hover:translate-y-[-6px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] no-underline text-inherit block animate-fadeInUp"
@@ -184,7 +184,7 @@ export function BannerUltraWideRestaurantes({ position }: BannerUltraWideRestaur
             </a>
 
             <a
-              href="https://www.casicinco.com/restaurante/sevilla?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes"
+              href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=ultra_wide_restaurantes"
               target="_blank"
               rel="noopener noreferrer sponsored nofollow"
               className="bg-[rgba(255,255,255,0.08)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.12)] rounded-[20px] p-5 transition-all duration-300 hover:bg-[rgba(255,255,255,0.14)] hover:border-[rgba(255,217,53,0.4)] hover:translate-y-[-6px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] no-underline text-inherit block animate-fadeInUp"

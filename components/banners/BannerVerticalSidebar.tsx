@@ -24,7 +24,7 @@ export function BannerVerticalSidebar({ position }: BannerVerticalSidebarProps) 
 
         <div className="p-6">
           <a
-            href="https://www.casicinco.com/restaurante?utm_source=furgocasa&utm_medium=banner&utm_campaign=vertical_sidebar"
+            href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=vertical_sidebar"
             target="_blank"
             rel="noopener noreferrer sponsored nofollow"
             className="flex items-center gap-3 mb-4 no-underline text-white group"
@@ -39,7 +39,7 @@ export function BannerVerticalSidebar({ position }: BannerVerticalSidebarProps) 
           </a>
 
           <a
-            href="https://www.casicinco.com/bar?utm_source=furgocasa&utm_medium=banner&utm_campaign=vertical_sidebar"
+            href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=vertical_sidebar"
             target="_blank"
             rel="noopener noreferrer sponsored nofollow"
             className="flex items-center gap-3 mb-4 no-underline text-white group"
@@ -54,7 +54,7 @@ export function BannerVerticalSidebar({ position }: BannerVerticalSidebarProps) 
           </a>
 
           <a
-            href="https://www.casicinco.com/hotel?utm_source=furgocasa&utm_medium=banner&utm_campaign=vertical_sidebar"
+            href="https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=vertical_sidebar"
             target="_blank"
             rel="noopener noreferrer sponsored nofollow"
             className="flex items-center gap-3 mb-4 no-underline text-white group"
