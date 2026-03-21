@@ -210,7 +210,7 @@ export function MapLibreMap({
             width: ${scale}px;
             height: ${scale}px;
             border-radius: 50%;
-            background-color: rgba(2, 132, 199, 0.85);
+            background-color: rgba(11, 60, 116, 0.9);
             color: white;
             display: flex;
             align-items: center;
@@ -219,7 +219,7 @@ export function MapLibreMap({
             font-size: ${count < 100 ? '14px' : '16px'};
             cursor: pointer;
             border: 3px solid white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
           `
           el.textContent = String(count)
 

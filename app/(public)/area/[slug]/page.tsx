@@ -136,11 +136,11 @@ export default async function AreaPage({ params }: PageProps) {
         <DetalleAreaHeader area={area} />
 
         {/* Contenido principal */}
-        <div className="max-w-[1200px] mx-auto px-4 py-8">
-          <div className="flex flex-col lg:flex-row gap-8">
+        <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-8">
+          <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
             
-            {/* Columna Izquierda (Principal) - 65% */}
-            <div className="w-full lg:w-[65%] space-y-8">
+            {/* Columna Izquierda (Principal) - 60% */}
+            <div className="w-full lg:w-[60%] space-y-8">
               {/* Información básica */}
               <InformacionBasica area={area} />
 
@@ -203,9 +203,9 @@ export default async function AreaPage({ params }: PageProps) {
               />
             </div>
 
-            {/* Columna Derecha (Sticky) - 35% */}
-            <div className="w-full lg:w-[35%] relative">
-              <div className="sticky top-24 space-y-6">
+            {/* Columna Derecha (Sticky) - 40% */}
+            <div className="w-full lg:w-[40%] relative">
+              <div className="sticky top-24 space-y-8">
                 {/* Mapa de ubicación */}
                 <MapaUbicacion
                   latitud={Number(area.latitud)}

@@ -129,7 +129,7 @@ export function DetalleAreaHeader({ area }: Props) {
       )}
       <div className="relative w-full max-w-[1600px] mx-auto bg-gray-50">
         {/* Contenedor principal con bordes redondeados en desktop */}
-        <div className="relative h-[400px] md:h-[500px] md:rounded-b-3xl overflow-hidden bg-slate-200 shadow-sm">
+        <div className="relative h-[400px] md:h-[450px] md:rounded-b-3xl overflow-hidden bg-slate-200 shadow-sm max-w-[1600px] mx-auto">
           {area.foto_principal ? (
             <Image
               src={area.foto_principal}
@@ -212,26 +212,30 @@ export function DetalleAreaHeader({ area }: Props) {
             </div>
 
             {/* Panel lateral derecho en hero (Rating y Precio) */}
-            <div className="flex items-center bg-black/40 backdrop-blur-lg border border-white/20 p-5 rounded-3xl shadow-xl">
-              {area.google_rating && (
-                <div className="flex flex-col items-center justify-center px-5 border-r border-white/20">
-                  <div className="flex items-center gap-1 text-white font-bold text-2xl">
-                    <span className="text-amber-400 text-xl">★</span>
-                    {area.google_rating.toFixed(1)}
+            {(area.google_rating || (area.precio_noche !== null && area.precio_noche !== undefined)) && (
+              <div className="flex items-center bg-black/40 backdrop-blur-lg border border-white/20 p-5 rounded-3xl shadow-xl">
+                {area.google_rating && (
+                  <div className={`flex flex-col items-center justify-center px-5 ${(area.precio_noche !== null && area.precio_noche !== undefined) ? 'border-r border-white/20' : ''}`}>
+                    <div className="flex items-center gap-1 text-white font-bold text-2xl">
+                      <span className="text-amber-400 text-xl">★</span>
+                      {area.google_rating.toFixed(1)}
+                    </div>
+                    <span className="text-xs text-slate-300 font-medium tracking-wider uppercase mt-1">Rating</span>
                   </div>
-                  <span className="text-xs text-slate-300 font-medium tracking-wider uppercase mt-1">Rating</span>
-                </div>
-              )}
-              
-              <div className="flex flex-col items-center justify-center px-5">
-                <div className="text-white font-bold text-2xl">
-                  {area.precio_noche === 0 ? 'Gratis' : `${area.precio_noche}€`}
-                </div>
-                <span className="text-xs text-slate-300 font-medium tracking-wider uppercase mt-1">
-                  /{area.precio_24h ? '24h' : 'noche'}
-                </span>
+                )}
+                
+                {area.precio_noche !== null && area.precio_noche !== undefined && (
+                  <div className="flex flex-col items-center justify-center px-5">
+                    <div className="text-white font-bold text-2xl">
+                      {area.precio_noche === 0 ? 'Gratis' : `${area.precio_noche}€`}
+                    </div>
+                    <span className="text-xs text-slate-300 font-medium tracking-wider uppercase mt-1">
+                      {area.precio_24h ? '/24h' : '/noche'}
+                    </span>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

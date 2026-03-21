@@ -25,125 +25,63 @@ export function BannerUltraWideModern({ position }: BannerProps) {
         <div className="absolute w-[150px] h-[150px] rounded-full bg-[#ffd935]/10 top-[60%] right-[15%] animate-float-delayed" />
         <div className="absolute w-[80px] h-[80px] rounded-full bg-[#ffd935]/10 bottom-[20%] left-[50%] animate-float-slow" />
 
-        <div className="relative z-10 p-12 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div className="relative z-10 p-6 md:p-8 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-center">
           {/* Sección Izquierda */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
-              <div className="text-7xl animate-pulse-slow">⭐</div>
-              <div className="flex flex-col gap-2">
+              <div className="text-4xl animate-pulse-slow">⭐</div>
+              <div className="flex flex-col gap-1">
                 <a
                   href={`https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                   target="_blank"
                   rel="noopener noreferrer sponsored nofollow"
-                  className="text-6xl font-black text-[#ffd935] leading-none tracking-[-2px] no-underline hover:text-[#ffe566] transition-colors"
+                  className="text-3xl font-black text-[#ffd935] leading-none tracking-tight no-underline hover:text-[#ffe566] transition-colors"
                 >
                   Casi Cinco
                 </a>
-                <span className="inline-block bg-[#ffd935]/20 border-2 border-[#ffd935] px-3 py-1 rounded-2xl text-xs font-bold text-[#ffd935] uppercase tracking-widest">
+                <span className="inline-block bg-[#ffd935]/20 border border-[#ffd935] px-2 py-0.5 rounded-full text-[10px] font-bold text-[#ffd935] uppercase tracking-widest w-fit">
                   Verificado por Google
                 </span>
               </div>
             </div>
 
-            <div className="text-xl text-white/95 leading-relaxed font-medium">
+            <div className="text-base text-white/95 leading-snug font-medium max-w-xl">
               Descubre los mejores restaurantes, bares y hoteles de España. Solo lugares con
               +4.7★ en Google Maps.
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <a
-                href={`https://www.casicinco.com/ruta?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
-                target="_blank"
-                rel="noopener noreferrer sponsored nofollow"
-                className="flex items-center gap-3 bg-white/6 backdrop-blur-sm border border-white/10 p-5 rounded-2xl transition-all hover:bg-[#ffd935]/10 hover:border-[#ffd935]/30 hover:translate-x-2 no-underline"
-              >
-                <div className="text-3xl">🛣️</div>
-                <div className="flex-1">
-                  <div className="text-[15px] font-bold text-white mb-0.5">
-                    Planificador de Rutas
-                  </div>
-                  <div className="text-xs text-white/70">Crea tu itinerario perfecto</div>
-                </div>
-              </a>
-
-              <a
-                href={`https://www.casicinco.com/mapa?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
-                target="_blank"
-                rel="noopener noreferrer sponsored nofollow"
-                className="flex items-center gap-3 bg-white/6 backdrop-blur-sm border border-white/10 p-5 rounded-2xl transition-all hover:bg-[#ffd935]/10 hover:border-[#ffd935]/30 hover:translate-x-2 no-underline"
-              >
-                <div className="text-3xl">🤖</div>
-                <div className="flex-1">
-                  <div className="text-[15px] font-bold text-white mb-0.5">Chat IA</div>
-                  <div className="text-xs text-white/70">Recomendaciones personalizadas</div>
-                </div>
-              </a>
-
-              <a
-                href={`https://www.casicinco.com/mapa?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
-                target="_blank"
-                rel="noopener noreferrer sponsored nofollow"
-                className="flex items-center gap-3 bg-white/6 backdrop-blur-sm border border-white/10 p-5 rounded-2xl transition-all hover:bg-[#ffd935]/10 hover:border-[#ffd935]/30 hover:translate-x-2 no-underline"
-              >
-                <div className="text-3xl">🗺️</div>
-                <div className="flex-1">
-                  <div className="text-[15px] font-bold text-white mb-0.5">Mapa Interactivo</div>
-                  <div className="text-xs text-white/70">Explora por ubicación</div>
-                </div>
-              </a>
-
+            <div className="flex items-center gap-4 flex-wrap mt-1">
               <a
                 href={`https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
                 rel="noopener noreferrer sponsored nofollow"
-                className="flex items-center gap-3 bg-white/6 backdrop-blur-sm border border-white/10 p-5 rounded-2xl transition-all hover:bg-[#ffd935]/10 hover:border-[#ffd935]/30 hover:translate-x-2 no-underline"
-              >
-                <div className="text-3xl">⭐</div>
-                <div className="flex-1">
-                  <div className="text-[15px] font-bold text-white mb-0.5">+3500 Lugares</div>
-                  <div className="text-xs text-white/70">Solo +4.7★ verificados</div>
-                </div>
-              </a>
-            </div>
-
-            <div className="flex items-center gap-4 flex-wrap">
-              <a
-                href={`https://www.casicinco.com?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
-                target="_blank"
-                rel="noopener noreferrer sponsored nofollow"
-                className="relative bg-gradient-to-br from-[#ffd935] to-[#ffe566] text-[#063971] px-14 py-6 rounded-2xl font-black text-2xl transition-all hover:-translate-y-1 hover:shadow-[0_12px_48px_rgba(255,217,53,0.7)] shadow-[0_8px_32px_rgba(255,217,53,0.5)] no-underline"
+                className="relative bg-gradient-to-br from-[#ffd935] to-[#ffe566] text-[#063971] px-6 py-2.5 rounded-xl font-black text-lg transition-all hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(255,217,53,0.5)] shadow-[0_4px_16px_rgba(255,217,53,0.3)] no-underline"
               >
                 <span className="relative z-10">Explorar Ahora →</span>
               </a>
               <div className="text-sm text-white/80 flex items-center gap-2">
                 <span>🔥</span>
                 <span>
-                  <span className="text-lg font-bold text-[#ffd935]">+3500</span> lugares
-                  verificados
+                  <span className="font-bold text-[#ffd935]">+3500</span> lugares verificados
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Sección Derecha - Showcase */}
-          <div className="flex flex-col gap-4">
-            <div className="text-[#ffd935] text-base font-bold uppercase tracking-widest mb-2">
-              🌟 Lugares Destacados
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+          {/* Sección Derecha - Showcase (reducida) */}
+          <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <a
                 href={`https://www.casicinco.com/restaurante/madrid?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
                 rel="noopener noreferrer sponsored nofollow"
-                className="bg-white/8 backdrop-blur-sm border border-white/12 rounded-2xl p-5 transition-all hover:bg-white/14 hover:border-[#ffd935]/40 hover:-translate-y-1.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] no-underline"
+                className="bg-white/8 backdrop-blur-sm border border-white/12 rounded-xl p-3 transition-all hover:bg-white/14 hover:border-[#ffd935]/40 hover:-translate-y-0.5 hover:shadow-lg no-underline flex flex-col justify-center"
               >
-                <div className="text-4xl mb-3">🍽️</div>
-                <div className="text-base font-bold text-white mb-1.5">DiverXO</div>
-                <div className="text-xs text-white/60 mb-2">📍 Madrid</div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[#ffd935] text-sm">★★★★★</span>
-                  <span className="text-lg font-extrabold text-[#ffd935]">4.9</span>
-                  <span className="text-[11px] text-white/50">(1.2k)</span>
+                <div className="text-2xl mb-1">🍽️</div>
+                <div className="text-xs font-bold text-white mb-0.5">DiverXO</div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[#ffd935] text-[10px]">★★★★★</span>
+                  <span className="text-xs font-extrabold text-[#ffd935]">4.9</span>
                 </div>
               </a>
 
@@ -151,15 +89,13 @@ export function BannerUltraWideModern({ position }: BannerProps) {
                 href={`https://www.casicinco.com/bar/barcelona?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
                 rel="noopener noreferrer sponsored nofollow"
-                className="bg-white/8 backdrop-blur-sm border border-white/12 rounded-2xl p-5 transition-all hover:bg-white/14 hover:border-[#ffd935]/40 hover:-translate-y-1.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] no-underline"
+                className="bg-white/8 backdrop-blur-sm border border-white/12 rounded-xl p-3 transition-all hover:bg-white/14 hover:border-[#ffd935]/40 hover:-translate-y-0.5 hover:shadow-lg no-underline flex flex-col justify-center"
               >
-                <div className="text-4xl mb-3">🍺</div>
-                <div className="text-base font-bold text-white mb-1.5">Bobby's Free</div>
-                <div className="text-xs text-white/60 mb-2">📍 Barcelona</div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[#ffd935] text-sm">★★★★★</span>
-                  <span className="text-lg font-extrabold text-[#ffd935]">4.8</span>
-                  <span className="text-[11px] text-white/50">(856)</span>
+                <div className="text-2xl mb-1">🍺</div>
+                <div className="text-xs font-bold text-white mb-0.5">Bobby's Free</div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[#ffd935] text-[10px]">★★★★★</span>
+                  <span className="text-xs font-extrabold text-[#ffd935]">4.8</span>
                 </div>
               </a>
 
@@ -167,15 +103,13 @@ export function BannerUltraWideModern({ position }: BannerProps) {
                 href={`https://www.casicinco.com/hotel/barcelona?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
                 rel="noopener noreferrer sponsored nofollow"
-                className="bg-white/8 backdrop-blur-sm border border-white/12 rounded-2xl p-5 transition-all hover:bg-white/14 hover:border-[#ffd935]/40 hover:-translate-y-1.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] no-underline"
+                className="bg-white/8 backdrop-blur-sm border border-white/12 rounded-xl p-3 transition-all hover:bg-white/14 hover:border-[#ffd935]/40 hover:-translate-y-0.5 hover:shadow-lg no-underline flex flex-col justify-center"
               >
-                <div className="text-4xl mb-3">🏨</div>
-                <div className="text-base font-bold text-white mb-1.5">Hotel Arts</div>
-                <div className="text-xs text-white/60 mb-2">📍 Barcelona</div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[#ffd935] text-sm">★★★★★</span>
-                  <span className="text-lg font-extrabold text-[#ffd935]">4.9</span>
-                  <span className="text-[11px] text-white/50">(2.3k)</span>
+                <div className="text-2xl mb-1">🏨</div>
+                <div className="text-xs font-bold text-white mb-0.5">Hotel Arts</div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[#ffd935] text-[10px]">★★★★★</span>
+                  <span className="text-xs font-extrabold text-[#ffd935]">4.9</span>
                 </div>
               </a>
 
@@ -183,15 +117,13 @@ export function BannerUltraWideModern({ position }: BannerProps) {
                 href={`https://www.casicinco.com/restaurante/valencia?utm_source=furgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
                 target="_blank"
                 rel="noopener noreferrer sponsored nofollow"
-                className="bg-white/8 backdrop-blur-sm border border-white/12 rounded-2xl p-5 transition-all hover:bg-white/14 hover:border-[#ffd935]/40 hover:-translate-y-1.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] no-underline"
+                className="bg-white/8 backdrop-blur-sm border border-white/12 rounded-xl p-3 transition-all hover:bg-white/14 hover:border-[#ffd935]/40 hover:-translate-y-0.5 hover:shadow-lg no-underline flex flex-col justify-center"
               >
-                <div className="text-4xl mb-3">🍽️</div>
-                <div className="text-base font-bold text-white mb-1.5">Quique Dacosta</div>
-                <div className="text-xs text-white/60 mb-2">📍 Valencia</div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[#ffd935] text-sm">★★★★★</span>
-                  <span className="text-lg font-extrabold text-[#ffd935]">4.8</span>
-                  <span className="text-[11px] text-white/50">(980)</span>
+                <div className="text-2xl mb-1">🛣️</div>
+                <div className="text-xs font-bold text-white mb-0.5">Rutas IA</div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[#ffd935] text-[10px]">★★★★★</span>
+                  <span className="text-xs font-extrabold text-[#ffd935]">5.0</span>
                 </div>
               </a>
             </div>
