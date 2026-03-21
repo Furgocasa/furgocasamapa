@@ -34,7 +34,7 @@ export function BannerFurgocasaHero({ position }: BannerProps) {
                 <span className="text-white/80 font-semibold text-xs tracking-widest uppercase">Furgocasa</span>
               </div>
               <h3 className="text-white text-xl md:text-2xl font-black tracking-tight leading-tight mb-2">
-                Campers Premium · Tu aventura empieza aquí
+                Campers de Gran Volumen · Alquiler y Venta
               </h3>
               <div className="flex items-center gap-3 text-white/50 text-xs font-medium">
                 <span>Desde <span className="text-[#ff6b35] font-bold">95€/día</span></span>

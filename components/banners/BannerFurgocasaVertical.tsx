@@ -34,7 +34,7 @@ export function BannerFurgocasaVertical({ position }: BannerProps) {
           {/* Panel inferior */}
           <div className="bg-[#0a1628] p-5">
             <p className="text-white/50 text-xs mb-4 font-medium text-center">
-              Alquiler y venta de campers premium
+              Alquiler y venta de campers de gran volumen
             </p>
 
             <div className="space-y-2 mb-5">

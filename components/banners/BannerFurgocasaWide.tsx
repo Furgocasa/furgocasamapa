@@ -33,7 +33,7 @@ export function BannerFurgocasaWide({ position }: BannerProps) {
                 <div className="w-7 h-7 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-xs">🚐</div>
                 <span className="text-white/80 font-semibold text-xs tracking-widest uppercase">Furgocasa</span>
                 <span className="text-white/30 text-xs">·</span>
-                <span className="text-white/50 text-xs font-medium">Alquiler y Venta</span>
+                <span className="text-white/50 text-xs font-medium">Alquiler y Venta de Campers de Gran Volumen</span>
               </div>
 
               <h3 className="text-white text-2xl md:text-3xl font-black tracking-tight leading-tight mb-3">

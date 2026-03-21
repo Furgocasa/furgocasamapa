@@ -32,7 +32,7 @@ export function BannerFurgocasaImageAlquiler({ position }: BannerProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-sm">🚐</div>
-                <span className="text-white/90 font-semibold text-sm tracking-wide">Furgocasa</span>
+                <span className="text-white/90 font-semibold text-sm tracking-wide">Furgocasa · Campers de Gran Volumen</span>
               </div>
               <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-full px-4 py-1.5">
                 <span className="text-white font-bold text-sm">desde <span className="text-[#ff6b35]">95€</span>/día</span>
