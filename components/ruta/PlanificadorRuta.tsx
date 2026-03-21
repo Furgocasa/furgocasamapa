@@ -47,6 +47,21 @@ type GoogleDirectionsRoute = any
 type GoogleDirectionsRequest = any
 type GoogleDirectionsWaypoint = any
 
+/** Cada cálculo OK del planificador (Google Directions); no bloquea la UI. */
+function registrarCalculoRuta(distanciaMetros: number, numParadasIntermedias: number) {
+  const distancia_km =
+    distanciaMetros > 0 ? Math.round((distanciaMetros / 1000) * 100) / 100 : undefined
+  void fetch('/api/analytics/route-calculate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      distancia_km,
+      num_paradas: numParadasIntermedias,
+      page_url: typeof window !== 'undefined' ? window.location.pathname : undefined,
+    }),
+  }).catch(() => {})
+}
+
 interface RoutePoint {
   name: string
   lat: number
@@ -555,6 +570,12 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
         if (status === 'OK' && result) {
           setProgreso(40)
           setMensajeProgreso('Ruta calculada. Dibujando en el mapa...')
+
+          let distanciaMetros = 0
+          result.routes[0].legs.forEach((leg: any) => {
+            if (leg.distance?.value) distanciaMetros += leg.distance.value
+          })
+          registrarCalculoRuta(distanciaMetros, waypoints.length)
 
           directionsRenderer.setDirections(result)
 
@@ -1232,6 +1253,12 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
         },
         (result: any, status: any) => {
           if (status === 'OK' && result) {
+            let distanciaMetros = 0
+            result.routes[0].legs.forEach((leg: any) => {
+              if (leg.distance?.value) distanciaMetros += leg.distance.value
+            })
+            registrarCalculoRuta(distanciaMetros, paradasPuntos.length)
+
             directionsRenderer.setDirections(result)
             setCurrentRoute(result.routes[0])
             actualizarInfoRuta(result)

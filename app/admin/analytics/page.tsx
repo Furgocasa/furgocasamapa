@@ -61,6 +61,14 @@ interface AnalyticsData {
   promedioRutasPorUsuario: number
   promedioDistanciaPorUsuario: number
 
+  // Cálculos en el planificador (user_interactions → route_calculate), no solo rutas guardadas
+  totalRutasCalculadas: number
+  rutasCalculadasHoy: number
+  rutasCalculadasEstaSemana: number
+  rutasCalculadasEsteMes: number
+  rutasCalculadasPorDia: { fecha: string; count: number }[]
+  rutasCalculadasPorMes: { mes: string; count: number; distancia: number }[]
+
   // Métricas temporales - Visitas de usuarios
   visitasHoy: number
   visitasEstaSemana: number
@@ -278,6 +286,16 @@ export default function AdminAnalyticsPage() {
       const totalInteraccionesIA = mensajes?.length || 0
       console.log(`✅ ${totalInteraccionesIA} interacciones con IA registradas`)
 
+      console.log('🧭 Obteniendo cálculos de ruta (planificador) desde user_interactions...')
+      const { data: eventosRutaCalc, error: errorRutaCalc } = await (supabase as any)
+        .from('user_interactions')
+        .select('id, created_at, timestamp, user_id, event_data')
+        .eq('event_type', 'route_calculate')
+
+      if (errorRutaCalc) {
+        console.error('❌ Error obteniendo cálculos de ruta:', errorRutaCalc)
+      }
+
       // ========== MÉTRICAS TEMPORALES ==========
       console.log('📊 Calculando métricas temporales...')
 
@@ -400,6 +418,62 @@ export default function AdminAnalyticsPage() {
 
       console.log(`✅ Rutas: ${rutasHoy} hoy, ${rutasEstaSemana} esta semana, ${rutasEsteMes} este mes`)
       console.log(`📏 Distancia promedio: ${distanciaPromedio.toFixed(1)} km, Más larga: ${rutaMasLarga.toFixed(1)} km`)
+
+      // ========== CÁLCULOS DE RUTA EN PLANIFICADOR (route_calculate) ==========
+      const totalRutasCalculadas = eventosRutaCalc?.length || 0
+      const rutasCalculadasHoy =
+        eventosRutaCalc?.filter((e: any) => estaEnRango(e.timestamp || e.created_at, inicioDia)).length || 0
+      const rutasCalculadasEstaSemana =
+        eventosRutaCalc?.filter((e: any) => estaEnRango(e.timestamp || e.created_at, inicioSemana)).length || 0
+      const rutasCalculadasEsteMes =
+        eventosRutaCalc?.filter((e: any) => estaEnRango(e.timestamp || e.created_at, inicioMes)).length || 0
+
+      const rutasCalculadasPorDia: { fecha: string; count: number }[] = []
+      for (let i = 29; i >= 0; i--) {
+        const fecha = new Date(ahora)
+        fecha.setDate(ahora.getDate() - i)
+        fecha.setHours(0, 0, 0, 0)
+        const fechaSiguiente = new Date(fecha)
+        fechaSiguiente.setDate(fecha.getDate() + 1)
+
+        const count =
+          eventosRutaCalc?.filter((e: any) => {
+            const f = new Date(e.timestamp || e.created_at)
+            return f >= fecha && f < fechaSiguiente
+          }).length || 0
+
+        rutasCalculadasPorDia.push({
+          fecha: fecha.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
+          count,
+        })
+      }
+
+      const rutasCalculadasPorMes: { mes: string; count: number; distancia: number }[] = []
+      for (let i = 11; i >= 0; i--) {
+        const fechaMes = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1)
+        const mesNombre = fechaMes.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' })
+
+        const delMes =
+          eventosRutaCalc?.filter((e: any) => {
+            const f = new Date(e.timestamp || e.created_at)
+            return f.getFullYear() === fechaMes.getFullYear() && f.getMonth() === fechaMes.getMonth()
+          }) || []
+
+        const distanciaMes = delMes.reduce((sum: number, e: any) => {
+          const km = e.event_data?.distancia_km
+          return sum + (typeof km === 'number' && Number.isFinite(km) ? km : 0)
+        }, 0)
+
+        rutasCalculadasPorMes.push({
+          mes: mesNombre,
+          count: delMes.length,
+          distancia: distanciaMes,
+        })
+      }
+
+      console.log(
+        `✅ Cálculos planificador: ${rutasCalculadasHoy} hoy, ${rutasCalculadasEstaSemana} semana, ${totalRutasCalculadas} total`
+      )
 
       // ========== MÉTRICAS DE VISITAS TEMPORALES ==========
       console.log('👁️ Obteniendo visitas registradas...')
@@ -673,6 +747,7 @@ export default function AdminAnalyticsPage() {
       valoraciones?.forEach((v: any) => {if (v.user_id) usuariosConActividad.add(v.user_id)})
       favoritos?.forEach((f: any) => {if (f.user_id) usuariosConActividad.add(f.user_id)})
       rutas?.forEach((r: any) => {if (r.user_id) usuariosConActividad.add(r.user_id)})
+      eventosRutaCalc?.forEach((e: any) => {if (e.user_id) usuariosConActividad.add(e.user_id)})
 
       // Usuarios activos por período
       const usuariosActivosHoySet = new Set<string>()
@@ -684,6 +759,14 @@ export default function AdminAnalyticsPage() {
         if (estaEnRango(item.created_at, inicioDia)) usuariosActivosHoySet.add(item.user_id)
         if (estaEnRango(item.created_at, inicioSemana)) usuariosActivosSemanaSet.add(item.user_id)
         if (estaEnRango(item.created_at, inicioMes)) usuariosActivosMesSet.add(item.user_id)
+      })
+      eventosRutaCalc?.forEach((e: any) => {
+        if (!e.user_id) return
+        const t = e.timestamp || e.created_at
+        if (!t) return
+        if (estaEnRango(t, inicioDia)) usuariosActivosHoySet.add(e.user_id)
+        if (estaEnRango(t, inicioSemana)) usuariosActivosSemanaSet.add(e.user_id)
+        if (estaEnRango(t, inicioMes)) usuariosActivosMesSet.add(e.user_id)
       })
 
       const usuariosActivosHoy = usuariosActivosHoySet.size
@@ -706,6 +789,11 @@ export default function AdminAnalyticsPage() {
           if (f >= fecha && f < fechaSiguiente) {
             usuariosDia.add(item.user_id)
           }
+        })
+        eventosRutaCalc?.forEach((e: any) => {
+          if (!e.user_id) return
+          const f = new Date(e.timestamp || e.created_at)
+          if (f >= fecha && f < fechaSiguiente) usuariosDia.add(e.user_id)
         })
 
         usuariosActivosPorDia.push({
@@ -1012,9 +1100,11 @@ export default function AdminAnalyticsPage() {
 
       // Estimación de sesiones basada en actividad
       // Asumimos que cada conjunto de acciones en un período corto es una sesión
-      const sesionesTotales = totalRutas + visitasEsteMes + valoracionesTotales + favoritosTotales
-      const sesionesHoy = rutasHoy + visitasHoy + valoracionesHoy + favoritosHoy
-      const sesionesEstaSemana = rutasEstaSemana + visitasEstaSemana + valoracionesEstaSemana + favoritosEstaSemana
+      const sesionesTotales =
+        totalRutasCalculadas + visitasEsteMes + valoracionesTotales + favoritosTotales
+      const sesionesHoy = rutasCalculadasHoy + visitasHoy + valoracionesHoy + favoritosHoy
+      const sesionesEstaSemana =
+        rutasCalculadasEstaSemana + visitasEstaSemana + valoracionesEstaSemana + favoritosEstaSemana
 
       // Promedio de tiempo de sesión (estimado en minutos)
       const promedioTiempoSesion = 8.5 // Valor estimado, se calculará real cuando tengamos tracking
@@ -1029,9 +1119,9 @@ export default function AdminAnalyticsPage() {
       // Estas métricas se calcularán cuando implementemos el tracking de user_interactions
       // Por ahora usamos valores de proxy basados en otras métricas
 
-      const busquedasTotales = totalRutas * 2 // Estimamos 2 búsquedas por ruta
-      const busquedasHoy = rutasHoy * 2
-      const busquedasEstaSemana = rutasEstaSemana * 2
+      const busquedasTotales = totalRutasCalculadas * 2 // Proxy: ~2 búsquedas por uso fuerte del mapa/ruta
+      const busquedasHoy = rutasCalculadasHoy * 2
+      const busquedasEstaSemana = rutasCalculadasEstaSemana * 2
 
       const vistasAreasTotal = favoritos ? favoritosTotales * 5 : 0 // Estimamos 5 vistas por favorito
       const vistasAreasHoy = favoritosHoy * 5
@@ -1076,7 +1166,8 @@ export default function AdminAnalyticsPage() {
       const eventosMasComunes = [
         { evento: 'Búsqueda de áreas', count: busquedasTotales },
         { evento: 'Vista de área', count: vistasAreasTotal },
-        { evento: 'Cálculo de ruta', count: totalRutas },
+        { evento: 'Cálculo de ruta (planificador)', count: totalRutasCalculadas },
+        { evento: 'Ruta guardada en perfil', count: totalRutas },
         { evento: 'Agregar favorito', count: favoritosTotales },
         { evento: 'Registrar visita', count: visitas?.length || 0 },
         { evento: 'Dejar valoración', count: valoracionesTotales },
@@ -1252,6 +1343,13 @@ export default function AdminAnalyticsPage() {
         usuariosConMasRutas,
         promedioRutasPorUsuario,
         promedioDistanciaPorUsuario,
+
+        totalRutasCalculadas,
+        rutasCalculadasHoy,
+        rutasCalculadasEstaSemana,
+        rutasCalculadasEsteMes,
+        rutasCalculadasPorDia,
+        rutasCalculadasPorMes,
 
         // Métricas temporales - Visitas
         visitasHoy,
@@ -1614,21 +1712,29 @@ export default function AdminAnalyticsPage() {
           </div>
         </div>
 
-        {/* KPIs de Uso - Rutas e Interacciones */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* KPIs de Uso - Planificador, rutas guardadas e IA */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
           <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-6 border border-indigo-200">
-            <p className="text-sm font-medium text-indigo-700">🗺️ Rutas Calculadas</p>
-            <p className="text-2xl font-bold text-indigo-900 mt-2">{analytics.totalRutas.toLocaleString()}</p>
+            <p className="text-sm font-medium text-indigo-700">🧭 Cálculos en planificador</p>
+            <p className="text-2xl font-bold text-indigo-900 mt-2">{analytics.totalRutasCalculadas.toLocaleString()}</p>
             <p className="text-xs text-indigo-600 mt-1">
-              Planificadas por usuarios
+              Cada vez que Google devuelve una ruta OK (desde el despliegue de este tracking)
+            </p>
+          </div>
+
+          <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl p-6 border border-cyan-200">
+            <p className="text-sm font-medium text-cyan-700">💾 Rutas guardadas</p>
+            <p className="text-2xl font-bold text-cyan-900 mt-2">{analytics.totalRutas.toLocaleString()}</p>
+            <p className="text-xs text-cyan-600 mt-1">
+              Guardadas en perfil (tabla rutas)
             </p>
           </div>
 
           <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-6 border border-teal-200">
-            <p className="text-sm font-medium text-teal-700">🛣️ Distancia Total</p>
+            <p className="text-sm font-medium text-teal-700">🛣️ Distancia (guardadas)</p>
             <p className="text-2xl font-bold text-teal-900 mt-2">{analytics.distanciaTotal.toLocaleString()} km</p>
             <p className="text-xs text-teal-600 mt-1">
-              En todas las rutas
+              Suma en rutas guardadas
             </p>
           </div>
 
@@ -1661,8 +1767,8 @@ export default function AdminAnalyticsPage() {
           {/* Grid de Rutas Temporales */}
           <div className="bg-white rounded-xl shadow mb-6">
             <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-blue-50">
-              <h3 className="text-lg font-bold text-gray-900">🗺️ Rutas Calculadas por Período</h3>
-              <p className="text-sm text-gray-600">Actividad de planificación de rutas</p>
+              <h3 className="text-lg font-bold text-gray-900">🧭 Cálculos de ruta en el planificador</h3>
+              <p className="text-sm text-gray-600">Cada resultado OK del planificador (uso real de la herramienta)</p>
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1671,17 +1777,19 @@ export default function AdminAnalyticsPage() {
                     <p className="text-sm font-semibold text-indigo-700">📅 Hoy</p>
                     <span className="px-2 py-1 bg-indigo-200 text-indigo-800 rounded-full text-xs font-bold">LIVE</span>
                   </div>
-                  <p className="text-4xl font-black text-indigo-900">{analytics.rutasHoy}</p>
-                  <p className="text-xs text-indigo-600 mt-2">rutas planificadas</p>
+                  <p className="text-4xl font-black text-indigo-900">{analytics.rutasCalculadasHoy}</p>
+                  <p className="text-xs text-indigo-600 mt-2">cálculos exitosos</p>
                 </div>
 
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-sm font-semibold text-blue-700">📆 Esta Semana</p>
                   </div>
-                  <p className="text-4xl font-black text-blue-900">{analytics.rutasEstaSemana}</p>
+                  <p className="text-4xl font-black text-blue-900">{analytics.rutasCalculadasEstaSemana}</p>
                   <p className="text-xs text-blue-600 mt-2">
-                    {analytics.rutasEstaSemana > 0 ? `+${((analytics.rutasEstaSemana / analytics.totalRutas) * 100).toFixed(1)}% del total` : 'Sin rutas'}
+                    {analytics.totalRutasCalculadas > 0 && analytics.rutasCalculadasEstaSemana > 0
+                      ? `${((analytics.rutasCalculadasEstaSemana / analytics.totalRutasCalculadas) * 100).toFixed(1)}% del total histórico`
+                      : '—'}
                   </p>
                 </div>
 
@@ -1689,9 +1797,45 @@ export default function AdminAnalyticsPage() {
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-sm font-semibold text-sky-700">📅 Este Mes</p>
                   </div>
-                  <p className="text-4xl font-black text-sky-900">{analytics.rutasEsteMes}</p>
+                  <p className="text-4xl font-black text-sky-900">{analytics.rutasCalculadasEsteMes}</p>
                   <p className="text-xs text-sky-600 mt-2">
-                    {analytics.rutasEsteMes > 0 ? `${((analytics.rutasEsteMes / analytics.totalRutas) * 100).toFixed(1)}% del total` : 'Sin rutas'}
+                    {analytics.totalRutasCalculadas > 0 && analytics.rutasCalculadasEsteMes > 0
+                      ? `${((analytics.rutasCalculadasEsteMes / analytics.totalRutasCalculadas) * 100).toFixed(1)}% del total histórico`
+                      : '—'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow mb-6">
+            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-cyan-50 to-teal-50">
+              <h3 className="text-lg font-bold text-gray-900">💾 Rutas guardadas en perfil</h3>
+              <p className="text-sm text-gray-600">Registros en tabla rutas (usuario pulsó guardar)</p>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl p-6 border-2 border-cyan-200">
+                  <p className="text-sm font-semibold text-cyan-700 mb-2">📅 Hoy</p>
+                  <p className="text-4xl font-black text-cyan-900">{analytics.rutasHoy}</p>
+                  <p className="text-xs text-cyan-600 mt-2">guardadas</p>
+                </div>
+                <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-6 border-2 border-teal-200">
+                  <p className="text-sm font-semibold text-teal-700 mb-2">📆 Esta semana</p>
+                  <p className="text-4xl font-black text-teal-900">{analytics.rutasEstaSemana}</p>
+                  <p className="text-xs text-teal-600 mt-2">
+                    {analytics.totalRutas > 0 && analytics.rutasEstaSemana > 0
+                      ? `${((analytics.rutasEstaSemana / analytics.totalRutas) * 100).toFixed(1)}% del total`
+                      : '—'}
+                  </p>
+                </div>
+                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border-2 border-emerald-200">
+                  <p className="text-sm font-semibold text-emerald-700 mb-2">📅 Este mes</p>
+                  <p className="text-4xl font-black text-emerald-900">{analytics.rutasEsteMes}</p>
+                  <p className="text-xs text-emerald-600 mt-2">
+                    {analytics.totalRutas > 0 && analytics.rutasEsteMes > 0
+                      ? `${((analytics.rutasEsteMes / analytics.totalRutas) * 100).toFixed(1)}% del total`
+                      : '—'}
                   </p>
                 </div>
               </div>
@@ -2150,16 +2294,16 @@ export default function AdminAnalyticsPage() {
             </p>
           </div>
 
-          {/* Gráfico: Rutas por Día */}
+          {/* Gráfico: Cálculos planificador por día */}
           <div className="bg-white rounded-xl shadow mb-6">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">🗺️ Rutas Calculadas - Últimos 30 Días</h3>
-              <p className="text-sm text-gray-500">Actividad diaria de planificación de rutas</p>
+              <h3 className="text-lg font-semibold text-gray-900">🧭 Cálculos de ruta - Últimos 30 días</h3>
+              <p className="text-sm text-gray-500">Cada vez que el planificador obtiene una ruta de Google (OK)</p>
             </div>
             <div className="p-6">
               <div className="flex items-end justify-between gap-1 h-64">
-                {analytics.rutasPorDia.map((dia: any, index: any) => {
-                  const maxCount = Math.max(...analytics.rutasPorDia.map((d: any) => d.count), 1)
+                {analytics.rutasCalculadasPorDia.map((dia: any, index: any) => {
+                  const maxCount = Math.max(...analytics.rutasCalculadasPorDia.map((d: any) => d.count), 1)
                   const altura = (dia.count / maxCount) * 100
                   return (
                     <div key={index} className="flex-1 flex flex-col items-center gap-1">
@@ -2171,7 +2315,7 @@ export default function AdminAnalyticsPage() {
                         <div
                           className="w-full bg-gradient-to-t from-indigo-500 to-indigo-400 rounded-t hover:from-indigo-600 hover:to-indigo-500 transition-all cursor-pointer shadow-sm"
                           style={{ height: `${dia.count === 0 ? '10' : Math.min(Math.max(altura, 40), 95)}%` }}
-                          title={`${dia.fecha}: ${dia.count} rutas`}
+                          title={`${dia.fecha}: ${dia.count} cálculos`}
                         />
                       {index % 5 === 0 && (
                         <p className="text-[9px] text-gray-500 mt-1 rotate-45 origin-top-left">{dia.fecha}</p>
@@ -2183,8 +2327,51 @@ export default function AdminAnalyticsPage() {
               <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
                 <p className="text-sm text-gray-600">
                   Total últimos 30 días: <span className="font-bold text-indigo-600">
+                    {analytics.rutasCalculadasPorDia.reduce((sum: any, d: any) => sum + d.count, 0).toLocaleString()}
+                  </span> cálculos
+                </p>
+                <p className="text-xs text-gray-500">
+                  Promedio diario: {(analytics.rutasCalculadasPorDia.reduce((sum: any, d: any) => sum + d.count, 0) / 30).toFixed(1)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Gráfico: Rutas guardadas por día */}
+          <div className="bg-white rounded-xl shadow mb-6">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">💾 Rutas guardadas en perfil - Últimos 30 días</h3>
+              <p className="text-sm text-gray-500">Usuario guardó la ruta (tabla rutas)</p>
+            </div>
+            <div className="p-6">
+              <div className="flex items-end justify-between gap-1 h-64">
+                {analytics.rutasPorDia.map((dia: any, index: any) => {
+                  const maxCount = Math.max(...analytics.rutasPorDia.map((d: any) => d.count), 1)
+                  const altura = (dia.count / maxCount) * 100
+                  return (
+                    <div key={index} className="flex-1 flex flex-col items-center gap-1">
+                      <div className="text-center">
+                        {dia.count > 0 && (
+                          <p className="text-xs font-bold text-cyan-700">{dia.count}</p>
+                        )}
+                      </div>
+                        <div
+                          className="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t hover:from-cyan-600 hover:to-cyan-500 transition-all cursor-pointer shadow-sm"
+                          style={{ height: `${dia.count === 0 ? '10' : Math.min(Math.max(altura, 40), 95)}%` }}
+                          title={`${dia.fecha}: ${dia.count} guardadas`}
+                        />
+                      {index % 5 === 0 && (
+                        <p className="text-[9px] text-gray-500 mt-1 rotate-45 origin-top-left">{dia.fecha}</p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+                <p className="text-sm text-gray-600">
+                  Total últimos 30 días: <span className="font-bold text-cyan-700">
                     {analytics.rutasPorDia.reduce((sum: any, d: any) => sum + d.count, 0).toLocaleString()}
-                  </span> rutas
+                  </span> guardadas
                 </p>
                 <p className="text-xs text-gray-500">
                   Promedio diario: {(analytics.rutasPorDia.reduce((sum: any, d: any) => sum + d.count, 0) / 30).toFixed(1)}
@@ -2279,27 +2466,29 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
 
-          {/* Gráfico: Rutas por Mes (últimos 12 meses) */}
+          {/* Gráfico: Cálculos por mes */}
           <div className="bg-white rounded-xl shadow mb-6">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">🗺️ Rutas y Distancia por Mes - Últimos 12 Meses</h3>
-              <p className="text-sm text-gray-500">Evolución mensual de rutas y kilómetros recorridos</p>
+              <h3 className="text-lg font-semibold text-gray-900">🧭 Cálculos de ruta por mes - Últimos 12 meses</h3>
+              <p className="text-sm text-gray-500">Uso del planificador; km estimados desde eventos (si se enviaron)</p>
             </div>
             <div className="p-6">
               <div className="flex items-end justify-between gap-2 h-64">
-                {analytics.rutasPorMes.map((mes: any, index: any) => {
-                  const maxCount = Math.max(...analytics.rutasPorMes.map((m: any) => m.count), 1)
+                {analytics.rutasCalculadasPorMes.map((mes: any, index: any) => {
+                  const maxCount = Math.max(...analytics.rutasCalculadasPorMes.map((m: any) => m.count), 1)
                   const altura = (mes.count / maxCount) * 100
                   return (
                     <div key={index} className="flex-1 flex flex-col items-center gap-2">
                       <div className="text-center">
                         <p className="text-xs font-bold text-indigo-600">{mes.count}</p>
-                        <p className="text-[9px] text-teal-600">{(mes.distancia / 1000).toFixed(0)}k km</p>
+                        {mes.distancia > 0 && (
+                          <p className="text-[9px] text-teal-600">{mes.distancia.toFixed(0)} km</p>
+                        )}
                       </div>
                       <div
                         className="w-full bg-gradient-to-t from-indigo-500 to-indigo-400 rounded-t hover:from-indigo-600 hover:to-indigo-500 transition-all cursor-pointer"
                         style={{ height: `${Math.min(Math.max(altura, 40), 95)}%` }}
-                        title={`${mes.mes}: ${mes.count} rutas, ${mes.distancia.toFixed(0)} km`}
+                        title={`${mes.mes}: ${mes.count} cálculos, ~${mes.distancia.toFixed(0)} km`}
                       />
                       <p className="text-xs font-medium text-gray-600">{mes.mes}</p>
                     </div>
@@ -2309,14 +2498,60 @@ export default function AdminAnalyticsPage() {
               <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-600">
-                    Total rutas (12 meses): <span className="font-bold text-indigo-600">
+                    Total cálculos (12 meses): <span className="font-bold text-indigo-600">
+                      {analytics.rutasCalculadasPorMes.reduce((sum: any, m: any) => sum + m.count, 0).toLocaleString()}
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">
+                    Km ref. en eventos: <span className="font-bold text-teal-600">
+                      {analytics.rutasCalculadasPorMes.reduce((sum: any, m: any) => sum + m.distancia, 0).toLocaleString()} km
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Gráfico: Rutas guardadas por mes */}
+          <div className="bg-white rounded-xl shadow mb-6">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">💾 Rutas guardadas y distancia por mes - 12 meses</h3>
+              <p className="text-sm text-gray-500">Tabla rutas (perfil)</p>
+            </div>
+            <div className="p-6">
+              <div className="flex items-end justify-between gap-2 h-64">
+                {analytics.rutasPorMes.map((mes: any, index: any) => {
+                  const maxCount = Math.max(...analytics.rutasPorMes.map((m: any) => m.count), 1)
+                  const altura = (mes.count / maxCount) * 100
+                  return (
+                    <div key={index} className="flex-1 flex flex-col items-center gap-2">
+                      <div className="text-center">
+                        <p className="text-xs font-bold text-cyan-700">{mes.count}</p>
+                        <p className="text-[9px] text-teal-600">{mes.distancia.toFixed(0)} km</p>
+                      </div>
+                      <div
+                        className="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t hover:from-cyan-600 hover:to-cyan-500 transition-all cursor-pointer"
+                        style={{ height: `${Math.min(Math.max(altura, 40), 95)}%` }}
+                        title={`${mes.mes}: ${mes.count} guardadas, ${mes.distancia.toFixed(0)} km`}
+                      />
+                      <p className="text-xs font-medium text-gray-600">{mes.mes}</p>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">
+                    Total guardadas (12 meses): <span className="font-bold text-cyan-700">
                       {analytics.rutasPorMes.reduce((sum: any, m: any) => sum + m.count, 0).toLocaleString()}
                     </span>
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">
-                    Total distancia: <span className="font-bold text-teal-600">
+                    Distancia total: <span className="font-bold text-teal-600">
                       {analytics.rutasPorMes.reduce((sum: any, m: any) => sum + m.distancia, 0).toLocaleString()} km
                     </span>
                   </p>
