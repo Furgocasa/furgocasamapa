@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Loader } from '@googlemaps/js-api-loader'
+import maplibregl from 'maplibre-gl'
+import 'maplibre-gl/dist/maplibre-gl.css'
 
 interface Props {
   latitud: number
@@ -10,63 +11,76 @@ interface Props {
 }
 
 export function MapaUbicacion({ latitud, longitud, nombre }: Props) {
-  const mapRef = useRef<HTMLDivElement>(null)
+  const mapContainerRef = useRef<HTMLDivElement>(null)
+  const mapRef = useRef<maplibregl.Map | null>(null)
 
   // Validar coordenadas ANTES de cualquier hook
   const coordenadasValidas = !isNaN(latitud) && !isNaN(longitud) && latitud !== 0 && longitud !== 0
 
-  // SIEMPRE ejecutar useEffect (no hacer return condicional antes de los hooks)
   useEffect(() => {
-    if (!coordenadasValidas) {
-      console.warn('Coordenadas inválidas para el mapa:', { latitud, longitud })
-      return
-    }
+    if (!coordenadasValidas || !mapContainerRef.current) return
 
-    const initMap = async () => {
-      try {
-        const loader = new Loader({
-          apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-          version: 'weekly',
-          libraries: ['places', 'geometry'] // Mismas libraries que MapaInteractivo
-        })
+    const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_API_KEY || 'get_your_own_key'
 
-        const { Map } = await loader.importLibrary('maps')
-        const { AdvancedMarkerElement, PinElement } = await loader.importLibrary('marker')
+    try {
+      const map = new maplibregl.Map({
+        container: mapContainerRef.current,
+        style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`,
+        center: [longitud, latitud],
+        zoom: 15,
+        attributionControl: false
+      })
 
-        if (mapRef.current) {
-          const position = { lat: latitud, lng: longitud }
+      map.addControl(new maplibregl.NavigationControl(), 'top-right')
 
-          const map = new Map(mapRef.current, {
-            center: position,
-            zoom: 15,
-            mapTypeControl: false,
-            streetViewControl: true,
-            fullscreenControl: true,
-            zoomControl: true,
-            mapId: 'FURGOCASA_MAP', // Necesario para AdvancedMarkerElement
-          })
+      // Crear marcador
+      const el = document.createElement('div')
+      el.style.cssText = `
+        width: 30px;
+        height: 30px;
+        background-color: #0b3c74;
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        border: 2px solid white;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        cursor: pointer;
+      `
 
-          // Crear marcador
-          const pin = new PinElement({
-            background: '#0b3c74',
-            borderColor: '#ffffff',
-            glyphColor: '#ffffff',
-            scale: 1.5,
-          })
+      // Círculo blanco en el centro
+      const inner = document.createElement('div')
+      inner.style.cssText = `
+        width: 12px;
+        height: 12px;
+        background-color: white;
+        border-radius: 50%;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      `
+      el.appendChild(inner)
 
-          new AdvancedMarkerElement({
-            map,
-            position,
-            title: nombre,
-            content: pin.element,
-          })
-        }
-      } catch (error) {
-        console.error('Error inicializando mapa:', error)
+      new maplibregl.Marker({ element: el })
+        .setLngLat([longitud, latitud])
+        .addTo(map)
+
+      // Añadir popup simple con el nombre
+      const popup = new maplibregl.Popup({ offset: 25 })
+        .setText(nombre)
+      
+      new maplibregl.Marker({ element: el })
+        .setLngLat([longitud, latitud])
+        .setPopup(popup)
+        .addTo(map)
+
+      mapRef.current = map
+
+      return () => {
+        map.remove()
       }
+    } catch (error) {
+      console.error('Error inicializando mapa de MapLibre:', error)
     }
-
-    initMap()
   }, [latitud, longitud, nombre, coordenadasValidas])
 
   const handleComoLlegar = () => {
@@ -113,7 +127,7 @@ export function MapaUbicacion({ latitud, longitud, nombre }: Props) {
 
       {/* Mapa */}
       <div 
-        ref={mapRef} 
+        ref={mapContainerRef} 
         className="w-full h-64 md:h-80 rounded-lg overflow-hidden border border-gray-200"
       />
 
