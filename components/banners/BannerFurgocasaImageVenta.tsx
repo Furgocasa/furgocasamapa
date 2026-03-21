@@ -13,72 +13,52 @@ export function BannerFurgocasaImageVenta({ position }: BannerProps) {
         href={`https://www.furgocasa.com/es/ventas?utm_source=mapafurgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
         target="_blank"
         rel="noopener noreferrer sponsored nofollow"
-        className="block no-underline"
+        className="block no-underline group"
       >
-        <div className="bg-[#2c5f2d] rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all hover:-translate-y-1">
-          <div className="flex flex-col md:flex-row items-stretch h-auto md:h-[220px]">
-            
-            {/* Columna de imágenes - 40% del ancho */}
-            <div className="w-full md:w-[40%] flex-shrink-0 grid grid-rows-2 md:grid-rows-1 md:grid-cols-2 gap-0.5 h-[300px] md:h-full">
-              <div className="relative overflow-hidden group">
-                <img 
-                  src="/images/banners/camper-3.jpg"
-                  alt="Camper en Venta Furgocasa"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute bottom-2 left-2 bg-[#4ade80]/90 backdrop-blur-sm text-[#1e4620] text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                  En Venta
-                </div>
+        <div className="relative rounded-2xl overflow-hidden h-[280px] md:h-[320px]">
+          {/* Foto full-bleed */}
+          <img
+            src="/images/banners/camper-3.jpg"
+            alt="Camper en venta Furgocasa"
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-[1200ms] ease-out"
+          />
+
+          {/* Overlay con tono verde oscuro */}
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/85 via-emerald-950/50 to-emerald-950/15" />
+
+          {/* Contenido sobre la foto */}
+          <div className="relative z-10 h-full flex flex-col justify-between p-6 md:p-10">
+            {/* Cabecera */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-sm">🏷️</div>
+                <span className="text-white/90 font-semibold text-sm tracking-wide">Furgocasa · Ventas</span>
               </div>
-              <div className="relative overflow-hidden group">
-                <img 
-                  src="/images/banners/camper-4.jpg"
-                  alt="Camper Garantizada"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute bottom-2 left-2 bg-[#4ade80]/90 backdrop-blur-sm text-[#1e4620] text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                  Garantía 1 Año
-                </div>
+              <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-full px-4 py-1.5">
+                <span className="text-white font-bold text-sm">desde <span className="text-emerald-400">49.000€</span></span>
               </div>
             </div>
 
-            {/* Contenido - 60% del ancho */}
-            <div className="flex-1 text-white p-6 md:p-8 flex flex-col justify-between">
-              <div>
-                <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
-                  <div className="inline-flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full">
-                    <span className="text-lg">🏷️</span>
-                    <span className="text-white font-bold text-[11px] tracking-widest uppercase">Venta de Campers</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-white/60 text-[10px] uppercase tracking-wider mb-0.5">Desde</div>
-                    <div className="text-[#4ade80] font-black text-2xl leading-none">49.000€</div>
-                  </div>
-                </div>
-                
-                <h3 className="text-2xl font-black text-white mb-2 tracking-tight">
-                  Hazte con tu Propia Camper
-                </h3>
-                
-                <p className="text-white/80 text-sm mb-4 leading-relaxed max-w-xl">
-                  Campers procedentes de nuestra flota de alquiler. Revisadas meticulosamente por nuestros mecánicos, con historial de mantenimiento y garantía de un año.
-                </p>
+            {/* Contenido principal */}
+            <div className="max-w-lg">
+              <h3 className="text-white text-3xl md:text-4xl font-black tracking-tight leading-[1.1] mb-3">
+                Hazte con<br/>tu propia camper
+              </h3>
+              <p className="text-white/70 text-sm md:text-base leading-relaxed mb-5 max-w-md">
+                Procedentes de nuestra flota de alquiler. Revisión mecánica completa, historial de mantenimiento y garantía de un año.
+              </p>
 
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="text-xs text-white/90 bg-white/5 px-2 py-1 rounded">✓ Historial Completo</span>
-                  <span className="text-xs text-white/90 bg-white/5 px-2 py-1 rounded">✓ 1 Año Garantía</span>
-                  <span className="text-xs text-white/90 bg-white/5 px-2 py-1 rounded">✓ Financiación 120m</span>
-                  <span className="text-xs text-white/90 bg-white/5 px-2 py-1 rounded">✓ Transferencia Incluida</span>
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="bg-emerald-500 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-emerald-500/25 group-hover:shadow-emerald-500/40 group-hover:bg-emerald-600 transition-all">
+                  Ver campers en venta →
                 </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="bg-[#4ade80] text-[#1e4620] px-6 py-2.5 rounded-lg font-bold text-sm text-center hover:bg-[#22c55e] transition-colors">
-                  Ver Campers en Venta →
+                <div className="hidden md:flex items-center gap-4 text-white/50 text-xs font-medium">
+                  <span className="flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-emerald-400"></span>Garantía 1 año</span>
+                  <span className="flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-emerald-400"></span>Financiación 120m</span>
+                  <span className="flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-emerald-400"></span>Historial completo</span>
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </a>

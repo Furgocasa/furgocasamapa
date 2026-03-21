@@ -13,72 +13,52 @@ export function BannerFurgocasaImageAlquiler({ position }: BannerProps) {
         href={`https://www.furgocasa.com/es?utm_source=mapafurgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
         target="_blank"
         rel="noopener noreferrer sponsored nofollow"
-        className="block no-underline"
+        className="block no-underline group"
       >
-        <div className="bg-[#0b3c74] rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all hover:-translate-y-1">
-          <div className="flex flex-col md:flex-row items-stretch h-auto md:h-[220px]">
-            
-            {/* Columna de imágenes - 40% del ancho */}
-            <div className="w-full md:w-[40%] flex-shrink-0 grid grid-rows-2 md:grid-rows-1 md:grid-cols-2 gap-0.5 h-[300px] md:h-full">
-              <div className="relative overflow-hidden group">
-                <img 
-                  src="/images/banners/camper-1.jpg"
-                  alt="Interior Camper Furgocasa"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute bottom-2 left-2 bg-[#ff6b35]/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                  Interior Equipado
-                </div>
+        <div className="relative rounded-2xl overflow-hidden h-[280px] md:h-[320px]">
+          {/* Foto full-bleed */}
+          <img
+            src="/images/banners/camper-1.jpg"
+            alt="Camper Furgocasa en ruta"
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-[1200ms] ease-out"
+          />
+
+          {/* Overlay cinematográfico */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-950/50 to-slate-950/20" />
+
+          {/* Contenido sobre la foto */}
+          <div className="relative z-10 h-full flex flex-col justify-between p-6 md:p-10">
+            {/* Cabecera */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-sm">🚐</div>
+                <span className="text-white/90 font-semibold text-sm tracking-wide">Furgocasa</span>
               </div>
-              <div className="relative overflow-hidden group">
-                <img 
-                  src="/images/banners/camper-2.jpg"
-                  alt="Exterior Camper Furgocasa"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute bottom-2 left-2 bg-[#ff6b35]/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                  Gran Volumen
-                </div>
+              <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-full px-4 py-1.5">
+                <span className="text-white font-bold text-sm">desde <span className="text-[#ff6b35]">95€</span>/día</span>
               </div>
             </div>
 
-            {/* Contenido - 60% del ancho */}
-            <div className="flex-1 text-white p-6 md:p-8 flex flex-col justify-between">
-              <div>
-                <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
-                  <div className="inline-flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full">
-                    <span className="text-lg">🚐</span>
-                    <span className="text-white font-bold text-[11px] tracking-widest uppercase">Furgocasa Rent</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[#ff6b35] font-black text-2xl leading-none">95€</div>
-                    <div className="text-white/60 text-[10px] uppercase tracking-wider">Por día</div>
-                  </div>
-                </div>
-                
-                <h3 className="text-2xl font-black text-white mb-2 tracking-tight">
-                  Alquiler de Campers de Gran Volumen
-                </h3>
-                
-                <p className="text-white/80 text-sm mb-4 leading-relaxed max-w-xl">
-                  Tu hotel sobre ruedas. Campers Premium totalmente equipadas con kilómetros ilimitados, seguro a todo riesgo y atención 24/7.
-                </p>
+            {/* Contenido principal */}
+            <div className="max-w-lg">
+              <h3 className="text-white text-3xl md:text-4xl font-black tracking-tight leading-[1.1] mb-3">
+                Tu hotel<br/>sobre ruedas
+              </h3>
+              <p className="text-white/70 text-sm md:text-base leading-relaxed mb-5 max-w-md">
+                Campers de gran volumen totalmente equipadas. Kilómetros ilimitados y seguro a todo riesgo incluido.
+              </p>
 
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="text-xs text-white/90 bg-white/5 px-2 py-1 rounded">✓ KM Ilimitados</span>
-                  <span className="text-xs text-white/90 bg-white/5 px-2 py-1 rounded">✓ Seguro Todo Riesgo</span>
-                  <span className="text-xs text-white/90 bg-white/5 px-2 py-1 rounded">✓ Menaje Incluido</span>
-                  <span className="text-xs text-white/90 bg-white/5 px-2 py-1 rounded">✓ 4.9★ Google</span>
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="bg-[#ff6b35] text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-orange-500/25 group-hover:shadow-orange-500/40 group-hover:bg-[#e85a25] transition-all">
+                  Ver disponibilidad →
                 </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="bg-[#ff6b35] text-white px-6 py-2.5 rounded-lg font-bold text-sm text-center hover:bg-[#e85a25] transition-colors">
-                  Ver Campers y Disponibilidad →
+                <div className="hidden md:flex items-center gap-4 text-white/50 text-xs font-medium">
+                  <span className="flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-[#ff6b35]"></span>KM Ilimitados</span>
+                  <span className="flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-[#ff6b35]"></span>4.9★ Google</span>
+                  <span className="flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-[#ff6b35]"></span>14+ años</span>
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </a>

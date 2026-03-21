@@ -8,52 +8,49 @@ export function BannerFurgocasaMobile({ position }: BannerProps) {
   const utmCampaign = `furgocasa_mobile_${position}_area_detail`
 
   return (
-    <div className="w-full max-w-[320px] mx-auto my-8">
+    <div className="w-full max-w-[360px] mx-auto my-8">
       <a
         href={`https://www.furgocasa.com/es?utm_source=mapafurgocasa&utm_medium=banner&utm_campaign=${utmCampaign}`}
         target="_blank"
         rel="noopener noreferrer sponsored nofollow"
-        className="block no-underline"
+        className="block no-underline group"
       >
-        <div className="bg-[#0b3c74] rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all group">
-          {/* Imagen visible - 40% altura */}
-          <div className="relative h-[160px] overflow-hidden">
-            <img 
-              src="/images/banners/camper-7.jpg"
-              alt="Camper Furgocasa"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0b3c74] via-transparent to-transparent"></div>
-            <div className="absolute top-3 left-3">
-              <span className="text-[9px] bg-white/20 backdrop-blur-sm text-white px-2 py-1 rounded uppercase font-bold tracking-wider">Patrocinado</span>
-            </div>
-          </div>
+        <div className="relative rounded-2xl overflow-hidden h-[320px]">
+          {/* Foto full-bleed */}
+          <img
+            src="/images/banners/camper-7.jpg"
+            alt="Camper Furgocasa"
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-[1200ms] ease-out"
+          />
 
-          {/* Contenido */}
-          <div className="p-5 text-center text-white relative z-10 -mt-8">
-            <div className="flex items-center justify-center gap-1.5 mb-1 drop-shadow-md">
-              <span className="text-xl">🚐</span>
-              <div className="text-xl font-black text-[#ff6b35] tracking-tight">
-                Furgocasa
-              </div>
+          {/* Overlay de abajo a arriba */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent" />
+
+          {/* Contenido abajo */}
+          <div className="relative z-10 h-full flex flex-col justify-end p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-6 h-6 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-[10px]">🚐</div>
+              <span className="text-white font-black text-lg tracking-tight">Furgocasa</span>
             </div>
-            <p className="text-xs text-white/80 mb-4 font-medium">
-              Alquiler y Venta de Campers Premium
+
+            <p className="text-white/60 text-xs mb-3 font-medium">
+              Campers de gran volumen · Todo incluido
             </p>
-            
-            <div className="flex justify-center gap-2 mb-4">
-              <div className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg flex flex-col items-center flex-1">
-                <div className="text-[#ff6b35] font-bold text-sm leading-none mb-1">95€</div>
-                <div className="text-white/60 text-[9px] uppercase tracking-wider">Alquiler</div>
+
+            <div className="flex items-center gap-2 mb-4">
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/10">
+                <span className="text-[#ff6b35] font-bold text-sm">95€</span><span className="text-white/40 text-[10px]">/día</span>
               </div>
-              <div className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg flex flex-col items-center flex-1">
-                <div className="text-[#4ade80] font-bold text-sm leading-none mb-1">49k</div>
-                <div className="text-white/60 text-[9px] uppercase tracking-wider">Venta</div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/10">
+                <span className="text-emerald-400 font-bold text-sm">49k€</span><span className="text-white/40 text-[10px]"> venta</span>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/10">
+                <span className="text-white font-bold text-sm">4.9★</span>
               </div>
             </div>
-            
-            <div className="bg-[#ff6b35] text-white w-full py-2.5 rounded-lg font-bold text-sm hover:bg-[#e85a25] transition-colors shadow-sm">
-              Ver Campers →
+
+            <div className="bg-[#ff6b35] text-white w-full py-3 rounded-xl font-bold text-sm text-center shadow-lg shadow-orange-500/25 group-hover:bg-[#e85a25] transition-colors">
+              Ver campers →
             </div>
           </div>
         </div>
