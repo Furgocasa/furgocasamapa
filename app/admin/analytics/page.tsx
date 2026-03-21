@@ -140,6 +140,19 @@ interface AnalyticsData {
   vehiculosMasBaratos: { vehiculo: any; precio: number }[]
   vehiculosConDatosFinancieros: number
 
+  // Vehículos - Mantenimiento y Seguridad
+  totalMantenimientos: number
+  costeTotalMantenimientos: number
+  totalAverias: number
+  costeTotalAverias: number
+  totalReportesAccidentes: number
+
+  // Chatbot IA Real
+  totalConversacionesIA: number
+  totalMensajesIA: number
+  promedioMensajesPorConversacion: number
+  funcionesIAMasUsadas: { funcion: string; count: number }[]
+
   // Vehículos - Top Mercado IA
   vehiculosMasCarosMercado: { marca: string; modelo: string; año: number | null; precio: number }[]
   vehiculosMasBaratosMercado: { marca: string; modelo: string; año: number | null; precio: number }[]
@@ -804,7 +817,7 @@ export default function AdminAnalyticsPage() {
 
       console.log(`✅ Usuarios activos: ${usuariosActivosHoy} hoy, ${usuariosActivosEstaSemana} esta semana`)
 
-      // ========== MÉTRICAS DE VEHÍCULOS ==========
+      // ========== MÉTRICAS DE VEHÍCULOS Y MANTENIMIENTO ==========
       // Usar cliente de Supabase con RPC (igual que /admin/vehiculos)
       console.log('🚐 Obteniendo vehículos con RPC...')
       let vehiculos: any[] = []
@@ -812,6 +825,12 @@ export default function AdminAnalyticsPage() {
       let fichasTecnicas: any[] = []
       let datosMercado: any[] = []
       let valoracionesIA: any[] = []
+      let mantenimientos: any[] = []
+      let averias: any[] = []
+      let reportesAccidentes: any[] = []
+      let chatbotConversaciones: any[] = []
+      let chatbotMensajes: any[] = []
+      let chatbotAnalyticsData: any[] = []
       let registrosKilometraje: any[] = []
 
       try {
@@ -892,7 +911,34 @@ export default function AdminAnalyticsPage() {
       const vehiculosConDatosFinancieros = valoracionesEconomicas.filter((v: any) => v.precio_compra && v.precio_compra > 0).length
       const promedioValorVehiculo = vehiculosConDatosFinancieros > 0 ? valorTotalParqueVehiculos / vehiculosConDatosFinancieros : 0
 
-      // Inversión total promedio (incluye mantenimientos, averías, mejoras, etc)
+      // ========== MANTENIMIENTOS, AVERÍAS Y REPORTES ==========
+      const totalMantenimientos = mantenimientos.length
+      const costeTotalMantenimientos = mantenimientos.reduce((sum: number, m: any) => sum + (m.coste || 0), 0)
+      
+      const totalAverias = averias.length
+      const costeTotalAverias = averias.reduce((sum: number, a: any) => sum + (a.coste || 0), 0)
+      
+      const totalReportesAccidentes = reportesAccidentes.length
+
+      // ========== CHATBOT IA PROFUNDO ==========
+      const totalConversacionesIA = chatbotConversaciones.length
+      const totalMensajesIA = chatbotConversaciones.reduce((sum: number, c: any) => sum + (c.total_mensajes || 0), 0)
+      const promedioMensajesPorConversacion = totalConversacionesIA > 0 ? totalMensajesIA / totalConversacionesIA : 0
+      
+      // Funciones de IA más usadas
+      const functionCallsCount: Record<string, number> = {}
+      chatbotAnalyticsData.forEach((a: any) => {
+        const fnName = a.detalles?.function_name
+        if (fnName) {
+          functionCallsCount[fnName] = (functionCallsCount[fnName] || 0) + 1
+        }
+      })
+      const funcionesIAMasUsadas = Object.entries(functionCallsCount)
+        .map(([funcion, count]) => ({ funcion, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5)
+
+      // Inversión total promedio (incluye compras, mantenimientos, averías, mejoras, etc)
       const inversionTotalPromedio = vehiculosConDatosFinancieros > 0
         ? valoracionesEconomicas.reduce((sum: any, v: any) => sum + (v.inversion_total || 0), 0) / vehiculosConDatosFinancieros
         : 0
@@ -1437,6 +1483,19 @@ export default function AdminAnalyticsPage() {
         vehiculosEnVenta,
         precioPromedioVenta,
         gananciaPromedioProyectada,
+
+        // Mantenimiento y Seguridad
+        totalMantenimientos,
+        costeTotalMantenimientos,
+        totalAverias,
+        costeTotalAverias,
+        totalReportesAccidentes,
+
+        // Chatbot IA Real
+        totalConversacionesIA,
+        totalMensajesIA,
+        promedioMensajesPorConversacion,
+        funcionesIAMasUsadas,
 
         // Vehículos - Distribución
         distribucionPreciosCompra,
@@ -2803,6 +2862,39 @@ export default function AdminAnalyticsPage() {
               </div>
             </div>
 
+            {/* SECCIÓN 2B: Mantenimientos, Averías y Seguridad */}
+            <div className="mb-8 mt-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">🔧 Mantenimientos, Averías y Seguridad</h3>
+              <p className="text-sm text-gray-600 mb-4">Uso de la herramienta de gestión y reportes de la comunidad</p>
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200">
+                  <p className="text-sm font-semibold text-blue-700 mb-2">🛠️ Mantenimientos</p>
+                  <p className="text-4xl font-black text-blue-900">{analytics.totalMantenimientos}</p>
+                  <p className="text-xs text-blue-600 mt-2">registros</p>
+                </div>
+                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-6 border-2 border-indigo-200">
+                  <p className="text-sm font-semibold text-indigo-700 mb-2">💸 Coste Mantenimiento</p>
+                  <p className="text-3xl font-black text-indigo-900">{analytics.costeTotalMantenimientos.toLocaleString('es-ES')}€</p>
+                  <p className="text-xs text-indigo-600 mt-2">total invertido</p>
+                </div>
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border-2 border-orange-200">
+                  <p className="text-sm font-semibold text-orange-700 mb-2">⚠️ Averías</p>
+                  <p className="text-4xl font-black text-orange-900">{analytics.totalAverias}</p>
+                  <p className="text-xs text-orange-600 mt-2">registros</p>
+                </div>
+                <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6 border-2 border-red-200">
+                  <p className="text-sm font-semibold text-red-700 mb-2">🔥 Coste Averías</p>
+                  <p className="text-3xl font-black text-red-900">{analytics.costeTotalAverias.toLocaleString('es-ES')}€</p>
+                  <p className="text-xs text-red-600 mt-2">total gastado</p>
+                </div>
+                <div className="bg-gradient-to-br from-rose-50 to-rose-100 rounded-xl p-6 border-2 border-rose-300">
+                  <p className="text-sm font-semibold text-rose-700 mb-2">🚨 Reportes Accidentes</p>
+                  <p className="text-4xl font-black text-rose-900">{analytics.totalReportesAccidentes}</p>
+                  <p className="text-xs text-rose-600 mt-2">escaneos QR / reportes</p>
+                </div>
+              </div>
+            </div>
+
             {/* SECCIÓN 3: Valoraciones IA & Venta */}
             <div className="mb-8">
               <h3 className="text-xl font-bold text-gray-900 mb-4">🤖 Valoraciones IA & Mercado de Venta</h3>
@@ -3315,6 +3407,59 @@ export default function AdminAnalyticsPage() {
                     <p className="text-xs text-yellow-600 mt-2">sin actividad previa</p>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* IA y Chatbot */}
+            <div className="bg-white rounded-xl shadow mb-6">
+              <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-fuchsia-50">
+                <h3 className="text-lg font-bold text-gray-900">🤖 Inteligencia Artificial & Chatbot</h3>
+                <p className="text-sm text-gray-600">Uso real del asistente inteligente en la app</p>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border-2 border-purple-200">
+                    <p className="text-sm font-semibold text-purple-700 mb-2">💬 Conversaciones</p>
+                    <p className="text-4xl font-black text-purple-900">{analytics.totalConversacionesIA}</p>
+                    <p className="text-xs text-purple-600 mt-2">sesiones de chat iniciadas</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-fuchsia-50 to-fuchsia-100 rounded-xl p-6 border-2 border-fuchsia-200">
+                    <p className="text-sm font-semibold text-fuchsia-700 mb-2">📨 Mensajes Totales</p>
+                    <p className="text-4xl font-black text-fuchsia-900">{analytics.totalMensajesIA}</p>
+                    <p className="text-xs text-fuchsia-600 mt-2">intercambios con el LLM</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl p-6 border-2 border-pink-200">
+                    <p className="text-sm font-semibold text-pink-700 mb-2">🔄 Profundidad</p>
+                    <p className="text-4xl font-black text-pink-900">{analytics.promedioMensajesPorConversacion.toFixed(1)}</p>
+                    <p className="text-xs text-pink-600 mt-2">mensajes por conversación</p>
+                  </div>
+                </div>
+
+                {analytics.funcionesIAMasUsadas && analytics.funcionesIAMasUsadas.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-4">Funciones de la Base de Datos más llamadas por el LLM</h4>
+                    <div className="space-y-3">
+                      {analytics.funcionesIAMasUsadas.map((fn: any, index: any) => {
+                        const maxCount = analytics.funcionesIAMasUsadas[0]?.count || 1
+                        const porcentaje = (fn.count / maxCount) * 100
+                        return (
+                          <div key={index} className="group">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-sm font-medium text-gray-700 font-mono">{fn.funcion}</span>
+                              <span className="text-sm font-bold text-fuchsia-600">{fn.count} usos</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                              <div
+                                className="bg-gradient-to-r from-fuchsia-500 to-purple-600 h-2.5 rounded-full transition-all duration-500"
+                                style={{ width: `${porcentaje}%` }}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
