@@ -1773,33 +1773,33 @@ export default function AdminAnalyticsPage() {
 
         {/* KPIs de Uso - Planificador, rutas guardadas e IA */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-6 border border-indigo-200">
+          <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-6 border border-indigo-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
             <p className="text-sm font-medium text-indigo-700">🧭 Cálculos en planificador</p>
-            <p className="text-2xl font-bold text-indigo-900 mt-2">{analytics.totalRutasCalculadas.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-indigo-900 mt-2">{analytics.totalRutasCalculadas.toLocaleString()}</p>
             <p className="text-xs text-indigo-600 mt-1">
               Cada vez que Google devuelve una ruta OK (desde el despliegue de este tracking)
             </p>
           </div>
 
-          <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl p-6 border border-cyan-200">
+          <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl p-6 border border-cyan-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
             <p className="text-sm font-medium text-cyan-700">💾 Rutas guardadas</p>
-            <p className="text-2xl font-bold text-cyan-900 mt-2">{analytics.totalRutas.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-cyan-900 mt-2">{analytics.totalRutas.toLocaleString()}</p>
             <p className="text-xs text-cyan-600 mt-1">
               Guardadas en perfil (tabla rutas)
             </p>
           </div>
 
-          <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-6 border border-teal-200">
+          <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-6 border border-teal-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
             <p className="text-sm font-medium text-teal-700">🛣️ Distancia (guardadas)</p>
-            <p className="text-2xl font-bold text-teal-900 mt-2">{analytics.distanciaTotal.toLocaleString()} km</p>
+            <p className="text-3xl font-bold text-teal-900 mt-2">{analytics.distanciaTotal.toLocaleString()} km</p>
             <p className="text-xs text-teal-600 mt-1">
               Suma en rutas guardadas
             </p>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
+          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
             <p className="text-sm font-medium text-purple-700">🤖 Interacciones IA</p>
-            <p className="text-2xl font-bold text-purple-900 mt-2">{analytics.totalInteraccionesIA.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-purple-900 mt-2">{analytics.totalInteraccionesIA.toLocaleString()}</p>
             <p className="text-xs text-purple-600 mt-1">
               Mensajes con el chatbot
             </p>
@@ -1831,33 +1831,42 @@ export default function AdminAnalyticsPage() {
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-6 border-2 border-indigo-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-semibold text-indigo-700">📅 Hoy</p>
-                    <span className="px-2 py-1 bg-indigo-200 text-indigo-800 rounded-full text-xs font-bold">LIVE</span>
+                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-6 border-2 border-indigo-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group">
+                  <div className="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <span className="text-8xl">🧭</span>
                   </div>
-                  <p className="text-4xl font-black text-indigo-900">{analytics.rutasCalculadasHoy}</p>
-                  <p className="text-xs text-indigo-600 mt-2">cálculos exitosos</p>
+                  <div className="flex items-center justify-between mb-2 relative z-10">
+                    <p className="text-sm font-semibold text-indigo-700">📅 Hoy</p>
+                    <span className="px-2 py-1 bg-indigo-200 text-indigo-800 rounded-full text-[10px] font-black tracking-wider uppercase shadow-sm">LIVE</span>
+                  </div>
+                  <p className="text-5xl font-black text-indigo-900 relative z-10">{analytics.rutasCalculadasHoy}</p>
+                  <p className="text-xs font-medium text-indigo-600 mt-2 relative z-10">cálculos exitosos</p>
                 </div>
 
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200">
-                  <div className="flex items-center justify-between mb-2">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group">
+                  <div className="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <span className="text-8xl">📆</span>
+                  </div>
+                  <div className="flex items-center justify-between mb-2 relative z-10">
                     <p className="text-sm font-semibold text-blue-700">📆 Esta Semana</p>
                   </div>
-                  <p className="text-4xl font-black text-blue-900">{analytics.rutasCalculadasEstaSemana}</p>
-                  <p className="text-xs text-blue-600 mt-2">
+                  <p className="text-5xl font-black text-blue-900 relative z-10">{analytics.rutasCalculadasEstaSemana}</p>
+                  <p className="text-xs font-medium text-blue-600 mt-2 relative z-10">
                     {analytics.totalRutasCalculadas > 0 && analytics.rutasCalculadasEstaSemana > 0
                       ? `${((analytics.rutasCalculadasEstaSemana / analytics.totalRutasCalculadas) * 100).toFixed(1)}% del total histórico`
                       : '—'}
                   </p>
                 </div>
 
-                <div className="bg-gradient-to-br from-sky-50 to-sky-100 rounded-xl p-6 border-2 border-sky-200">
-                  <div className="flex items-center justify-between mb-2">
+                <div className="bg-gradient-to-br from-sky-50 to-sky-100 rounded-xl p-6 border-2 border-sky-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group">
+                  <div className="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <span className="text-8xl">📅</span>
+                  </div>
+                  <div className="flex items-center justify-between mb-2 relative z-10">
                     <p className="text-sm font-semibold text-sky-700">📅 Este Mes</p>
                   </div>
-                  <p className="text-4xl font-black text-sky-900">{analytics.rutasCalculadasEsteMes}</p>
-                  <p className="text-xs text-sky-600 mt-2">
+                  <p className="text-5xl font-black text-sky-900 relative z-10">{analytics.rutasCalculadasEsteMes}</p>
+                  <p className="text-xs font-medium text-sky-600 mt-2 relative z-10">
                     {analytics.totalRutasCalculadas > 0 && analytics.rutasCalculadasEsteMes > 0
                       ? `${((analytics.rutasCalculadasEsteMes / analytics.totalRutasCalculadas) * 100).toFixed(1)}% del total histórico`
                       : '—'}
@@ -1874,24 +1883,33 @@ export default function AdminAnalyticsPage() {
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl p-6 border-2 border-cyan-200">
-                  <p className="text-sm font-semibold text-cyan-700 mb-2">📅 Hoy</p>
-                  <p className="text-4xl font-black text-cyan-900">{analytics.rutasHoy}</p>
-                  <p className="text-xs text-cyan-600 mt-2">guardadas</p>
+                <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl p-6 border-2 border-cyan-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group">
+                  <div className="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <span className="text-8xl">💾</span>
+                  </div>
+                  <p className="text-sm font-semibold text-cyan-700 mb-2 relative z-10">📅 Hoy</p>
+                  <p className="text-5xl font-black text-cyan-900 relative z-10">{analytics.rutasHoy}</p>
+                  <p className="text-xs font-medium text-cyan-600 mt-2 relative z-10">rutas guardadas</p>
                 </div>
-                <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-6 border-2 border-teal-200">
-                  <p className="text-sm font-semibold text-teal-700 mb-2">📆 Esta semana</p>
-                  <p className="text-4xl font-black text-teal-900">{analytics.rutasEstaSemana}</p>
-                  <p className="text-xs text-teal-600 mt-2">
+                <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-6 border-2 border-teal-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group">
+                  <div className="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <span className="text-8xl">📆</span>
+                  </div>
+                  <p className="text-sm font-semibold text-teal-700 mb-2 relative z-10">📆 Esta semana</p>
+                  <p className="text-5xl font-black text-teal-900 relative z-10">{analytics.rutasEstaSemana}</p>
+                  <p className="text-xs font-medium text-teal-600 mt-2 relative z-10">
                     {analytics.totalRutas > 0 && analytics.rutasEstaSemana > 0
                       ? `${((analytics.rutasEstaSemana / analytics.totalRutas) * 100).toFixed(1)}% del total`
                       : '—'}
                   </p>
                 </div>
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border-2 border-emerald-200">
-                  <p className="text-sm font-semibold text-emerald-700 mb-2">📅 Este mes</p>
-                  <p className="text-4xl font-black text-emerald-900">{analytics.rutasEsteMes}</p>
-                  <p className="text-xs text-emerald-600 mt-2">
+                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border-2 border-emerald-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group">
+                  <div className="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <span className="text-8xl">📅</span>
+                  </div>
+                  <p className="text-sm font-semibold text-emerald-700 mb-2 relative z-10">📅 Este mes</p>
+                  <p className="text-5xl font-black text-emerald-900 relative z-10">{analytics.rutasEsteMes}</p>
+                  <p className="text-xs font-medium text-emerald-600 mt-2 relative z-10">
                     {analytics.totalRutas > 0 && analytics.rutasEsteMes > 0
                       ? `${((analytics.rutasEsteMes / analytics.totalRutas) * 100).toFixed(1)}% del total`
                       : '—'}
@@ -2867,27 +2885,27 @@ export default function AdminAnalyticsPage() {
               <h3 className="text-xl font-bold text-gray-900 mb-4">🔧 Mantenimientos, Averías y Seguridad</h3>
               <p className="text-sm text-gray-600 mb-4">Uso de la herramienta de gestión y reportes de la comunidad</p>
               <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                   <p className="text-sm font-semibold text-blue-700 mb-2">🛠️ Mantenimientos</p>
                   <p className="text-4xl font-black text-blue-900">{analytics.totalMantenimientos}</p>
                   <p className="text-xs text-blue-600 mt-2">registros</p>
                 </div>
-                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-6 border-2 border-indigo-200">
+                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-6 border-2 border-indigo-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                   <p className="text-sm font-semibold text-indigo-700 mb-2">💸 Coste Mantenimiento</p>
                   <p className="text-3xl font-black text-indigo-900">{analytics.costeTotalMantenimientos.toLocaleString('es-ES')}€</p>
                   <p className="text-xs text-indigo-600 mt-2">total invertido</p>
                 </div>
-                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border-2 border-orange-200">
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border-2 border-orange-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                   <p className="text-sm font-semibold text-orange-700 mb-2">⚠️ Averías</p>
                   <p className="text-4xl font-black text-orange-900">{analytics.totalAverias}</p>
                   <p className="text-xs text-orange-600 mt-2">registros</p>
                 </div>
-                <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6 border-2 border-red-200">
+                <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6 border-2 border-red-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                   <p className="text-sm font-semibold text-red-700 mb-2">🔥 Coste Averías</p>
                   <p className="text-3xl font-black text-red-900">{analytics.costeTotalAverias.toLocaleString('es-ES')}€</p>
                   <p className="text-xs text-red-600 mt-2">total gastado</p>
                 </div>
-                <div className="bg-gradient-to-br from-rose-50 to-rose-100 rounded-xl p-6 border-2 border-rose-300">
+                <div className="bg-gradient-to-br from-rose-50 to-rose-100 rounded-xl p-6 border-2 border-rose-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                   <p className="text-sm font-semibold text-rose-700 mb-2">🚨 Reportes Accidentes</p>
                   <p className="text-4xl font-black text-rose-900">{analytics.totalReportesAccidentes}</p>
                   <p className="text-xs text-rose-600 mt-2">escaneos QR / reportes</p>
@@ -3417,42 +3435,46 @@ export default function AdminAnalyticsPage() {
                 <p className="text-sm text-gray-600">Uso real del asistente inteligente en la app</p>
               </div>
               <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border-2 border-purple-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border-2 border-purple-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                     <p className="text-sm font-semibold text-purple-700 mb-2">💬 Conversaciones</p>
-                    <p className="text-4xl font-black text-purple-900">{analytics.totalConversacionesIA}</p>
+                    <p className="text-5xl font-black text-purple-900">{analytics.totalConversacionesIA}</p>
                     <p className="text-xs text-purple-600 mt-2">sesiones de chat iniciadas</p>
                   </div>
-                  <div className="bg-gradient-to-br from-fuchsia-50 to-fuchsia-100 rounded-xl p-6 border-2 border-fuchsia-200">
+                  <div className="bg-gradient-to-br from-fuchsia-50 to-fuchsia-100 rounded-xl p-6 border-2 border-fuchsia-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                     <p className="text-sm font-semibold text-fuchsia-700 mb-2">📨 Mensajes Totales</p>
-                    <p className="text-4xl font-black text-fuchsia-900">{analytics.totalMensajesIA}</p>
+                    <p className="text-5xl font-black text-fuchsia-900">{analytics.totalMensajesIA}</p>
                     <p className="text-xs text-fuchsia-600 mt-2">intercambios con el LLM</p>
                   </div>
-                  <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl p-6 border-2 border-pink-200">
+                  <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl p-6 border-2 border-pink-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                     <p className="text-sm font-semibold text-pink-700 mb-2">🔄 Profundidad</p>
-                    <p className="text-4xl font-black text-pink-900">{analytics.promedioMensajesPorConversacion.toFixed(1)}</p>
+                    <p className="text-5xl font-black text-pink-900">{analytics.promedioMensajesPorConversacion.toFixed(1)}</p>
                     <p className="text-xs text-pink-600 mt-2">mensajes por conversación</p>
                   </div>
                 </div>
 
                 {analytics.funcionesIAMasUsadas && analytics.funcionesIAMasUsadas.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-4">Funciones de la Base de Datos más llamadas por el LLM</h4>
-                    <div className="space-y-3">
+                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                    <h4 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+                      <span className="text-fuchsia-600">⚡</span> Funciones del Sistema (Tools) más llamadas
+                    </h4>
+                    <div className="space-y-4">
                       {analytics.funcionesIAMasUsadas.map((fn: any, index: any) => {
                         const maxCount = analytics.funcionesIAMasUsadas[0]?.count || 1
                         const porcentaje = (fn.count / maxCount) * 100
                         return (
                           <div key={index} className="group">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-medium text-gray-700 font-mono">{fn.funcion}</span>
-                              <span className="text-sm font-bold text-fuchsia-600">{fn.count} usos</span>
+                              <span className="text-sm font-semibold text-gray-700 font-mono bg-white px-2 py-0.5 rounded border border-gray-200 shadow-sm">{fn.funcion}</span>
+                              <span className="text-sm font-black text-fuchsia-700">{fn.count} usos</span>
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
                               <div
-                                className="bg-gradient-to-r from-fuchsia-500 to-purple-600 h-2.5 rounded-full transition-all duration-500"
+                                className="bg-gradient-to-r from-fuchsia-500 to-purple-600 h-3 rounded-full transition-all duration-1000 ease-out relative"
                                 style={{ width: `${porcentaje}%` }}
-                              />
+                              >
+                                <div className="absolute inset-0 bg-white/20 w-full animate-pulse"></div>
+                              </div>
                             </div>
                           </div>
                         )
