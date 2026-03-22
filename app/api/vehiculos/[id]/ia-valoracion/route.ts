@@ -875,12 +875,12 @@ async function procesarValoracionIA(
       precioReferencia?.toLocaleString() || "No especificado"
     }€${
       !incluyeImpuesto
-        ? " ⚠️ (precio original sin impuesto matriculación, normalizado añadiendo ~14.75%)"
+        ? " (precio original sin impuesto matriculación, normalizado añadiendo ~14.75%)"
         : ""
     }
 - Origen/tipo de compra: ${origenCompra}${
       origenCompra === "empresa_alquiler"
-        ? " ⚠️ (exento impuesto matriculación)"
+        ? " (contexto fiscal: exento impuesto matriculación)"
         : ""
     }
 - Fecha de compra/matriculación: ${fechaCompra || "No especificado"}
