@@ -8,6 +8,10 @@ import {
   validarMarcaModelo,
 } from "@/lib/valoracion/extraer-marca-modelo";
 import { validateOpenAIModel, buildTokensParam } from "@/lib/openai/model-validation";
+import {
+  extraerPreciosRecomendadosDelInforme,
+  corregirOrdenPreciosValores,
+} from "@/lib/valoracion/extraer-precios-informe";
 
 export const maxDuration = 300;
 
@@ -1026,120 +1030,70 @@ async function procesarValoracionIA(
       })
       .eq("id", jobId);
 
-    // 6. EXTRAER PRECIOS DEL INFORME
+    // 6. EXTRAER PRECIOS DEL INFORME (bloque final + patrones flexibles, orden coherente)
     console.log(`\n💰 [PASO 6/7] Extrayendo precios del informe...`);
-
-    // Regex ultra estricto: busca SOLO en la sección final para evitar falsos positivos
-    // Buscamos algo parecido a "Precio de Salida Recomendado: 64.900 €"
-    // Usando matchGlobal para asegurarnos de que coge el último en caso de haber varios
-    
-    const extraerUltimoPrecio = (regex: RegExp) => {
-      const matches = [...informeTexto.matchAll(regex)];
-      if (matches && matches.length > 0) {
-        // Devolvemos el último match encontrado (que suele ser el de la sección de conclusiones finales)
-        return matches[matches.length - 1];
-      }
-      return null;
-    };
-
-    const precioSalidaMatch = extraerUltimoPrecio(
-      /precio\s+(?:de\s+)?salida\s+(?:recomendado)?[:\s]+(\d{1,3}(?:[.,]\d{3})*)[\s€]/gi
-    );
-    const precioObjetivoMatch = extraerUltimoPrecio(
-      /precio\s+objetivo\s+(?:de\s+venta)?[:\s]+(\d{1,3}(?:[.,]\d{3})*)[\s€]/gi
-    );
-    const precioMinimoMatch = extraerUltimoPrecio(
-      /precio\s+mínimo\s+(?:aceptable)?[:\s]+(\d{1,3}(?:[.,]\d{3})*)[\s€]/gi
-    );
-
-    console.log(`   🔍 Buscando precios en informe...`);
     console.log(`   📄 Longitud informe: ${informeTexto.length} caracteres`);
 
-    // Función auxiliar para parsear precios eliminando puntos y comas como separadores
-    const parsearPrecio = (precioStr: string): number => {
-      return parseFloat(precioStr.replace(/[.,]/g, ""));
-    };
+    const extraidosRaw = extraerPreciosRecomendadosDelInforme(informeTexto);
+    const ordenados = corregirOrdenPreciosValores(
+      extraidosRaw.precio_salida,
+      extraidosRaw.precio_objetivo,
+      extraidosRaw.precio_minimo
+    );
 
-    // Debug: mostrar lo que capturó el regex y el contexto
-    if (!precioSalidaMatch) {
-      console.log(`   ❌ NO MATCH Salida - Buscando en informe...`);
-      const contextoSalida = informeTexto.match(/precio.*salida.*\d+[.,]?\d*/i);
-      console.log(
-        `   📝 Contexto encontrado: "${
-          contextoSalida ? contextoSalida[0].substring(0, 100) : "N/A"
-        }"`
-      );
-    } else {
-      console.log(`   ✅ Match Salida: "${precioSalidaMatch[1]}"`);
-    }
+    let precioSalida = ordenados.precio_salida;
+    let precioObjetivo = ordenados.precio_objetivo;
+    let precioMinimo = ordenados.precio_minimo;
 
-    if (!precioObjetivoMatch) {
-      console.log(`   ❌ NO MATCH Objetivo - Buscando en informe...`);
-      const contextoObjetivo = informeTexto.match(
-        /precio.*objetivo.*\d+[.,]?\d*/i
-      );
-      console.log(
-        `   📝 Contexto encontrado: "${
-          contextoObjetivo ? contextoObjetivo[0].substring(0, 100) : "N/A"
-        }"`
-      );
-    } else {
-      console.log(`   ✅ Match Objetivo: "${precioObjetivoMatch[1]}"`);
-    }
-
-    if (!precioMinimoMatch) {
-      console.log(`   ❌ NO MATCH Mínimo - Buscando en informe...`);
-      const contextoMinimo = informeTexto.match(/precio.*mínimo.*\d+[.,]?\d*/i);
-      console.log(
-        `   📝 Contexto encontrado: "${
-          contextoMinimo ? contextoMinimo[0].substring(0, 100) : "N/A"
-        }"`
-      );
-    } else {
-      console.log(`   ✅ Match Mínimo: "${precioMinimoMatch[1]}"`);
-    }
-
-    // IMPORTANTE: Usar pvp_base_particular (precio normalizado) como fallback en lugar de precio_compra
     const precioReferenciaFallback =
       valoracion?.pvp_base_particular || valoracion?.precio_compra;
-    const precioSalida = precioSalidaMatch
-      ? parsearPrecio(precioSalidaMatch[1])
-      : precioReferenciaFallback
-      ? precioReferenciaFallback * 1.1
-      : null;
-    const precioObjetivo = precioObjetivoMatch
-      ? parsearPrecio(precioObjetivoMatch[1])
-      : precioReferenciaFallback || null;
-    const precioMinimo = precioMinimoMatch
-      ? parsearPrecio(precioMinimoMatch[1])
-      : precioReferenciaFallback
-      ? precioReferenciaFallback * 0.9
-      : null;
+
+    const teniaSalida = precioSalida != null && precioSalida > 0;
+    const teniaObjetivo = precioObjetivo != null && precioObjetivo > 0;
+    const teniaMinimo = precioMinimo != null && precioMinimo > 0;
+
+    if (!teniaObjetivo && precioReferenciaFallback) {
+      precioObjetivo = precioReferenciaFallback;
+    }
+    if (!teniaSalida && precioObjetivo != null) {
+      precioSalida = Math.round(precioObjetivo * 1.05);
+    } else if (!teniaSalida && precioReferenciaFallback) {
+      precioSalida = Math.round(precioReferenciaFallback * 1.1);
+    }
+    if (!teniaMinimo && precioObjetivo != null) {
+      precioMinimo = Math.round(precioObjetivo * 0.96);
+    } else if (!teniaMinimo && precioReferenciaFallback) {
+      precioMinimo = Math.round(precioReferenciaFallback * 0.9);
+    }
+
+    // Último re-orden si fallbacks mezclaron la jerarquía
+    const fin = corregirOrdenPreciosValores(precioSalida, precioObjetivo, precioMinimo);
+    precioSalida = fin.precio_salida;
+    precioObjetivo = fin.precio_objetivo;
+    precioMinimo = fin.precio_minimo;
+
+    console.log(`   ✅ Extraído (raw): salida=${extraidosRaw.precio_salida}, obj=${extraidosRaw.precio_objetivo}, min=${extraidosRaw.precio_minimo}`);
 
     console.log(`\n   💰 PRECIOS FINALES:`);
     console.log(
       `   💵 Salida: ${precioSalida?.toLocaleString()}€ ${
-        precioSalidaMatch ? "(extraído IA)" : "(fallback +10%)"
+        teniaSalida ? "(extraído IA)" : "(derivado/fallback)"
       }`
     );
     console.log(
       `   🎯 Objetivo: ${precioObjetivo?.toLocaleString()}€ ${
-        precioObjetivoMatch ? "(extraído IA)" : "(fallback)"
+        teniaObjetivo ? "(extraído IA)" : "(derivado/fallback)"
       }`
     );
     console.log(
       `   📉 Mínimo: ${precioMinimo?.toLocaleString()}€ ${
-        precioMinimoMatch ? "(extraído IA)" : "(fallback -10%)"
+        teniaMinimo ? "(extraído IA)" : "(derivado/fallback)"
       }`
     );
 
-    // ADVERTENCIA si se usaron fallbacks
-    if (!precioObjetivoMatch || !precioSalidaMatch || !precioMinimoMatch) {
+    if (!teniaObjetivo || !teniaSalida || !teniaMinimo) {
       console.warn(
-        `   ⚠️  ADVERTENCIA: Se usaron precios fallback porque no se pudieron extraer del informe`
-      );
-      console.warn(
-        `   ⚠️  Esto puede causar incoherencias entre el informe y los precios mostrados`
+        `   ⚠️  Algún precio vino de derivación/fallback; revisar formato del informe si persiste`
       );
     }
 
