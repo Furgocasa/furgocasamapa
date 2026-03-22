@@ -68,3 +68,4 @@ AppData/
 
 # Exportaciones con datos personales / listas de usuarios (no versionar)
 usuarios-nuevos.*
+.vercel
