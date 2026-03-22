@@ -174,7 +174,7 @@ Responde en formato JSON:
           },
         ],
         temperature: 0.1,
-        max_tokens: 500,
+        max_completion_tokens: 500,
       });
 
       const aiResponse = completion.choices[0]?.message?.content?.trim() || "";

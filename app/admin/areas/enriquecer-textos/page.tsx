@@ -438,7 +438,7 @@ INFORMACIÓN TURÍSTICA DE ${(area.ciudad || '').toUpperCase()}:
           model: config.model,
           messages: messages,
           temperature: config.temperature,
-          max_tokens: config.max_tokens
+          max_completion_tokens: config.max_tokens
         })
       })
 

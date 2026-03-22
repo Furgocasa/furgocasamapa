@@ -36,6 +36,16 @@ export async function listAvailableOpenAIModels(forceRefresh = false): Promise<s
   return models
 }
 
+/**
+ * Construye los parámetros de tokens para chat.completions.create según el modelo.
+ * Los modelos nuevos (o1, o3, o4, gpt-4.1, gpt-5, etc.) rechazan max_tokens
+ * y exigen max_completion_tokens. Los modelos legacy aceptan ambos.
+ * Usar siempre max_completion_tokens es seguro para todos.
+ */
+export function buildTokensParam(maxTokens: number): { max_completion_tokens: number } {
+  return { max_completion_tokens: maxTokens }
+}
+
 export async function validateOpenAIModel(model: string): Promise<{
   valid: boolean
   reason?: string

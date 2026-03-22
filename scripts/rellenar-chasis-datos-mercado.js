@@ -107,7 +107,7 @@ Responde SOLO con el nombre del chasis (ej: "Fiat Ducato"), sin explicaciones.`
         { role: "user", content: prompt }
       ],
       temperature: 0.1,
-      max_tokens: 20,
+      max_completion_tokens: 20,
     })
 
     const chasis = completion.choices[0]?.message?.content?.trim() || 'Fiat Ducato'

@@ -6,7 +6,7 @@ import {
   extraerMarcaModelo,
   validarMarcaModelo,
 } from "@/lib/valoracion/extraer-marca-modelo";
-import { validateOpenAIModel } from "@/lib/openai/model-validation";
+import { validateOpenAIModel, buildTokensParam } from "@/lib/openai/model-validation";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -989,7 +989,7 @@ async function procesarValoracionIA(
       model: config.model,
       messages: messages,
       temperature: config.temperature,
-      max_tokens: config.max_tokens,
+      ...buildTokensParam(config.max_tokens),
     });
 
     const informeTexto =

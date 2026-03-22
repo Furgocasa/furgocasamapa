@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
-import { validateOpenAIModel } from '@/lib/openai/model-validation'
+import { validateOpenAIModel, buildTokensParam } from '@/lib/openai/model-validation'
 
 function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -295,7 +295,7 @@ Escribe un texto completo, bien redactado y natural. NO uses listas de puntos, e
         model: config.model,
         messages: messages,
         temperature: config.temperature,
-        max_tokens: config.max_tokens
+        ...buildTokensParam(config.max_tokens)
       })
       console.log('✅ [ENRICH] OpenAI respondió correctamente')
       console.log('  - Tokens usados:', completion.usage?.total_tokens || '?')

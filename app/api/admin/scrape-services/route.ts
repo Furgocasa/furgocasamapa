@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
-import { validateOpenAIModel } from '@/lib/openai/model-validation'
+import { validateOpenAIModel, buildTokensParam } from '@/lib/openai/model-validation'
 
 function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -314,7 +314,7 @@ export async function POST(request: NextRequest) {
         model: config.model,
         messages: messages,
         temperature: config.temperature,
-        max_tokens: config.max_tokens
+        ...buildTokensParam(config.max_tokens)
       })
       console.log('✅ [SCRAPE] OpenAI respondió correctamente')
       console.log(`  🎯 Tokens usados: ${completion.usage?.total_tokens || '?'}`)

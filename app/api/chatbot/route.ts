@@ -29,7 +29,7 @@ import { getCached, CACHE_TTL } from '@/lib/cache/redis'
 
 // Logger
 import { logger } from '@/lib/logger'
-import { validateOpenAIModel } from '@/lib/openai/model-validation'
+import { validateOpenAIModel, buildTokensParam } from '@/lib/openai/model-validation'
 
 // ============================================
 // CONFIGURACIÓN
@@ -570,7 +570,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       functions: AVAILABLE_FUNCTIONS,
       function_call: 'auto',
       temperature: config.temperature,
-      max_tokens: config.max_tokens
+      ...buildTokensParam(config.max_tokens)
     })
     
     const response = completion.choices[0].message
@@ -665,7 +665,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
           }
         ],
         temperature: config.temperature,
-        max_tokens: config.max_tokens
+        ...buildTokensParam(config.max_tokens)
       })
       
       const finalResponse = secondCompletion.choices[0].message.content
