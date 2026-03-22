@@ -38,6 +38,18 @@ interface ChatbotConfig {
   updated_at: string
 }
 
+const FALLBACK_OPENAI_MODELS = [
+  'gpt-5',
+  'gpt-5-mini',
+  'gpt-5-nano',
+  'gpt-4.1',
+  'gpt-4.1-mini',
+  'gpt-4o',
+  'gpt-4o-mini',
+  'gpt-4-turbo',
+  'gpt-3.5-turbo'
+]
+
 export default function ConfiguracionPage() {
   const supabase = createClient()
 
@@ -57,11 +69,15 @@ export default function ConfiguracionPage() {
   } | null>(null)
   const [porcentajeIEDMT, setPorcentajeIEDMT] = useState<number>(14.75)
   const [savingIEDMT, setSavingIEDMT] = useState(false)
+  const [availableModels, setAvailableModels] = useState<string[]>([])
+  const [loadingModels, setLoadingModels] = useState(false)
+  const [modelsError, setModelsError] = useState<string | null>(null)
 
   useEffect(() => {
     loadConfigs()
     checkApiConnections()
     loadPorcentajeIEDMT()
+    loadOpenAIModels()
   }, [])
 
   const checkApiConnections = async () => {
@@ -99,6 +115,41 @@ export default function ConfiguracionPage() {
         supabase: false,
         chatbotOpenAI: false
       })
+    }
+  }
+
+  const loadOpenAIModels = async () => {
+    try {
+      setLoadingModels(true)
+      setModelsError(null)
+
+      const response = await fetch('/api/admin/openai-models', {
+        cache: 'no-store'
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+
+      const data = await response.json()
+      const models = Array.isArray(data.models) ? data.models : []
+
+      if (models.length > 0) {
+        setAvailableModels(Array.from(new Set(models)))
+      } else {
+        // Si no llegan modelos desde OpenAI, mantenemos sugerencias útiles.
+        setAvailableModels(FALLBACK_OPENAI_MODELS)
+      }
+
+      if (data.error) {
+        setModelsError(data.error)
+      }
+    } catch (error: any) {
+      console.error('Error cargando modelos OpenAI:', error)
+      setAvailableModels(FALLBACK_OPENAI_MODELS)
+      setModelsError('No se pudo obtener la lista en tiempo real. Usa un modelo manualmente.')
+    } finally {
+      setLoadingModels(false)
     }
   }
 
@@ -436,6 +487,39 @@ export default function ConfiguracionPage() {
     { key: 'valoracion_vehiculos', label: '🚐 Valoración de Vehículos IA', icon: '💰' }
   ]
 
+  const modelOptions = Array.from(new Set([...FALLBACK_OPENAI_MODELS, ...availableModels]))
+
+  const getModelValidation = (value?: string) => {
+    const normalizedValue = (value || '').trim()
+    const exactMatch = modelOptions.some((model) => model === normalizedValue)
+
+    if (!normalizedValue) {
+      return {
+        className: 'bg-gray-50 border-gray-200 text-gray-600',
+        text: 'Introduce un modelo para validar.'
+      }
+    }
+
+    if (loadingModels) {
+      return {
+        className: 'bg-blue-50 border-blue-200 text-blue-700',
+        text: 'Comprobando catálogo de modelos...'
+      }
+    }
+
+    if (exactMatch) {
+      return {
+        className: 'bg-green-50 border-green-200 text-green-700',
+        text: 'Modelo detectado en el catálogo cargado.'
+      }
+    }
+
+    return {
+      className: 'bg-amber-50 border-amber-200 text-amber-700',
+      text: 'No aparece en el catálogo cargado. Se puede guardar igualmente si es válido en tu cuenta.'
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -733,19 +817,36 @@ export default function ConfiguracionPage() {
 
               {/* Modelo */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Modelo de OpenAI
-                </label>
-                <select
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Modelo de OpenAI (campo libre)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={loadOpenAIModels}
+                    disabled={loadingModels || saving}
+                    className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    {loadingModels ? 'Actualizando...' : 'Actualizar modelos'}
+                  </button>
+                </div>
+                <input
+                  type="text"
                   value={editedConfig.config_value.model}
                   onChange={(e) => updateConfigValue('model', e.target.value)}
+                  list="openai-models-list"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                  placeholder="Ej: gpt-5, gpt-5-mini, gpt-4.1, gpt-4o-mini..."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Escribe cualquier modelo válido de tu cuenta OpenAI. Sugerencias cargadas: {modelOptions.length}.
+                  {modelsError ? ` Aviso: ${modelsError}` : ''}
+                </p>
+                <div
+                  className={`mt-2 text-xs border rounded-md px-3 py-2 ${getModelValidation(editedConfig.config_value.model).className}`}
                 >
-                  <option value="gpt-4o-mini">gpt-4o-mini (Recomendado - Rápido y económico)</option>
-                  <option value="gpt-4o">gpt-4o (Más potente)</option>
-                  <option value="gpt-4-turbo">gpt-4-turbo (Muy potente pero lento)</option>
-                  <option value="gpt-3.5-turbo">gpt-3.5-turbo (Más económico pero menos preciso)</option>
-                </select>
+                  {getModelValidation(editedConfig.config_value.model).text}
+                </div>
               </div>
 
               {/* Temperature */}
@@ -983,19 +1084,36 @@ export default function ConfiguracionPage() {
 
               {/* Modelo */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Modelo de OpenAI
-                </label>
-                <select
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Modelo de OpenAI (campo libre)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={loadOpenAIModels}
+                    disabled={loadingModels || saving}
+                    className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    {loadingModels ? 'Actualizando...' : 'Actualizar modelos'}
+                  </button>
+                </div>
+                <input
+                  type="text"
                   value={editedChatbotConfig.modelo}
                   onChange={(e) => updateChatbotConfigValue('modelo', e.target.value)}
+                  list="openai-models-list"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ej: gpt-5, gpt-5-mini, gpt-4.1, gpt-4o-mini..."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Puedes usar cualquier modelo disponible. Sugerencias cargadas: {modelOptions.length}.
+                  {modelsError ? ` Aviso: ${modelsError}` : ''}
+                </p>
+                <div
+                  className={`mt-2 text-xs border rounded-md px-3 py-2 ${getModelValidation(editedChatbotConfig.modelo).className}`}
                 >
-                  <option value="gpt-4o-mini">gpt-4o-mini (Recomendado - Rápido y económico)</option>
-                  <option value="gpt-4o">gpt-4o (Más potente)</option>
-                  <option value="gpt-4-turbo">gpt-4-turbo (Muy potente pero lento)</option>
-                  <option value="gpt-3.5-turbo">gpt-3.5-turbo (Más económico pero menos preciso)</option>
-                </select>
+                  {getModelValidation(editedChatbotConfig.modelo).text}
+                </div>
               </div>
 
               {/* Temperature */}
@@ -1358,6 +1476,12 @@ export default function ConfiguracionPage() {
             <li>Puedes usar variables en los prompts que se reemplazan automáticamente según el contexto</li>
           </ul>
         </div>
+
+        <datalist id="openai-models-list">
+          {modelOptions.map((model) => (
+            <option key={model} value={model} />
+          ))}
+        </datalist>
       </div>
     </div>
   )
