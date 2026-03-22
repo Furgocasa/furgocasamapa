@@ -738,6 +738,19 @@ async function procesarValoracionIA(
 
     const config = configData.config_value;
 
+    // Etiqueta para UI/logs: modelo real desde ia_config (opcional nombre legible)
+    const etiquetaModeloIA = (() => {
+      const display =
+        typeof (config as any).model_display_name === "string"
+          ? (config as any).model_display_name.trim()
+          : "";
+      const id =
+        typeof config.model === "string" ? config.model.trim() : "";
+      if (display) return display;
+      if (id) return id;
+      return "IA";
+    })();
+
     const modelValidation = await validateOpenAIModel(config.model);
     if (!modelValidation.valid) {
       throw new Error(
@@ -932,7 +945,7 @@ async function procesarValoracionIA(
       .from("valoracion_ia_trabajos")
       .update({
         progreso: 60,
-        mensaje_estado: "Preparando mensajes para GPT-4...",
+        mensaje_estado: `Preparando solicitud para ${etiquetaModeloIA}...`,
       })
       .eq("id", jobId);
 
@@ -975,13 +988,14 @@ async function procesarValoracionIA(
       .from("valoracion_ia_trabajos")
       .update({
         progreso: 70,
-        mensaje_estado:
-          "Generando informe con GPT-4... (puede tardar 1-2 minutos)",
+        mensaje_estado: `Generando informe con ${etiquetaModeloIA}... (puede tardar 1-2 minutos)`,
       })
       .eq("id", jobId);
 
-    // 6. LLAMAR A OPENAI GPT-4
-    console.log(`\n🤖 [PASO 5/7] Llamando a OpenAI GPT-4...`);
+    // 6. LLAMAR A OPENAI (modelo desde ia_config)
+    console.log(
+      `\n🤖 [PASO 5/7] Llamando a OpenAI (modelo: ${etiquetaModeloIA})...`
+    );
     console.log(
       `   🔑 API Key: ${
         process.env.OPENAI_API_KEY ? "Configurada" : "NO CONFIGURADA"
