@@ -62,6 +62,9 @@ AppData/
 .ssh/
 .wdm/
 
+# OG valoración IA: en producción solo WebP (PNG fuente >8MB, límite Meta/Facebook)
+public/images/opengraph/opengraph_valoracion.png
+
 # Archivos de trabajo e imágenes de desarrollo
 /images/
 /banners/

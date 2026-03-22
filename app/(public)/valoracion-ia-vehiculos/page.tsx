@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     url: "https://www.mapafurgocasa.com/valoracion-ia-vehiculos",
     images: [
       {
-        url: "https://www.mapafurgocasa.com/images/opengraph/opengraph_valoracion.png",
+        url: "https://www.mapafurgocasa.com/images/opengraph/opengraph_valoracion.webp",
         width: 1200,
         height: 630,
         alt: "Valora tu autocaravana o camper en minutos con IA — Mapa Furgocasa",
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     description:
       "Sistema inteligente de valoración de vehículos recreativos con IA. Informes profesionales en minutos.",
     images: [
-      "https://www.mapafurgocasa.com/images/opengraph/opengraph_valoracion.png",
+      "https://www.mapafurgocasa.com/images/opengraph/opengraph_valoracion.webp",
     ],
   },
 };
