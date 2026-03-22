@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { waitUntil } from "@vercel/functions";
 import OpenAI from "openai";
 import { buscarComparables } from "@/lib/valoracion/buscar-comparables";
 import {
@@ -7,6 +8,8 @@ import {
   validarMarcaModelo,
 } from "@/lib/valoracion/extraer-marca-modelo";
 import { validateOpenAIModel, buildTokensParam } from "@/lib/openai/model-validation";
+
+export const maxDuration = 300;
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -1366,10 +1369,13 @@ export async function POST(
 
     console.log(`✅ Trabajo creado con ID: ${trabajo.id}`);
 
-    // INICIAR PROCESAMIENTO EN SEGUNDO PLANO (sin await)
-    procesarValoracionIA(trabajo.id, params.id, user.id).catch((error) => {
-      console.error("❌ Error en procesamiento asíncrono:", error);
-    });
+    // INICIAR PROCESAMIENTO EN SEGUNDO PLANO con waitUntil
+    // waitUntil garantiza que Vercel mantenga la función viva hasta que termine
+    waitUntil(
+      procesarValoracionIA(trabajo.id, params.id, user.id).catch((error) => {
+        console.error("❌ Error en procesamiento asíncrono:", error);
+      })
+    );
 
     // RESPONDER INMEDIATAMENTE al cliente
     return NextResponse.json({
