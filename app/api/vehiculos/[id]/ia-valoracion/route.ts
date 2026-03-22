@@ -1029,17 +1029,27 @@ async function procesarValoracionIA(
     // 6. EXTRAER PRECIOS DEL INFORME
     console.log(`\n💰 [PASO 6/7] Extrayendo precios del informe...`);
 
-    // Regex mejorado: busca precios en múltiples formatos y ubicaciones
-    // Prioridad 1: Sección "5. VALORACIÓN Y PRECIOS RECOMENDADOS"
-    // Prioridad 2: Resumen final "Precios Finales Recomendados"
-    const precioSalidaMatch = informeTexto.match(
-      /precio\s+(?:de\s+)?salida\s+(?:recomendado)?[:\s]+(\d{1,3}(?:[.,]\d{3})*)[\s€]/i
+    // Regex ultra estricto: busca SOLO en la sección final para evitar falsos positivos
+    // Buscamos algo parecido a "Precio de Salida Recomendado: 64.900 €"
+    // Usando matchGlobal para asegurarnos de que coge el último en caso de haber varios
+    
+    const extraerUltimoPrecio = (regex: RegExp) => {
+      const matches = [...informeTexto.matchAll(regex)];
+      if (matches && matches.length > 0) {
+        // Devolvemos el último match encontrado (que suele ser el de la sección de conclusiones finales)
+        return matches[matches.length - 1];
+      }
+      return null;
+    };
+
+    const precioSalidaMatch = extraerUltimoPrecio(
+      /precio\s+(?:de\s+)?salida\s+(?:recomendado)?[:\s]+(\d{1,3}(?:[.,]\d{3})*)[\s€]/gi
     );
-    const precioObjetivoMatch = informeTexto.match(
-      /precio\s+objetivo\s+(?:de\s+venta)?[:\s]+(\d{1,3}(?:[.,]\d{3})*)[\s€]/i
+    const precioObjetivoMatch = extraerUltimoPrecio(
+      /precio\s+objetivo\s+(?:de\s+venta)?[:\s]+(\d{1,3}(?:[.,]\d{3})*)[\s€]/gi
     );
-    const precioMinimoMatch = informeTexto.match(
-      /precio\s+mínimo\s+(?:aceptable)?[:\s]+(\d{1,3}(?:[.,]\d{3})*)[\s€]/i
+    const precioMinimoMatch = extraerUltimoPrecio(
+      /precio\s+mínimo\s+(?:aceptable)?[:\s]+(\d{1,3}(?:[.,]\d{3})*)[\s€]/gi
     );
 
     console.log(`   🔍 Buscando precios en informe...`);
