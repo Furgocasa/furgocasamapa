@@ -6,6 +6,7 @@ import {
   extraerMarcaModelo,
   validarMarcaModelo,
 } from "@/lib/valoracion/extraer-marca-modelo";
+import { validateOpenAIModel } from "@/lib/openai/model-validation";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -733,6 +734,13 @@ async function procesarValoracionIA(
     }
 
     const config = configData.config_value;
+
+    const modelValidation = await validateOpenAIModel(config.model);
+    if (!modelValidation.valid) {
+      throw new Error(
+        `Modelo OpenAI no válido en "Valoración IA": ${modelValidation.reason}`
+      );
+    }
 
     console.log(`   ✅ Configuración cargada:`);
     console.log(`      📦 Modelo: ${config.model}`);

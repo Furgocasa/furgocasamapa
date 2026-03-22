@@ -297,23 +297,34 @@ export default function ConfiguracionPage() {
           updateData.prompts = editedChatbotConfig.prompts
         }
 
-        const { error } = await (supabase as any)
-          .from('chatbot_config')
-          .update(updateData)
-          .eq('id', editedChatbotConfig.id)
+        const response = await fetch('/api/admin/chatbot-config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: editedChatbotConfig.id,
+            updateData
+          })
+        })
 
-        if (error) throw error
+        const result = await response.json()
+        if (!response.ok) {
+          throw new Error(result?.details || result?.error || 'Error guardando configuración del chatbot')
+        }
       } else if (editedConfig) {
         // Guardar configuración normal
-        const { error } = await (supabase as any)
-          .from('ia_config')
-          .update({
-            config_value: editedConfig.config_value,
-            updated_at: new Date().toISOString()
+        const response = await fetch('/api/admin/ia-config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            configKey: editedConfig.config_key,
+            configValue: editedConfig.config_value
           })
-          .eq('config_key', editedConfig.config_key)
+        })
 
-        if (error) throw error
+        const result = await response.json()
+        if (!response.ok) {
+          throw new Error(result?.details || result?.error || 'Error guardando configuración')
+        }
       }
 
       showMessage('success', '✓ Configuración guardada correctamente')

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
+import { validateOpenAIModel } from '@/lib/openai/model-validation'
 
 function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -214,6 +215,15 @@ INFORMACIÓN TURÍSTICA DE ${(area.ciudad || '').toUpperCase()}:
           required: true
         }
       ]
+    }
+
+    const modelValidation = await validateOpenAIModel(config.model)
+    if (!modelValidation.valid) {
+      return NextResponse.json({
+        error: 'Modelo OpenAI no válido en configuración de "Enriquecer Textos"',
+        details: modelValidation.reason,
+        errorType: 'MODEL_NOT_AVAILABLE'
+      }, { status: 400 })
     }
 
     // Construir mensajes para OpenAI desde los prompts configurados

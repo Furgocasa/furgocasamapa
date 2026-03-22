@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { validateOpenAIModel } from '@/lib/openai/model-validation'
 
 function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -55,6 +56,20 @@ export async function PUT(request: NextRequest) {
     if (!configKey || !configValue) {
       return NextResponse.json(
         { error: 'configKey y configValue son requeridos' },
+        { status: 400 }
+      )
+    }
+
+    const model = (configValue?.model || '').trim()
+    const modelValidation = await validateOpenAIModel(model)
+
+    if (!modelValidation.valid) {
+      return NextResponse.json(
+        {
+          error: 'Modelo OpenAI no válido',
+          details: modelValidation.reason,
+          errorType: 'MODEL_NOT_AVAILABLE'
+        },
         { status: 400 }
       )
     }

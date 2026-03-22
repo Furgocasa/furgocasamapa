@@ -29,6 +29,7 @@ import { getCached, CACHE_TTL } from '@/lib/cache/redis'
 
 // Logger
 import { logger } from '@/lib/logger'
+import { validateOpenAIModel } from '@/lib/openai/model-validation'
 
 // ============================================
 // CONFIGURACIÓN
@@ -446,6 +447,18 @@ export async function POST(req: NextRequest) {
     }
     
     console.log('✅ Configuración cargada:', config.modelo)
+
+    const modelValidation = await validateOpenAIModel(config.modelo)
+    if (!modelValidation.valid) {
+      return NextResponse.json(
+        {
+          error: 'Modelo OpenAI no válido en configuración del chatbot',
+          details: modelValidation.reason,
+          errorType: 'MODEL_NOT_AVAILABLE'
+        },
+        { status: 400 }
+      )
+    }
     
     // ============================================
     // ENRIQUECER CONTEXTO (PARALELIZADO)
