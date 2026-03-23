@@ -102,7 +102,7 @@ export default function ReporteAccidentePage() {
         setNoEncontrado(true);
         setMessage({
           type: "error",
-          text: "No se encontró ningún vehículo registrado con esa matrícula. Verifica que esté correctamente escrita.",
+          text: "No tenemos a este vehículo en nuestra base de datos para avisarle automáticamente. ¡Pero aún puedes ayudar! Déjale una nota en el parabrisas con lo que has visto, el dueño te lo agradecerá eternamente.",
         });
       }
     } catch (error) {
@@ -527,7 +527,7 @@ export default function ReporteAccidentePage() {
               💙 "Haz por otros lo que te gustaría que hicieran por ti"
             </p>
             <p className="text-gray-600 italic">
-              El dueño de esta autocaravana seguro haría lo mismo por la tuya.
+              Seas campista o un vecino que pasaba por allí, hoy por él, mañana por ti. Ayúdale a no pagar de su bolsillo un golpe ajeno.
             </p>
             <p className="text-sm text-gray-500 mt-3">
               🕐 Solo te llevará <span className="font-semibold">2 minutos</span> •
@@ -542,6 +542,27 @@ export default function ReporteAccidentePage() {
             descubren quién rayó su autocaravana. ¡Tú puedes cambiar eso! 🦸‍♂️
           </p>
         </div>
+
+        {/* Cómo funciona */}
+        {!vehiculo && !buscando && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 flex flex-col items-center text-center transform transition-transform hover:-translate-y-1">
+              <div className="w-14 h-14 bg-primary-50 text-primary-600 rounded-full flex items-center justify-center text-2xl mb-4">🔍</div>
+              <h3 className="font-bold text-gray-900 mb-2 text-lg">1. Busca la matrícula</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">Comprobamos al instante si el dueño está registrado en nuestra plataforma.</p>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 flex flex-col items-center text-center transform transition-transform hover:-translate-y-1">
+              <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-2xl mb-4">📸</div>
+              <h3 className="font-bold text-gray-900 mb-2 text-lg">2. Cuenta qué pasó</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">Sube fotos y ubicación del incidente. Puedes hacerlo de forma <strong>100% anónima</strong>.</p>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 flex flex-col items-center text-center transform transition-transform hover:-translate-y-1">
+              <div className="w-14 h-14 bg-green-50 text-green-600 rounded-full flex items-center justify-center text-2xl mb-4">📨</div>
+              <h3 className="font-bold text-gray-900 mb-2 text-lg">3. Avisamos al dueño</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">Le llega una alerta al móvil para que pueda dar parte a su seguro gracias a ti.</p>
+            </div>
+          </div>
+        )}
 
         {/* Mensajes */}
         {message && (
@@ -1020,9 +1041,12 @@ export default function ReporteAccidentePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Matrícula del Tercero Responsable (si aplica)
                   </label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    Tranquilo, esta información solo se le entrega a la víctima para su seguro. Nosotros no la hacemos pública.
+                  </p>
                   <input
                     type="text"
                     value={formData.matricula_tercero}
@@ -1170,6 +1194,47 @@ export default function ReporteAccidentePage() {
             </p>
           </form>
         )}
+
+        {/* FAQ - Preguntas Frecuentes */}
+        <div className="mt-16 bg-white rounded-2xl shadow-md border border-gray-100 p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+            <span className="flex items-center justify-center w-10 h-10 bg-primary-100 text-primary-600 rounded-lg">❓</span> 
+            Preguntas Frecuentes
+          </h2>
+          
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                <span className="text-primary-500">▪</span> ¿Es realmente anónimo?
+              </h3>
+              <p className="text-gray-600 pl-4 border-l-2 border-gray-100">
+                Sí. Si marcas la opción "Hacer este reporte anónimo" en el paso 3, el propietario de la autocaravana solo recibirá los detalles del incidente y las fotos, pero <strong>nunca</strong> sabrá tu nombre, email o teléfono.
+              </p>
+            </div>
+            
+            <div className="h-px bg-gray-100"></div>
+            
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                <span className="text-primary-500">▪</span> ¿Me meteré en problemas legales por reportar esto?
+              </h3>
+              <p className="text-gray-600 pl-4 border-l-2 border-gray-100">
+                En absoluto. Al usar esta plataforma solo actúas como un "buen samaritano" informando de un hecho. No estás interponiendo una denuncia oficial, solo estás facilitando información privada a la víctima para que pueda reclamar a su seguro y no tenga que pagar la reparación de su bolsillo.
+              </p>
+            </div>
+            
+            <div className="h-px bg-gray-100"></div>
+            
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                <span className="text-primary-500">▪</span> No soy campista, ¿puedo reportar un accidente?
+              </h3>
+              <p className="text-gray-600 pl-4 border-l-2 border-gray-100">
+                ¡Por supuesto! Seas vecino del barrio, un peatón paseando a su perro o un conductor que pasaba por ahí. Tu ayuda es vital para construir una comunidad más solidaria.
+              </p>
+            </div>
+          </div>
+        </div>
       </main>
 
       <Footer />
