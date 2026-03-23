@@ -1,0 +1,250 @@
+<!-- RESTITUTION : PROPRE + CUVES VIDES + PÉNALITÉS (FR) — coller juste APRÈS le tableau des prix sur /fr/tarifs. Supprimer l’ancienne section « Retour » en bas si elle dupliquait ce texte. -->
+<style>
+    .fc-devol-penal-wrap {
+        max-width: 1200px;
+        margin: 0 auto 40px;
+        padding: 0 20px 50px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+    .fc-devol-penal-critico {
+        background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 50%, #991b1b 100%);
+        color: #fff;
+        border-radius: 20px;
+        padding: 28px 32px;
+        margin-bottom: 28px;
+        box-shadow: 0 12px 40px rgba(185, 28, 28, 0.35);
+        border: 3px solid #fecaca;
+    }
+    .fc-devol-penal-critico h2 {
+        margin: 0 0 12px;
+        font-size: 26px;
+        line-height: 1.25;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }
+    .fc-devol-penal-critico p {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.65;
+        opacity: 0.96;
+    }
+    .fc-devol-penal-critico ul {
+        margin: 16px 0 0;
+        padding-left: 22px;
+        font-size: 15px;
+        line-height: 1.7;
+    }
+    .fc-devol-penal-critico li { margin: 6px 0; }
+    .fc-devol-penal-sub {
+        font-size: 14px;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(255,255,255,0.35);
+        opacity: 0.92;
+    }
+    .fc-devol-penal-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 22px;
+        margin-bottom: 28px;
+    }
+    @media (min-width: 900px) {
+        .fc-devol-penal-grid { grid-template-columns: 1fr 1fr; align-items: start; }
+    }
+    .fc-devol-penal-card {
+        background: #fff;
+        border: 2px solid #e3e6ee;
+        border-radius: 18px;
+        padding: 24px 22px;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+    }
+    .fc-devol-penal-card h3 {
+        margin: 0 0 14px;
+        font-size: 19px;
+        color: #063971;
+        font-weight: 800;
+    }
+    .fc-devol-penal-tabla-wrap { overflow-x: auto; }
+    .fc-devol-penal-tabla {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+    .fc-devol-penal-tabla th,
+    .fc-devol-penal-tabla td {
+        padding: 14px 12px;
+        text-align: left;
+        border-bottom: 1px solid #e8ecf1;
+        vertical-align: top;
+    }
+    .fc-devol-penal-tabla th {
+        background: #f1f5f9;
+        color: #0f172a;
+        font-weight: 800;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .fc-devol-penal-tabla td:last-child {
+        font-weight: 800;
+        color: #b91c1c;
+        white-space: normal;
+        min-width: 110px;
+    }
+    .fc-devol-penal-tabla caption {
+        caption-side: bottom;
+        text-align: left;
+        font-size: 12px;
+        color: #64748b;
+        padding-top: 10px;
+    }
+    .fc-devol-penal-nota {
+        font-size: 13px;
+        color: #475569;
+        line-height: 1.6;
+        margin-top: 12px;
+    }
+    .fc-devol-penal-punt {
+        background: linear-gradient(135deg, #063971 0%, #074a8c 100%);
+        color: #fff;
+        border-radius: 18px;
+        padding: 26px 24px;
+        margin-bottom: 24px;
+    }
+    .fc-devol-penal-punt h3 {
+        margin: 0 0 12px;
+        font-size: 20px;
+        font-weight: 800;
+    }
+    .fc-devol-penal-punt ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    .fc-devol-penal-punt li {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        font-size: 14px;
+    }
+    .fc-devol-penal-punt li:last-child { border-bottom: none; }
+    .fc-devol-penal-punt .precio { font-weight: 800; font-size: 16px; }
+    .fc-devol-penal-alert {
+        background: rgba(255, 221, 138, 0.15);
+        border: 2px solid #ffdd8a;
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-top: 16px;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+    .fc-devol-penal-alert strong { color: #ffdd8a; }
+    .fc-devol-penal-tip {
+        background: linear-gradient(135deg, #fff8e6 0%, #fff4d9 100%);
+        border: 2px solid #ffb347;
+        border-radius: 18px;
+        padding: 24px 22px;
+        text-align: center;
+    }
+    .fc-devol-penal-tip h4 {
+        margin: 0 0 10px;
+        color: #c2410c;
+        font-size: 18px;
+        font-weight: 800;
+    }
+    .fc-devol-penal-tip p {
+        margin: 0;
+        color: #57534e;
+        font-size: 15px;
+        line-height: 1.7;
+        max-width: 920px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+</style>
+
+<div id="devolucion" class="fc-devol-penal-wrap">
+    <div class="fc-devol-penal-critico" role="region" aria-label="Conditions obligatoires de restitution">
+        <h2>⚠️ Restitution obligatoire : v&eacute;hicule propre et cuves vides</h2>
+        <p>
+            &Agrave; l&apos;heure convenue, le v&eacute;hicule doit &ecirc;tre restitu&eacute; conform&eacute;ment au contrat. Il est <strong>obligatoire</strong> de le rendre
+            <strong>propre &agrave; l&apos;int&eacute;rieur</strong> avec <strong>toutes les cuves vides</strong> (eau propre, eaux grises et WC / eaux noires),
+            sauf indication &eacute;crite contraire de FURGOCASA.
+        </p>
+        <ul>
+            <li><strong>Eau propre :</strong> cuve vid&eacute;e (ou niveau indiqu&eacute; au d&eacute;part).</li>
+            <li><strong>Eaux grises :</strong> cuve vid&eacute;e.</li>
+            <li><strong>WC / eaux noires :</strong> vid&eacute; (cassette / cuve selon mod&egrave;le).</li>
+            <li><strong>Carburant :</strong> m&ecirc;me niveau qu&apos;au d&eacute;but (fiche de remise). Si le v&eacute;hicule a &eacute;t&eacute; remis plein, restituer plein.</li>
+            <li><strong>Horaires :</strong> restitution dans le cr&eacute;neau convenu ; cl&eacute;s remises au personnel FURGOCASA.</li>
+        </ul>
+        <p class="fc-devol-penal-sub">
+            En cas de d&eacute;passement d&apos;horaire, vous devrez peut-&ecirc;tre attendre le prochain cr&eacute;neau d&apos;ouverture ; les p&eacute;nalit&eacute;s de retard ci-dessous pourront s&apos;appliquer.
+        </p>
+    </div>
+
+    <div class="fc-devol-penal-grid">
+        <div class="fc-devol-penal-card">
+            <h3>Suppl&eacute;ments en cas de non-respect (TVA incluse)</h3>
+            <p class="fc-devol-penal-nota">Chaque ligne est ind&eacute;pendante : plusieurs manquements peuvent &ecirc;tre factur&eacute;s ensemble.</p>
+            <div class="fc-devol-penal-tabla-wrap">
+                <table class="fc-devol-penal-tabla">
+                    <thead>
+                        <tr>
+                            <th>Manquement</th>
+                            <th>Suppl&eacute;ment / frais</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Vidange <strong>eaux grises</strong> (non restitu&eacute;es vides)</td>
+                            <td>20&nbsp;&euro;</td>
+                        </tr>
+                        <tr>
+                            <td>Vidange <strong>eau propre</strong> (cuve non vide)</td>
+                            <td>20&nbsp;&euro;</td>
+                        </tr>
+                        <tr>
+                            <td>Vidange <strong>WC / eaux noires</strong> (non vid&eacute;)</td>
+                            <td>70&nbsp;&euro;</td>
+                        </tr>
+                        <tr>
+                            <td><strong>M&eacute;nage int&eacute;rieur</strong> insuffisant (salet&eacute;, odeurs, d&eacute;chets&hellip;)</td>
+                            <td>&Agrave; partir de 120&nbsp;&euro;</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Carburant</strong> sous le niveau de remise</td>
+                            <td>Litres manquants au prix en vigueur + 20&nbsp;&euro; de gestion</td>
+                        </tr>
+                    </tbody>
+                    <caption>Montants indicatifs selon les tarifs FURGOCASA en vigueur ; d&eacute;tail sur la liquidation si applicable.</caption>
+                </table>
+            </div>
+        </div>
+
+        <div id="puntualidad" class="fc-devol-penal-punt">
+            <h3>⏰ Retard aux rendez-vous de remise / restitution</h3>
+            <p style="margin:0 0 14px;font-size:14px;line-height:1.55;opacity:0.95;">
+                La ponctualit&eacute; est essentielle : l&apos;&eacute;quipe planifie chaque v&eacute;hicule. Le temps d&apos;attente li&eacute; au retard est facturable.
+            </p>
+            <ul>
+                <li><span>Premi&egrave;re heure de retard</span> <span class="precio">40&nbsp;&euro;</span></li>
+                <li><span>Chaque heure suppl&eacute;mentaire</span> <span class="precio">20&nbsp;&euro;</span></li>
+                <li><span>Plafond maximum par jour (retard)</span> <span class="precio">2 jours de location</span></li>
+            </ul>
+            <div class="fc-devol-penal-alert">
+                <strong>Important :</strong> ne pas vous pr&eacute;senter au rendez-vous sans pr&eacute;venir peut &ecirc;tre consid&eacute;r&eacute; comme une <strong>annulation</strong> de la prestation sans remboursement des sommes d&eacute;j&agrave; dues, selon le contrat.
+            </div>
+        </div>
+    </div>
+
+    <div class="fc-devol-penal-tip">
+        <h4>💡 Conseil</h4>
+        <p>
+            Vous anticipez un retard ? Contactez Furgocasa au plus vite : vous pouvez souvent <strong>prolonger la location</strong> au tarif journalier,
+            ce qui est g&eacute;n&eacute;ralement moins co&ucirc;teux que les p&eacute;nalit&eacute;s cumul&eacute;es. Sous r&eacute;serve de disponibilit&eacute; si une autre location suit.
+        </p>
+    </div>
+</div>

@@ -1,4 +1,4 @@
-<!-- TABLA DE PRECIOS INTERACTIVA -->
+<!-- TABLA DE PRECIOS INTERACTIVA (+ devolución/penalizaciones justo debajo — quitar del pie el snippet 37 si duplicaba esta info) -->
 <style>
     .fc-precios-tabla {
         max-width: 1200px;
@@ -229,7 +229,7 @@
     }
 </style>
 
-<div class="fc-precios-tabla">
+<div class="fc-precios-tabla" id="precios">
     <div class="fc-precios-header">
         <h2>Precios de alquiler</h2>
         <p>Tarifas orientativas por d&iacute;a seg&uacute;n temporada</p>
@@ -353,5 +353,258 @@
         </a>
     </div>
 </div>
+
+<!-- ========== DEVOLUCIÓN: LIMPIEZA + DEPÓSITOS VACÍOS + PENALIZACIONES (subir este bloque pegado a precios en WP) ========== -->
+<style>
+    .fc-devol-penal-wrap {
+        max-width: 1200px;
+        margin: 0 auto 40px;
+        padding: 0 20px 50px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+    .fc-devol-penal-critico {
+        background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 50%, #991b1b 100%);
+        color: #fff;
+        border-radius: 20px;
+        padding: 28px 32px;
+        margin-bottom: 28px;
+        box-shadow: 0 12px 40px rgba(185, 28, 28, 0.35);
+        border: 3px solid #fecaca;
+    }
+    .fc-devol-penal-critico h2 {
+        margin: 0 0 12px;
+        font-size: 26px;
+        line-height: 1.25;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }
+    .fc-devol-penal-critico p {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.65;
+        opacity: 0.96;
+    }
+    .fc-devol-penal-critico ul {
+        margin: 16px 0 0;
+        padding-left: 22px;
+        font-size: 15px;
+        line-height: 1.7;
+    }
+    .fc-devol-penal-critico li { margin: 6px 0; }
+    .fc-devol-penal-sub {
+        font-size: 14px;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(255,255,255,0.35);
+        opacity: 0.92;
+    }
+    .fc-devol-penal-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 22px;
+        margin-bottom: 28px;
+    }
+    @media (min-width: 900px) {
+        .fc-devol-penal-grid { grid-template-columns: 1fr 1fr; align-items: start; }
+    }
+    .fc-devol-penal-card {
+        background: #fff;
+        border: 2px solid #e3e6ee;
+        border-radius: 18px;
+        padding: 24px 22px;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+    }
+    .fc-devol-penal-card h3 {
+        margin: 0 0 14px;
+        font-size: 19px;
+        color: #063971;
+        font-weight: 800;
+    }
+    .fc-devol-penal-tabla-wrap { overflow-x: auto; }
+    .fc-devol-penal-tabla {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+    .fc-devol-penal-tabla th,
+    .fc-devol-penal-tabla td {
+        padding: 14px 12px;
+        text-align: left;
+        border-bottom: 1px solid #e8ecf1;
+        vertical-align: top;
+    }
+    .fc-devol-penal-tabla th {
+        background: #f1f5f9;
+        color: #0f172a;
+        font-weight: 800;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .fc-devol-penal-tabla td:last-child {
+        font-weight: 800;
+        color: #b91c1c;
+        white-space: normal;
+        min-width: 110px;
+    }
+    .fc-devol-penal-tabla caption {
+        caption-side: bottom;
+        text-align: left;
+        font-size: 12px;
+        color: #64748b;
+        padding-top: 10px;
+    }
+    .fc-devol-penal-nota {
+        font-size: 13px;
+        color: #475569;
+        line-height: 1.6;
+        margin-top: 12px;
+    }
+    .fc-devol-penal-punt {
+        background: linear-gradient(135deg, #063971 0%, #074a8c 100%);
+        color: #fff;
+        border-radius: 18px;
+        padding: 26px 24px;
+        margin-bottom: 24px;
+    }
+    .fc-devol-penal-punt h3 {
+        margin: 0 0 12px;
+        font-size: 20px;
+        font-weight: 800;
+    }
+    .fc-devol-penal-punt ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    .fc-devol-penal-punt li {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        font-size: 14px;
+    }
+    .fc-devol-penal-punt li:last-child { border-bottom: none; }
+    .fc-devol-penal-punt .precio { font-weight: 800; font-size: 16px; }
+    .fc-devol-penal-alert {
+        background: rgba(255, 221, 138, 0.15);
+        border: 2px solid #ffdd8a;
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-top: 16px;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+    .fc-devol-penal-alert strong { color: #ffdd8a; }
+    .fc-devol-penal-tip {
+        background: linear-gradient(135deg, #fff8e6 0%, #fff4d9 100%);
+        border: 2px solid #ffb347;
+        border-radius: 18px;
+        padding: 24px 22px;
+        text-align: center;
+    }
+    .fc-devol-penal-tip h4 {
+        margin: 0 0 10px;
+        color: #c2410c;
+        font-size: 18px;
+        font-weight: 800;
+    }
+    .fc-devol-penal-tip p {
+        margin: 0;
+        color: #57534e;
+        font-size: 15px;
+        line-height: 1.7;
+        max-width: 920px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+</style>
+
+<div id="devolucion" class="fc-devol-penal-wrap">
+    <div class="fc-devol-penal-critico" role="region" aria-label="Condiciones obligatorias de devolución">
+        <h2>⚠️ Devolución obligatoria: furgo limpia y depósitos vacíos</h2>
+        <p>
+            A la hora acordada, el vehículo debe entregarse en condiciones contractuales. <strong>Es obligatorio</strong> dejarlo
+            <strong>limpio por dentro</strong> y con <strong>todos los depósitos vacíos</strong> (agua limpia, aguas grises y WC / aguas negras),
+            salvo indicación distinta por escrito de FURGOCASA.
+        </p>
+        <ul>
+            <li><strong>Agua limpia:</strong> depósito vaciado (o según nivel indicado en la entrega).</li>
+            <li><strong>Aguas grises:</strong> depósito vaciado.</li>
+            <li><strong>WC / aguas negras:</strong> vaciado (cassette / depósito según modelo).</li>
+            <li><strong>Combustible:</strong> mismo nivel que al inicio del alquiler (parte de entrega). Si se entregó lleno, devolución llena.</li>
+            <li><strong>Horario:</strong> devolución en la franja acordada; llaves al personal de FURGOCASA.</li>
+        </ul>
+        <p class="fc-devol-penal-sub">
+            Si superas el horario de devolución, deberás esperar a la siguiente franja de apertura y podrán aplicarse las penalizaciones por retraso indicadas m&aacute;s abajo.
+        </p>
+    </div>
+
+    <div class="fc-devol-penal-grid">
+        <div class="fc-devol-penal-card">
+            <h3>Cargos si no se cumple (IVA incluido)</h3>
+            <p class="fc-devol-penal-nota">Cada fila es independiente: si aplica m&aacute;s de un incumplimiento, se suman los conceptos correspondientes.</p>
+            <div class="fc-devol-penal-tabla-wrap">
+                <table class="fc-devol-penal-tabla">
+                    <thead>
+                        <tr>
+                            <th>Incumplimiento</th>
+                            <th>Suplemento / cargo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Vaciado de <strong>aguas grises</strong> (no entregado vacío)</td>
+                            <td>20&nbsp;&euro;</td>
+                        </tr>
+                        <tr>
+                            <td>Vaciado de <strong>agua limpia</strong> (no entregado vacío)</td>
+                            <td>20&nbsp;&euro;</td>
+                        </tr>
+                        <tr>
+                            <td>Vaciado de <strong>WC / aguas negras</strong> (no entregado vacío)</td>
+                            <td>70&nbsp;&euro;</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Limpieza interior</strong> deficiente (suciedad, olores, restos…)</td>
+                            <td>Desde 120&nbsp;&euro;</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Combustible</strong> por debajo del nivel de salida</td>
+                            <td>Litros faltantes a precio en vigor + 20&nbsp;&euro; gestión</td>
+                        </tr>
+                    </tbody>
+                    <caption>Importes orientativos según tarifas FURGOCASA en vigor; el desglose aparecerá en la liquidación si procede.</caption>
+                </table>
+            </div>
+        </div>
+
+        <div id="puntualidad" class="fc-devol-penal-punt">
+            <h3>⏰ Retrasos en la cita de devolución / entrega</h3>
+            <p style="margin:0 0 14px;font-size:14px;line-height:1.55;opacity:0.95;">
+                La puntualidad es esencial: el equipo se desplaza y prepara cada vehículo en horario concertado. Los retrasos generan coste de espera.
+            </p>
+            <ul>
+                <li><span>Primera hora de retraso</span> <span class="precio">40&nbsp;&euro;</span></li>
+                <li><span>Cada hora adicional</span> <span class="precio">20&nbsp;&euro;</span></li>
+                <li><span>Tope m&aacute;ximo por d&iacute;a (retraso)</span> <span class="precio">2 d&iacute;as de alquiler</span></li>
+            </ul>
+            <div class="fc-devol-penal-alert">
+                <strong>Importante:</strong> no presentarse a la cita sin avisar puede considerarse <strong>cancelación</strong> del servicio de entrega/devolución sin derecho a reembolso de cantidades ya devengadas, según contrato.
+            </div>
+        </div>
+    </div>
+
+    <div class="fc-devol-penal-tip">
+        <h4>💡 Recomendación</h4>
+        <p>
+            Si prevés llegar tarde, contacta con Furgocasa cuanto antes: a menudo puedes <strong>ampliar el alquiler</strong> pagando la tarifa diaria en vigor,
+            lo que suele ser m&aacute;s económico que la suma de penalizaciones por retraso. Sujeto a disponibilidad si hay otro alquiler posterior confirmado.
+        </p>
+    </div>
+</div>
+<!-- ========== FIN DEVOLUCIÓN / PENALIZACIONES ========== -->
+
 <!-- FIN TABLA DE PRECIOS INTERACTIVA -->
 
