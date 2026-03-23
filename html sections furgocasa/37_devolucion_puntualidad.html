@@ -1,14 +1,427 @@
-<!--
-  ═══════════════════════════════════════════════════════════════════════════
-  OBSOLETO en español: el contenido de devolución, depósitos vacíos y penalizaciones
-  está integrado al FINAL de 33_tabla_precios_interactiva.html (anclas #devolucion y #puntualidad).
+<!-- SECCIÓN DEVOLUCIÓN Y PUNTUALIDAD -->
+<style>
+    .fc-devolucion-punt {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 50px 20px;
+        font-family: Arial, sans-serif;
+    }
+    .fc-devolucion-punt-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .fc-devolucion-punt-header h2 {
+        font-size: 36px;
+        margin-bottom: 12px;
+        color: #222;
+    }
+    .fc-devolucion-punt-header p {
+        font-size: 16px;
+        color: #666;
+    }
+    .fc-devolucion-punt-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
+    }
+    .fc-devolucion-box {
+        background: #fff;
+        border: 2px solid #e3e6ee;
+        border-radius: 20px;
+        padding: 32px 28px;
+        transition: all 0.3s;
+    }
+    .fc-devolucion-box:hover {
+        border-color: #063971;
+        box-shadow: 0 8px 25px rgba(6,57,113,0.1);
+        transform: translateY(-4px);
+    }
+    .fc-devolucion-title {
+        font-size: 22px;
+        font-weight: bold;
+        color: #222;
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .fc-devolucion-icon {
+        font-size: 28px;
+    }
+    .fc-devolucion-texto {
+        font-size: 14px;
+        color: #555;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    .fc-devolucion-requisitos {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    .fc-devolucion-requisitos-title {
+        font-size: 15px;
+        font-weight: bold;
+        color: #222;
+        margin-bottom: 12px;
+    }
+    .fc-devolucion-requisitos-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .fc-devolucion-requisitos-list li {
+        padding: 8px 0;
+        border-bottom: 1px solid #e3e6ee;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        color: #555;
+    }
+    .fc-devolucion-requisitos-list li:last-child {
+        border-bottom: none;
+    }
+    .fc-devolucion-requisitos-list li::before {
+        content: '✓';
+        color: #063971;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    .fc-suplementos-box {
+        background: linear-gradient(135deg, #ff8c42 0%, #e6732e 100%);
+        border-radius: 20px;
+        padding: 32px 28px;
+        color: #fff;
+        transition: all 0.3s;
+    }
+    .fc-suplementos-box:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 35px rgba(255,140,66,0.3);
+    }
+    .fc-suplementos-title {
+        font-size: 22px;
+        font-weight: bold;
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .fc-suplementos-icon {
+        font-size: 28px;
+    }
+    .fc-suplementos-texto {
+        font-size: 14px;
+        line-height: 1.6;
+        opacity: 0.95;
+        margin-bottom: 24px;
+    }
+    .fc-suplementos-grid {
+        display: grid;
+        gap: 12px;
+    }
+    .fc-suplemento-item {
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s;
+    }
+    .fc-suplemento-item:hover {
+        background: rgba(255,255,255,0.25);
+        transform: translateX(5px);
+    }
+    .fc-suplemento-descripcion {
+        font-size: 14px;
+        font-weight: 500;
+    }
+    .fc-suplemento-precio {
+        font-size: 24px;
+        font-weight: bold;
+        white-space: nowrap;
+        margin-left: 12px;
+    }
+    .fc-suplemento-nota {
+        font-size: 11px;
+        opacity: 0.8;
+        margin-top: 4px;
+    }
+    .fc-puntualidad-box {
+        background: linear-gradient(135deg, #063971 0%, #074a8c 100%);
+        border-radius: 20px;
+        padding: 32px 28px;
+        color: #fff;
+        transition: all 0.3s;
+    }
+    .fc-puntualidad-box:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 35px rgba(6,57,113,0.3);
+    }
+    .fc-puntualidad-title {
+        font-size: 22px;
+        font-weight: bold;
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .fc-puntualidad-icon {
+        font-size: 28px;
+    }
+    .fc-puntualidad-texto {
+        font-size: 14px;
+        line-height: 1.6;
+        opacity: 0.95;
+        margin-bottom: 20px;
+    }
+    .fc-puntualidad-penalizaciones {
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    .fc-puntualidad-penalizaciones-title {
+        font-size: 15px;
+        font-weight: bold;
+        margin-bottom: 12px;
+    }
+    .fc-puntualidad-penalizaciones-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .fc-puntualidad-penalizaciones-list li {
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+    }
+    .fc-puntualidad-penalizaciones-list li:last-child {
+        border-bottom: none;
+    }
+    .fc-puntualidad-penalizaciones-precio {
+        font-weight: bold;
+        font-size: 15px;
+    }
+    .fc-puntualidad-alert {
+        background: rgba(255,221,138,0.2);
+        border: 2px solid #ffdd8a;
+        border-radius: 12px;
+        padding: 14px;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+    .fc-puntualidad-alert strong {
+        color: #ffdd8a;
+    }
+    .fc-importante-banner {
+        background: linear-gradient(135deg, #fff8e6 0%, #fff4d9 100%);
+        border: 2px solid #ffb347;
+        border-radius: 20px;
+        padding: 32px 28px;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(255,179,71,0.2);
+    }
+    .fc-importante-banner-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+    .fc-importante-banner-title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #ff8c42;
+        margin-bottom: 12px;
+    }
+    .fc-importante-banner-texto {
+        font-size: 15px;
+        color: #666;
+        line-height: 1.7;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    @media (max-width: 1024px) {
+        .fc-devolucion-punt-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    @media (max-width: 768px) {
+        .fc-devolucion-punt {
+            padding: 20px 16px;
+        }
+        .fc-devolucion-punt-header h2 {
+            font-size: 28px;
+        }
+        .fc-devolucion-punt-header p {
+            font-size: 14px;
+        }
+        .fc-devolucion-box,
+        .fc-suplementos-box,
+        .fc-puntualidad-box {
+            padding: 24px 20px;
+        }
+        .fc-devolucion-title,
+        .fc-suplementos-title,
+        .fc-puntualidad-title {
+            font-size: 20px;
+        }
+        .fc-devolucion-icon,
+        .fc-suplementos-icon,
+        .fc-puntualidad-icon {
+            font-size: 24px;
+        }
+        .fc-suplemento-item {
+            flex-direction: column;
+            text-align: center;
+            gap: 10px;
+        }
+        .fc-suplemento-precio {
+            margin-left: 0;
+        }
+        .fc-importante-banner {
+            padding: 24px 20px;
+        }
+        .fc-importante-banner-icon {
+            font-size: 40px;
+        }
+        .fc-importante-banner-title {
+            font-size: 20px;
+        }
+        .fc-importante-banner-texto {
+            font-size: 14px;
+        }
+    }
+</style>
 
-  En WordPress: si actualizas el bloque 33, ELIMINA del pie de página cualquier inserción
-  antigua de este archivo para no duplicar texto.
+<div class="fc-devolucion-punt">
+    <div class="fc-devolucion-punt-header">
+        <h2>Devoluci&oacute;n del veh&iacute;culo y puntualidad</h2>
+        <p>Condiciones para la devoluci&oacute;n y penalizaciones por retrasos</p>
+    </div>
 
-  Hero pestañas traducidas: 31_tarifas_hero_en.html y 31_tarifas_hero_fr.html
+    <div class="fc-devolucion-punt-grid">
+        <!-- DEVOLUCIÓN -->
+        <div class="fc-devolucion-box">
+            <h3 class="fc-devolucion-title">
+                <span class="fc-devolucion-icon">🔙</span>
+                <span>Condiciones de devoluci&oacute;n</span>
+            </h3>
 
-  Fragmentos devolución/penalidades: 33_devolucion_penalidades_EN.html y 33_devolucion_penalidades_FR.html
-  (pégalos justo después de la tabla de precios en cada idioma; quita la sección antigua duplicada al final).
-  ═══════════════════════════════════════════════════════════════════════════
--->
+            <p class="fc-devolucion-texto">
+                Las devoluciones deber&aacute;n realizarse <strong>siempre en la hora acordada</strong> dentro del horario 
+                fijado por FURGOCASA. <strong>No se pueden realizar devoluciones fuera del horario establecido.</strong>
+            </p>
+
+            <div class="fc-devolucion-requisitos">
+                <div class="fc-devolucion-requisitos-title">El veh&iacute;culo debe estar:</div>
+                <ul class="fc-devolucion-requisitos-list">
+                    <li>Limpio interiormente</li>
+                    <li>Aguas grises vaciadas</li>
+                    <li>WC qu&iacute;mico vaciado</li>
+                    <li>En horario acordado</li>
+                    <li>Llaves entregadas al personal</li>
+                </ul>
+            </div>
+
+            <p class="fc-devolucion-texto" style="margin-top: 16px; font-size: 13px;">
+                Si excedes el horario de devoluci&oacute;n, deber&aacute;s esperar a la siguiente franja horaria 
+                de apertura y se aplicar&aacute;n las penalizaciones correspondientes.
+            </p>
+        </div>
+        
+        <!-- SUPLEMENTOS -->
+        <div class="fc-suplementos-box">
+            <h3 class="fc-suplementos-title">
+                <span class="fc-suplementos-icon">💰</span>
+                <span>Suplementos por incumplimiento</span>
+            </h3>
+
+            <p class="fc-suplementos-texto">
+                Si el veh&iacute;culo no cumple las condiciones de devoluci&oacute;n, se aplicar&aacute;n estos cargos:
+            </p>
+
+            <div class="fc-suplementos-grid">
+                <div class="fc-suplemento-item">
+                    <div>
+                        <div class="fc-suplemento-descripcion">Vaciado aguas grises</div>
+                        <div class="fc-suplemento-nota">IVA incluido</div>
+                    </div>
+                    <div class="fc-suplemento-precio">20&euro;</div>
+                </div>
+                <div class="fc-suplemento-item">
+                    <div>
+                        <div class="fc-suplemento-descripcion">Vaciado WC qu&iacute;mico</div>
+                        <div class="fc-suplemento-nota">IVA incluido</div>
+                    </div>
+                    <div class="fc-suplemento-precio">70&euro;</div>
+                </div>
+                <div class="fc-suplemento-item">
+                    <div>
+                        <div class="fc-suplemento-descripcion">Limpieza interior</div>
+                        <div class="fc-suplemento-nota">IVA incluido</div>
+                    </div>
+                    <div class="fc-suplemento-precio">Desde 120&euro;</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PUNTUALIDAD -->
+        <div class="fc-puntualidad-box">
+            <h3 class="fc-puntualidad-title">
+                <span class="fc-puntualidad-icon">⏰</span>
+                <span>Penalizaciones por retraso</span>
+            </h3>
+
+            <p class="fc-puntualidad-texto">
+                Es fundamental ser puntual en las citas. Nos desplazamos expresamente para cada alquiler.
+            </p>
+
+            <div class="fc-puntualidad-penalizaciones">
+                <div class="fc-puntualidad-penalizaciones-title">Tarifas por retraso:</div>
+                <ul class="fc-puntualidad-penalizaciones-list">
+                    <li>
+                        <span>Primera hora</span>
+                        <span class="fc-puntualidad-penalizaciones-precio">40&euro;</span>
+                    </li>
+                    <li>
+                        <span>Hora adicional</span>
+                        <span class="fc-puntualidad-penalizaciones-precio">20&euro;</span>
+                    </li>
+                    <li>
+                        <span>M&aacute;ximo/d&iacute;a</span>
+                        <span class="fc-puntualidad-penalizaciones-precio">2 d&iacute;as alquiler</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="fc-puntualidad-alert">
+                <strong>⚠️</strong> No aparecer sin avisar = <strong>CANCELACI&Oacute;N</strong> sin reembolso
+            </div>
+        </div>
+    </div>
+
+    <div class="fc-importante-banner">
+        <div class="fc-importante-banner-icon">💡</div>
+        <div class="fc-importante-banner-title">Recomendaci&oacute;n importante</div>
+        <p class="fc-importante-banner-texto">
+            Si prevés llegar con retraso, contacta con Furgocasa cuanto antes. Puedes ampliar 
+            tu alquiler pagando la tarifa diaria normal, lo que supone un coste inferior a la 
+            penalizaci&oacute;n. Ten en cuenta que puede no ser posible si hay otro alquiler 
+            posterior confirmado.
+        </p>
+    </div>
+</div>
+<!-- FIN SECCIÓN DEVOLUCIÓN Y PUNTUALIDAD -->
+
