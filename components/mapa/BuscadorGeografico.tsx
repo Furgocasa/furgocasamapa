@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { track } from '@/lib/analytics/track'
 
 interface BuscadorGeograficoProps {
   map: any // Google Map instance
@@ -148,6 +149,14 @@ export function BuscadorGeografico({ map, onLocationFound, currentCountry }: Bus
 
     // Notificar al padre
     onLocationFoundRef.current(location)
+
+    track('area_search', {
+      event_data: {
+        query: address,
+        country: location.country,
+        country_code: location.countryCode,
+      },
+    })
 
     // Limpiar UI y cerrar
     setSearchValue('')

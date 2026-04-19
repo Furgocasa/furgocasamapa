@@ -3,6 +3,7 @@ import Script from 'next/script'
 import './globals.css'
 import WelcomeModal from '@/components/ui/WelcomeModal'
 import ChatbotWidget from '@/components/chatbot/ChatbotWidget'
+import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.mapafurgocasa.com'),
@@ -118,6 +119,7 @@ export default function RootLayout({
           strategy="lazyOnload"
         />
 
+        <AnalyticsTracker />
         <WelcomeModal />
         <ChatbotWidget />
         {children}

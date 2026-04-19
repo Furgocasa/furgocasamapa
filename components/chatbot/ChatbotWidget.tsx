@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { formatErrorForUser } from '@/lib/chatbot/errors'
+import { track } from '@/lib/analytics/track'
 
 interface Message {
   rol: 'user' | 'assistant'
@@ -125,6 +126,7 @@ export default function ChatbotWidget() {
     setIsOpen(true)
     setIsMinimized(false)
     setIsHidden(false)
+    track('chatbot_open', { event_data: { autenticado: Boolean(user) } })
     if (user && !conversacionId) {
       iniciarConversacion()
     }
@@ -160,6 +162,14 @@ export default function ChatbotWidget() {
     setMessages(prev => [...prev, userMessage])
     setInput('')
     setSending(true)
+
+    track('chatbot_message', {
+      event_data: {
+        longitud: userMessage.contenido.length,
+        es_primer_mensaje: messages.length === 0,
+        tiene_ubicacion: Boolean(ubicacion),
+      },
+    })
     
     try {
       const response = await fetch('/api/chatbot', {

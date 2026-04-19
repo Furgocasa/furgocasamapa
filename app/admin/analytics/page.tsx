@@ -284,30 +284,65 @@ export default function AdminAnalyticsPage() {
       const distanciaTotal = rutas?.reduce((sum: number, r: any) => sum + (r.distancia_km || 0), 0) || 0
       console.log(`✅ ${totalRutas} rutas, ${distanciaTotal.toFixed(0)} km totales`)
 
-      // Obtener métricas de CHATBOT
-      // Los mensajes se trackean en user_interactions con event_type = 'chatbot_message'
-      console.log('🤖 Obteniendo métricas de chatbot desde user_interactions...')
-      const { data: mensajes, error: mensajesError } = await (supabase as any)
-        .from('user_interactions')
-        .select('id, created_at, user_id, timestamp, event_data')
-        .eq('event_type', 'chatbot_message')
+      // ========== INTERACCIONES DE USUARIO (user_interactions) ==========
+      // Cargamos TODAS las interacciones paginadas y luego filtramos en JS por event_type.
+      // Así, con una sola consulta, alimentamos: chatbot, planificador, page_views,
+      // dispositivos, sesiones, búsquedas, vistas de área, eventos más comunes...
+      console.log('📡 Cargando user_interactions (paginado)...')
+      const allInteractions: any[] = []
+      const intPageSize = 1000
+      let intPage = 0
+      let intHasMore = true
+      while (intHasMore) {
+        const { data: interactionsBatch, error: interactionsError } = await (supabase as any)
+          .from('user_interactions')
+          .select('id, created_at, timestamp, user_id, event_type, event_data, page_url, area_id')
+          .order('timestamp', { ascending: false })
+          .range(intPage * intPageSize, (intPage + 1) * intPageSize - 1)
 
-      if (mensajesError) {
-        console.error('❌ Error obteniendo mensajes chatbot:', mensajesError)
+        if (interactionsError) {
+          console.error('❌ Error cargando user_interactions:', interactionsError)
+          break
+        }
+
+        if (interactionsBatch && interactionsBatch.length > 0) {
+          allInteractions.push(...interactionsBatch)
+          intPage++
+          if (interactionsBatch.length < intPageSize) intHasMore = false
+        } else {
+          intHasMore = false
+        }
+        // safety stop a 100k filas (~100 páginas)
+        if (intPage > 100) break
+      }
+      console.log(`✅ ${allInteractions.length} interacciones de usuario cargadas`)
+
+      // Particionado por event_type
+      const interactionsByType: Record<string, any[]> = {}
+      for (const it of allInteractions) {
+        const et = it.event_type || 'other'
+        if (!interactionsByType[et]) interactionsByType[et] = []
+        interactionsByType[et].push(it)
       }
 
-      const totalInteraccionesIA = mensajes?.length || 0
-      console.log(`✅ ${totalInteraccionesIA} interacciones con IA registradas`)
+      const eventosRutaCalc = interactionsByType['route_calculate'] || []
 
-      console.log('🧭 Obteniendo cálculos de ruta (planificador) desde user_interactions...')
-      const { data: eventosRutaCalc, error: errorRutaCalc } = await (supabase as any)
-        .from('user_interactions')
-        .select('id, created_at, timestamp, user_id, event_data')
-        .eq('event_type', 'route_calculate')
+      // ========== MENSAJES DEL CHATBOT (fuente real: chatbot_mensajes) ==========
+      // El widget escribe en chatbot_mensajes, así que esa es la fuente de verdad
+      // para el conteo de mensajes del usuario al asistente IA.
+      console.log('🤖 Cargando mensajes del chatbot (rol=user) desde chatbot_mensajes...')
+      const { data: chatbotMensajesUser, error: chatbotMensajesError } = await (supabase as any)
+        .from('chatbot_mensajes')
+        .select('id, created_at, rol')
+        .eq('rol', 'user')
 
-      if (errorRutaCalc) {
-        console.error('❌ Error obteniendo cálculos de ruta:', errorRutaCalc)
+      if (chatbotMensajesError) {
+        console.error('⚠️ Error cargando chatbot_mensajes:', chatbotMensajesError)
       }
+      const mensajes = chatbotMensajesUser || []
+      const totalInteraccionesIA = mensajes.length
+      console.log(`✅ ${totalInteraccionesIA} mensajes de usuario al chatbot`)
+      console.log(`🧭 ${eventosRutaCalc.length} cálculos de ruta (route_calculate)`)
 
       // ========== MÉTRICAS TEMPORALES ==========
       console.log('📊 Calculando métricas temporales...')
@@ -1141,37 +1176,73 @@ export default function AdminAnalyticsPage() {
       console.log(`📅 Distribución años:`, distribucionAños)
       console.log(`🛣️ Distribución kilometraje:`, distribucionKilometraje)
 
-      // ========== MÉTRICAS DE ENGAGEMENT ==========
-      // Como aún no tenemos la tabla user_sessions implementada, calculamos métricas estimadas
+      // ========== MÉTRICAS DE ENGAGEMENT (REALES desde user_interactions) ==========
+      console.log('📈 Calculando engagement real desde user_interactions...')
 
-      // Estimación de sesiones basada en actividad
-      // Asumimos que cada conjunto de acciones en un período corto es una sesión
-      const sesionesTotales =
-        totalRutasCalculadas + visitasEsteMes + valoracionesTotales + favoritosTotales
-      const sesionesHoy = rutasCalculadasHoy + visitasHoy + valoracionesHoy + favoritosHoy
-      const sesionesEstaSemana =
-        rutasCalculadasEstaSemana + visitasEstaSemana + valoracionesEstaSemana + favoritosEstaSemana
+      const tsOf = (it: any): number => new Date(it.timestamp || it.created_at).getTime()
 
-      // Promedio de tiempo de sesión (estimado en minutos)
-      const promedioTiempoSesion = 8.5 // Valor estimado, se calculará real cuando tengamos tracking
+      // Sesiones REALES: agrupar por session_id_client (event_data) y calcular duración
+      const sessionsMap = new Map<string, { start: number; end: number; pageViews: number; userId: string | null; device: string }>()
+      for (const it of allInteractions) {
+        const sid = it.event_data?.session_id_client
+        if (!sid) continue
+        const t = tsOf(it)
+        const dev = it.event_data?.device_type || 'desktop'
+        const existing = sessionsMap.get(sid)
+        if (!existing) {
+          sessionsMap.set(sid, {
+            start: t,
+            end: t,
+            pageViews: it.event_type === 'page_view' ? 1 : 0,
+            userId: it.user_id || null,
+            device: dev,
+          })
+        } else {
+          if (t < existing.start) existing.start = t
+          if (t > existing.end) existing.end = t
+          if (it.event_type === 'page_view') existing.pageViews++
+          if (!existing.userId && it.user_id) existing.userId = it.user_id
+        }
+      }
+      const sesionesArray = Array.from(sessionsMap.values())
+      const sesionesTotales = sesionesArray.length
 
-      // Promedio de páginas por sesión (estimado)
-      const promedioPaginasPorSesion = 4.2 // Valor estimado
+      const sesionesHoy = sesionesArray.filter((s: any) => s.start >= inicioDia.getTime()).length
+      const sesionesEstaSemana = sesionesArray.filter((s: any) => s.start >= inicioSemana.getTime()).length
 
-      // Tasa de rebote (estimado en %)
-      const tasaRebote = 32 // Valor estimado
+      // Promedio de tiempo de sesión (en minutos), excluyendo sesiones de 1 sola interacción (duración 0)
+      const sesionesConDuracion = sesionesArray.filter((s: any) => s.end > s.start)
+      const promedioTiempoSesion = sesionesConDuracion.length > 0
+        ? sesionesConDuracion.reduce((sum: number, s: any) => sum + (s.end - s.start), 0)
+            / sesionesConDuracion.length
+            / 1000 / 60
+        : 0
 
-      // ========== BÚSQUEDAS Y VISTAS DE ÁREAS ==========
-      // Estas métricas se calcularán cuando implementemos el tracking de user_interactions
-      // Por ahora usamos valores de proxy basados en otras métricas
+      // Promedio de páginas por sesión (REAL)
+      const sesionesConPageView = sesionesArray.filter((s: any) => s.pageViews > 0)
+      const promedioPaginasPorSesion = sesionesConPageView.length > 0
+        ? sesionesConPageView.reduce((sum: number, s: any) => sum + s.pageViews, 0) / sesionesConPageView.length
+        : 0
 
-      const busquedasTotales = totalRutasCalculadas * 2 // Proxy: ~2 búsquedas por uso fuerte del mapa/ruta
-      const busquedasHoy = rutasCalculadasHoy * 2
-      const busquedasEstaSemana = rutasCalculadasEstaSemana * 2
+      // Tasa de rebote: % de sesiones con 1 sola page_view
+      const tasaRebote = sesionesConPageView.length > 0
+        ? (sesionesConPageView.filter((s: any) => s.pageViews === 1).length / sesionesConPageView.length) * 100
+        : 0
 
-      const vistasAreasTotal = favoritos ? favoritosTotales * 5 : 0 // Estimamos 5 vistas por favorito
-      const vistasAreasHoy = favoritosHoy * 5
-      const vistasAreasEstaSemana = favoritosEstaSemana * 5
+      // ========== BÚSQUEDAS Y VISTAS DE ÁREAS (REALES) ==========
+      const eventosBusqueda = interactionsByType['area_search'] || []
+      const eventosAreaView = interactionsByType['area_view'] || []
+      const eventosPageView = interactionsByType['page_view'] || []
+
+      const busquedasTotales = eventosBusqueda.length
+      const busquedasHoy = eventosBusqueda.filter((e: any) => tsOf(e) >= inicioDia.getTime()).length
+      const busquedasEstaSemana = eventosBusqueda.filter((e: any) => tsOf(e) >= inicioSemana.getTime()).length
+
+      const vistasAreasTotal = eventosAreaView.length
+      const vistasAreasHoy = eventosAreaView.filter((e: any) => tsOf(e) >= inicioDia.getTime()).length
+      const vistasAreasEstaSemana = eventosAreaView.filter((e: any) => tsOf(e) >= inicioSemana.getTime()).length
+
+      console.log(`🔍 Búsquedas: ${busquedasTotales} | 👁️ Vistas área: ${vistasAreasTotal} | 📄 Page views: ${eventosPageView.length}`)
 
       // ========== CONVERSIÓN Y RETENCIÓN ==========
       // Usuarios recurrentes: usuarios que tienen más de 1 actividad
@@ -1182,46 +1253,75 @@ export default function AdminAnalyticsPage() {
       })
 
       const usuariosRecurrentes = Array.from(actividadesPorUsuario.values()).filter((count: any) => count > 1).length
-      const usuariosNuevos = totalUsers - usuariosRecurrentes
+      const usuariosNuevos = Math.max(0, totalUsers - usuariosRecurrentes)
 
       // Tasa de conversión (% de usuarios que realizan al menos 1 acción)
       const tasaConversionRegistro = totalUsers > 0
         ? ((usuariosConActividad.size / totalUsers) * 100)
         : 0
 
-      // ========== DISPOSITIVOS ==========
-      // Distribución de dispositivos (estimada, se calculará real con tracking)
+      // ========== DISPOSITIVOS (REALES desde event_data.device_type) ==========
+      const conteoDispositivos: Record<string, number> = { Desktop: 0, Mobile: 0, Tablet: 0 }
+      for (const s of sesionesArray) {
+        const tipo = s.device === 'mobile' ? 'Mobile' : s.device === 'tablet' ? 'Tablet' : 'Desktop'
+        conteoDispositivos[tipo] = (conteoDispositivos[tipo] || 0) + 1
+      }
+      const totalSesionesConDispositivo = Object.values(conteoDispositivos).reduce((a: number, b: number) => a + b, 0)
       const usuariosPorDispositivo = [
-        { tipo: 'Desktop', count: Math.floor(totalUsers * 0.45), porcentaje: 45 },
-        { tipo: 'Mobile', count: Math.floor(totalUsers * 0.50), porcentaje: 50 },
-        { tipo: 'Tablet', count: Math.floor(totalUsers * 0.05), porcentaje: 5 }
+        { tipo: 'Desktop', count: conteoDispositivos.Desktop, porcentaje: totalSesionesConDispositivo > 0 ? (conteoDispositivos.Desktop / totalSesionesConDispositivo) * 100 : 0 },
+        { tipo: 'Mobile', count: conteoDispositivos.Mobile, porcentaje: totalSesionesConDispositivo > 0 ? (conteoDispositivos.Mobile / totalSesionesConDispositivo) * 100 : 0 },
+        { tipo: 'Tablet', count: conteoDispositivos.Tablet, porcentaje: totalSesionesConDispositivo > 0 ? (conteoDispositivos.Tablet / totalSesionesConDispositivo) * 100 : 0 },
       ]
 
-      // ========== ACTIVIDAD POR HORA ==========
-      // Distribución de actividad por hora del día (estimada)
-      const actividadPorHora: { hora: number; interacciones: number }[] = []
-      const distribucionHoraria = [2, 1, 1, 1, 2, 4, 6, 8, 7, 6, 5, 6, 7, 6, 5, 6, 8, 10, 9, 8, 7, 6, 4, 3]
-      for (let h = 0; h < 24; h++) {
-        actividadPorHora.push({
-          hora: h,
-          interacciones: Math.floor((sesionesTotales / 24) * (distribucionHoraria[h] / 5))
-        })
+      // ========== ACTIVIDAD POR HORA (REAL: últimas 4 semanas) ==========
+      const inicio4Semanas = new Date(ahora)
+      inicio4Semanas.setDate(ahora.getDate() - 28)
+      const interaccionesUltimoMes = allInteractions.filter((it: any) => tsOf(it) >= inicio4Semanas.getTime())
+      const conteoPorHora: number[] = Array(24).fill(0)
+      for (const it of interaccionesUltimoMes) {
+        const h = new Date(it.timestamp || it.created_at).getHours()
+        conteoPorHora[h]++
       }
+      const actividadPorHora: { hora: number; interacciones: number }[] = conteoPorHora.map((interacciones, hora) => ({ hora, interacciones }))
 
-      // ========== EVENTOS MÁS COMUNES ==========
-      const eventosMasComunes = [
-        { evento: 'Búsqueda de áreas', count: busquedasTotales },
-        { evento: 'Vista de área', count: vistasAreasTotal },
-        { evento: 'Cálculo de ruta (planificador)', count: totalRutasCalculadas },
-        { evento: 'Ruta guardada en perfil', count: totalRutas },
-        { evento: 'Agregar favorito', count: favoritosTotales },
-        { evento: 'Registrar visita', count: visitas?.length || 0 },
-        { evento: 'Dejar valoración', count: valoracionesTotales },
-        { evento: 'Mensaje chatbot', count: totalInteraccionesIA },
-        { evento: 'Registrar vehículo', count: totalVehiculosRegistrados }
-      ].sort((a: any, b: any) => b.count - a.count)
+      // ========== EVENTOS MÁS COMUNES (REALES) ==========
+      const labelEvento: Record<string, string> = {
+        page_view: 'Vista de página',
+        area_view: 'Vista de área',
+        area_search: 'Búsqueda de áreas',
+        route_calculate: 'Cálculo de ruta (planificador)',
+        route_save: 'Ruta guardada',
+        area_favorite: 'Agregar favorito',
+        area_unfavorite: 'Quitar favorito',
+        area_visit_register: 'Registrar visita',
+        area_rate: 'Dejar valoración',
+        filter_apply: 'Aplicar filtro',
+        map_interaction: 'Interacción con mapa',
+        chatbot_open: 'Abrir chatbot',
+        chatbot_message: 'Mensaje al chatbot',
+        vehicle_register: 'Registrar vehículo',
+        vehicle_update: 'Actualizar vehículo',
+        profile_view: 'Ver perfil',
+        profile_update: 'Actualizar perfil',
+        login: 'Iniciar sesión',
+        logout: 'Cerrar sesión',
+        signup: 'Registro nuevo',
+        share: 'Compartir',
+        download: 'Descargar',
+        click: 'Click',
+        scroll: 'Scroll',
+        form_submit: 'Envío formulario',
+        error: 'Error',
+        other: 'Otros',
+      }
+      const eventosMasComunes = Object.entries(interactionsByType)
+        .map(([evento, list]: [string, any]) => ({
+          evento: labelEvento[evento] || evento,
+          count: list.length,
+        }))
+        .sort((a: any, b: any) => b.count - a.count)
 
-      console.log('✅ Métricas de comportamiento calculadas')
+      console.log(`✅ Engagement real: ${sesionesTotales} sesiones · ${promedioTiempoSesion.toFixed(1)} min/sesión · ${promedioPaginasPorSesion.toFixed(1)} pag/sesión · rebote ${tasaRebote.toFixed(0)}%`)
 
       // ========== ESTADÍSTICAS POR PAÍS ==========
       const areasPorPais = areas?.reduce((acc: any, area: any) => {
@@ -3368,23 +3468,46 @@ export default function AdminAnalyticsPage() {
               <p className="text-teal-100 mt-2 text-lg">Calidad de la experiencia y retención</p>
             </div>
 
+            {/* Aviso si no hay datos de tracking todavía */}
+            {analytics.sesionesTotales === 0 && (
+              <div className="bg-amber-50 border-l-4 border-amber-400 rounded-lg p-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">⏳</span>
+                  <div>
+                    <h4 className="font-bold text-amber-900">Aún no hay datos de sesiones</h4>
+                    <p className="text-sm text-amber-800 mt-1">
+                      El tracking de páginas vistas, sesiones, dispositivos y rebote acaba de activarse.
+                      A medida que los usuarios entren en la web (registrados o no), se irán acumulando datos reales aquí.
+                      No mostramos cifras inventadas: estos cuadros aparecerán con valores en cuanto haya navegación.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Métricas de Engagement */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
                 <p className="text-sm font-medium text-green-700 mb-2">⏱️ Tiempo Promedio</p>
-                <p className="text-4xl font-bold text-green-900">{analytics.promedioTiempoSesion} min</p>
-                <p className="text-xs text-green-600 mt-1">por sesión</p>
+                <p className="text-4xl font-bold text-green-900">
+                  {analytics.sesionesTotales > 0 ? `${analytics.promedioTiempoSesion.toFixed(1)} min` : '—'}
+                </p>
+                <p className="text-xs text-green-600 mt-1">por sesión (real)</p>
               </div>
 
               <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-6 border border-teal-200">
                 <p className="text-sm font-medium text-teal-700 mb-2">📄 Páginas/Sesión</p>
-                <p className="text-4xl font-bold text-teal-900">{analytics.promedioPaginasPorSesion}</p>
-                <p className="text-xs text-teal-600 mt-1">páginas vistas</p>
+                <p className="text-4xl font-bold text-teal-900">
+                  {analytics.sesionesTotales > 0 ? analytics.promedioPaginasPorSesion.toFixed(1) : '—'}
+                </p>
+                <p className="text-xs text-teal-600 mt-1">páginas vistas (real)</p>
               </div>
 
               <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl p-6 border border-cyan-200">
                 <p className="text-sm font-medium text-cyan-700 mb-2">↩️ Tasa de Rebote</p>
-                <p className="text-4xl font-bold text-cyan-900">{analytics.tasaRebote}%</p>
+                <p className="text-4xl font-bold text-cyan-900">
+                  {analytics.sesionesTotales > 0 ? `${analytics.tasaRebote.toFixed(0)}%` : '—'}
+                </p>
                 <p className="text-xs text-cyan-600 mt-1">sesiones de 1 página</p>
               </div>
 
@@ -3551,34 +3674,84 @@ export default function AdminAnalyticsPage() {
                 <p className="text-sm text-gray-600">Desde dónde acceden los usuarios</p>
               </div>
               <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {analytics.usuariosPorDispositivo.map((dispositivo: any, index: any) => {
-                    const colores = [
-                      { bg: 'slate', border: 'slate', text: 'slate' },
-                      { bg: 'blue', border: 'blue', text: 'blue' },
-                      { bg: 'purple', border: 'purple', text: 'purple' }
-                    ]
-                    const color = colores[index]
-
-                    return (
-                      <div key={dispositivo.tipo} className={`bg-gradient-to-br from-${color.bg}-50 to-${color.bg}-100 rounded-xl p-6 border-2 border-${color.border}-200`}>
-                        <p className={`text-sm font-semibold text-${color.text}-700 mb-2`}>
-                          {dispositivo.tipo === 'Desktop' ? '💻' : dispositivo.tipo === 'Mobile' ? '📱' : '📲'} {dispositivo.tipo}
-                        </p>
-                        <p className={`text-4xl font-black text-${color.text}-900 mb-3`}>{dispositivo.count.toLocaleString()}</p>
-                        <p className={`text-lg font-bold text-${color.text}-700 mb-2`}>{dispositivo.porcentaje}%</p>
-                        <div className="w-full bg-gray-200 rounded-full h-4">
-                          <div
-                            className={`bg-gradient-to-r from-${color.bg}-500 to-${color.bg}-600 h-4 rounded-full transition-all flex items-center justify-center`}
-                            style={{ width: `${dispositivo.porcentaje}%` }}
-                          >
-                            <span className="text-white text-xs font-bold">{dispositivo.porcentaje}%</span>
+                {analytics.usuariosPorDispositivo.every((d: any) => d.count === 0) ? (
+                  <p className="text-sm text-gray-500 italic">
+                    Sin datos de dispositivo todavía. Aparecerán aquí en cuanto los usuarios naveguen por la web.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {analytics.usuariosPorDispositivo.map((dispositivo: any) => {
+                      const palette: Record<string, { card: string; border: string; text: string; bar: string; emoji: string }> = {
+                        Desktop: { card: 'from-slate-50 to-slate-100', border: 'border-slate-200', text: 'text-slate-700', bar: 'from-slate-500 to-slate-600', emoji: '💻' },
+                        Mobile: { card: 'from-blue-50 to-blue-100', border: 'border-blue-200', text: 'text-blue-700', bar: 'from-blue-500 to-blue-600', emoji: '📱' },
+                        Tablet: { card: 'from-purple-50 to-purple-100', border: 'border-purple-200', text: 'text-purple-700', bar: 'from-purple-500 to-purple-600', emoji: '📲' },
+                      }
+                      const c = palette[dispositivo.tipo] || palette.Desktop
+                      const pct = Number(dispositivo.porcentaje || 0)
+                      return (
+                        <div key={dispositivo.tipo} className={`bg-gradient-to-br ${c.card} rounded-xl p-6 border-2 ${c.border}`}>
+                          <p className={`text-sm font-semibold ${c.text} mb-2`}>
+                            {c.emoji} {dispositivo.tipo}
+                          </p>
+                          <p className={`text-4xl font-black ${c.text} mb-3`}>{dispositivo.count.toLocaleString()}</p>
+                          <p className={`text-lg font-bold ${c.text} mb-2`}>{pct.toFixed(1)}%</p>
+                          <div className="w-full bg-gray-200 rounded-full h-4">
+                            <div
+                              className={`bg-gradient-to-r ${c.bar} h-4 rounded-full transition-all flex items-center justify-center`}
+                              style={{ width: `${Math.max(pct, 0)}%` }}
+                            >
+                              <span className="text-white text-xs font-bold">{pct.toFixed(0)}%</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )
-                  })}
-                </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Actividad por hora del día (últimas 4 semanas) */}
+            <div className="bg-white rounded-xl shadow mb-6">
+              <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-blue-50">
+                <h3 className="text-lg font-bold text-gray-900">🕒 Actividad por hora del día</h3>
+                <p className="text-sm text-gray-600">Interacciones reales en las últimas 4 semanas</p>
+              </div>
+              <div className="p-6">
+                {analytics.actividadPorHora.every((h: any) => h.interacciones === 0) ? (
+                  <p className="text-sm text-gray-500 italic">
+                    Sin actividad registrada todavía. Aparecerá en cuanto los usuarios empiecen a navegar.
+                  </p>
+                ) : (
+                  <>
+                    <div className="flex items-end gap-1 h-48">
+                      {analytics.actividadPorHora.map((h: any) => {
+                        const max = Math.max(...analytics.actividadPorHora.map((x: any) => x.interacciones), 1)
+                        const altura = (h.interacciones / max) * 100
+                        return (
+                          <div key={h.hora} className="flex-1 flex flex-col items-center gap-1">
+                            <div
+                              className="w-full bg-gradient-to-t from-indigo-500 to-indigo-400 rounded-t hover:from-indigo-600 transition-all"
+                              style={{ height: `${h.interacciones === 0 ? '4' : Math.max(altura, 8)}%` }}
+                              title={`${h.hora}:00 — ${h.interacciones} interacciones`}
+                            />
+                            <span className="text-[9px] text-gray-500">{String(h.hora).padStart(2, '0')}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between text-sm text-gray-600">
+                      <span>
+                        Hora pico: <strong className="text-indigo-600">
+                          {String(analytics.actividadPorHora.reduce((a: any, b: any) => (b.interacciones > a.interacciones ? b : a)).hora).padStart(2, '0')}:00h
+                        </strong>
+                      </span>
+                      <span>
+                        Total: <strong>{analytics.actividadPorHora.reduce((s: number, h: any) => s + h.interacciones, 0).toLocaleString()}</strong> interacciones
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -3586,9 +3759,14 @@ export default function AdminAnalyticsPage() {
             <div className="bg-white rounded-xl shadow">
               <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
                 <h3 className="text-lg font-bold text-gray-900">🎯 Eventos Más Comunes</h3>
-                <p className="text-sm text-gray-600">Acciones más realizadas por usuarios</p>
+                <p className="text-sm text-gray-600">Acciones reales de usuarios (de mayor a menor)</p>
               </div>
               <div className="p-6">
+                {analytics.eventosMasComunes.length === 0 ? (
+                  <p className="text-sm text-gray-500 italic">
+                    Sin eventos registrados todavía. Aparecerán aquí en cuanto los usuarios interactúen con la web.
+                  </p>
+                ) : (
                 <div className="space-y-3">
                   {analytics.eventosMasComunes.map((evento: any, index: any) => {
                     const maxCount = analytics.eventosMasComunes[0]?.count || 1
@@ -3630,6 +3808,7 @@ export default function AdminAnalyticsPage() {
                     )
                   })}
                 </div>
+                )}
               </div>
             </div>
           </div>

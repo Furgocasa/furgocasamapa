@@ -13,6 +13,7 @@ import LoginWall from '@/components/ui/LoginWall'
 import { usePersistentFilters } from '@/hooks/usePersistentFilters'
 import { ToastNotification } from '@/components/mapa/ToastNotification'
 import { reverseGeocode } from '@/lib/google/geocoding'
+import { track } from '@/lib/analytics/track'
 
 export default function MapaPage() {
   const [areas, setAreas] = useState<Area[]>([])
@@ -495,6 +496,15 @@ export default function MapaPage() {
 
   const handleAreaClick = (area: Area) => {
     setAreaSeleccionada(area)
+    track('area_view', {
+      area_id: (area as any)?.id,
+      event_data: {
+        nombre: area?.nombre,
+        pais: area?.pais,
+        provincia: (area as any)?.provincia,
+        tipo_area: (area as any)?.tipo_area,
+      },
+    })
     // En móvil se muestra el InfoWindow del mapa, no se abre la lista
   }
 
