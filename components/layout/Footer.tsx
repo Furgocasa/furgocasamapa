@@ -272,14 +272,14 @@ export function Footer() {
             </p>
             <p className="flex flex-col sm:flex-row items-center gap-1 text-center md:text-right">
               <span className="flex items-center gap-1">
-                Una empresa de{" "}
+                Una herramienta de{" "}
                 <a
                   href="https://www.furgocasa.com"
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener"
                   className="text-primary-400 hover:text-primary-300 transition-colors"
                 >
-                  www.furgocasa.com
+                  Furgocasa
                 </a>
               </span>
               <span className="hidden sm:inline">-</span>
