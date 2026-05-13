@@ -1,20 +1,19 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Sobre Nosotros - Mapa Furgocasa | Líder en Autocaravanas y Camperización',
-  description: 'Conoce Mapa Furgocasa, parte de Furgocasa Campervans. Especialistas en venta, alquiler y camperización de furgonetas. Ayudamos a miles de viajeros a descubrir el mundo en autocaravana con +3600 áreas verificadas.',
+  title: 'Sobre Nosotros - Mapa Furgocasa | El Mapa de Áreas para Autocaravanas',
+  description: 'Conoce Mapa Furgocasa, una herramienta creada por Furgocasa para la comunidad autocaravanista. +3600 áreas verificadas en Europa y Latinoamérica, planificador de rutas y gestión inteligente con IA.',
   keywords: [
     'mapa furgocasa',
     'sobre mapa furgocasa',
     'furgocasa',
-    'empresa autocaravanas',
-    'camperización furgonetas',
-    'alquiler autocaravanas',
-    'venta campers'
+    'comunidad autocaravanas',
+    'mapa áreas autocaravanas',
+    'gestión autocaravanas'
   ],
   openGraph: {
     title: 'Sobre Mapa Furgocasa - Tu Compañero de Viaje en Autocaravana',
-    description: 'Empresa líder en España en venta, alquiler y camperización de autocaravanas. Descubre nuestra historia y misión.',
+    description: 'Conoce nuestra historia y misión: una plataforma creada para la comunidad autocaravanista, con +3600 áreas verificadas e IA para gestionar tu vehículo.',
     url: 'https://www.mapafurgocasa.com/sobre-nosotros',
   },
 }
