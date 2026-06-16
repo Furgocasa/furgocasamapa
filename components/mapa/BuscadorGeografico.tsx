@@ -187,7 +187,8 @@ export function BuscadorGeografico({
     (area: Area, query: string) => {
       centerMap(area.latitud, area.longitud, 14)
       onAreaSelectRef.current?.(area)
-      onSearchQueryRef.current?.(query)
+      // Coherencia entre buscadores: el panel lateral recibe el NOMBRE COMPLETO del área
+      onSearchQueryRef.current?.(area.nombre)
 
       track('area_search', {
         event_data: {

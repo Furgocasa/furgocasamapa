@@ -496,6 +496,18 @@ export default function MapaPage() {
 
   const handleAreaClick = (area: Area) => {
     setAreaSeleccionada(area)
+
+    // Coherencia: si el área seleccionada (p. ej. desde el buscador) no pasa el
+    // filtro de país activo, ajustamos el filtro a su país para que aparezca
+    // también en la lista y en los marcadores. En clics sobre marcadores ya
+    // visibles esta condición no se cumple, por lo que no altera el filtro.
+    const paisArea = (area as any)?.pais?.trim() || ''
+    if (paisArea && paisFiltroLista && !paisPerteneceAFiltro(paisArea, paisFiltroLista)) {
+      skipMapCenterRef.current = true
+      setFiltros(prev => ({ ...prev, pais: paisArea }))
+      setMetadata(prev => ({ ...prev, paisSource: 'manual' }))
+    }
+
     track('area_view', {
       area_id: (area as any)?.id,
       event_data: {
