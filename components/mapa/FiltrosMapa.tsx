@@ -271,7 +271,7 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
               type="text"
               value={busquedaLocal}
               onChange={(e) => handleBusquedaChange(e.target.value)}
-              placeholder="Nombre, ciudad, dirección..."
+              placeholder="Nombre, ciudad o provincia..."
               className="w-full pl-8 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
             <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />

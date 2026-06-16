@@ -46,7 +46,8 @@ export default function MapaPage() {
   const conteoPaisesRegion = { europa: 16, sudamerica: 7, centroamerica: 3 }
 
   // Hook de filtros persistentes (reemplaza el useState anterior)
-  const { filtros, setFiltros, metadata, setMetadata, limpiarFiltros, contarFiltrosActivos } = usePersistentFilters()
+  const { filtros, setFiltros, metadata, setMetadata, limpiarFiltros, contarFiltrosActivos, isLoaded } = usePersistentFilters()
+  const autoCountryAppliedRef = useRef(false)
 
   const handlePaisManualChange = (_pais: string) => {
     setMetadata((prev) => ({
@@ -178,27 +179,15 @@ export default function MapaPage() {
               console.log('🌍 País detectado:', detectedCountryValue)
               setDetectedCountry(detectedCountryValue)
 
-              // Actualizar metadata GPS
-              setMetadata({
+              // Solo registramos el país GPS en metadata. La aplicación del filtro
+              // se hace en un efecto aparte que espera a que los filtros persistentes
+              // terminen de cargarse, para no pisar una selección manual guardada
+              // (condición de carrera: el GPS puede resolver antes que localStorage).
+              setMetadata(prev => ({
+                ...prev,
                 gpsCountry: detectedCountryValue,
-                gpsActive: true,
-                paisSource: metadata.paisSource === 'manual' ? 'manual' : (filtros.pais ? metadata.paisSource : 'gps')
-              })
-
-              // APLICAR FILTRO AUTOMÁTICO si no hay filtro de país previo
-              if (!filtros.pais && metadata.paisSource !== 'manual') {
-                console.log('✅ Aplicando filtro automático de país:', detectedCountryValue)
-                setFiltros({
-                  ...filtros,
-                  pais: detectedCountryValue
-                })
-
-                // Mostrar Toast Notification
-                setToastMessage(`Para mejorar los tiempos de carga, hemos aplicado un filtro del país donde te encuentras. Puedes cambiarlo en los filtros si lo deseas.`)
-                setShowToast(true)
-              } else {
-                console.log('ℹ️ Ya existe filtro de país:', filtros.pais, '- No se aplica automático')
-              }
+                gpsActive: true
+              }))
             }
           } catch (error) {
             console.error('❌ Error en reverse geocoding:', error)
@@ -212,6 +201,25 @@ export default function MapaPage() {
       )
     }
   }, []) // Solo ejecutar al montar
+
+  // ✅ Aplicar el filtro de país detectado por GPS SOLO cuando los filtros
+  // persistentes ya se han cargado desde localStorage. Así evitamos sobrescribir
+  // una selección de país manual guardada por una condición de carrera (el GPS
+  // puede resolver antes de que se restauren los filtros).
+  useEffect(() => {
+    if (!isLoaded || !detectedCountry || autoCountryAppliedRef.current) return
+    autoCountryAppliedRef.current = true
+
+    if (!filtros.pais && metadata.paisSource !== 'manual') {
+      console.log('✅ Aplicando filtro automático de país:', detectedCountry)
+      setFiltros(prev => ({ ...prev, pais: detectedCountry }))
+      setMetadata(prev => ({ ...prev, paisSource: 'gps' }))
+      setToastMessage('Para mejorar los tiempos de carga, hemos aplicado un filtro del país donde te encuentras. Puedes cambiarlo en los filtros si lo deseas.')
+      setShowToast(true)
+    } else {
+      console.log('ℹ️ Selección de país previa, no se aplica GPS:', filtros.pais)
+    }
+  }, [isLoaded, detectedCountry, filtros.pais, metadata.paisSource, setFiltros, setMetadata])
 
   // Centrar mapa cuando cambia el filtro de país o región
   useEffect(() => {
@@ -350,11 +358,12 @@ export default function MapaPage() {
       // Filtro de búsqueda
       if (filtros.busqueda) {
         const busqueda = filtros.busqueda.toLowerCase()
+        // Nota: la descripción NO se carga en el SELECT (sería muy pesado para
+        // ~5.000 áreas), por lo que la búsqueda es por nombre, ciudad y provincia.
         const coincide =
           area.nombre.toLowerCase().includes(busqueda) ||
           area.ciudad?.toLowerCase().includes(busqueda) ||
-          area.provincia?.toLowerCase().includes(busqueda) ||
-          area.descripcion?.toLowerCase().includes(busqueda)
+          area.provincia?.toLowerCase().includes(busqueda)
 
         if (!coincide) return false
       }
