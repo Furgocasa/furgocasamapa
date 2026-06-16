@@ -508,6 +508,11 @@ export default function MapaPage() {
     // En móvil se muestra el InfoWindow del mapa, no se abre la lista
   }
 
+  // Sincronizar búsqueda del mapa con el panel lateral
+  const handleMapSearchQuery = (query: string) => {
+    setFiltros((prev) => ({ ...prev, busqueda: query }))
+  }
+
   // Handler para cambio de país desde búsqueda geográfica
   const handleCountryChange = (newCountry: string, previousCountry: string | null) => {
     console.log(`📍 Cambio de país: ${previousCountry || 'ninguno'} → ${newCountry}`)
@@ -644,10 +649,12 @@ export default function MapaPage() {
         <div className="flex-1 relative">
           <MapaInteractivo
             areas={areasParaMapa}
+            areasBusqueda={areas}
             areaSeleccionada={areaSeleccionada}
             onAreaClick={handleAreaClick}
             mapRef={mapRef}
             onCountryChange={handleCountryChange}
+            onSearchQuery={handleMapSearchQuery}
             currentCountry={paisObjetivo || undefined}
             paisFiltro={filtros.pais}
           />

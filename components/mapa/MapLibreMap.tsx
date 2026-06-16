@@ -18,6 +18,8 @@ interface MapLibreMapProps {
   currentCountry?: string
   estilo?: 'default' | 'waze' | 'satellite' | 'dark'
   paisFiltro?: string // Filtro de país/región activo
+  areasBusqueda?: Area[]
+  onSearchQuery?: (query: string) => void
 }
 
 export function MapLibreMap({ 
@@ -28,7 +30,9 @@ export function MapLibreMap({
   onCountryChange,
   currentCountry,
   estilo = 'default',
-  paisFiltro = ''
+  paisFiltro = '',
+  areasBusqueda,
+  onSearchQuery,
 }: MapLibreMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<maplibregl.Map | null>(null)
@@ -545,6 +549,9 @@ export function MapLibreMap({
             map={map}
             onLocationFound={handleLocationFound}
             currentCountry={currentCountry}
+            areas={areasBusqueda || areas}
+            onAreaSelect={onAreaClick}
+            onSearchQuery={onSearchQuery}
           />
         </div>
       )}

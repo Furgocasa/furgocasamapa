@@ -14,6 +14,10 @@ interface MapaInteractivoProps {
   onCountryChange?: (country: string, previousCountry: string | null) => void
   currentCountry?: string
   paisFiltro?: string
+  /** Áreas completas para el buscador del mapa (sin filtro de texto) */
+  areasBusqueda?: Area[]
+  /** Sincronizar búsqueda con el panel lateral */
+  onSearchQuery?: (query: string) => void
 }
 
 /**

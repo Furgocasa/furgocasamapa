@@ -23,6 +23,8 @@ interface LeafletMapProps {
   currentCountry?: string
   estilo?: 'default' | 'waze' | 'satellite' | 'dark'
   paisFiltro?: string // Filtro de país/región activo
+  areasBusqueda?: Area[]
+  onSearchQuery?: (query: string) => void
 }
 
 export function LeafletMap({ 
@@ -33,7 +35,9 @@ export function LeafletMap({
   onCountryChange,
   currentCountry,
   estilo = 'default',
-  paisFiltro = ''
+  paisFiltro = '',
+  areasBusqueda,
+  onSearchQuery,
 }: LeafletMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<any>(null)
@@ -541,6 +545,9 @@ export function LeafletMap({
             map={map}
             onLocationFound={handleLocationFound}
             currentCountry={currentCountry}
+            areas={areasBusqueda || areas}
+            onAreaSelect={onAreaClick}
+            onSearchQuery={onSearchQuery}
           />
         </div>
       )}

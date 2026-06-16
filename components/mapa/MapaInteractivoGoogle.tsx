@@ -23,9 +23,11 @@ interface MapaInteractivoGoogleProps {
   currentCountry?: string
   estilo?: 'default' | 'waze' | 'satellite' | 'dark'
   paisFiltro?: string
+  areasBusqueda?: Area[]
+  onSearchQuery?: (query: string) => void
 }
 
-export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, mapRef: externalMapRef, onCountryChange, currentCountry, estilo, paisFiltro = '' }: MapaInteractivoGoogleProps) {
+export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, mapRef: externalMapRef, onCountryChange, currentCountry, estilo, paisFiltro = '', areasBusqueda, onSearchQuery }: MapaInteractivoGoogleProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<GoogleMap | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -636,6 +638,9 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
             map={map}
             onLocationFound={handleLocationFound}
             currentCountry={currentCountry}
+            areas={areasBusqueda || areas}
+            onAreaSelect={onAreaClick}
+            onSearchQuery={onSearchQuery}
           />
         </div>
       )}
