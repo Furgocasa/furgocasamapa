@@ -93,7 +93,7 @@ export default function MapaPage() {
         while (hasMore) {
           const { data, error } = await supabase
             .from('areas')
-            .select('id, nombre, slug, latitud, longitud, ciudad, provincia, pais, tipo_area, precio_noche, foto_principal, servicios, plazas_totales, acceso_24h, barrera_altura')
+            .select('id, nombre, slug, latitud, longitud, ciudad, provincia, pais, tipo_area, precio_noche, foto_principal, servicios, plazas_totales, plazas_camper, acceso_24h, barrera_altura, google_rating, google_maps_url, verificado, con_descuento_furgocasa')
             .eq('activo', true)
             .order('nombre')
             .range(page * pageSize, (page + 1) * pageSize - 1)

@@ -7,6 +7,7 @@ import { MarkerClusterer, SuperClusterAlgorithm } from '@googlemaps/markercluste
 import Supercluster from 'supercluster'
 import type { Area } from '@/types/database.types'
 import { BuscadorGeografico } from './BuscadorGeografico'
+import { buildAreaPopupHTML } from './areaPopup'
 
 interface MapLibreMapProps {
   areas: Area[]
@@ -390,75 +391,9 @@ export function MapLibreMap({
     return colors[tipo] || '#0284c7'
   }
 
-  // Crear contenido HTML para popup - EXACTAMENTE IGUAL que Google Maps
+  // Crear contenido HTML para popup - SINCRONIZADO con Google y Leaflet
   const createInfoWindowContent = (area: Area): string => {
-    const tipoLabels: Record<string, string> = {
-      publica: 'Pública',
-      privada: 'Privada',
-      camping: 'Camping',
-      parking: 'Parking'
-    }
-
-    const serviciosIconos: Record<string, { icon: string; label: string }> = {
-      agua: { icon: '💧', label: 'Agua' },
-      electricidad: { icon: '⚡', label: 'Electricidad' },
-      vaciado_aguas_negras: { icon: '♻️', label: 'Vaciado' },
-      wifi: { icon: '📶', label: 'WiFi' },
-      duchas: { icon: '🚿', label: 'Duchas' },
-      wc: { icon: '🚻', label: 'WC' },
-    }
-
-    const serviciosDisponibles = area.servicios && typeof area.servicios === 'object' 
-      ? Object.entries(area.servicios)
-          .filter(([key, value]) => value === true)
-          .map(([key]) => serviciosIconos[key])
-          .filter(Boolean)
-      : []
-
-    const mostrarServicios = serviciosDisponibles.slice(0, 6)
-
-    return `
-      <div style="max-width: 340px; font-family: system-ui, -apple-system, sans-serif;">
-        ${area.foto_principal ? `
-          <div style="margin: -15px -15px 12px -15px; height: 160px; overflow: hidden;">
-            <img src="${area.foto_principal}" alt="${area.nombre}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"/>
-            ${area.google_rating ? `<div style="position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.95); padding: 4px 8px; border-radius: 12px; font-weight: 700; font-size: 13px;">⭐ ${area.google_rating}</div>` : ''}
-          </div>
-        ` : ''}
-        
-        <div style="padding: 0 4px;">
-          <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 700; color: #111827;">${area.nombre}</h3>
-          
-          ${area.ciudad || area.provincia ? `
-            <p style="margin: 0 0 8px 0; color: #6B7280; font-size: 13px;">📍 ${[area.ciudad, area.provincia].filter(Boolean).join(', ')}</p>
-          ` : ''}
-
-          <div style="display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap;">
-            <span style="background: ${getTipoAreaColor(area.tipo_area)}20; color: ${getTipoAreaColor(area.tipo_area)}; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">
-              ${tipoLabels[area.tipo_area] || 'Pública'}
-            </span>
-            ${area.precio_noche !== null && area.precio_noche !== undefined ? `
-              <span style="background: #F3F4F6; color: #374151; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">
-                ${area.precio_noche === 0 ? '🎉 Gratis' : `💰 ${area.precio_noche}€/noche`}
-              </span>
-            ` : ''}
-          </div>
-
-          ${mostrarServicios.length > 0 ? `
-            <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; margin: 8px 0;">
-              <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                ${mostrarServicios.map((s: any) => `<span style="font-size: 12px;">${s.icon} ${s.label}</span>`).join('')}
-              </div>
-            </div>
-          ` : ''}
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 12px;">
-            <a href="/area/${area.slug}" style="text-align: center; background: #0284c7; color: white; padding: 10px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 13px;">Ver Detalles</a>
-            <a href="${area.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${area.latitud},${area.longitud}`}" target="_blank" style="text-align: center; background: #34A853; color: white; padding: 10px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 13px;">Google Maps</a>
-          </div>
-        </div>
-      </div>
-    `
+    return buildAreaPopupHTML(area, getTipoAreaColor, -15)
   }
 
   // Función para activar/desactivar GPS
