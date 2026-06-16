@@ -46,8 +46,7 @@ export default function MapaPage() {
   const conteoPaisesRegion = { europa: 16, sudamerica: 7, centroamerica: 3 }
 
   // Hook de filtros persistentes (reemplaza el useState anterior)
-  const { filtros, setFiltros, metadata, setMetadata, limpiarFiltros, contarFiltrosActivos, isLoaded } = usePersistentFilters()
-  const autoCountryAppliedRef = useRef(false)
+  const { filtros, setFiltros, metadata, setMetadata, limpiarFiltros, contarFiltrosActivos } = usePersistentFilters()
 
   const handlePaisManualChange = (_pais: string) => {
     setMetadata((prev) => ({
@@ -202,28 +201,18 @@ export default function MapaPage() {
     }
   }, []) // Solo ejecutar al montar
 
-  // ✅ Aplicar el filtro de país detectado por GPS SOLO cuando los filtros
-  // persistentes ya se han cargado desde localStorage. Así evitamos sobrescribir
-  // una selección de país manual guardada por una condición de carrera (el GPS
-  // puede resolver antes de que se restauren los filtros).
-  useEffect(() => {
-    if (!isLoaded || !detectedCountry || autoCountryAppliedRef.current) return
-    autoCountryAppliedRef.current = true
+  // País objetivo: selección manual del usuario o, en su defecto, el país GPS.
+  // Se usa para CENTRAR el mapa (no para filtrar).
+  const paisObjetivo = filtros.pais || detectedCountry || ''
+  // ⚠️ El país detectado por GPS YA NO filtra las áreas: el mapa carga TODAS las
+  // áreas en cualquier dispositivo (igual que en PC). El filtrado por país es
+  // exclusivamente manual desde los filtros.
+  const paisFiltroLista = filtros.pais
 
-    if (!filtros.pais && metadata.paisSource !== 'manual') {
-      console.log('✅ Aplicando filtro automático de país:', detectedCountry)
-      setFiltros(prev => ({ ...prev, pais: detectedCountry }))
-      setMetadata(prev => ({ ...prev, paisSource: 'gps' }))
-      setToastMessage('Para mejorar los tiempos de carga, hemos aplicado un filtro del país donde te encuentras. Puedes cambiarlo en los filtros si lo deseas.')
-      setShowToast(true)
-    } else {
-      console.log('ℹ️ Selección de país previa, no se aplica GPS:', filtros.pais)
-    }
-  }, [isLoaded, detectedCountry, filtros.pais, metadata.paisSource, setFiltros, setMetadata])
-
-  // Centrar mapa cuando cambia el filtro de país o región
+  // Centrar mapa cuando cambia el país objetivo (selección manual o GPS).
+  // El GPS solo se usa aquí para acercar el mapa al país del usuario.
   useEffect(() => {
-    if (!filtros.pais || !mapRef.current) return
+    if (!paisObjetivo || !mapRef.current) return
 
     // Coordenadas de REGIONES (con zoom apropiado)
     const regionCoordenadas: Record<string, { lat: number, lng: number, zoom: number }> = {
@@ -306,9 +295,9 @@ export default function MapaPage() {
     }
 
     // Verificar si es una región
-    const region = regionCoordenadas[filtros.pais]
+    const region = regionCoordenadas[paisObjetivo]
     if (region && mapRef.current) {
-      console.log(`🗺️ Centrando mapa en región: ${filtros.pais}`)
+      console.log(`🗺️ Centrando mapa en región: ${paisObjetivo}`)
       const m = mapRef.current
       // Detectar proveedor: MapLibre tiene getCanvas; Google tiene setCenter/setZoom;
       // Leaflet usa flyTo([lat, lng], zoom) con orden invertido respecto a MapLibre.
@@ -327,25 +316,15 @@ export default function MapaPage() {
     }
 
     // Verificar si es un país
-    const coordenadas = paisCoordenadas[filtros.pais]
+    const coordenadas = paisCoordenadas[paisObjetivo]
     if (coordenadas && mapRef.current) {
-      console.log(`🗺️ Centrando mapa en ${filtros.pais}`)
+      console.log(`🗺️ Centrando mapa en ${paisObjetivo}`)
       // Solo centrar (panTo), sin cambiar zoom
       mapRef.current.panTo({ lat: coordenadas.lat, lng: coordenadas.lng })
     }
-  }, [filtros.pais])
+  }, [paisObjetivo])
 
-  // Obtener países únicos de las áreas
-  // Ya no necesitamos comunidades ni provincias
-
-  const paisObjetivo = filtros.pais || (metadata.paisSource === 'gps' ? detectedCountry : '')
-  // ✅ Aplicar GPS SOLO si no hay selección manual
-  // Si paisSource === 'manual' y filtros.pais === '', significa "Todos los países" (sin filtro)
-  const paisFiltroLista = metadata.paisSource === 'manual' 
-    ? filtros.pais  // Manual: usar exactamente lo seleccionado (puede ser '' = todos)
-    : (filtros.pais || detectedCountry || '')  // GPS: usar país detectado si no hay manual
-
-  // ✅ ÁREAS PARA LA LISTA: filtrar por país (GPS o manual) + otros filtros
+  // ✅ ÁREAS PARA LA LISTA: filtrar por país (solo manual) + otros filtros
   const areasParaLista = useMemo(() => {
     console.log('🔍 Filtrando lista:', {
       paisSource: metadata.paisSource,
@@ -614,8 +593,8 @@ export default function MapaPage() {
           <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg px-3 py-2 z-10">
             <p className="text-sm font-semibold text-gray-700">
               {areasParaMapa.length} {areasParaMapa.length === 1 ? 'área' : 'áreas'}
-              {detectedCountry && (
-                <span className="ml-2 text-xs text-gray-500">({detectedCountry})</span>
+              {filtros.pais && !filtros.pais.startsWith('REGION_') && (
+                <span className="ml-2 text-xs text-gray-500">({filtros.pais})</span>
               )}
               {loading && (
                 <span className="ml-2 inline-flex items-center">
