@@ -1,69 +1,169 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
-import { validateOpenAIModel, buildTokensParam } from '@/lib/openai/model-validation'
+
+// La búsqueda web + razonamiento puede tardar; ampliamos el límite de la función.
+export const maxDuration = 60
+export const dynamic = 'force-dynamic'
+
+// Modelo por defecto: GPT-5.5 (soporta la herramienta web_search vía Responses API).
+const DEFAULT_MODEL = 'gpt-5.5'
+
+// Frases prohibidas: textos dubitativos / "consultar antes" que no queremos ver nunca.
+const FORBIDDEN_PATTERNS: RegExp[] = [
+  /consult\w*\s+(antes|disponibilidad|directamente|con\s+el\s+|la\s+disponibilidad)/i,
+  /se\s+recomienda\s+(consultar|verificar|confirmar|comprobar)/i,
+  /(verifica|verificar|comprobar|confirmar|confirma)\s+(los\s+)?(servicios|la\s+disponibilidad|antes)/i,
+  /no\s+(se\s+)?(dispone|disponemos|tengo|tenemos|hay)\s+(de\s+)?(información|datos)/i,
+  /no\s+(se\s+)?(especifica|indica|detalla|aclara|sabe|conoce)/i,
+  /información\s+no\s+disponible/i,
+  /se\s+desconoce/i,
+  /(posiblemente|probablemente|puede\s+que|podría\s+(tener|disponer)|suele\s+tener)/i,
+  /antes\s+de\s+(tu\s+)?(visita|viajar|llegar)\s+te\s+recomendamos/i
+]
 
 function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  
+
   if (!supabaseUrl || !supabaseKey) {
-    console.error('Missing Supabase credentials:', {
-      hasUrl: !!supabaseUrl,
-      hasKey: !!supabaseKey
-    })
     throw new Error('Supabase credentials not configured')
   }
-  
+
   return createClient(supabaseUrl, supabaseKey)
 }
 
 function getOpenAIClient() {
-  return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY!
-  })
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
+}
+
+// Solo los modelos gpt-5.x / o-series soportan bien la herramienta web_search.
+function modelSupportsWebSearch(model: string): boolean {
+  const m = (model || '').toLowerCase()
+  return m.startsWith('gpt-5') || m.startsWith('o1') || m.startsWith('o3') || m.startsWith('o4')
+}
+
+function isReasoningModel(model: string): boolean {
+  const m = (model || '').toLowerCase()
+  return m.startsWith('gpt-5') || m.startsWith('o1') || m.startsWith('o3') || m.startsWith('o4')
+}
+
+function hasForbiddenText(text: string): boolean {
+  return FORBIDDEN_PATTERNS.some((re) => re.test(text))
+}
+
+/**
+ * Limpia el texto generado por la búsqueda web: elimina citas markdown ([dominio](url)),
+ * enlaces markdown, negritas y encabezados, para guardar texto plano limpio.
+ */
+function cleanGeneratedText(text: string): string {
+  return text
+    .replace(/\s*\(\[[^\]]*\]\([^)]*\)\)/g, '') // citas tipo ([dominio](url))
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1') // [texto](url) -> texto
+    .replace(/\*\*([^*]+)\*\*/g, '$1') // **negrita** -> texto
+    .replace(/(^|\n)\s*#+\s*/g, '$1') // encabezados markdown
+    .replace(/[ \t]+\n/g, '\n') // espacios sobrantes al final de línea
+    .replace(/\n{3,}/g, '\n\n') // máximo una línea en blanco entre párrafos
+    .trim()
+}
+
+/**
+ * Reúne contexto de refuerzo desde SerpAPI (opcional, best-effort).
+ * Si falla o no hay clave, devolvemos cadena vacía: el modelo buscará por su cuenta.
+ */
+async function buildSerpReinforcement(area: any): Promise<string> {
+  const serpApiKey = process.env.SERPAPI_KEY || process.env.NEXT_PUBLIC_SERPAPI_KEY_ADMIN
+  if (!serpApiKey) return ''
+
+  try {
+    const query = `"${area.ciudad}" ${area.provincia} ${area.pais} área autocaravanas servicios qué ver`
+    const url = `https://serpapi.com/search.json?q=${encodeURIComponent(query)}&api_key=${serpApiKey}&hl=es&gl=es&num=10`
+    const res = await fetch(url)
+    const data = await res.json()
+    if (data.error) return ''
+
+    let out = ''
+    const ciudadLower = (area.ciudad || '').toLowerCase()
+
+    if (Array.isArray(data.organic_results)) {
+      data.organic_results
+        .filter((r: any) => {
+          if (!ciudadLower) return true
+          const t = `${r.title || ''} ${r.snippet || ''}`.toLowerCase()
+          return t.includes(ciudadLower)
+        })
+        .slice(0, 8)
+        .forEach((r: any) => {
+          if (r.title || r.snippet) out += `- ${r.title || ''}: ${r.snippet || ''}\n`
+        })
+    }
+
+    if (data.answer_box) {
+      out += `- ${data.answer_box.snippet || data.answer_box.answer || ''}\n`
+    }
+
+    return out.trim()
+  } catch {
+    return ''
+  }
+}
+
+function buildContexto(area: any, serpReinforcement: string): string {
+  let contexto = `ÁREA QUE DEBES DESCRIBIR (datos exactos de nuestra base de datos):
+- Nombre del área: ${area.nombre}
+- Ciudad: ${area.ciudad}
+- Provincia: ${area.provincia}
+- País: ${area.pais}
+- Tipo: ${area.tipo_area || 'área para autocaravanas'}
+`
+
+  if (area.precio_por_noche || area.precio_noche != null) {
+    const precio = area.precio_por_noche ?? area.precio_noche
+    contexto += `- Precio: ${precio === 0 ? 'Gratuita' : `${precio}€/noche`}\n`
+  }
+
+  if (area.plazas_disponibles || area.plazas_totales) {
+    contexto += `- Plazas: ${area.plazas_disponibles || area.plazas_totales}\n`
+  }
+
+  if (area.servicios && typeof area.servicios === 'object') {
+    const confirmados = Object.entries(area.servicios)
+      .filter(([, v]) => v === true)
+      .map(([k]) => k)
+
+    if (confirmados.length > 0) {
+      contexto += `- Servicios CONFIRMADOS por nuestra base de datos: ${confirmados.join(', ')}\n`
+    } else {
+      contexto += `- Servicios: no confirmados en nuestra base de datos (NO menciones servicios concretos que no hayas verificado en internet).\n`
+    }
+  }
+
+  if (serpReinforcement) {
+    contexto += `\nINFORMACIÓN DE REFUERZO (resultados de búsqueda sobre ${area.ciudad}, úsala como apoyo y contrástala con tu propia búsqueda):\n${serpReinforcement}\n`
+  }
+
+  return contexto
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = getSupabaseClient()
-  const openai = getOpenAIClient()
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-  console.log('🚀 [ENRICH] Iniciando enriquecimiento de área')
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-  
+  console.log('🚀 [ENRICH] Iniciando enriquecimiento (Responses API + web_search)')
+
   try {
-    // Validar API keys al inicio
-    console.log('🔑 [ENRICH] Validando API keys...')
-    console.log('  - OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? '✅ Configurada' : '❌ NO configurada')
-    console.log('  - SERPAPI_KEY:', process.env.SERPAPI_KEY ? '✅ Configurada' : '❌ NO configurada')
-    
     if (!process.env.OPENAI_API_KEY) {
-      console.error('❌ [ENRICH] Error: OPENAI_API_KEY no configurada')
       return NextResponse.json({
         error: 'OPENAI_API_KEY no configurada',
-        details: 'Añade OPENAI_API_KEY al archivo .env.local',
         errorType: 'CONFIG_ERROR'
       }, { status: 500 })
     }
 
-    if (!process.env.SERPAPI_KEY) {
-      console.error('❌ [ENRICH] Error: SERPAPI_KEY no configurada')
-      return NextResponse.json({
-        error: 'SERPAPI_KEY no configurada',
-        details: 'Añade SERPAPI_KEY al archivo .env.local',
-        errorType: 'CONFIG_ERROR'
-      }, { status: 500 })
-    }
-
-    const { areaId } = await request.json()
-    console.log('📝 [ENRICH] Area ID recibido:', areaId)
-
+    const { areaId, force } = await request.json()
     if (!areaId) {
       return NextResponse.json({ error: 'Area ID es requerido' }, { status: 400 })
     }
 
-    // Obtener el área de la base de datos
-    console.log('🔍 [ENRICH] Buscando área en base de datos...')
+    const supabase = getSupabaseClient()
+    const openai = getOpenAIClient()
+
     const { data: area, error: areaError } = await (supabase as any)
       .from('areas')
       .select('*')
@@ -71,308 +171,173 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (areaError || !area) {
-      console.error('❌ [ENRICH] Error: Área no encontrada', areaError)
       return NextResponse.json({ error: 'Área no encontrada' }, { status: 404 })
     }
 
-    console.log('✅ [ENRICH] Área encontrada:', area.nombre, '-', area.ciudad)
-    console.log('  - Descripción actual:', area.descripcion ? `${area.descripcion.substring(0, 50)}...` : 'Sin descripción')
-
-    // Si ya tiene descripción, no sobrescribir (a menos que se fuerce)
-    if (area.descripcion && area.descripcion.length > 100) {
-      console.log('⚠️ [ENRICH] El área ya tiene descripción (>100 caracteres). No se sobrescribe.')
-      return NextResponse.json({
-        success: false,
-        message: 'El área ya tiene una descripción. No se sobrescribe.'
-      })
-    }
-
-    console.log('✅ [ENRICH] Área válida para enriquecer. Continuando...')
-
-    // Buscar información del área y la localidad con SerpAPI
-    // Usar comillas para búsqueda exacta de ciudad
-    const query = `"${area.ciudad}" ${area.provincia} turismo autocaravanas qué ver`
-    const serpApiUrl = `https://serpapi.com/search.json?q=${encodeURIComponent(query)}&api_key=${process.env.SERPAPI_KEY}&location=Spain&hl=es&gl=es&num=10`
-
-    console.log('🔎 [ENRICH] Llamando a SerpAPI...')
-    console.log('  - Área:', area.nombre, '-', area.ciudad, area.provincia)
-    console.log('  - Query:', query)
-
-    let serpResponse
-    try {
-      serpResponse = await fetch(serpApiUrl)
-      console.log('  - SerpAPI HTTP Status:', serpResponse.status)
-    } catch (fetchError: any) {
-      console.error('❌ [ENRICH] Error de red con SerpAPI:', fetchError.message)
-      return NextResponse.json({
-        error: 'Error conectando con SerpAPI',
-        details: fetchError.message,
-        errorType: 'NETWORK_ERROR'
-      }, { status: 500 })
-    }
-
-    const serpData = await serpResponse.json()
-
-    // Verificar si SerpAPI devolvió error
-    if (serpData.error) {
-      console.error('❌ [ENRICH] Error de SerpAPI:', serpData.error)
-      return NextResponse.json({
-        error: 'Error de SerpAPI',
-        details: serpData.error,
-        errorType: 'SERPAPI_ERROR'
-      }, { status: 500 })
-    }
-
-    console.log('✅ [ENRICH] SerpAPI respondió correctamente')
-    console.log('  - Resultados orgánicos:', serpData.organic_results?.length || 0)
-
-    // FILTRAR resultados que NO sean de la ciudad correcta
-    if (serpData.organic_results && serpData.organic_results.length > 0) {
-      const ciudadLower = (area.ciudad || '').toLowerCase()
-      const resultadosOriginales = serpData.organic_results.length
-      
-      if (ciudadLower) {
-        serpData.organic_results = serpData.organic_results.filter((result: any) => {
-          const snippet = (result.snippet || '').toLowerCase()
-          const title = (result.title || '').toLowerCase()
-          
-          // Mantener solo resultados que mencionen la ciudad correcta
-          return snippet.includes(ciudadLower) || title.includes(ciudadLower)
+    // Si NO se fuerza, no sobrescribir descripciones largas Y de buena calidad.
+    if (!force) {
+      const desc = (area.descripcion || '').trim()
+      if (desc.length > 200 && !hasForbiddenText(desc)) {
+        return NextResponse.json({
+          success: false,
+          message: 'El área ya tiene una descripción de calidad. Usa force=true para regenerarla.'
         })
-        
-        console.log(`  - Filtrado por ciudad "${area.ciudad}": ${resultadosOriginales} → ${serpData.organic_results.length} resultados`)
       }
     }
 
-    // Extraer información relevante
-    let contexto = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ ÁREA ESPECÍFICA QUE DEBES DESCRIBIR:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Nombre del área: ${area.nombre}
-Ciudad: ${area.ciudad}
-Provincia: ${area.provincia}
-País: ${area.pais}
-Tipo: ${area.tipo_area}
-`
-    
-    if (area.precio_por_noche) {
-      contexto += `Precio: ${area.precio_por_noche}€/noche\n`
-    } else {
-      contexto += `Precio: Gratis o desconocido\n`
-    }
+    console.log(`✅ [ENRICH] Área: ${area.nombre} (${area.ciudad}, ${area.provincia})`)
 
-    if (area.plazas_disponibles) {
-      contexto += `Plazas disponibles: ${area.plazas_disponibles}\n`
-    }
+    // 1) Refuerzo con SerpAPI (best-effort)
+    const serpReinforcement = await buildSerpReinforcement(area)
+    console.log(`🔎 [ENRICH] SerpAPI refuerzo: ${serpReinforcement ? 'sí' : 'no disponible'}`)
 
-    if (area.servicios && typeof area.servicios === 'object') {
-      const serviciosDisponibles = Object.entries(area.servicios)
-        .filter(([_, value]) => value === true)
-        .map(([key]) => key)
-      
-      if (serviciosDisponibles.length > 0) {
-        contexto += `\n✅ Servicios confirmados: ${serviciosDisponibles.join(', ')}\n`
-      } else {
-        contexto += `\n⚠️ No hay servicios confirmados para esta área.\n`
-      }
-    }
+    const contexto = buildContexto(area, serpReinforcement)
 
-    contexto += `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-INFORMACIÓN TURÍSTICA DE ${(area.ciudad || '').toUpperCase()}:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-(Esta información es solo sobre ${area.ciudad}, NO sobre otras ciudades)
-
-`
-
-    if (serpData.organic_results) {
-      serpData.organic_results.forEach((result: any) => {
-        contexto += `${result.title}\n${result.snippet}\n\n`
-      })
-    }
-
-    if (serpData.answer_box) {
-      contexto += `${serpData.answer_box.snippet || serpData.answer_box.answer}\n\n`
-    }
-
-    // Obtener configuración del agente desde la BD
+    // 2) Cargar configuración (modelo + prompts) desde la BD
     const { data: configData } = await (supabase as any)
       .from('ia_config')
       .select('config_value')
       .eq('config_key', 'enrich_description')
       .single()
 
-    const config = configData?.config_value || {
-      model: 'gpt-4o-mini',
-      temperature: 0.7,
-      max_tokens: 1500,
-      prompts: [
-        {
-          id: 'sys-1',
-          role: 'system',
-          content: 'Eres un redactor experto en guías de viaje para autocaravanas. Escribes textos informativos, naturales y bien estructurados en español.',
-          order: 1,
-          required: true
-        }
-      ]
+    const config = configData?.config_value || {}
+    let model = (config.model || '').trim()
+    // Si el modelo configurado no soporta web_search, forzamos GPT-5.5.
+    if (!model || !modelSupportsWebSearch(model)) {
+      model = DEFAULT_MODEL
     }
 
-    const modelValidation = await validateOpenAIModel(config.model)
-    if (!modelValidation.valid) {
-      return NextResponse.json({
-        error: 'Modelo OpenAI no válido en configuración de "Enriquecer Textos"',
-        details: modelValidation.reason,
-        errorType: 'MODEL_NOT_AVAILABLE'
-      }, { status: 400 })
-    }
+    // Instrucciones de sistema (no negociables) + prompt de usuario configurable.
+    const systemInstruction = `Eres un redactor profesional especializado en guías de viaje para autocaravanas, campers y caravanas en español.
+Tienes acceso a búsqueda web: ÚSALA para encontrar información real y actual sobre el área y su localidad (servicios, accesos, entorno, atractivos turísticos, gastronomía).
 
-    // Construir mensajes para OpenAI desde los prompts configurados
-    const messages = config.prompts
-      .sort((a: any, b: any) => a.order - b.order)
-      .map((prompt: any) => {
-        // Reemplazar variables en el contenido del prompt
-        let content = prompt.content
+REGLAS DE CALIDAD INNEGOCIABLES:
+- Escribe con seguridad y precisión, como un experto que conoce el sitio. JAMÁS muestres dudas.
+- PROHIBIDO usar frases dubitativas o de descargo como: "consulta antes", "se recomienda verificar", "conviene confirmar", "no se especifica", "no hay información", "no disponemos de datos", "se desconoce", "posiblemente", "probablemente", "puede que", "suele tener", "verifica los servicios al llegar".
+- Sobre SERVICIOS: menciona únicamente los que estén confirmados en la base de datos o que verifiques claramente en internet. Si no puedes confirmar un servicio, NO lo menciones (ni para decir que no lo tiene). Nunca inventes.
+- Si no hay servicios confirmables, céntrate en el entorno, la localidad, qué ver y hacer, gastronomía e historia: el texto debe ser igual de útil y atractivo.
+- No menciones la dirección postal (ya aparece en el mapa).
+- Refiérete siempre a "el área de autocaravanas" o "el área de ${area.nombre}", nunca "esta área".
+- Tono informativo, cercano y útil; nada de pomposidad vacía ("destino ideal", "maravilloso", "joya escondida").
+- Español natural y fluido, sin listas ni viñetas.`
+
+    // Prompt de usuario: si hay prompts configurados de tipo user/agent, usamos el último; si no, uno por defecto.
+    let userPrompt = ''
+    if (Array.isArray(config.prompts) && config.prompts.length > 0) {
+      const userPrompts = config.prompts
+        .filter((p: any) => p.role === 'user' || p.role === 'agent')
+        .sort((a: any, b: any) => a.order - b.order)
+      if (userPrompts.length > 0) {
+        userPrompt = userPrompts[userPrompts.length - 1].content
           .replace(/\{\{contexto\}\}/g, contexto)
-          .replace(/\{\{area_nombre\}\}/g, area.nombre)
-          .replace(/\{\{area_ciudad\}\}/g, area.ciudad)
-          .replace(/\{\{area_provincia\}\}/g, area.provincia)
-        
-        return {
-          role: prompt.role === 'agent' ? 'user' : prompt.role,
-          content: content
-        }
-      })
+          .replace(/\{\{area_nombre\}\}/g, area.nombre || '')
+          .replace(/\{\{area_ciudad\}\}/g, area.ciudad || '')
+          .replace(/\{\{area_provincia\}\}/g, area.provincia || '')
+      }
+    }
 
-    // Prompt para generar el texto descriptivo (fallback si no hay prompts configurados)
-    const prompt = messages.length > 1 ? messages[messages.length - 1].content : `Eres un redactor especializado en autocaravanas, campers y viajes. 
-Tu misión es crear contenido detallado para un Mapa de Áreas de Autocaravanas dirigido a viajeros en autocaravanas, caravanas y campers.
+    if (!userPrompt) {
+      userPrompt = `${contexto}
 
-INFORMACIÓN QUE TIENES:
-${contexto}
+TAREA:
+Investiga en internet el área "${area.nombre}" y la localidad de ${area.ciudad} (${area.provincia}, ${area.pais}) y redacta una descripción de 350-550 palabras en 4-5 párrafos separados por una línea en blanco:
 
-TU TAREA:
-Crear un texto extenso y detallado (400-600 palabras) que combine:
-1. Información específica del área de autocaravanas
-2. Guía turística de la localidad y zona próxima
-3. Información práctica para el viajero
+1) Presentación del área de autocaravanas y su ubicación dentro de ${area.ciudad}.
+2) Características del área: plazas, precio y servicios (solo los confirmados o verificados).
+3) Qué ver y hacer en ${area.ciudad} y su entorno cercano.
+4) Gastronomía, cultura, fiestas o naturaleza de la zona.
+5) Cierre práctico y útil para el viajero en autocaravana (accesos, mejor época, recomendaciones reales).
 
-REGLAS ESTRICTAS:
-✓ Información veraz y contrastada basada en el contexto proporcionado.
-✓ Sobre SERVICIOS: Solo menciona los servicios que aparecen en "Servicios confirmados disponibles". Si no hay servicios confirmados, NO hables de servicios específicos.
-✓ Si no tienes información sobre servicios, céntrate en el entorno, la localidad, atractivos turísticos, gastronomía, historia, etc.
-✓ Siempre di "el área de autocaravanas" (nunca "esta área").
-✓ Tono informativo y útil, sin ser excesivamente pomposo.
-✓ Escribe en español de forma natural y fluida.
+Devuelve solo el texto final, en párrafos, sin títulos ni viñetas.`
+    }
 
-NUNCA, BAJO NINGÚN CONCEPTO:
-✗ Mencionar la dirección del área (ya está en el mapa).
-✗ Usar frases como "no dispongo de información", "no he encontrado información", "no existe información".
-✗ Usar frases como "Aunque la información sobre la disponibilidad de servicios no está claramente especificada".
-✗ Recomendar "verificar los servicios en el momento de la visita".
-✗ Inventar o suponer servicios con expresiones como "posiblemente", "probablemente", "suele tener".
-✗ Decir constantemente "destino ideal", "maravilloso", etc.
-✗ Mencionar servicios que NO están en la lista de "Servicios confirmados disponibles".
+    // 3) Generar con Responses API + web_search
+    const buildRequest = (extraReminder = '') => {
+      const req: any = {
+        model,
+        tools: [{ type: 'web_search' }],
+        input: [
+          { role: 'system', content: systemInstruction + (extraReminder ? `\n\n${extraReminder}` : '') },
+          { role: 'user', content: userPrompt }
+        ],
+        max_output_tokens: config.max_tokens && config.max_tokens > 600 ? config.max_tokens : 2500
+      }
+      if (isReasoningModel(model)) {
+        req.reasoning = { effort: config.reasoning_effort || 'low' }
+      } else if (typeof config.temperature === 'number') {
+        req.temperature = config.temperature
+      }
+      return req
+    }
 
-ESTRUCTURA SUGERIDA:
-1. Introducción al área y su ubicación
-2. Información del área (plazas, precio solo si está confirmado, servicios solo si están confirmados)
-3. Entorno y localidad cercana
-4. Atractivos turísticos de la zona
-5. Información práctica (acceso, mejor época, recomendaciones)
+    console.log(`🤖 [ENRICH] Modelo: ${model} (web_search activado)`)
 
-Escribe un texto completo, bien redactado y natural. NO uses listas de puntos, escribe en párrafos.`
-
-    // Llamar a OpenAI con manejo de errores mejorado
-    console.log('🤖 [ENRICH] Llamando a OpenAI...')
-    console.log('  - Modelo:', config.model)
-    console.log('  - Temperature:', config.temperature)
-    console.log('  - Max tokens:', config.max_tokens)
-    console.log('  - Número de mensajes:', messages.length)
-    
-    let completion
+    let response
     try {
-      completion = await openai.chat.completions.create({
-        model: config.model,
-        messages: messages,
-        temperature: config.temperature,
-        ...buildTokensParam(config.max_tokens)
-      })
-      console.log('✅ [ENRICH] OpenAI respondió correctamente')
-      console.log('  - Tokens usados:', completion.usage?.total_tokens || '?')
-    } catch (openaiError: any) {
-      console.error('❌ [ENRICH] Error de OpenAI:', openaiError.message)
-      if (openaiError.status === 401) {
-        return NextResponse.json({
-          error: 'OpenAI API Key inválida',
-          details: 'La API key de OpenAI no es válida. Verifica OPENAI_API_KEY en .env.local',
-          errorType: 'AUTH_ERROR'
-        }, { status: 401 })
-      }
-      
-      if (openaiError.status === 429) {
-        return NextResponse.json({
-          error: 'Límite de OpenAI alcanzado',
-          details: 'Has superado tu cuota o límite de peticiones. Espera unos minutos o aumenta tu límite en OpenAI.',
-          errorType: 'RATE_LIMIT'
-        }, { status: 429 })
-      }
-
-      if (openaiError.status === 400) {
-        return NextResponse.json({
-          error: 'Petición inválida a OpenAI',
-          details: openaiError.message || 'Verifica la configuración del prompt',
-          errorType: 'VALIDATION_ERROR'
-        }, { status: 400 })
-      }
-
+      response = await (openai as any).responses.create(buildRequest())
+    } catch (e: any) {
+      console.error('❌ [ENRICH] Error OpenAI Responses:', e?.message)
+      const status = e?.status || 500
       return NextResponse.json({
-        error: 'Error de OpenAI',
-        details: openaiError.message || 'Error desconocido',
-        errorType: 'OPENAI_ERROR'
+        error: status === 401 ? 'OpenAI API Key inválida' : 'Error de OpenAI',
+        details: e?.message || 'Error desconocido',
+        errorType: status === 429 ? 'RATE_LIMIT' : 'OPENAI_ERROR'
+      }, { status })
+    }
+
+    let descripcion: string = cleanGeneratedText(response.output_text || '')
+
+    // 4) Red de seguridad: si aún hay frases prohibidas, un reintento más estricto.
+    if (descripcion && hasForbiddenText(descripcion)) {
+      console.log('⚠️ [ENRICH] Texto con frases dubitativas. Reintentando más estricto...')
+      try {
+        const retry = await (openai as any).responses.create(
+          buildRequest('IMPORTANTE: El borrador anterior contenía frases dubitativas prohibidas. Reescribe el texto eliminando por completo cualquier frase de duda, descargo o "consultar/verificar antes". Sé afirmativo y concreto.')
+        )
+        const retryText = cleanGeneratedText(retry.output_text || '')
+        if (retryText && !hasForbiddenText(retryText)) {
+          descripcion = retryText
+        }
+      } catch {
+        // nos quedamos con el primer resultado si el reintento falla
+      }
+    }
+
+    if (!descripcion || descripcion.length < 100) {
+      return NextResponse.json({
+        error: 'El modelo no devolvió una descripción válida',
+        errorType: 'EMPTY_RESPONSE'
       }, { status: 500 })
     }
 
-    const descripcionGenerada = completion.choices[0].message.content || ''
+    console.log(`📝 [ENRICH] Descripción generada (${descripcion.length} caracteres)`)
 
-    console.log('📝 [ENRICH] Descripción generada (' + descripcionGenerada.length + ' caracteres)')
-    console.log('  - Primeros 100 caracteres:', descripcionGenerada.substring(0, 100) + '...')
-
-    // Actualizar en la base de datos
-    console.log('💾 [ENRICH] Guardando en base de datos...')
     const { error: updateError } = await (supabase as any)
       .from('areas')
-      .update({
-        descripcion: descripcionGenerada,
-        updated_at: new Date().toISOString()
-      })
+      .update({ descripcion, updated_at: new Date().toISOString() })
       .eq('id', areaId)
 
     if (updateError) {
-      console.error('❌ [ENRICH] Error al guardar en BD:', updateError)
-      throw updateError
+      return NextResponse.json({
+        error: `Error al guardar en base de datos: ${updateError.message}`,
+        errorType: 'DB_ERROR'
+      }, { status: 500 })
     }
 
-    console.log('✅ [ENRICH] ¡Descripción guardada exitosamente!')
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('✅ [ENRICH] Guardada correctamente')
 
     return NextResponse.json({
       success: true,
-      descripcion: descripcionGenerada,
-      fuente: 'SerpAPI + OpenAI'
+      descripcion,
+      modelo: model,
+      fuente: serpReinforcement ? 'GPT-5.5 web_search + SerpAPI' : 'GPT-5.5 web_search'
     })
 
   } catch (error: any) {
-    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
     console.error('❌ [ENRICH] ERROR CRÍTICO:', error)
-    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-    return NextResponse.json(
-      { 
-        error: error.message || 'Error procesando el área',
-        details: error.stack?.split('\n')[0] || 'Sin detalles adicionales',
-        errorType: 'UNKNOWN_ERROR'
-      },
-      { status: 500 }
-    )
+    return NextResponse.json({
+      error: error.message || 'Error procesando el área',
+      errorType: 'UNKNOWN_ERROR'
+    }, { status: 500 })
   }
 }
-

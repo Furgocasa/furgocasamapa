@@ -24,20 +24,6 @@ interface AreaConCambios extends Area {
   serviciosNuevos?: Record<string, boolean>
 }
 
-const SERVICIOS_VALIDOS = [
-  'agua',
-  'electricidad',
-  'vaciado_aguas_negras',
-  'vaciado_aguas_grises',
-  'wifi',
-  'duchas',
-  'wc',
-  'lavanderia',
-  'restaurante',
-  'supermercado',
-  'zona_mascotas'
-]
-
 export default function ActualizarServiciosPage() {
   const router = useRouter()
   const supabase = createClient()
@@ -87,371 +73,27 @@ export default function ActualizarServiciosPage() {
     throw new Error('Máximo de reintentos alcanzado')
   }
 
-  // Función para analizar servicios con búsqueda multi-etapa optimizada y caché
-  // MEJORAS 2026-01-31:
-  // - Búsqueda 1: Añadidos términos específicos (agua, electricidad, vaciado) para mejores resultados
-  // - Búsqueda 2: Ampliado a 6 plataformas especializadas (Park4night, Camperstop, Caramaps, iOverlander, Campercontact, Womo-Stellplatz)
-  // - Búsqueda 3: Optimizada con términos multiidioma (motorhome, camper, facilities) para capturar más información
+  // Detección de servicios mediante GPT-5.5 con búsqueda web (reforzado con SerpAPI).
+  // Todo el trabajo pesado se hace en el servidor (/api/admin/scrape-services).
   const analizarServiciosArea = async (areaId: string): Promise<Record<string, boolean> | null> => {
-    const startTime = Date.now()
-    
     try {
-      console.log('🔎 [SCRAPE] Analizando servicios para área:', areaId)
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-      
-      // 1. Obtener datos del área con updated_at
-      const { data: area, error: areaError } = await (supabase as any)
-        .from('areas')
-        .select('*')
-        .eq('id', areaId)
-        .single()
-
-      if (areaError || !area) {
-        console.error('❌ Área no encontrada')
-        return null
-      }
-
-      // 2. CACHÉ: Verificar si se actualizó recientemente (últimas 24 horas)
-      const horasDesdeUpdate = (Date.now() - new Date(area.updated_at || 0).getTime()) / (1000 * 60 * 60)
-      if (horasDesdeUpdate < 24 && area.servicios && Object.keys(area.servicios).length > 0) {
-        const serviciosActuales = Object.values(area.servicios).filter((v: any) => v === true).length
-        if (serviciosActuales > 0) {
-          console.log(`⏭️  Área actualizada hace ${horasDesdeUpdate.toFixed(1)} horas, usando caché`)
-          console.log(`   Servicios en caché: ${serviciosActuales}`)
-          return area.servicios
-        }
-      }
-
-      const openaiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY_ADMIN
-      let textoParaAnalizar = `INFORMACIÓN DEL ÁREA: ${area.nombre}, ${area.ciudad}, ${area.provincia}\n\n`
-
-      // 3. BÚSQUEDA MULTI-ETAPA: 3 búsquedas especializadas
-      
-      // BÚSQUEDA 1: Información general y web oficial (optimizada)
-      console.log('🔍 [1/3] Búsqueda general y web oficial...')
-      // Query mejorada: menciona servicios específicos para mejores resultados
-      const query1 = `"${area.nombre}" ${area.ciudad} ${area.provincia} servicios autocaravanas agua electricidad vaciado`
-      try {
-        const resp1 = await fetchWithRetry('/api/admin/serpapi-proxy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: query1, engine: 'google' })
-        })
-
-        if (resp1.ok) {
-          const result1 = await resp1.json()
-          if (result1.success && result1.data.organic_results) {
-            textoParaAnalizar += `=== INFORMACIÓN GENERAL ===\n`
-            result1.data.organic_results.slice(0, 5).forEach((r: any) => {
-              textoParaAnalizar += `${r.title}\n${r.snippet}\n\n`
-            })
-            console.log(`  ✅ ${result1.data.organic_results.length} resultados generales`)
-          }
-          if (result1.data.answer_box) {
-            textoParaAnalizar += `${result1.data.answer_box.snippet || result1.data.answer_box.answer}\n\n`
-          }
-        }
-      } catch (e) {
-        console.warn('  ⚠️  Error en búsqueda 1:', e)
-      }
-
-      // Pausa breve entre búsquedas
-      await new Promise(r => setTimeout(r, 500))
-
-      // BÚSQUEDA 2: Plataformas especializadas (ampliado con más fuentes)
-      console.log('🏕️  [2/3] Búsqueda en plataformas especializadas...')
-      
-      // Lista ampliada de plataformas especializadas en autocaravanas
-      const plataformas = [
-        'Park4night',
-        'Camperstop',
-        'Caramaps',
-        'iOverlander',
-        'Campercontact',
-        'Womo-Stellplatz'
-      ]
-      
-      // Query optimizada con operador OR para buscar en múltiples plataformas
-      const query2 = `"${area.nombre}" ${area.ciudad} (${plataformas.join(' OR ')}) servicios autocaravanas camping`
-      try {
-        const resp2 = await fetchWithRetry('/api/admin/serpapi-proxy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: query2, engine: 'google' })
-        })
-
-        if (resp2.ok) {
-          const result2 = await resp2.json()
-          if (result2.success && result2.data.organic_results) {
-            textoParaAnalizar += `\n=== INFORMACIÓN DE PLATAFORMAS ESPECIALIZADAS ===\n`
-            result2.data.organic_results.slice(0, 5).forEach((r: any) => {
-              textoParaAnalizar += `${r.title}\n${r.snippet}\n\n`
-            })
-            console.log(`  ✅ ${result2.data.organic_results.length} resultados de plataformas`)
-          }
-        }
-      } catch (e) {
-        console.warn('  ⚠️  Error en búsqueda 2:', e)
-      }
-
-      // Pausa breve
-      await new Promise(r => setTimeout(r, 500))
-
-      // BÚSQUEDA 3: Google Maps, reviews y experiencias de usuarios
-      console.log('⭐ [3/3] Búsqueda de opiniones y reviews...')
-      // Query optimizada para capturar experiencias reales de usuarios
-      const query3 = `"${area.nombre}" ${area.ciudad} opiniones servicios motorhome camper facilities reviews`
-      try {
-        const resp3 = await fetchWithRetry('/api/admin/serpapi-proxy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: query3, engine: 'google' })
-        })
-
-        if (resp3.ok) {
-          const result3 = await resp3.json()
-          if (result3.success && result3.data.organic_results) {
-            textoParaAnalizar += `\n=== OPINIONES Y REVIEWS ===\n`
-            result3.data.organic_results.slice(0, 5).forEach((r: any) => {
-              textoParaAnalizar += `${r.title}\n${r.snippet}\n\n`
-            })
-            console.log(`  ✅ ${result3.data.organic_results.length} resultados de opiniones`)
-          }
-        }
-      } catch (e) {
-        console.warn('  ⚠️  Error en búsqueda 3:', e)
-      }
-
-      console.log(`📊 Total información recopilada: ${textoParaAnalizar.length} caracteres`)
-
-      // 4. Obtener configuración del agente
-      const { data: configData } = await (supabase as any)
-        .from('ia_config')
-        .select('config_value')
-        .eq('config_key', 'scrape_services')
-        .single()
-
-      const config = configData?.config_value || {
-        model: 'gpt-4o-mini',
-        temperature: 0.1,
-        max_tokens: 400,
-        prompts: [
-          {
-            id: 'sys-1',
-            role: 'system',
-            content: `Eres un auditor experto en áreas de autocaravanas y campings.
-
-INSTRUCCIONES ESTRICTAS:
-- Solo confirmas un servicio si hay EVIDENCIA EXPLÍCITA y CLARA
-- No asumas servicios por el tipo de lugar
-- Si hay duda o información ambigua, marca como false
-- Responde ÚNICAMENTE con JSON válido, sin texto adicional
-
-SERVICIOS A DETECTAR:
-- agua: Suministro de agua potable
-- electricidad: Conexión eléctrica o enchufes
-- vaciado_aguas_negras: Vaciado de aguas negras/WC químico
-- vaciado_aguas_grises: Vaciado de aguas grises
-- wifi: Conexión WiFi/Internet
-- duchas: Duchas disponibles
-- wc: Baños/WC
-- lavanderia: Lavandería o lavadoras
-- restaurante: Restaurante, bar o cafetería
-- supermercado: Supermercado o tienda
-- zona_mascotas: Área específica para mascotas`,
-            order: 1,
-            required: true
-          },
-          {
-            id: 'user-1',
-            role: 'user',
-            content: `Analiza la siguiente información sobre "{{area_nombre}}" en {{area_ciudad}}, {{area_provincia}}:
-
-{{texto_analizar}}
-
-Responde con JSON con esta estructura exacta:
-{
-  "agua": true/false,
-  "electricidad": true/false,
-  "vaciado_aguas_negras": true/false,
-  "vaciado_aguas_grises": true/false,
-  "wifi": true/false,
-  "duchas": true/false,
-  "wc": true/false,
-  "lavanderia": true/false,
-  "restaurante": true/false,
-  "supermercado": true/false,
-  "zona_mascotas": true/false
-}`,
-            order: 2,
-            required: true
-          }
-        ]
-      }
-
-      // 5. Construir mensajes para OpenAI
-      const messages = config.prompts
-        .sort((a: any, b: any) => a.order - b.order)
-        .map((prompt: any) => {
-          let content = prompt.content
-            .replace(/\{\{area_nombre\}\}/g, area.nombre)
-            .replace(/\{\{area_ciudad\}\}/g, area.ciudad)
-            .replace(/\{\{area_provincia\}\}/g, area.provincia)
-            .replace(/\{\{texto_analizar\}\}/g, textoParaAnalizar)
-          
-          return {
-            role: prompt.role === 'agent' ? 'user' : prompt.role,
-            content: content
-          }
-        })
-
-      // 6. Llamar a OpenAI con retry logic
-      console.log('🤖 Llamando a OpenAI con reintentos automáticos...')
-      const openaiResponse = await fetchWithRetry('https://api.openai.com/v1/chat/completions', {
+      const response = await fetchWithRetry('/api/admin/scrape-services', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${openaiKey}`
-        },
-        body: JSON.stringify({
-          model: config.model,
-          messages: messages,
-          temperature: config.temperature,
-          max_completion_tokens: config.max_tokens
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ areaId })
       })
 
-      if (!openaiResponse.ok) {
-        const errorData = await openaiResponse.json()
-        console.error('❌ Error de OpenAI:', openaiResponse.status, errorData)
-        throw new Error(`OpenAI error: ${errorData.error?.message || 'Unknown error'}`)
+      const result = await response.json().catch(() => ({}))
+
+      if (!response.ok || !result.success) {
+        const errorMsg = result.details || result.error || `Error ${response.status}`
+        throw new Error(errorMsg)
       }
 
-      const openaiData = await openaiResponse.json()
-      const respuestaIA = openaiData.choices[0].message.content || '{}'
-      console.log(`  ✅ Respuesta recibida (${openaiData.usage?.total_tokens || '?'} tokens)`)
-
-      // 7. Parsear respuesta
-      let serviciosDetectados: Record<string, boolean> = {}
-      try {
-        const jsonMatch = respuestaIA.match(/\{[\s\S]*\}/)
-        if (jsonMatch) {
-          serviciosDetectados = JSON.parse(jsonMatch[0])
-        } else {
-          serviciosDetectados = JSON.parse(respuestaIA)
-        }
-      } catch (e) {
-        console.error('❌ Error parseando respuesta:', respuestaIA)
-        return null
-      }
-
-      // 8. Validar servicios
-      const serviciosFinales: Record<string, boolean> = {}
-      SERVICIOS_VALIDOS.forEach((servicio: any) => {
-        serviciosFinales[servicio] = serviciosDetectados[servicio] === true
-      })
-
-      // 🔧 LÓGICA DE INFERENCIA: Deducir servicios relacionados
-      console.log('🧠 Aplicando lógica de inferencia...')
-      let serviciosInferidos = 0
-
-      // REGLA 1: Si hay agua → probablemente hay vaciados
-      // (95% de áreas con agua tienen puntos de vaciado)
-      if (serviciosFinales['agua'] === true) {
-        if (serviciosFinales['vaciado_aguas_negras'] !== true) {
-          console.log('   💡 Inferencia: Agua detectada → añadiendo vaciado aguas negras')
-          serviciosFinales['vaciado_aguas_negras'] = true
-          serviciosInferidos++
-        }
-        if (serviciosFinales['vaciado_aguas_grises'] !== true) {
-          console.log('   💡 Inferencia: Agua detectada → añadiendo vaciado aguas grises')
-          serviciosFinales['vaciado_aguas_grises'] = true
-          serviciosInferidos++
-        }
-      }
-
-      // REGLA 2: Si hay duchas → seguro hay WC y agua
-      if (serviciosFinales['duchas'] === true) {
-        if (serviciosFinales['wc'] !== true) {
-          console.log('   💡 Inferencia: Duchas detectadas → añadiendo WC')
-          serviciosFinales['wc'] = true
-          serviciosInferidos++
-        }
-        if (serviciosFinales['agua'] !== true) {
-          console.log('   💡 Inferencia: Duchas detectadas → añadiendo agua')
-          serviciosFinales['agua'] = true
-          serviciosInferidos++
-        }
-        // Si hay duchas, también hay vaciados
-        if (serviciosFinales['vaciado_aguas_negras'] !== true) {
-          console.log('   💡 Inferencia: Duchas detectadas → añadiendo vaciado aguas negras')
-          serviciosFinales['vaciado_aguas_negras'] = true
-          serviciosInferidos++
-        }
-        if (serviciosFinales['vaciado_aguas_grises'] !== true) {
-          console.log('   💡 Inferencia: Duchas detectadas → añadiendo vaciado aguas grises')
-          serviciosFinales['vaciado_aguas_grises'] = true
-          serviciosInferidos++
-        }
-      }
-
-      // REGLA 3: Si hay WC → probablemente hay agua
-      if (serviciosFinales['wc'] === true && serviciosFinales['agua'] !== true) {
-        console.log('   💡 Inferencia: WC detectado → añadiendo agua')
-        serviciosFinales['agua'] = true
-        serviciosInferidos++
-      }
-
-      // REGLA 4: Si hay electricidad + agua → es un área de servicio completa
-      if (serviciosFinales['electricidad'] === true && serviciosFinales['agua'] === true) {
-        if (serviciosFinales['vaciado_aguas_negras'] !== true) {
-          console.log('   💡 Inferencia: Electricidad + Agua → añadiendo vaciado aguas negras')
-          serviciosFinales['vaciado_aguas_negras'] = true
-          serviciosInferidos++
-        }
-        if (serviciosFinales['vaciado_aguas_grises'] !== true) {
-          console.log('   💡 Inferencia: Electricidad + Agua → añadiendo vaciado aguas grises')
-          serviciosFinales['vaciado_aguas_grises'] = true
-          serviciosInferidos++
-        }
-      }
-
-      if (serviciosInferidos > 0) {
-        console.log(`   ✅ ${serviciosInferidos} servicio(s) añadido(s) por inferencia`)
-      } else {
-        console.log('   ℹ️  No se aplicaron inferencias adicionales')
-      }
-
-      // 9. Actualizar en la base de datos
-      console.log('💾 Actualizando base de datos...')
-      const { error: updateError } = await (supabase as any)
-        .from('areas')
-        .update({
-          servicios: serviciosFinales,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', areaId)
-
-      if (updateError) {
-        console.error('❌ Error al actualizar BD:', updateError)
-        return null
-      }
-
-      const tiempoProcesamiento = ((Date.now() - startTime) / 1000).toFixed(1)
-      const totalServiciosDetectados = Object.values(serviciosFinales).filter((v: any) => v === true).length
-      
-      console.log('✅ Servicios actualizados exitosamente!')
-      console.log(`   📊 ${totalServiciosDetectados} servicios detectados`)
-      console.log(`   ⏱️  Tiempo: ${tiempoProcesamiento}s`)
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-      
-      return serviciosFinales
-
-    } catch (error) {
-      console.error('❌ Error analizando servicios:', error)
-      const tiempoProcesamiento = ((Date.now() - startTime) / 1000).toFixed(1)
-      console.log(`   ⏱️  Tiempo hasta error: ${tiempoProcesamiento}s`)
-      return null
+      return result.servicios as Record<string, boolean>
+    } catch (error: any) {
+      console.error('❌ Error analizando servicios:', error?.message || error)
+      throw error
     }
   }
 
@@ -537,7 +179,8 @@ Responde con JSON con esta estructura exacta:
         console.error('  ❌ Error probando SerpAPI:', e.message)
       }
       
-      const isReady = checks.openaiKeyValid && checks.serpApiKeyValid
+      // SerpAPI es opcional (solo refuerzo): basta con OpenAI para la búsqueda web de GPT-5.5.
+      const isReady = checks.openaiKeyValid
       
       setConfigStatus({
         ready: isReady,
@@ -786,19 +429,15 @@ Responde con JSON con esta estructura exacta:
       return
     }
 
-    // Estimación de tiempo y costo mejorada
-    const estimatedMinutes = Math.ceil((areasSeleccionadas.length * 8) / 60) // 8s por área (búsqueda múltiple)
-    const estimatedCost = (areasSeleccionadas.length * 0.0003).toFixed(4) // Ajustado para 3 búsquedas
+    // Estimación de tiempo y costo (GPT-5.5 con búsqueda web: ~25s y ~$0.05 por área)
+    const estimatedMinutes = Math.ceil((areasSeleccionadas.length * 25) / 60)
+    const estimatedCost = (areasSeleccionadas.length * 0.05).toFixed(2)
     
     if (!confirm(
-      `¿Deseas actualizar los servicios de ${areasSeleccionadas.length} área(s)?\n\n` +
+      `¿Deseas detectar los servicios de ${areasSeleccionadas.length} área(s) con GPT-5.5 (búsqueda web)?\n\n` +
       `⏱️ Tiempo estimado: ${estimatedMinutes} minuto(s)\n` +
       `💰 Costo aproximado: $${estimatedCost} USD\n\n` +
-      `✨ El proceso incluye:\n` +
-      `  • 3 búsquedas especializadas por área\n` +
-      `  • Caché para áreas actualizadas recientemente\n` +
-      `  • Reintentos automáticos en caso de error\n` +
-      `  • Pausas inteligentes para evitar límites`
+      `✨ El modelo verifica los servicios buscando en webs oficiales y plataformas (Park4night, Campercontact...), reforzado con SerpAPI.`
     )) {
       return
     }
@@ -1019,7 +658,7 @@ Responde con JSON con esta estructura exacta:
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">🔄 Actualizar Servicios</h1>
                 <p className="mt-1 text-sm text-gray-500">
-                  Usa IA para detectar servicios desde las webs de las áreas
+                  GPT-5.5 busca en internet (webs oficiales, Park4night...) para detectar los servicios reales de cada área
                 </p>
               </div>
             </div>

@@ -113,14 +113,14 @@ export async function POST(request: NextRequest) {
     // Valores por defecto con nueva estructura de prompts
     const defaults: Record<string, any> = {
       scrape_services: {
-        model: 'gpt-4o-mini',
-        temperature: 0.1,
-        max_tokens: 300,
+        model: 'gpt-5.5',
+        reasoning_effort: 'low',
+        max_tokens: 2000,
         prompts: [
           {
             id: 'sys-1',
             role: 'system',
-            content: 'Eres un auditor crítico que analiza información sobre áreas de autocaravanas. Solo confirmas servicios con evidencia explícita. Respondes únicamente con JSON válido, sin texto adicional.',
+            content: 'Eres un auditor crítico de áreas de autocaravanas con acceso a búsqueda web. Verificas los servicios consultando webs oficiales, plataformas (Park4night, Campercontact, Caramaps) y reseñas. Solo confirmas un servicio con evidencia clara; ante la duda, false. Respondes únicamente con JSON válido, sin texto adicional.',
             order: 1,
             required: true
           },
@@ -191,81 +191,46 @@ RESPONDE SOLO CON JSON (sin texto adicional):
         ]
       },
       enrich_description: {
-        model: 'gpt-4o-mini',
-        temperature: 0.7,
-        max_tokens: 1500,
+        model: 'gpt-5.5',
+        reasoning_effort: 'low',
+        max_tokens: 2500,
         prompts: [
           {
             id: 'sys-1',
             role: 'system',
-            content: 'Eres un redactor experto en guías de viaje para autocaravanas. Escribes textos informativos, naturales y bien estructurados en español.',
+            content: 'Eres un redactor profesional de guías de viaje para autocaravanas en español. Tienes acceso a búsqueda web y la usas para encontrar información real y actual. Escribes con seguridad y precisión, nunca con frases dubitativas.',
             order: 1,
             required: true
           },
           {
             id: 'user-1',
             role: 'user',
-            content: `Eres un redactor especializado en autocaravanas, campers y viajes.
-Tu misión es crear contenido detallado para un Mapa de Áreas de Autocaravanas dirigido a viajeros en autocaravanas, caravanas y campers.
+            content: `{{contexto}}
 
-{{contexto}}
-
-⚠️ ADVERTENCIA CRÍTICA SOBRE LA INFORMACIÓN:
-El contexto arriba muestra claramente el nombre del área, ciudad y provincia que debes describir.
-La información turística puede ser genérica. Tu tarea es escribir ESPECÍFICAMENTE sobre la ciudad indicada en "ÁREA ESPECÍFICA QUE DEBES DESCRIBIR", NO sobre otras ciudades mencionadas en el contexto web.
-
-TU TAREA:
-Crear un texto extenso y detallado (400-600 palabras) DIVIDIDO EN 4-5 PÁRRAFOS SEPARADOS que combine:
-1. Información específica del área de autocaravanas mencionada arriba
-2. Guía turística de la ciudad especificada arriba
-3. Información práctica para el viajero
-
-FORMATO OBLIGATORIO - MUY IMPORTANTE:
-Escribe en 4-5 párrafos. Separa CADA párrafo con DOS SALTOS DE LÍNEA (deja una línea en blanco entre párrafos).
+TAREA:
+Investiga en internet el área "{{area_nombre}}" y la localidad de {{area_ciudad}} ({{area_provincia}}) y redacta una descripción de 350-550 palabras en 4-5 párrafos separados por una línea en blanco.
 
 Estructura:
-Párrafo 1: Introducción al área y su ubicación (2-3 líneas)
+Párrafo 1: Presentación del área de autocaravanas y su ubicación dentro de {{area_ciudad}}.
+Párrafo 2: Características del área (plazas, precio y solo los servicios confirmados o verificados).
+Párrafo 3: Qué ver y hacer en {{area_ciudad}} y su entorno cercano.
+Párrafo 4: Gastronomía, cultura, fiestas o naturaleza de la zona.
+Párrafo 5: Cierre práctico y útil (accesos, mejor época, recomendaciones reales).
 
-Párrafo 2: Servicios, plazas, precio y características del área (3-4 líneas)
+REGLAS DE CALIDAD INNEGOCIABLES:
+✓ Escribe con seguridad, como un experto que conoce el sitio.
+✓ Sobre SERVICIOS: menciona solo los confirmados o verificados en internet. Si no puedes confirmar uno, NO lo menciones (tampoco para negarlo).
+✓ Si no hay servicios confirmables, céntrate en el entorno, qué ver y hacer, gastronomía e historia.
+✓ Refiérete a "el área de autocaravanas" o "el área de {{area_nombre}}" (nunca "esta área").
+✓ Español natural y fluido, en párrafos, sin listas ni viñetas.
 
-Párrafo 3: Atractivos turísticos de la ciudad (3-4 líneas)
+PROHIBIDO TERMINANTEMENTE:
+✗ Frases dubitativas o de descargo: "consulta antes", "se recomienda verificar", "conviene confirmar", "no se especifica", "no hay información", "no disponemos de datos", "se desconoce", "posiblemente", "probablemente", "puede que", "suele tener", "verifica los servicios al llegar".
+✗ Mencionar la dirección postal (ya está en el mapa).
+✗ Inventar servicios o datos.
+✗ Pomposidad vacía: "destino ideal", "maravilloso", "joya escondida".
 
-Párrafo 4: Gastronomía, cultura y otros atractivos (3-4 líneas)
-
-Párrafo 5: Conclusión práctica para el viajero (2-3 líneas)
-
-EJEMPLO DE FORMATO CORRECTO:
-"El área de autocaravanas en [Ciudad] se encuentra...
-
-Este espacio está equipado con servicios esenciales...
-
-[Ciudad] es conocida por sus atractivos turísticos...
-
-La gastronomía local destaca por...
-
-Para los viajeros en autocaravana, esta área representa..."
-
-REGLAS ESTRICTAS:
-✓ SOLO describe la ciudad y área mostrada en "ÁREA ESPECÍFICA QUE DEBES DESCRIBIR"
-✓ Si el contexto web menciona otra ciudad diferente, IGNÓRALA completamente
-✓ Información veraz basada ÚNICAMENTE en el contexto de la ciudad correcta
-✓ Sobre SERVICIOS: Solo menciona los servicios marcados con ✅. Si dice "No hay servicios confirmados", NO menciones servicios específicos
-✓ Si no hay servicios confirmados, céntrate SOLO en el entorno, la localidad, atractivos turísticos, gastronomía, historia
-✓ Siempre di "el área de autocaravanas" o "el área de {{area_nombre}}" (nunca "esta área")
-✓ Tono informativo y útil, sin ser excesivamente pomposo
-✓ Escribe en español de forma natural y fluida
-
-NUNCA, BAJO NINGÚN CONCEPTO:
-✗ Describir otra ciudad que no sea la especificada en "ÁREA ESPECÍFICA"
-✗ Mencionar la dirección del área (ya está en el mapa)
-✗ Usar frases como "no dispongo de información", "no existe información"
-✗ Recomendar "verificar los servicios en el momento de la visita"
-✗ Inventar o suponer servicios con "posiblemente", "probablemente", "suele tener"
-✗ Decir constantemente "destino ideal", "maravilloso"
-✗ Mencionar servicios que NO tienen ✅ en "Servicios confirmados"
-✗ Usar listas de puntos (•, -, 1., 2., etc.)
-
-Escribe en párrafos separados por líneas en blanco. Texto fluido y natural.`,
+Devuelve solo el texto final.`,
             order: 2,
             required: false
           }

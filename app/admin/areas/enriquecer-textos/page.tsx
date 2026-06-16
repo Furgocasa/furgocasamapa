@@ -8,6 +8,24 @@ import { AdminTable, AdminTableColumn } from '@/components/admin/AdminTable'
 import { SparklesIcon, MagnifyingGlassIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
 import type { Area } from '@/types/database.types'
 
+const PLACEHOLDER_TEXT = 'Área encontrada mediante búsqueda en Google Maps. Requiere verificación y enriquecimiento.'
+
+// Frases dubitativas / "consultar antes" que indican una descripción de baja calidad a regenerar.
+const LOW_QUALITY_PATTERNS: RegExp[] = [
+  /consult\w*\s+(antes|disponibilidad|directamente|con\s+el|la\s+disponibilidad)/i,
+  /se\s+recomienda\s+(consultar|verificar|confirmar|comprobar)/i,
+  /(verifica|verificar|comprobar|confirmar|confirma)\s+(los\s+)?(servicios|la\s+disponibilidad|antes)/i,
+  /no\s+(se\s+)?(dispone|disponemos|tengo|tenemos|hay)\s+(de\s+)?(información|datos)/i,
+  /no\s+(se\s+)?(especifica|indica|detalla|aclara|sabe|conoce)/i,
+  /información\s+no\s+disponible/i,
+  /se\s+desconoce/i,
+  /(posiblemente|probablemente|puede\s+que|podría\s+(tener|disponer)|suele\s+tener)/i
+]
+
+function isLowQuality(desc: string): boolean {
+  return LOW_QUALITY_PATTERNS.some((re) => re.test(desc))
+}
+
 export default function EnriquecerTextosPage() {
   const router = useRouter()
   const supabase = createClient()
@@ -44,7 +62,8 @@ export default function EnriquecerTextosPage() {
       const checks = await response.json()
       
       setConfigStatus({
-        ready: checks.openaiKeyValid && checks.serpApiKeyValid,
+        // SerpAPI es opcional (solo refuerzo): basta con OpenAI para usar la búsqueda web de GPT-5.5.
+        ready: checks.openaiKeyValid,
         checks
       })
     } catch (error) {
@@ -128,24 +147,22 @@ export default function EnriquecerTextosPage() {
       }
     }
 
-    // Filtrar solo sin texto (sin descripción = NULL, vacío, placeholder o < 200 caracteres)
-    // Las descripciones de IA deben ser textos largos, no snippets cortos
-    const PLACEHOLDER_TEXT = 'Área encontrada mediante búsqueda en Google Maps. Requiere verificación y enriquecimiento.'
-    
+    // Filtrar áreas que necesitan trabajo: sin descripción, placeholder, < 200 caracteres
+    // o descripciones de baja calidad (frases dubitativas tipo "consultar antes").
     if (soloSinTexto) {
       const beforeSinTexto = filtered.length
       filtered = filtered.filter((area: any) => {
         if (!area.descripcion) return true // Sin descripción
         const desc = area.descripcion.trim()
-        
+
         // Detectar texto placeholder por defecto
         if (desc === PLACEHOLDER_TEXT) return true
         if (desc.includes('Requiere verificación y enriquecimiento')) return true
-        
-        const length = desc.length
-        return length < 200 // Menos de 200 caracteres = descripción corta/incompleta
+
+        if (desc.length < 200) return true // Descripción corta/incompleta
+        return isLowQuality(desc) // Texto largo pero con frases dubitativas
       })
-      console.log('  ✅ Después de sin texto (<200 chars o placeholder):', filtered.length, 'de', beforeSinTexto)
+      console.log('  ✅ Después de filtro (sin texto / corta / baja calidad):', filtered.length, 'de', beforeSinTexto)
     }
 
     setFilteredAreas(filtered)
@@ -204,7 +221,15 @@ export default function EnriquecerTextosPage() {
             </span>
           )
         }
-        
+
+        if (length >= 200 && isLowQuality(desc)) {
+          return (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+              ⚠ Baja calidad (regenerar)
+            </span>
+          )
+        }
+
         if (length >= 200) {
           return (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -256,227 +281,31 @@ export default function EnriquecerTextosPage() {
 
   const enrichArea = async (areaId: string, forceProcess: boolean = false): Promise<{ success: boolean; error?: string }> => {
     try {
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-      console.log('🚀 [ENRICH] Iniciando enriquecimiento de área:', areaId)
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-      
-      // Obtener datos frescos de Supabase
-      const { data: area, error: areaError } = await (supabase as any)
-        .from('areas')
-        .select('*')
-        .eq('id', areaId)
-        .single()
-
-      if (areaError || !area) {
-        console.error('❌ [ENRICH] Error: Área no encontrada', areaError)
-        return { success: false, error: 'Área no encontrada en la base de datos' }
-      }
-
-      console.log('✅ [ENRICH] Área encontrada:', area.nombre, '-', area.ciudad)
-      console.log('  📍 ID:', area.id)
-      
-      // Si viene del filtro "Solo sin descripción", procesamos directamente
-      if (forceProcess) {
-        console.log('  ⚡ Modo forzado: Se procesará sin verificar (viene del filtro)')
-      } else {
-        console.log('  📝 Descripción actual:', area.descripcion ? `"${area.descripcion.trim()}" (${area.descripcion.trim().length} caracteres)` : 'NULL o vacío')
-        
-        // Solo verificamos si NO viene del filtro (sin descripción = < 200 caracteres)
-        const PLACEHOLDER_TEXT = 'Área encontrada mediante búsqueda en Google Maps. Requiere verificación y enriquecimiento.'
-        const desc = area.descripcion?.trim() || ''
-        const isPlaceholder = desc.includes('Requiere verificación y enriquecimiento')
-        
-        // Si ya tiene descripción válida (≥200 caracteres y no es placeholder), no sobreescribir
-        if (area.descripcion && !isPlaceholder && desc.length >= 200) {
-          console.log('⚠️ [ENRICH] El área ya tiene descripción válida (≥200 caracteres). No se sobrescribe.')
-          return { success: false, error: 'Ya tiene descripción válida (≥200 caracteres)' }
-        }
-      }
-
-      // 1. Buscar información con SerpAPI (a través del proxy del servidor)
-      const query = `"${area.ciudad}" ${area.provincia} turismo autocaravanas qué ver`
-
-      console.log('🔎 [ENRICH] Llamando a SerpAPI (vía proxy)...')
-      const serpResponse = await fetch('/api/admin/serpapi-proxy', {
+      // Todo el trabajo pesado (SerpAPI + GPT-5.5 con búsqueda web) se hace en el servidor,
+      // en /api/admin/enrich-description, para no exponer claves ni depender del navegador.
+      const response = await fetch('/api/admin/enrich-description', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, engine: 'google' })
+        body: JSON.stringify({ areaId, force: forceProcess })
       })
 
-      if (!serpResponse.ok) {
-        const errorData = await serpResponse.json().catch(() => ({}))
-        console.error('❌ [ENRICH] Error del proxy de SerpAPI:', serpResponse.status, errorData)
-        return { success: false, error: `Error de SerpAPI (${serpResponse.status}): ${errorData.error || errorData.details || 'Error desconocido'}` }
-      }
+      const result = await response.json().catch(() => ({}))
 
-      const serpResult = await serpResponse.json()
-      
-      if (!serpResult.success) {
-        console.error('❌ [ENRICH] Error de SerpAPI:', serpResult.error, serpResult.details)
-        const errorMsg = serpResult.details || serpResult.error || 'Error desconocido'
-        // Detectar error de créditos excedidos
-        if (errorMsg.includes('credit') || errorMsg.includes('limit') || errorMsg.includes('exceeded')) {
-          return { success: false, error: '⚠️ CRÉDITOS DE SERPAPI EXCEDIDOS - Recarga tu cuenta en serpapi.com' }
+      if (!response.ok) {
+        const errorMsg = result.details || result.error || `Error ${response.status}`
+        if (/credit|limit|exceeded|cuota/i.test(errorMsg) || result.errorType === 'RATE_LIMIT') {
+          return { success: false, error: `⚠️ LÍMITE/CRÉDITOS EXCEDIDOS - ${errorMsg}` }
         }
-        return { success: false, error: `Error de SerpAPI: ${errorMsg}` }
+        return { success: false, error: errorMsg }
       }
 
-      const serpData = serpResult.data
-      console.log('✅ [ENRICH] SerpAPI respondió correctamente (vía proxy)')
-
-      // Filtrar resultados por ciudad
-      if (serpData.organic_results && serpData.organic_results.length > 0) {
-        const ciudadLower = (area.ciudad || '').toLowerCase()
-        if (ciudadLower) {
-          serpData.organic_results = serpData.organic_results.filter((result: any) => {
-            const snippet = (result.snippet || '').toLowerCase()
-            const title = (result.title || '').toLowerCase()
-            return snippet.includes(ciudadLower) || title.includes(ciudadLower)
-          })
-        }
+      if (!result.success) {
+        return { success: false, error: result.message || result.error || 'No se generó descripción' }
       }
 
-      // 2. Construir contexto para OpenAI
-      let contexto = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ ÁREA ESPECÍFICA QUE DEBES DESCRIBIR:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Nombre del área: ${area.nombre}
-Ciudad: ${area.ciudad}
-Provincia: ${area.provincia}
-País: ${area.pais}
-Tipo: ${area.tipo_area}
-`
-      
-      if (area.precio_por_noche) {
-        contexto += `Precio: ${area.precio_por_noche}€/noche\n`
-      } else {
-        contexto += `Precio: Gratis o desconocido\n`
-      }
-
-      if (area.plazas_disponibles) {
-        contexto += `Plazas disponibles: ${area.plazas_disponibles}\n`
-      }
-
-      if (area.servicios && typeof area.servicios === 'object') {
-        const serviciosDisponibles = Object.entries(area.servicios)
-          .filter(([_, value]) => value === true)
-          .map(([key]) => key)
-        
-        if (serviciosDisponibles.length > 0) {
-          contexto += `\n✅ Servicios confirmados: ${serviciosDisponibles.join(', ')}\n`
-        } else {
-          contexto += `\n⚠️ No hay servicios confirmados para esta área.\n`
-        }
-      }
-
-      contexto += `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-INFORMACIÓN TURÍSTICA DE ${(area.ciudad || '').toUpperCase()}:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-(Esta información es solo sobre ${area.ciudad}, NO sobre otras ciudades)
-
-`
-
-      if (serpData.organic_results) {
-        serpData.organic_results.forEach((result: any) => {
-          contexto += `${result.title}\n${result.snippet}\n\n`
-        })
-      }
-
-      if (serpData.answer_box) {
-        contexto += `${serpData.answer_box.snippet || serpData.answer_box.answer}\n\n`
-      }
-
-      // 3. Obtener configuración del agente desde la BD
-      const { data: configData } = await (supabase as any)
-        .from('ia_config')
-        .select('config_value')
-        .eq('config_key', 'enrich_description')
-        .single()
-
-      const config = configData?.config_value || {
-        model: 'gpt-4o-mini',
-        temperature: 0.7,
-        max_tokens: 1500,
-        prompts: [
-          {
-            id: 'sys-1',
-            role: 'system',
-            content: 'Eres un redactor experto en guías de viaje para autocaravanas. Escribes textos informativos, naturales y bien estructurados en español.',
-            order: 1,
-            required: true
-          }
-        ]
-      }
-
-      // Construir mensajes para OpenAI
-      const messages = config.prompts
-        .sort((a: any, b: any) => a.order - b.order)
-        .map((prompt: any) => {
-          let content = prompt.content
-            .replace(/\{\{contexto\}\}/g, contexto)
-            .replace(/\{\{area_nombre\}\}/g, area.nombre)
-            .replace(/\{\{area_ciudad\}\}/g, area.ciudad)
-            .replace(/\{\{area_provincia\}\}/g, area.provincia)
-          
-          return {
-            role: prompt.role === 'agent' ? 'user' : prompt.role,
-            content: content
-          }
-        })
-
-      // 4. Llamar a OpenAI desde el cliente
-      console.log('🤖 [ENRICH] Llamando a OpenAI...')
-      const openaiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY_ADMIN
-      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${openaiKey}`
-        },
-        body: JSON.stringify({
-          model: config.model,
-          messages: messages,
-          temperature: config.temperature,
-          max_completion_tokens: config.max_tokens
-        })
-      })
-
-      if (!openaiResponse.ok) {
-        const errorData = await openaiResponse.json().catch(() => ({}))
-        console.error('❌ [ENRICH] Error de OpenAI:', openaiResponse.status, errorData)
-        return { success: false, error: `Error de OpenAI (${openaiResponse.status}): ${errorData.error?.message || 'Error desconocido'}` }
-      }
-
-      const openaiData = await openaiResponse.json()
-      const descripcionGenerada = openaiData.choices[0].message.content || ''
-
-      console.log('📝 [ENRICH] Descripción generada (' + descripcionGenerada.length + ' caracteres)')
-
-      // 5. Guardar en la base de datos
-      console.log('💾 [ENRICH] Guardando en base de datos...')
-      const { error: updateError } = await (supabase as any)
-        .from('areas')
-        .update({
-          descripcion: descripcionGenerada,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', areaId)
-
-      if (updateError) {
-        console.error('❌ [ENRICH] Error al guardar en BD:', updateError)
-        return { success: false, error: `Error al guardar en base de datos: ${updateError.message}` }
-      }
-
-      console.log('✅ [ENRICH] ¡Descripción guardada exitosamente!')
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
       return { success: true }
-
     } catch (error: any) {
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
       console.error('❌ [ENRICH] Error enriqueciendo área:', error)
-      console.error('  Detalles:', error?.message || 'Sin detalles')
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
       return { success: false, error: `Error inesperado: ${error.message}` }
     }
   }
@@ -505,15 +334,15 @@ INFORMACIÓN TURÍSTICA DE ${(area.ciudad || '').toUpperCase()}:
     
     console.log('✅ Validaciones pasadas, iniciando proceso...')
 
-    // Estimación de tiempo y costo
-    const estimatedMinutes = Math.ceil((selectedIds.length * 8) / 60)
-    const estimatedCost = (selectedIds.length * 0.0006).toFixed(4)
+    // Estimación de tiempo y costo (GPT-5.5 con búsqueda web: ~25s y ~$0.05 por área)
+    const estimatedMinutes = Math.ceil((selectedIds.length * 25) / 60)
+    const estimatedCost = (selectedIds.length * 0.05).toFixed(2)
 
     const userConfirmed = confirm(
-      `¿Generar descripciones con IA para ${selectedIds.length} área(s)?\n\n` +
+      `¿Generar descripciones con GPT-5.5 (búsqueda web) para ${selectedIds.length} área(s)?\n\n` +
       `⏱️ Tiempo estimado: ${estimatedMinutes} minuto(s)\n` +
       `💰 Costo aproximado: $${estimatedCost} USD\n\n` +
-      `El proceso incluye pausas entre peticiones para evitar límites de rate.`
+      `El modelo busca información real en internet y la refuerza con SerpAPI.`
     )
     
     console.log('❓ Usuario confirmó:', userConfirmed)
@@ -660,7 +489,7 @@ INFORMACIÓN TURÍSTICA DE ${(area.ciudad || '').toUpperCase()}:
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Enriquecer con IA</h1>
               <p className="text-gray-600 mt-1">
-                Usa IA para generar descripciones completas de las áreas sin texto
+                GPT-5.5 busca información real en internet (reforzado con SerpAPI) para generar descripciones de calidad
               </p>
             </div>
           </div>
@@ -712,7 +541,7 @@ INFORMACIÓN TURÍSTICA DE ${(area.ciudad || '').toUpperCase()}:
                 onChange={(e) => setSoloSinTexto(e.target.checked)}
                 className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
               />
-              <span className="text-sm text-gray-700">Solo áreas sin descripción completa (&lt;200 caracteres)</span>
+              <span className="text-sm text-gray-700">Solo áreas sin descripción, incompletas (&lt;200 caracteres) o de baja calidad</span>
             </label>
           </div>
 
