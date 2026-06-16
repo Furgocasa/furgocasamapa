@@ -71,6 +71,11 @@ export function buildAreaPopupHTML(
     }padding:5px 10px;border-radius:8px;font-size:12px;font-weight:600;line-height:1;">${html}</span>`
 
   const chips: string[] = []
+  if (area.google_rating) {
+    chips.push(
+      `<span style="display:inline-flex;align-items:center;gap:4px;background:#FEF9C3;color:#854D0E;border:1px solid #FDE68A;padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;line-height:1;">⭐ ${area.google_rating}</span>`
+    )
+  }
   if (area.precio_noche !== null && area.precio_noche !== undefined) {
     chips.push(
       area.precio_noche === 0
@@ -82,29 +87,20 @@ export function buildAreaPopupHTML(
   if (area.acceso_24h) chips.push(chip(`🕒 24h`))
   if (area.barrera_altura) chips.push(chip(`📏 ${area.barrera_altura} m`))
 
+  // El botón de cerrar (×) del mapa va arriba a la derecha: dejamos esa esquina libre.
   const imageBlock = area.foto_principal
     ? `
       <div style="position:relative;margin:${imageMargin}px ${imageMargin}px 0 ${imageMargin}px;height:172px;background:#e5e7eb;">
         <img src="${esc(area.foto_principal)}" alt="${esc(area.nombre)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'"/>
-        <div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.12) 38%, rgba(0,0,0,0) 60%);"></div>
-        <span style="position:absolute;top:12px;left:12px;background:${color};color:#fff;padding:5px 12px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.3px;box-shadow:0 2px 6px rgba(0,0,0,0.25);">${tipo}</span>
-        ${
-          area.google_rating
-            ? `<span style="position:absolute;top:12px;right:12px;display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,0.96);padding:5px 10px;border-radius:999px;font-size:12px;font-weight:700;color:#111827;box-shadow:0 2px 6px rgba(0,0,0,0.2);">⭐ ${area.google_rating}</span>`
-            : ''
-        }
+        <div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.12) 42%, rgba(0,0,0,0) 62%);"></div>
+        <span style="position:absolute;bottom:38px;left:14px;background:${color};color:#fff;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.3px;box-shadow:0 2px 6px rgba(0,0,0,0.25);">${tipo}</span>
         <h3 style="position:absolute;left:14px;right:14px;bottom:10px;margin:0;color:#fff;font-size:18px;font-weight:800;line-height:1.25;text-shadow:0 1px 4px rgba(0,0,0,0.6);">${esc(area.nombre)}</h3>
       </div>`
     : `
-      <div style="display:flex;align-items:center;gap:8px;margin:2px 4px 4px 4px;">
-        <span style="background:${color};color:#fff;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.3px;">${tipo}</span>
-        ${
-          area.google_rating
-            ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:13px;font-weight:700;color:#111827;">⭐ ${area.google_rating}</span>`
-            : ''
-        }
-      </div>
-      <h3 style="margin:0 4px 4px 4px;font-size:18px;font-weight:800;color:#111827;line-height:1.25;">${esc(area.nombre)}</h3>`
+      <div style="margin:2px 4px 4px 4px;">
+        <span style="display:inline-block;background:${color};color:#fff;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.3px;margin-bottom:6px;">${tipo}</span>
+        <h3 style="margin:0;font-size:18px;font-weight:800;color:#111827;line-height:1.25;padding-right:24px;">${esc(area.nombre)}</h3>
+      </div>`
 
   return `
     <div style="width:318px;max-width:88vw;font-family:system-ui,-apple-system,sans-serif;color:#1f2937;">
@@ -130,20 +126,23 @@ export function buildAreaPopupHTML(
         }
         ${
           mostrarServicios.length
-            ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
-                ${mostrarServicios
-                  .map(
-                    (s) =>
-                      `<span style="display:inline-flex;align-items:center;gap:4px;background:#F8FAFC;border:1px solid #EEF2F6;color:#475569;padding:4px 9px;border-radius:7px;font-size:11.5px;font-weight:500;line-height:1;">${s.icon} ${s.label}</span>`
-                  )
-                  .join('')}
-                ${
-                  serviciosRestantes > 0
-                    ? `<span style="display:inline-flex;align-items:center;background:#EFF6FF;color:#0284c7;padding:4px 9px;border-radius:7px;font-size:11.5px;font-weight:700;line-height:1;">+${serviciosRestantes}</span>`
-                    : ''
-                }
+            ? `<div style="margin-bottom:12px;">
+                <p style="margin:0 0 6px 0;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#9CA3AF;">Servicios</p>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                  ${mostrarServicios
+                    .map(
+                      (s) =>
+                        `<span style="display:inline-flex;align-items:center;gap:4px;background:#F1F5F9;border:1px solid #E2E8F0;color:#334155;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:600;line-height:1;">${s.icon} ${s.label}</span>`
+                    )
+                    .join('')}
+                  ${
+                    serviciosRestantes > 0
+                      ? `<span style="display:inline-flex;align-items:center;background:#EFF6FF;color:#0284c7;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;line-height:1;">+${serviciosRestantes}</span>`
+                      : ''
+                  }
+                </div>
               </div>`
-            : ''
+            : `<p style="margin:0 0 12px 0;font-size:12px;color:#9CA3AF;font-style:italic;">Servicios no especificados</p>`
         }
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
           <a href="/area/${esc(area.slug)}" style="display:flex;align-items:center;justify-content:center;gap:6px;background:#0284c7;color:#fff;padding:11px;border-radius:10px;text-decoration:none;font-weight:700;font-size:13.5px;box-shadow:0 2px 6px rgba(2,132,199,0.35);">
