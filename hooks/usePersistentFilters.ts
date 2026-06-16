@@ -45,11 +45,17 @@ export const usePersistentFilters = () => {
         const saved = localStorage.getItem(STORAGE_KEY)
         if (saved) {
           const parsed: SavedFilters = JSON.parse(saved)
-          
+
+          // ⚠️ MIGRACIÓN: el filtro de país solo se conserva si fue una selección
+          // MANUAL del usuario. Antes el GPS aplicaba (y guardaba) un país
+          // automáticamente; ahora el GPS no filtra, así que ignoramos cualquier
+          // país guardado cuyo origen no sea 'manual' para no seguir filtrando.
+          const paisRestaurado = parsed.paisSource === 'manual' ? (parsed.pais || '') : ''
+
           // Restaurar filtros
           setFiltros({
             busqueda: parsed.busqueda || '',
-            pais: parsed.pais || '',
+            pais: paisRestaurado,
             servicios: parsed.servicios || [],
             precio: parsed.precio || '',
             caracteristicas: parsed.caracteristicas || []
@@ -57,12 +63,12 @@ export const usePersistentFilters = () => {
           
           // Restaurar metadata
           setMetadata({
-            paisSource: parsed.paisSource || null,
+            paisSource: parsed.paisSource === 'manual' ? 'manual' : null,
             gpsCountry: parsed.gpsCountry || null,
             gpsActive: parsed.gpsActive || false
           })
           
-          console.log('✅ Filtros restaurados desde localStorage:', parsed)
+          console.log('✅ Filtros restaurados desde localStorage:', { ...parsed, pais: paisRestaurado })
         }
       } catch (error) {
         console.error('❌ Error cargando filtros:', error)
