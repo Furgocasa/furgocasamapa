@@ -7,7 +7,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import BottomSheet from '@/components/mobile/BottomSheet'
 import { createClient } from '@/lib/supabase/client'
 import type { Area } from '@/types/database.types'
-import { useEffect, useState, useMemo, useRef } from 'react'
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { MapIcon, FunnelIcon, ListBulletIcon } from '@heroicons/react/24/outline'
 import LoginWall from '@/components/ui/LoginWall'
 import { usePersistentFilters } from '@/hooks/usePersistentFilters'
@@ -301,14 +301,19 @@ export default function MapaPage() {
     const region = regionCoordenadas[filtros.pais]
     if (region && mapRef.current) {
       console.log(`🗺️ Centrando mapa en región: ${filtros.pais}`)
-      // Para regiones: flyTo con zoom específico
-      if (mapRef.current.flyTo) {
-        // MapLibre
-        mapRef.current.flyTo({ center: [region.lng, region.lat], zoom: region.zoom, duration: 1000 })
-      } else if (mapRef.current.setCenter) {
+      const m = mapRef.current
+      // Detectar proveedor: MapLibre tiene getCanvas; Google tiene setCenter/setZoom;
+      // Leaflet usa flyTo([lat, lng], zoom) con orden invertido respecto a MapLibre.
+      if (m.getCanvas && m.flyTo) {
+        // MapLibre GL → [lng, lat]
+        m.flyTo({ center: [region.lng, region.lat], zoom: region.zoom, duration: 1000 })
+      } else if (m.setCenter && m.setZoom) {
         // Google Maps
-        mapRef.current.setCenter({ lat: region.lat, lng: region.lng })
-        mapRef.current.setZoom(region.zoom)
+        m.setCenter({ lat: region.lat, lng: region.lng })
+        m.setZoom(region.zoom)
+      } else if (m.flyTo) {
+        // Leaflet → [lat, lng]
+        m.flyTo([region.lat, region.lng], region.zoom, { duration: 1 })
       }
       return
     }
@@ -413,88 +418,12 @@ export default function MapaPage() {
     })
   }, [areas, filtros, paisFiltroLista])
 
-  // ✅ ÁREAS PARA EL MAPA: aplicar TODOS los filtros (igual que la lista)
-  const areasParaMapa = useMemo(() => {
-    const filtradas = areas.filter((area: any) => {
-      // Filtro de búsqueda
-      if (filtros.busqueda) {
-        const busqueda = filtros.busqueda.toLowerCase()
-        const coincide =
-          area.nombre.toLowerCase().includes(busqueda) ||
-          area.ciudad?.toLowerCase().includes(busqueda) ||
-          area.provincia?.toLowerCase().includes(busqueda) ||
-          area.descripcion?.toLowerCase().includes(busqueda)
+  // ✅ ÁREAS PARA EL MAPA: usan EXACTAMENTE los mismos filtros que la lista.
+  // Antes había una copia idéntica de toda la lógica de filtrado (se recorrían
+  // ~5.000 áreas dos veces y podían divergir). Ahora reutilizamos el mismo cálculo.
+  const areasParaMapa = areasParaLista
 
-        if (!coincide) return false
-      }
-
-      // Filtro de país/región
-      if (paisFiltroLista) {
-        const paisArea = area.pais?.trim() || ''
-        const perteneceAlFiltro = paisPerteneceAFiltro(paisArea, paisFiltroLista)
-        if (!perteneceAlFiltro) {
-          return false
-        }
-      }
-
-      // Filtro de precio
-      if (filtros.precio) {
-        if (filtros.precio === 'gratis') {
-          if (area.precio_noche !== 0) {
-            return false
-          }
-        }
-        if (filtros.precio === 'de-pago') {
-          if (!area.precio_noche || area.precio_noche <= 0) {
-            return false
-          }
-        }
-        if (filtros.precio === 'desconocido') {
-          if (area.precio_noche !== null && area.precio_noche !== undefined) {
-            return false
-          }
-        }
-      }
-
-      // Filtro de características
-      if (filtros.caracteristicas.length > 0) {
-        if (filtros.caracteristicas.includes('verificado') && !area.verificado) {
-          return false
-        }
-        if (filtros.caracteristicas.includes('con_descuento_furgocasa') && !area.con_descuento_furgocasa) {
-          return false
-        }
-      }
-
-      // Filtro de servicios
-      if (filtros.servicios.length > 0) {
-        const serviciosArea = area.servicios as Record<string, boolean>
-        const tieneServicios = filtros.servicios.every(
-          servicio => serviciosArea && serviciosArea[servicio] === true
-        )
-        if (!tieneServicios) return false
-      }
-
-      return true
-    })
-    
-    console.log(`🗺️ MAPA: ${filtradas.length} áreas después de filtros`, { 
-      total: areas.length,
-      filtros: {
-        busqueda: filtros.busqueda,
-        pais: paisFiltroLista,
-        precio: filtros.precio,
-        servicios: filtros.servicios,
-        caracteristicas: filtros.caracteristicas
-      },
-      // DEBUG: Muestra de países en las áreas filtradas
-      paisesEnResultado: [...new Set(filtradas.map(a => a.pais))].slice(0, 10)
-    })
-    
-    return filtradas
-  }, [areas, filtros, paisFiltroLista])
-
-  const handleAreaClick = (area: Area) => {
+  const handleAreaClick = useCallback((area: Area) => {
     setAreaSeleccionada(area)
 
     // Coherencia: si el área seleccionada (p. ej. desde el buscador) no pasa el
@@ -518,12 +447,12 @@ export default function MapaPage() {
       },
     })
     // En móvil se muestra el InfoWindow del mapa, no se abre la lista
-  }
+  }, [paisFiltroLista, setFiltros, setMetadata])
 
   // Sincronizar búsqueda del mapa con el panel lateral
-  const handleMapSearchQuery = (query: string) => {
+  const handleMapSearchQuery = useCallback((query: string) => {
     setFiltros((prev) => ({ ...prev, busqueda: query }))
-  }
+  }, [setFiltros])
 
   // Handler para cambio de país desde búsqueda geográfica
   const handleCountryChange = (newCountry: string, previousCountry: string | null) => {

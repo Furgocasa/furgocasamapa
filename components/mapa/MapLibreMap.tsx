@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { MarkerClusterer, SuperClusterAlgorithm } from '@googlemaps/markerclusterer'
 import Supercluster from 'supercluster'
 import type { Area } from '@/types/database.types'
 import { BuscadorGeografico } from './BuscadorGeografico'
