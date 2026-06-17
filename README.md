@@ -201,6 +201,34 @@ Todos los banners tienen:
 
 ---
 
+## 🤖 Enriquecimiento de Descripciones (IA)
+
+Las descripciones de las áreas se generan/mejoran en lote con OpenAI (GPT-5.5 + búsqueda web) mediante el script `scripts/bulk-enrich.js`. El proceso es **reanudable**: cada área completada se guarda en `scripts/enrich-checkpoint.txt` y se salta en ejecuciones posteriores.
+
+### Estado actual (17 jun 2026)
+
+| Métrica | Valor |
+|---------|-------|
+| Áreas activas totales | **4.962** |
+| Procesadas (checkpoint) | **873** |
+| **Pendientes de enriquecer** | **660** |
+
+> ⏸️ **Proceso pausado**: se agotó el crédito de OpenAI durante la última ejecución. Al recargar la cuenta, **relanzar** el script: gracias al checkpoint continuará automáticamente por las **660 áreas pendientes** sin repetir las ya hechas.
+
+### Cómo relanzar (PowerShell)
+
+```powershell
+# Contar pendientes sin gastar crédito (dry-run)
+$env:NODE_TLS_REJECT_UNAUTHORIZED="0"; $env:BULK_DRYRUN="1"; node scripts/bulk-enrich.js
+
+# Lanzar el enriquecimiento real (reanuda desde el checkpoint)
+$env:NODE_TLS_REJECT_UNAUTHORIZED="0"; node scripts/bulk-enrich.js
+```
+
+Variables opcionales: `BULK_MODE` (`critical` | `all` | `everything`), `BULK_CONCURRENCY` (def 6), `BULK_LIMIT` (0 = todas), `BULK_MODEL` (def `gpt-5.5`), `BULK_DRYRUN` (1 = solo contar).
+
+---
+
 ## 👨‍💻 Autor
 
 **Narciso Pardo Buendía**
