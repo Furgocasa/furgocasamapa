@@ -17,6 +17,7 @@ import {
   getAreasByCountry,
   buscarAreasPorNombre,
   searchAreasAlongRoute,
+  serializeToolResultForModel,
   BusquedaAreasParams,
   AreaResumen
 } from '@/lib/chatbot/functions'
@@ -188,7 +189,7 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
   },
   {
     name: 'search_areas_along_route',
-    description: 'Busca áreas a lo largo de la ruta entre dos ciudades, ordenadas de origen a destino. Usar para "voy de Madrid a Valencia, ¿dónde paro?", "áreas de camino a...", "paradas entre X e Y".',
+    description: 'OBLIGATORIA para cualquier pregunta de ruta/paradas entre dos ciudades (ES/EN/FR/DE/IT). Ej: "voy de Madrid a Valencia", "Driving X to Y, where to stop?", "dónde paro de A a B". NUNCA respondas solo redirigiendo a /ruta: primero llama a esta función y lista paradas concretas.',
     parameters: {
       type: 'object',
       properties: {
@@ -274,6 +275,23 @@ interface EstadisticasBD {
 // ============================================
 // FUNCIONES AUXILIARES
 // ============================================
+
+/**
+ * Detecta si el mensaje pide paradas/áreas en una ruta entre dos ciudades.
+ * Usado para forzar search_areas_along_route en la primera ronda.
+ */
+function detectarPreguntaRuta(mensaje: string): boolean {
+  if (!mensaje || typeof mensaje !== 'string') return false
+  const t = mensaje.trim()
+  // "Driving Madrid to Valencia, where to stop?" / "voy de X a Y" / "de X a Y dónde paro"
+  const patrones = [
+    /\b(?:driving|drive|voy|vamos|ruta|route|trayecto)\b.+\b(?:to|a|hacia|→|->)\b.+/i,
+    /\b(?:from|de)\s+[A-Za-zÀ-ÿ][\wÀ-ÿ\s.'-]{1,40}\s+(?:to|a|hacia)\s+[A-Za-zÀ-ÿ][\wÀ-ÿ\s.'-]{1,40}/i,
+    /\b(?:where to stop|d[oó]nde paro|donde parar|paradas?\s+entre|stop(?:s)?\s+along|áreas?\s+de\s+camino)\b/i,
+    /\b[A-Za-zÀ-ÿ][\wÀ-ÿ.'-]{2,30}\s+(?:to|→|->|–|-)\s+[A-Za-zÀ-ÿ][\wÀ-ÿ.'-]{2,30}.{0,40}\b(?:stop|paro|parar|paradas?)\b/i,
+  ]
+  return patrones.some((re) => re.test(t))
+}
 
 /**
  * Obtiene estadísticas de la base de datos para contexto (con caché)
@@ -582,19 +600,30 @@ REGLAS DE UBICACIÓN:
 
 Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónde están", etc.`
 
-    // Idioma de respuesta: el de la interfaz del usuario
-    if (locale && locale !== 'es') {
+    // Idioma: prioridad al mensaje del usuario; la UI es solo fallback
+    {
       const NOMBRES_IDIOMA: Record<string, string> = {
-        en: 'inglés', fr: 'francés', de: 'alemán', it: 'italiano', pt: 'portugués', nl: 'neerlandés'
+        es: 'español', en: 'inglés', fr: 'francés', de: 'alemán', it: 'italiano', pt: 'portugués', nl: 'neerlandés'
       }
-      const nombreIdioma = NOMBRES_IDIOMA[locale] || locale
+      const nombreUi = NOMBRES_IDIOMA[locale || 'es'] || locale || 'español'
       systemPromptEnriquecido += `\n\n═══════════════════════════════════════
-🌍 IDIOMA DE RESPUESTA
+🌍 IDIOMA DE RESPUESTA (PRIORIDAD)
 ═══════════════════════════════════════
-El usuario usa la web en ${nombreIdioma}. RESPONDE SIEMPRE en ${nombreIdioma},
-independientemente del idioma de los datos de las áreas (que están en español).
-Si el usuario te escribe en otro idioma, responde en el idioma en que te escriba.`
+1) PRIORIDAD MÁXIMA: responde en el idioma del ÚLTIMO mensaje del usuario
+   (si escribe en español → español; si en inglés → inglés; etc.), aunque la web esté en otro idioma.
+2) Solo si el mensaje es ambiguo/emoji/sin texto claro, usa el idioma de la interfaz (${nombreUi}).
+3) Los datos de áreas están en español: tradúcelos al idioma de la respuesta.
+4) NUNCA mezcles idiomas en la misma respuesta.`
     }
+
+    systemPromptEnriquecido += `\n\n═══════════════════════════════════════
+🛣️ RUTAS Y FORMATO (RECORDATORIO)
+═══════════════════════════════════════
+- Si el usuario pregunta paradas/ruta entre dos ciudades → llama SIEMPRE a search_areas_along_route.
+- /ruta es complemento OPCIONAL después de listar paradas, NUNCA la única respuesta.
+- Servicios: SOLO los que estén en true (ej: "Agua, Electricidad"). NUNCA "[agua: no, ...]".
+- Valoración: "⭐ 4.7/5 (128 valoraciones)" si hay nº de reseñas. No digas "5 estrellas" sin volumen.
+- Links: solo /area/{slug}. Prohibido Google Maps e imágenes markdown.`
     
     // 5. PREPARAR MENSAJES COMPLETOS
     const fullMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
@@ -640,15 +669,30 @@ Si el usuario te escribe en otro idioma, responde en el idioma en que te escriba
     const conversation: OpenAI.Chat.ChatCompletionMessageParam[] = [...fullMessages]
     let finalResponse: string | null = null
 
+    const ultimoMensajeUsuario = [...messages]
+      .reverse()
+      .find((m: any) => m.role === 'user')?.content || ''
+    const parecePreguntaRuta = detectarPreguntaRuta(ultimoMensajeUsuario)
+
     while (rounds < MAX_TOOL_ROUNDS) {
       rounds++
       console.log(`🔮 Llamando a OpenAI (ronda ${rounds})...`)
+
+      // Primera ronda + pregunta de ruta → forzar search_areas_along_route
+      const toolChoice: OpenAI.Chat.ChatCompletionToolChoiceOption =
+        rounds === 1 && parecePreguntaRuta && !firstFunctionName
+          ? { type: 'function', function: { name: 'search_areas_along_route' } }
+          : 'auto'
+
+      if (toolChoice !== 'auto') {
+        console.log('🛣️ Forzando search_areas_along_route por detección de ruta')
+      }
 
       const completion = await openai.chat.completions.create({
         model: config.modelo,
         messages: conversation,
         tools,
-        tool_choice: 'auto',
+        tool_choice: toolChoice,
         temperature: config.temperature,
         ...buildTokensParam(config.max_tokens)
       })
@@ -733,7 +777,7 @@ Si el usuario te escribe en otro idioma, responde en el idioma en que te escriba
         conversation.push({
           role: 'tool',
           tool_call_id: toolCall.id,
-          content: JSON.stringify(functionResult)
+          content: serializeToolResultForModel(functionResult)
         })
       }
     }

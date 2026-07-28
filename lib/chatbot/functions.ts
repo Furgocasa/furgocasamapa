@@ -65,9 +65,28 @@ const RATING_PRIOR_MEAN = 4.2
 /** Cuántas reseñas “imaginarias” aporta el prior (más = más exigente con volumen). */
 const RATING_PRIOR_WEIGHT = 15
 
-/** Nombres que no son áreas de pernocta (alquileres, talleres…). */
+/** Mínimo de reseñas para considerar un área en rankings "mejores/top". */
+const MIN_REVIEWS_TOP = 10
+/** Fallback si no hay suficientes candidatas con MIN_REVIEWS_TOP. */
+const MIN_REVIEWS_FALLBACK = 3
+
+/** Nombres que no son áreas de pernocta (alquileres, talleres, camperización…). */
 const NOMBRE_BASURA_RE =
-  /\b(rent|rental|alquiler|hire|vermietung|location de|autovermietung|car hire|campervan rent|rent a|noleggio)\b/i
+  /\b(rent|rental|alquiler|hire|vermietung|location de|autovermietung|car hire|campervan rent|rent a|noleggio|verhuur|camperizaci[oó]n|taller de|workshop|go caravan|survan camper|autocaravana rent)\b/i
+
+const SERVICIOS_NOMBRES: Record<string, string> = {
+  agua: 'Agua',
+  electricidad: 'Electricidad',
+  wifi: 'WiFi',
+  duchas: 'Duchas',
+  wc: 'WC',
+  zona_mascotas: 'Mascotas',
+  vaciado_aguas_grises: 'Vaciado grises',
+  vaciado_aguas_negras: 'Vaciado negras',
+  lavanderia: 'Lavandería',
+  restaurante: 'Restaurante',
+  supermercado: 'Supermercado',
+}
 
 /**
  * Score bayesiano: combina nota y nº de reseñas.
@@ -88,6 +107,15 @@ function contarServicios(servicios: Record<string, boolean> | null | undefined):
   return Object.values(servicios).filter((v) => v === true).length
 }
 
+/** Lista legible de servicios en true (nunca muestra false ni el objeto crudo). */
+export function formatServiciosLegibles(servicios: Record<string, boolean> | null | undefined): string {
+  if (!servicios || typeof servicios !== 'object') return ''
+  return Object.entries(servicios)
+    .filter(([, value]) => value === true)
+    .map(([key]) => SERVICIOS_NOMBRES[key] || key.replace(/_/g, ' '))
+    .join(', ')
+}
+
 function esNombreBasura(nombre: string | null | undefined): boolean {
   return !nombre || NOMBRE_BASURA_RE.test(nombre)
 }
@@ -97,22 +125,82 @@ function esNombreBasura(nombre: string | null | undefined): boolean {
  * 1) score bayesiano (rating × volumen)
  * 2) nº de servicios
  * 3) tiene foto
- * Filtra alquileres / nombres basura.
+ * Filtra alquileres / nombres basura y prioriza volumen mínimo de reseñas.
  */
 export function rankMejoresAreas<T extends AreaResumen>(areas: T[], limit: number): T[] {
-  return [...areas]
-    .filter((a) => !esNombreBasura(a.nombre))
+  const limpias = [...areas].filter((a) => !esNombreBasura(a.nombre))
+  const conVolumen = limpias.filter((a) => (a.google_ratings_total || 0) >= MIN_REVIEWS_TOP)
+  const conVolumenMin = limpias.filter((a) => (a.google_ratings_total || 0) >= MIN_REVIEWS_FALLBACK)
+  const pool =
+    conVolumen.length >= Math.min(limit, 5)
+      ? conVolumen
+      : conVolumenMin.length >= Math.min(3, limit)
+        ? conVolumenMin
+        : limpias
+
+  return pool
     .map((a) => {
       const bayes = scoreValoracionPonderada(a.google_rating, a.google_ratings_total)
       const serv = contarServicios(a.servicios)
       const foto = a.foto_principal || (Array.isArray(a.fotos_urls) && a.fotos_urls[0]) ? 1 : 0
       // Empuje suave si hay volumen real de reseñas
-      const volumenBonus = Math.min(0.15, Math.log10(1 + (a.google_ratings_total || 0)) * 0.05)
+      const volumenBonus = Math.min(0.25, Math.log10(1 + (a.google_ratings_total || 0)) * 0.08)
       return { area: a, score: bayes + serv * 0.03 + foto * 0.08 + volumenBonus }
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map(({ area }) => area)
+}
+
+/**
+ * Serializa el resultado de una tool para el modelo:
+ * texto ya formateado (servicios legibles, slug interno) + campos clave.
+ * Evita que el LLM invente formatos tipo "[agua: no, electricidad: sí]".
+ */
+export function serializeToolResultForModel(result: any): string {
+  if (result == null) return JSON.stringify({ error: 'Sin resultado' })
+  if (result.error) return JSON.stringify(result)
+
+  const mapArea = (a: any) => ({
+    id: a.id,
+    slug: a.slug,
+    nombre: a.nombre,
+    resumen: formatAreaParaChat(a),
+    google_rating: a.google_rating ?? null,
+    google_ratings_total: a.google_ratings_total ?? null,
+    precio_noche: a.precio_noche ?? null,
+    distancia_km: a.distancia_km,
+    desvio_km: a.desvio_km,
+  })
+
+  if (Array.isArray(result)) {
+    return JSON.stringify({
+      total: result.length,
+      instrucciones:
+        'Usa el campo "resumen" de cada área tal cual (ya incluye servicios solo en true, rating con Nº de valoraciones y enlace /area/{slug}). No inventes servicios ni pegues Google Maps / imágenes.',
+      areas: result.map(mapArea),
+    })
+  }
+
+  if (Array.isArray(result.areas)) {
+    return JSON.stringify({
+      total: result.areas.length,
+      instrucciones:
+        'Usa el campo "resumen" de cada área tal cual. Menciona desvío_km si existe. Tras listar paradas puedes mencionar /ruta como complemento, nunca como única respuesta. Enlace interno: /area/{slug}.',
+      areas: result.areas.map(mapArea),
+    })
+  }
+
+  // Detalle de un área concreto
+  if (result.id && result.nombre) {
+    return JSON.stringify({
+      ...result,
+      servicios_legibles: formatServiciosLegibles(result.servicios),
+      resumen: formatAreaParaChat(result),
+    })
+  }
+
+  return JSON.stringify(result)
 }
 
 const AREA_SELECT_RESUMEN = `
@@ -359,16 +447,31 @@ export async function getAreasByCountry(pais: string, limit: number = 10): Promi
   console.log('🌍 [getAreasByCountry] Buscando en:', pais, `(límite: ${limit})`)
   
   try {
-    const { data, error } = await queryAreasResumen((select) =>
+    let { data, error } = await queryAreasResumen((select) =>
       (supabase as any).from('areas')
         .select(select)
         .eq('activo', true)
         .ilike('pais', `%${pais}%`)
         .not('google_rating', 'is', null)
         .gte('google_rating', 3.5)
-        .order('google_rating', { ascending: false, nullsFirst: false })
-        .limit(Math.max(80, limit * 8))
+        .gte('google_ratings_total', MIN_REVIEWS_FALLBACK)
+        .order('google_ratings_total', { ascending: false, nullsFirst: false })
+        .limit(Math.max(120, limit * 12))
     )
+
+    // Fallback si la columna/filtro de reseñas no está disponible
+    if (error && /google_ratings_total/i.test(error.message || '')) {
+      ;({ data, error } = await queryAreasResumen((select) =>
+        (supabase as any).from('areas')
+          .select(select)
+          .eq('activo', true)
+          .ilike('pais', `%${pais}%`)
+          .not('google_rating', 'is', null)
+          .gte('google_rating', 3.5)
+          .order('google_rating', { ascending: false, nullsFirst: false })
+          .limit(Math.max(120, limit * 12))
+      ))
+    }
     
     if (error) {
       console.error('❌ Error buscando por país:', error)
@@ -404,8 +507,9 @@ export async function getAreasPopulares(limit: number = 10): Promise<AreaResumen
         .eq('activo', true)
         .not('google_rating', 'is', null)
         .gte('google_rating', 3.5)
-        .order('google_rating', { ascending: false })
-        .limit(Math.max(80, limit * 8))
+        .gte('google_ratings_total', MIN_REVIEWS_FALLBACK)
+        .order('google_ratings_total', { ascending: false, nullsFirst: false })
+        .limit(Math.max(120, limit * 12))
     )
     
     if (error) {
@@ -599,23 +703,9 @@ export function formatAreaParaChat(area: AreaResumen): string {
     texto += `💰 Gratis\n`
   }
   
-  // Servicios principales
-  const serviciosDisponibles = Object.entries(area.servicios || {})
-    .filter(([_, value]) => value === true)
-    .map(([key, _]) => {
-      const nombres: Record<string, string> = {
-        agua: 'Agua',
-        electricidad: 'Electricidad',
-        wifi: 'WiFi',
-        duchas: 'Duchas',
-        wc: 'WC',
-        zona_mascotas: 'Mascotas'
-      }
-      return nombres[key] || key
-    })
-  
-  if (serviciosDisponibles.length > 0) {
-    texto += `✨ Servicios: ${serviciosDisponibles.join(', ')}\n`
+  const serviciosDisponibles = formatServiciosLegibles(area.servicios)
+  if (serviciosDisponibles) {
+    texto += `✨ Servicios: ${serviciosDisponibles}\n`
   }
   
   if (area.google_rating && area.google_rating > 0) {
