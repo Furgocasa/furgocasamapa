@@ -186,6 +186,74 @@ const REGIONES: Region[] = [
     bounds: { north: 26.0, south: 24.0, east: -98.9, west: -101.3 },
     gridSize: 0.8,
   },
+  // Fase 4 — norte, altiplano, golfo sur
+  {
+    id: "chihuahua",
+    nombre: "Chihuahua",
+    // Este acotado para no chupar Big Bend / West Texas
+    bounds: { north: 31.7, south: 25.5, east: -104.05, west: -109.1 },
+    gridSize: 1.4,
+  },
+  {
+    id: "coahuila",
+    nombre: "Coahuila",
+    bounds: { north: 29.3, south: 24.5, east: -99.8, west: -103.4 },
+    gridSize: 1.3,
+  },
+  {
+    id: "tamaulipas",
+    nombre: "Tamaulipas",
+    bounds: { north: 25.9, south: 22.2, east: -97.15, west: -100.15 },
+    gridSize: 1.1,
+  },
+  {
+    id: "durango",
+    nombre: "Durango",
+    bounds: { north: 26.9, south: 22.3, east: -102.4, west: -107.2 },
+    gridSize: 1.3,
+  },
+  {
+    id: "zacatecas",
+    nombre: "Zacatecas",
+    bounds: { north: 25.15, south: 21.0, east: -100.7, west: -104.4 },
+    gridSize: 1.2,
+  },
+  {
+    id: "san_luis",
+    nombre: "San Luis Potosí",
+    bounds: { north: 24.5, south: 21.1, east: -98.3, west: -102.3 },
+    gridSize: 1.1,
+  },
+  {
+    id: "aguascalientes",
+    nombre: "Aguascalientes",
+    bounds: { north: 22.3, south: 21.6, east: -101.85, west: -102.9 },
+    gridSize: 0.5,
+  },
+  {
+    id: "hidalgo",
+    nombre: "Hidalgo",
+    bounds: { north: 21.4, south: 19.6, east: -97.95, west: -99.9 },
+    gridSize: 0.8,
+  },
+  {
+    id: "tlaxcala",
+    nombre: "Tlaxcala",
+    bounds: { north: 19.75, south: 19.05, east: -97.6, west: -98.7 },
+    gridSize: 0.5,
+  },
+  {
+    id: "campeche",
+    nombre: "Campeche",
+    bounds: { north: 20.85, south: 17.8, east: -89.1, west: -92.5 },
+    gridSize: 1.1,
+  },
+  {
+    id: "tabasco",
+    nombre: "Tabasco",
+    bounds: { north: 18.65, south: 17.25, east: -91.0, west: -94.15 },
+    gridSize: 0.9,
+  },
 ];
 
 const PHASE1 = ["baja", "jalisco"];
@@ -202,6 +270,19 @@ const PHASE3 = [
   "puebla",
   "veracruz",
   "nuevo_leon",
+];
+const PHASE4 = [
+  "chihuahua",
+  "coahuila",
+  "tamaulipas",
+  "durango",
+  "zacatecas",
+  "san_luis",
+  "aguascalientes",
+  "hidalgo",
+  "tlaxcala",
+  "campeche",
+  "tabasco",
 ];
 
 /**
@@ -221,11 +302,20 @@ function isInMexico(lat: number, lng: number): boolean {
   if (lat > 31.7 && lng > -106.7 && lng < -103.0) return false;
   // Texas / frontera Laredo–Brownsville (sur ~25.8–26.0)
   if (lat > 25.95 && lng > -100.6 && lng < -97.0) return false;
+  // El Paso / Juárez: rechaza lado US (lat>31.75 oeste de -106)
+  if (lat > 31.75 && lng > -106.7 && lng < -106.0) return false;
+  // West Texas Big Bend / Marathon / Fort Davis (norte del Río Bravo)
+  // Ojinaga MX ~29.57,-104.41 se mantiene; el parque Big Bend US ~29.25,-103.3 se corta
+  if (lat > 29.15 && lat < 30.6 && lng > -104.0 && lng < -102.7) return false;
+  if (lat > 30.2 && lat < 31.6 && lng > -104.6 && lng < -103.2) return false; // Alpine/Fort Davis
   return true;
 }
 
 const US_NAME_RE =
-  /\b(arizona|new mexico|california|yuma|san diego|tucson|koa journey|lordsburg|casa grande)\b/i;
+  /\b(arizona|new mexico|california|texas|yuma|san diego|tucson|koa journey|lordsburg|casa grande|el paso)\b/i;
+
+const NOISE_NAME_RE =
+  /\b(estacionamiento|parking|mirador|plaza comercial|centro comercial|mall|aeropuerto|hospital)\b/i;
 
 /** Keywords locales MX (no jerga europea) */
 const TERMINOS_MX = [
@@ -282,6 +372,10 @@ function createGrid(
 
 function isRelevant(name: string, types: string[]): boolean {
   if (US_NAME_RE.test(name)) return false;
+  // Ruido: parkings/miradores sin señal RV/camping
+  if (NOISE_NAME_RE.test(name) && !RELEVANCE_RE.test(name) && !types.includes("rv_park") && !types.includes("campground")) {
+    return false;
+  }
   if (types.includes("rv_park")) return true;
   if (types.includes("campground") && RELEVANCE_RE.test(name)) return true;
   return RELEVANCE_RE.test(name);
@@ -528,6 +622,8 @@ async function main() {
     regiones = REGIONES.filter((r) => PHASE2.includes(r.id));
   } else if (phaseArg === "3") {
     regiones = REGIONES.filter((r) => PHASE3.includes(r.id));
+  } else if (phaseArg === "4") {
+    regiones = REGIONES.filter((r) => PHASE4.includes(r.id));
   } else if (phaseArg === "all") {
     regiones = REGIONES;
   }

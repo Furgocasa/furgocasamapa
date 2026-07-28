@@ -33,6 +33,8 @@
     "import:mexico:from-report": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-mexico-pilot.ts -- --from-report --import",
     "import:mexico:phase2": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-mexico-pilot.ts -- --phase=2 --import",
     "import:mexico:phase3": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-mexico-pilot.ts -- --phase=3 --import",
+    "import:mexico:phase4": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-mexico-pilot.ts -- --phase=4 --import",
+    "cleanup:mexico:us": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/cleanup-mexico-us-spill.ts",
     "import:empresas": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-empresas-espana.ts",
     "import:empresas:dry": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-empresas-espana.ts -- --dry",
     "monitor:import": "ts-node --project tsconfig.scripts.json scripts/monitor-import-progress.ts",
