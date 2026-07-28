@@ -19,7 +19,8 @@ const withPWA = require('next-pwa')({
       // OFFLINE: dataset de áreas del mapa. NetworkFirst = datos frescos con
       // cobertura, y el último dataset descargado cuando no la hay.
       // DEBE ir ANTES de la regla genérica /api/* NetworkOnly.
-      urlPattern: /\/api\/areas$/i,
+      // Incluye ?lang=xx (i18n). Debe ir ANTES de /api/* NetworkOnly.
+      urlPattern: /\/api\/areas(?:\?.*)?$/i,
       handler: 'NetworkFirst',
       options: {
         cacheName: 'areas-data',

@@ -13,6 +13,7 @@
 | 4 | Modo offline PWA | ✅ Hecho | Fidelidad |
 | 5 | MapLibre por defecto | ✅ Hecho | Coste/mantenimiento |
 | 6 | Higiene técnica | ✅ Hecho (fase 1) | Deuda técnica |
+| 7 | Tío Viajero IA renovado | ✅ Hecho | Conversión/UX |
 
 ---
 
@@ -39,7 +40,7 @@ tabla nueva; cuando 2+ usuarios coinciden en un dato, es candidato a aplicarse.
 datos. Es el único activo que la competencia no puede copiar.
 
 **Cambios**:
-- [x] Migración SQL `supabase/migrations/20260728_area_contribuciones.sql` (con RLS, anti-spam 1/día) — **ejecutar en Supabase SQL Editor**
+- [x] Migración SQL `supabase/migrations/20260728_area_contribuciones.sql` (con RLS, anti-spam 1/día) ✅ ejecutada
 - [x] Componente `components/area/ConfirmarDatosArea.tsx` (inserción directa con RLS, sin API extra)
 - [x] Integrado en la página de detalle de área, bajo los servicios
 - [ ] (Fase 2, pendiente) Panel admin para revisar/aplicar contribuciones y aplicación automática con 2+ coincidencias
@@ -54,8 +55,8 @@ datos. Es el único activo que la competencia no puede copiar.
 **Por qué**: el grueso del mercado europeo de autocaravanas no habla español.
 
 **Cambios**:
-- [x] Migración SQL `supabase/migrations/20260728_areas_traducciones.sql`
-- [x] Migración SQL `supabase/migrations/20260728_areas_traducciones_campos.sql` — **ejecutar en Supabase SQL Editor**
+- [x] Migración SQL `supabase/migrations/20260728_areas_traducciones.sql` ✅ ejecutada
+- [x] Migración SQL `supabase/migrations/20260728_areas_traducciones_campos.sql` ✅ ejecutada
 - [x] Script `npm run translate` (dry-run por defecto; `TRAD_RUN=1` para traducir; JSON multi-campo; reanudable)
 - [x] `lib/i18n` + selector en Navbar + `/api/areas?lang=` + ficha de área
 - [ ] (Backlog) Rutas SEO i18n en Next (`/fr/aire-camping-car-...`)
@@ -70,7 +71,7 @@ tiles del mapa, para que la app funcione sin cobertura.
 **Por qué**: el usuario nos necesita más justo cuando no tiene cobertura.
 
 **Cambios**:
-- [x] `next.config.js`: NetworkFirst para `/api/areas` (última descarga disponible sin cobertura, 1 semana)
+- [x] `next.config.js`: NetworkFirst para `/api/areas` (incluye `?lang=`, 1 semana)
 - [x] `next.config.js`: CacheFirst para tiles MapTiler y OpenStreetMap (30 días)
 
 ---
@@ -98,24 +99,53 @@ de BD falla, mejor caer en el gratuito.
 **Cambios**:
 - [x] Eliminado `app/(public)/mapa/page.tsx.backup`
 - [x] Verificación sintáctica de todos los archivos tocados
+- [x] Eliminado fallback `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY` en scripts
 - [ ] ⚠️ PENDIENTE (manual): mover `usuarios-nuevos.csv/json/xlsx` (datos personales) fuera de la carpeta del proyecto
 - [ ] (Backlog) Trocear page.tsx del mapa, tipar `any`, tests de filtros
 
 ---
 
+## Mejora 7 — Tío Viajero IA renovado (28 jul 2026)
+
+**Motor** (`app/api/chatbot/route.ts` + `lib/chatbot/functions.ts`):
+- [x] Migrado de la API obsoleta `functions` a la moderna `tools` con **bucle de hasta 4 rondas**: puede encadenar y combinar varias búsquedas en un mensaje ("compara áreas gratis en Granada y Sevilla")
+- [x] Responde en el **idioma de la interfaz** del usuario (es/en/fr/de/it)
+- [x] Nueva función `get_area_by_name` ("háblame del área de Ronda")
+- [x] Nueva función `search_areas_along_route` (paradas entre dos ciudades, geocodificación Nominatim GRATIS, ordenadas origen→destino)
+- [x] Nuevo filtro `valoracion_minima` en las búsquedas
+- [x] Deduplicación de áreas entre búsquedas para las tarjetas
+
+**Widget** (`components/chatbot/ChatbotWidget.tsx`):
+- [x] **Abierto sin login** (rate limit por IP ya existente; con cuenta se guarda el historial)
+- [x] **Tarjetas de áreas** con foto, precio, valoración ★ y distancia/desvío, enlazando a `/area/...` (antes: texto plano)
+- [x] **Mensajes prefijados** (chips) al iniciar conversación, localizados en 5 idiomas
+- [x] Bienvenida, placeholder y textos localizados según idioma de la web
+
+**Pendiente (fase 2)**: streaming de respuestas (SSE) para percepción de velocidad.
+
+**Auditoría de respuestas** (28 jul 2026):
+- [x] Migración `20260728_chatbot_respuestas_log.sql` ✅ ejecutada
+- [x] TODAS las respuestas (también de anónimos) se registran con pregunta, respuesta, búsquedas ejecutadas, tokens, modelo y duración
+- [x] Página `/admin/chatbot-respuestas`: filtro pendientes/revisadas, detalle completo, marcar revisada con nota + enlace en panel admin
+
+**Agente revisor IA** (28 jul 2026):
+- [x] Código y script listos (`npm run evaluar:chatbot`)
+- [ ] Migración `20260728_chatbot_evaluacion_ia.sql` — **PENDIENTE de ejecutar en Supabase SQL Editor**
+- [x] `/admin/chatbot-respuestas`: filtros por veredicto IA, badges y bloque con motivo/sugerencia
+- Flujo de afinado: ejecutar el revisor periódicamente → filtrar "incorrectas" → aplicar las sugerencias al system prompt del chatbot (editable en /admin) → repetir y ver si baja el % de incorrectas
+
+---
+
 ## Pasos manuales pendientes (Narciso)
 
-1. **Supabase SQL Editor**: ejecutar las migraciones nuevas:
-   - `supabase/migrations/20260728_area_contribuciones.sql`
-   - `supabase/migrations/20260728_areas_traducciones.sql`
-   - `supabase/migrations/20260728_areas_traducciones_campos.sql`
+1. **Supabase SQL Editor**: ejecutar `supabase/migrations/20260728_chatbot_evaluacion_ia.sql` (única migración pendiente).
 2. **Vercel**: borrar variables `NEXT_PUBLIC_OPENAI_API_KEY_ADMIN`,
    `NEXT_PUBLIC_SERPAPI_KEY_ADMIN` y `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY`
    si existen, y rotar las claves de OpenAI y SerpAPI.
-3. **Deploy**: `git add . && git commit -m "feat: mejoras plan v5" && git push origin main`
-4. Tras recargar crédito OpenAI: `npm run enrich:textos` (660 áreas pendientes)
+3. Tras recargar crédito OpenAI: `npm run enrich:textos` (660 áreas pendientes)
    y después `npm run translate` con `TRAD_RUN=1`.
-5. Mover `usuarios-nuevos.*` fuera del proyecto.
+4. Mover `usuarios-nuevos.*` fuera del proyecto.
+5. Tras ejecutar la migración del revisor: `EVAL_RUN=1 npm run evaluar:chatbot`.
 
 ---
 
@@ -125,3 +155,6 @@ de BD falla, mejor caer en el gratuito.
   reducción de costes Google en pipeline, caché CDN de áreas, auditoría de
   datos (`npm run db:audit`), enriquecimiento estructurado
   (`npm run enrich:datos`), mejoras estéticas de /mapa.
+- **28 jul 2026 (tarde)**: Tío Viajero renovado (tools + bucle, sin login,
+  tarjetas, ruta Nominatim), auditoría de respuestas, agente revisor IA
+  (código listo; migración de columnas pendiente), enlace admin, PWA con `?lang=`.

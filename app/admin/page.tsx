@@ -18,7 +18,8 @@ import {
   ExclamationTriangleIcon,
   TruckIcon,
   TableCellsIcon,
-  MapIcon
+  MapIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline'
 
 export default function AdminDashboardPage() {
@@ -107,6 +108,13 @@ export default function AdminDashboardPage() {
       icon: <CogIcon className="w-12 h-12" />,
       href: '/admin/configuracion',
       color: 'from-gray-600 to-slate-700'
+    },
+    {
+      title: 'Respuestas Tío Viajero',
+      description: 'Revisa y evalúa respuestas del chatbot',
+      icon: <ChatBubbleLeftRightIcon className="w-12 h-12" />,
+      href: '/admin/chatbot-respuestas',
+      color: 'from-sky-500 to-indigo-600'
     },
     {
       title: 'Reportes de Accidentes',

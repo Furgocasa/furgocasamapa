@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { formatErrorForUser } from '@/lib/chatbot/errors'
 import { track } from '@/lib/analytics/track'
+import { useLanguage } from '@/lib/i18n'
 
 interface Message {
   rol: 'user' | 'assistant'
@@ -12,7 +13,84 @@ interface Message {
   areas?: any[]
 }
 
+// Textos del widget y mensajes prefijados por idioma
+const TEXTOS: Record<string, {
+  bienvenida: string
+  sugerencias: string[]
+  placeholder: string
+  enviar: string
+  ubicacionDetectada: string
+}> = {
+  es: {
+    bienvenida: '¡Hola! 👋 Soy el Tío Viajero IA. Pregúntame por áreas, servicios, precios o paradas de ruta. ¿Por dónde empezamos?',
+    sugerencias: [
+      '🆓 Áreas gratis cerca de mí',
+      '⭐ Las mejores áreas de España',
+      '🛣️ Voy de Madrid a Valencia, ¿dónde paro?',
+      '💧 Áreas con agua y electricidad',
+      '🐕 Áreas que admiten mascotas'
+    ],
+    placeholder: 'Pregunta al Tío Viajero...',
+    enviar: 'Enviar',
+    ubicacionDetectada: '📍 Ubicación detectada · Las búsquedas serán más precisas'
+  },
+  en: {
+    bienvenida: "Hi! 👋 I'm Tío Viajero AI. Ask me about motorhome areas, services, prices or route stops. Where shall we start?",
+    sugerencias: [
+      '🆓 Free areas near me',
+      '⭐ Best areas in Spain',
+      '🛣️ Driving Madrid to Valencia, where to stop?',
+      '💧 Areas with water and electricity',
+      '🐕 Pet-friendly areas'
+    ],
+    placeholder: 'Ask Tío Viajero...',
+    enviar: 'Send',
+    ubicacionDetectada: '📍 Location detected · Searches will be more accurate'
+  },
+  fr: {
+    bienvenida: "Salut ! 👋 Je suis Tío Viajero IA. Demandez-moi des aires, services, prix ou étapes d'itinéraire. On commence ?",
+    sugerencias: [
+      '🆓 Aires gratuites près de moi',
+      '⭐ Meilleures aires en Espagne',
+      '🛣️ De Madrid à Valence, où m\'arrêter ?',
+      '💧 Aires avec eau et électricité',
+      '🐕 Aires acceptant les animaux'
+    ],
+    placeholder: 'Demandez à Tío Viajero...',
+    enviar: 'Envoyer',
+    ubicacionDetectada: '📍 Position détectée · Recherches plus précises'
+  },
+  de: {
+    bienvenida: 'Hallo! 👋 Ich bin Tío Viajero KI. Frag mich nach Stellplätzen, Services, Preisen oder Routenstopps. Womit fangen wir an?',
+    sugerencias: [
+      '🆓 Kostenlose Stellplätze in meiner Nähe',
+      '⭐ Beste Stellplätze in Spanien',
+      '🛣️ Von Madrid nach Valencia — wo halten?',
+      '💧 Stellplätze mit Wasser und Strom',
+      '🐕 Haustierfreundliche Stellplätze'
+    ],
+    placeholder: 'Frag Tío Viajero...',
+    enviar: 'Senden',
+    ubicacionDetectada: '📍 Standort erkannt · Genauere Suche'
+  },
+  it: {
+    bienvenida: 'Ciao! 👋 Sono Tío Viajero IA. Chiedimi aree, servizi, prezzi o soste lungo il percorso. Da dove iniziamo?',
+    sugerencias: [
+      '🆓 Aree gratuite vicino a me',
+      '⭐ Le migliori aree in Spagna',
+      '🛣️ Da Madrid a Valencia, dove fermarmi?',
+      '💧 Aree con acqua ed elettricità',
+      '🐕 Aree che accettano animali'
+    ],
+    placeholder: 'Chiedi a Tío Viajero...',
+    enviar: 'Invia',
+    ubicacionDetectada: '📍 Posizione rilevata · Ricerche più precise'
+  }
+}
+
 export default function ChatbotWidget() {
+  const { locale } = useLanguage()
+  const txt = TEXTOS[locale] || TEXTOS.es
   const [isOpen, setIsOpen] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
@@ -88,9 +166,9 @@ export default function ChatbotWidget() {
     );
   }
   
-  // Obtener geolocalización
+  // Obtener geolocalización (también para usuarios sin cuenta)
   useEffect(() => {
-    if (isOpen && user && !ubicacion) {
+    if (isOpen && !ubicacion) {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
@@ -106,28 +184,26 @@ export default function ChatbotWidget() {
         )
       }
     }
-  }, [isOpen, user, ubicacion])
-  
-  // Iniciar conversación (ahora lo hace la API)
+  }, [isOpen, ubicacion])
+
+  // Iniciar conversación (abierta a todos, con o sin cuenta)
   const iniciarConversacion = async () => {
-    if (!user) return
-    
-    // Mensaje de bienvenida inmediato
+    // Mensaje de bienvenida inmediato (en el idioma del usuario)
     setMessages([{
       rol: 'assistant',
-      contenido: '¡Hola! 👋 Soy el Tío Viajero IA, tu compañero de aventuras en autocaravana. ¿En qué puedo ayudarte hoy?\n\nPuedo ayudarte a:\n🔍 Encontrar áreas para tu autocaravana\n📍 Recomendar las mejores ubicaciones\n💡 Responder dudas sobre servicios y precios\n🌍 Buscar áreas por país o región\n🚐 Consejos para tu viaje\n\n💡 **Tip:** Si quieres planificar una ruta completa, usa nuestra herramienta 🗺️ **Planificador de Rutas** en /ruta\n\n¡Pregúntame lo que necesites! Estoy aquí para ayudarte. 🚐✨'
+      contenido: txt.bienvenida
     }])
-    
+
     // La conversación se creará en el API al enviar el primer mensaje
   }
-  
+
   // Abrir chat
   const handleOpen = () => {
     setIsOpen(true)
     setIsMinimized(false)
     setIsHidden(false)
     track('chatbot_open', { event_data: { autenticado: Boolean(user) } })
-    if (user && !conversacionId) {
+    if (messages.length === 0) {
       iniciarConversacion()
     }
   }
@@ -154,11 +230,12 @@ export default function ChatbotWidget() {
     setIsHidden(false)
   }
   
-  // Enviar mensaje
-  const enviarMensaje = async () => {
-    if (!input.trim() || sending || !user) return
-    
-    const userMessage: Message = { rol: 'user', contenido: input }
+  // Enviar mensaje (texto opcional para los mensajes prefijados)
+  const enviarMensaje = async (textoPrefijado?: string) => {
+    const texto = (textoPrefijado ?? input).trim()
+    if (!texto || sending) return
+
+    const userMessage: Message = { rol: 'user', contenido: texto }
     setMessages(prev => [...prev, userMessage])
     setInput('')
     setSending(true)
@@ -182,7 +259,8 @@ export default function ChatbotWidget() {
           })),
           conversacionId,
           ubicacionUsuario: ubicacion,
-          userId: user.id // Enviar user ID para que la API cree la conversación
+          userId: user?.id || undefined, // Con cuenta: se guarda el historial
+          locale // La IA responde en el idioma de la interfaz
         })
       })
       
@@ -223,97 +301,10 @@ export default function ChatbotWidget() {
   if (loading) {
     return null
   }
-  
-  // MODAL DE BLOQUEO (si no está autenticado)
-  if (isOpen && !user) {
-    return (
-      <>
-        {/* Botón difuminado */}
-        <button
-          onClick={() => setIsOpen(false)}
-          className="fixed bottom-24 right-6 md:bottom-6 bg-gradient-to-r from-blue-600 to-gray-700 rounded-full p-2 shadow-2xl z-50 blur-sm"
-        >
-          <img 
-            src="/tio-viajero-avatar.png" 
-            alt="Tío Viajero IA" 
-            className="w-14 h-14 object-cover rounded-full border-2 border-white"
-          />
-        </button>
-        
-        {/* Modal de bloqueo */}
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="relative max-w-md w-full mx-4 bg-white rounded-2xl shadow-2xl p-8 animate-fade-in">
-            {/* Botón cerrar */}
-            <button
-              onClick={() => setIsOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            
-            {/* Avatar Tío Viajero */}
-            <div className="mx-auto w-24 h-24 mb-4">
-              <img 
-                src="/tio-viajero-avatar.png" 
-                alt="Tío Viajero IA" 
-                className="w-full h-full object-cover rounded-full border-4 border-blue-500 shadow-lg"
-              />
-            </div>
 
-            {/* Título */}
-            <h2 className="text-2xl font-bold text-gray-900 text-center mb-4">
-              Tío Viajero IA Bloqueado
-            </h2>
+  // El Tío Viajero es PÚBLICO: sin cuenta también funciona (rate limit por IP).
+  // Con cuenta, además, se guarda el historial de conversaciones.
 
-            {/* Descripción */}
-            <p className="text-gray-600 text-center mb-6 leading-relaxed">
-              Para usar el <span className="font-semibold text-purple-600">Asistente Inteligente</span> con IA, 
-              una de nuestras herramientas más avanzadas, necesitas registrarte e iniciar sesión.
-            </p>
-
-            {/* Beneficios */}
-            <div className="bg-blue-50 rounded-lg p-4 mb-6 space-y-2">
-              <p className="text-sm font-semibold text-blue-900 mb-2">✨ Con el Tío Viajero IA podrás:</p>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>🤖 Búsqueda inteligente con IA</li>
-                <li>💬 Conversación natural en español</li>
-                <li>🎯 Recomendaciones personalizadas</li>
-                <li>📍 Búsqueda por ubicación GPS</li>
-                <li>⚡ Respuestas instantáneas 24/7</li>
-              </ul>
-            </div>
-
-            {/* Botones */}
-            <div className="space-y-3">
-              <Link
-                href="/auth/register"
-                onClick={() => setIsOpen(false)}
-                className="block w-full bg-gradient-to-r from-blue-600 to-gray-700 text-white text-center py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-gray-800 transition-all shadow-lg hover:shadow-xl"
-              >
-                🚀 Registrarme Gratis
-              </Link>
-              
-              <Link
-                href="/auth/login"
-                onClick={() => setIsOpen(false)}
-                className="block w-full bg-white border-2 border-blue-300 text-gray-700 text-center py-3 rounded-lg font-semibold hover:bg-blue-50 transition-all"
-              >
-                Ya tengo cuenta
-              </Link>
-            </div>
-
-            {/* Texto pequeño */}
-            <p className="text-xs text-gray-500 text-center mt-4">
-              ✓ Acceso inmediato · ✓ 100% gratis · ✓ IA avanzada
-            </p>
-          </div>
-        </div>
-      </>
-    )
-  }
-  
   return (
     <>
       {/* Botón pequeño para mostrar avatar cuando está oculto */}
@@ -357,7 +348,7 @@ export default function ChatbotWidget() {
       )}
       
       {/* Avatar minimizado con botón de expandir */}
-      {isOpen && user && isMinimized && !isHidden && (
+      {isOpen && isMinimized && !isHidden && (
         <div className="fixed bottom-24 right-6 md:bottom-6 z-50 group">
           <button
             onClick={handleExpand}
@@ -386,7 +377,7 @@ export default function ChatbotWidget() {
       )}
       
       {/* Ventana del chat */}
-      {isOpen && user && !isMinimized && !isHidden && (
+      {isOpen && !isMinimized && !isHidden && (
         <div className="fixed bottom-24 right-6 md:bottom-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200 max-w-[calc(100vw-3rem)] max-h-[calc(100vh-3rem)]">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-gray-700 text-white p-4 rounded-t-2xl flex justify-between items-center">
@@ -434,39 +425,79 @@ export default function ChatbotWidget() {
                     {renderMessageWithLinks(msg.contenido)}
                   </div>
                   
-                  {/* Mostrar áreas si las hay */}
+                  {/* Tarjetas de áreas encontradas */}
                   {msg.areas && msg.areas.length > 0 && (
                     <div className="mt-3 space-y-2">
-                      {msg.areas.slice(0, 3).map((area: any) => (
-                        <Link
-                          key={area.id}
-                          href={`/area/${area.slug}`}
-                          className="block bg-blue-50 hover:bg-blue-100 p-2 rounded-lg text-xs transition-colors"
-                          target="_blank"
-                        >
-                          <strong className="text-blue-900">{area.nombre}</strong>
-                          <div className="text-gray-700 text-xs mt-1">
-                            📍 {area.ciudad}, {area.pais}
-                            {area.precio_noche !== null && area.precio_noche > 0 && (
-                              <span className="ml-2">💰 {area.precio_noche}€</span>
-                            )}
-                            {(area.precio_noche === null || area.precio_noche === 0) && (
-                              <span className="ml-2">💰 Gratis</span>
-                            )}
-                          </div>
-                        </Link>
-                      ))}
+                      {msg.areas.slice(0, 6).map((area: any) => {
+                        const foto = Array.isArray(area.fotos_urls) && area.fotos_urls.length > 0
+                          ? area.fotos_urls[0]
+                          : (typeof area.fotos_urls === 'string' && area.fotos_urls.trim().startsWith('http')
+                            ? area.fotos_urls.split(',')[0].trim()
+                            : null)
+                        return (
+                          <Link
+                            key={area.id}
+                            href={`/area/${area.slug}`}
+                            target="_blank"
+                            className="flex gap-2.5 bg-white hover:bg-sky-50 border border-gray-200 hover:border-sky-300 rounded-xl overflow-hidden transition-all group shadow-sm"
+                          >
+                            {/* Foto */}
+                            <div className="w-20 h-20 flex-shrink-0 bg-gradient-to-br from-sky-100 to-blue-100 flex items-center justify-center overflow-hidden">
+                              {foto ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={foto} alt={area.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
+                              ) : (
+                                <span className="text-2xl">🚐</span>
+                              )}
+                            </div>
+                            {/* Datos */}
+                            <div className="py-2 pr-2.5 min-w-0 flex-1">
+                              <p className="font-semibold text-gray-900 text-xs leading-tight truncate group-hover:text-sky-700">{area.nombre}</p>
+                              <p className="text-[11px] text-gray-500 truncate">📍 {area.ciudad}, {area.pais}</p>
+                              <div className="flex items-center gap-2 mt-1 text-[11px]">
+                                <span className={`font-bold ${(!area.precio_noche || area.precio_noche === 0) ? 'text-green-600' : 'text-gray-800'}`}>
+                                  {(!area.precio_noche || area.precio_noche === 0) ? 'Gratis' : `${area.precio_noche}€/noche`}
+                                </span>
+                                {area.google_rating && (
+                                  <span className="text-amber-500 font-medium">★ {Number(area.google_rating).toFixed(1)}</span>
+                                )}
+                                {area.distancia_km !== undefined && (
+                                  <span className="text-gray-500">{Number(area.distancia_km).toFixed(0)} km</span>
+                                )}
+                                {area.desvio_km !== undefined && (
+                                  <span className="text-gray-500">↔ {area.desvio_km} km</span>
+                                )}
+                              </div>
+                            </div>
+                          </Link>
+                        )
+                      })}
                     </div>
                   )}
                 </div>
               </div>
             ))}
             
+            {/* Mensajes prefijados (solo al inicio de la conversación) */}
+            {!sending && messages.length <= 1 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {txt.sugerencias.map((sugerencia) => (
+                  <button
+                    key={sugerencia}
+                    onClick={() => enviarMensaje(sugerencia)}
+                    className="text-xs bg-white border border-sky-200 text-sky-700 hover:bg-sky-50 hover:border-sky-400 rounded-full px-3 py-1.5 transition-all active:scale-95 shadow-sm text-left"
+                  >
+                    {sugerencia}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {sending && (
               <div className="flex justify-start gap-2">
-                <img 
-                  src="/tio-viajero-avatar.png" 
-                  alt="Tío Viajero IA" 
+                <img
+                  src="/tio-viajero-avatar.png"
+                  alt="Tío Viajero IA"
                   className="w-8 h-8 object-cover rounded-full border-2 border-blue-500 flex-shrink-0"
                 />
                 <div className="bg-white rounded-2xl p-3 shadow-md">
@@ -489,21 +520,21 @@ export default function ChatbotWidget() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && enviarMensaje()}
-                placeholder="Pregunta al Tío Viajero..."
+                placeholder={txt.placeholder}
                 className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 disabled={sending}
               />
               <button
-                onClick={enviarMensaje}
+                onClick={() => enviarMensaje()}
                 disabled={sending || !input.trim()}
                 className="bg-gradient-to-r from-blue-600 to-gray-700 text-white rounded-full px-6 py-2 hover:from-blue-700 hover:to-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-sm shadow-md"
               >
-                {sending ? '...' : 'Enviar'}
+                {sending ? '...' : txt.enviar}
               </button>
             </div>
             {ubicacion && (
               <p className="text-xs text-gray-500 mt-2 text-center">
-                📍 Ubicación detectada · Las búsquedas serán más precisas
+                {txt.ubicacionDetectada}
               </p>
             )}
           </div>

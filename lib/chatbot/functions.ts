@@ -35,6 +35,7 @@ export interface BusquedaAreasParams {
   solo_gratuitas?: boolean
   tipo_area?: 'publica' | 'privada' | 'camping' | 'parking'
   pais?: string
+  valoracion_minima?: number
 }
 
 export interface AreaResumen {
@@ -143,11 +144,18 @@ export async function searchAreas(params: BusquedaAreasParams): Promise<AreaResu
       // Filtro por tipo
       if (params.tipo_area) {
         console.log('🏷️ Filtrando por tipo:', params.tipo_area)
-        filtered = filtered.filter((area: any) => 
+        filtered = filtered.filter((area: any) =>
           area.tipo_area === params.tipo_area
         )
       }
-      
+
+      // Filtro por valoración mínima
+      if (params.valoracion_minima) {
+        filtered = filtered.filter((area: any) =>
+          area.google_rating != null && area.google_rating >= params.valoracion_minima!
+        )
+      }
+
       console.log(`✅ Resultado final: ${filtered.length} áreas después de filtros`)
       return filtered.slice(0, 10)
     }
@@ -204,7 +212,12 @@ export async function searchAreas(params: BusquedaAreasParams): Promise<AreaResu
       console.log('🏷️ Filtrando por tipo:', params.tipo_area)
       query = query.eq('tipo_area', params.tipo_area)
     }
-    
+
+    // Filtro por valoración mínima
+    if (params.valoracion_minima) {
+      query = query.gte('google_rating', params.valoracion_minima)
+    }
+
     // Ordenar por valoración (mejores primero)
     query = query
       .order('google_rating', { ascending: false, nullsFirst: false })
@@ -381,6 +394,124 @@ export async function buscarAreasPorNombre(nombre: string, limit: number = 5): P
     console.error('❌ [buscarAreasPorNombre] Error:', error)
     throw error
   }
+}
+
+// ============================================
+// FUNCIÓN 6: searchAreasAlongRoute
+// ============================================
+
+// Caché en memoria de geocodificación de ciudades (evita repetir peticiones)
+const geocodeCityCache = new Map<string, { lat: number; lng: number } | null>()
+
+/**
+ * Geocodifica una ciudad con Nominatim (OpenStreetMap, GRATIS).
+ */
+async function geocodeCity(nombre: string): Promise<{ lat: number; lng: number } | null> {
+  const key = nombre.trim().toLowerCase()
+  if (geocodeCityCache.has(key)) return geocodeCityCache.get(key)!
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(nombre)}&limit=1&accept-language=es`
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'MapaFurgocasa/1.0 (contacto@acttax.es)' }
+    })
+    const data: any = await res.json()
+    const result = Array.isArray(data) && data[0]
+      ? { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
+      : null
+    geocodeCityCache.set(key, result)
+    return result
+  } catch (e) {
+    console.error('❌ [geocodeCity] Error geocodificando', nombre, e)
+    return null
+  }
+}
+
+/**
+ * Distancia aproximada (km) de un punto a un segmento origen→destino
+ * usando proyección equirectangular (suficiente para corredores de ruta).
+ */
+function distanciaAlSegmentoKm(
+  p: { lat: number; lng: number },
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number }
+): { distKm: number; t: number } {
+  const KM_LAT = 111.32
+  const latMedia = ((a.lat + b.lat) / 2) * (Math.PI / 180)
+  const kmLng = KM_LAT * Math.cos(latMedia)
+
+  const ax = a.lng * kmLng, ay = a.lat * KM_LAT
+  const bx = b.lng * kmLng, by = b.lat * KM_LAT
+  const px = p.lng * kmLng, py = p.lat * KM_LAT
+
+  const dx = bx - ax, dy = by - ay
+  const len2 = dx * dx + dy * dy
+  let t = len2 === 0 ? 0 : ((px - ax) * dx + (py - ay) * dy) / len2
+  t = Math.max(0, Math.min(1, t))
+  const cx = ax + t * dx, cy = ay + t * dy
+  return { distKm: Math.hypot(px - cx, py - cy), t }
+}
+
+/**
+ * Busca áreas dentro de un corredor a lo largo de la ruta entre dos ciudades.
+ * Devuelve las áreas ordenadas por su posición en la ruta (origen → destino).
+ */
+export async function searchAreasAlongRoute(
+  origen: string,
+  destino: string,
+  corredorKm: number = 15
+): Promise<{ error?: string; areas?: (AreaResumen & { desvio_km: number })[] }> {
+  console.log(`🛣️ [searchAreasAlongRoute] ${origen} → ${destino} (corredor ${corredorKm}km)`)
+
+  const [coordsOrigen, coordsDestino] = await Promise.all([
+    geocodeCity(origen),
+    geocodeCity(destino)
+  ])
+
+  if (!coordsOrigen) return { error: `No se pudo localizar "${origen}"` }
+  if (!coordsDestino) return { error: `No se pudo localizar "${destino}"` }
+
+  const supabase = getSupabaseClient()
+
+  // Bounding box del corredor (con margen)
+  const margenGrados = (corredorKm + 20) / 111
+  const minLat = Math.min(coordsOrigen.lat, coordsDestino.lat) - margenGrados
+  const maxLat = Math.max(coordsOrigen.lat, coordsDestino.lat) + margenGrados
+  const minLng = Math.min(coordsOrigen.lng, coordsDestino.lng) - margenGrados
+  const maxLng = Math.max(coordsOrigen.lng, coordsDestino.lng) + margenGrados
+
+  const { data, error } = await (supabase as any).from('areas')
+    .select(`
+      id, nombre, slug, ciudad, provincia, pais,
+      latitud, longitud, precio_noche,
+      servicios, tipo_area, google_rating,
+      plazas_totales, google_maps_url, fotos_urls
+    `)
+    .eq('activo', true)
+    .gte('latitud', minLat).lte('latitud', maxLat)
+    .gte('longitud', minLng).lte('longitud', maxLng)
+
+  if (error) {
+    console.error('❌ [searchAreasAlongRoute] Error BD:', error)
+    throw error
+  }
+
+  const enCorredor = (data || [])
+    .map((area: any) => {
+      const { distKm, t } = distanciaAlSegmentoKm(
+        { lat: area.latitud, lng: area.longitud },
+        coordsOrigen,
+        coordsDestino
+      )
+      return { ...area, desvio_km: Math.round(distKm * 10) / 10, _t: t }
+    })
+    .filter((a: any) => a.desvio_km <= corredorKm)
+    .sort((a: any, b: any) => a._t - b._t) // orden origen → destino
+    .slice(0, 15)
+    .map(({ _t, ...rest }: any) => rest)
+
+  console.log(`✅ ${enCorredor.length} áreas en el corredor`)
+  return { areas: enCorredor }
 }
 
 // ============================================

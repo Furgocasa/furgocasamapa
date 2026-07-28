@@ -15,6 +15,8 @@ import {
   searchAreas,
   getAreaDetails,
   getAreasByCountry,
+  buscarAreasPorNombre,
+  searchAreasAlongRoute,
   BusquedaAreasParams,
   AreaResumen
 } from '@/lib/chatbot/functions'
@@ -157,8 +159,54 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
         pais: {
           type: 'string',
           description: 'Filtrar por país específico. Ejemplo: "España", "Francia", "Portugal"'
+        },
+        valoracion_minima: {
+          type: 'number',
+          description: 'Valoración mínima en Google (1-5). Ejemplo: 4 para "bien valoradas"'
         }
       }
+    }
+  },
+  {
+    name: 'get_area_by_name',
+    description: 'Busca un área CONCRETA por su nombre. Usar cuando el usuario menciona un área específica: "háblame del área de Ronda", "el área municipal de Zafra".',
+    parameters: {
+      type: 'object',
+      properties: {
+        nombre: {
+          type: 'string',
+          description: 'Nombre (o parte del nombre) del área mencionada por el usuario'
+        },
+        limit: {
+          type: 'number',
+          description: 'Máximo de coincidencias a devolver',
+          default: 5
+        }
+      },
+      required: ['nombre']
+    }
+  },
+  {
+    name: 'search_areas_along_route',
+    description: 'Busca áreas a lo largo de la ruta entre dos ciudades, ordenadas de origen a destino. Usar para "voy de Madrid a Valencia, ¿dónde paro?", "áreas de camino a...", "paradas entre X e Y".',
+    parameters: {
+      type: 'object',
+      properties: {
+        origen: {
+          type: 'string',
+          description: 'Ciudad de origen. Ejemplo: "Madrid"'
+        },
+        destino: {
+          type: 'string',
+          description: 'Ciudad de destino. Ejemplo: "Valencia"'
+        },
+        corredor_km: {
+          type: 'number',
+          description: 'Desvío máximo de la ruta en km',
+          default: 15
+        }
+      },
+      required: ['origen', 'destino']
     }
   },
   {
@@ -212,6 +260,7 @@ interface ChatbotRequest {
     lng: number
   }
   userId?: string
+  locale?: string // idioma de la interfaz del usuario (es, fr, de, it, en...)
 }
 
 interface EstadisticasBD {
@@ -290,6 +339,20 @@ async function getEstadisticasBD(supabase: any): Promise<EstadisticasBD> {
   )
 }
 
+/**
+ * Registra TODA respuesta del chatbot (también anónimas) en
+ * chatbot_respuestas_log para revisión manual desde el admin.
+ * Best-effort: nunca rompe la respuesta al usuario.
+ */
+async function logRespuesta(supabase: any, datos: Record<string, any>) {
+  try {
+    const { error } = await supabase.from('chatbot_respuestas_log').insert(datos)
+    if (error) logger.warn('No se pudo registrar en chatbot_respuestas_log', { error: error.message })
+  } catch (e: any) {
+    logger.warn('No se pudo registrar en chatbot_respuestas_log', { error: e?.message })
+  }
+}
+
 // ============================================
 // ENDPOINT POST
 // ============================================
@@ -303,7 +366,7 @@ export async function POST(req: NextRequest) {
     
     // Parsear body primero
     const body: ChatbotRequest = await req.json()
-    let { messages, conversacionId, ubicacionUsuario, userId } = body
+    let { messages, conversacionId, ubicacionUsuario, userId, locale } = body
     
     // ============================================
     // RATE LIMITING
@@ -518,6 +581,20 @@ REGLAS DE UBICACIÓN:
 - Áreas en LATAM: ${stats.areasLatam} áreas
 
 Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónde están", etc.`
+
+    // Idioma de respuesta: el de la interfaz del usuario
+    if (locale && locale !== 'es') {
+      const NOMBRES_IDIOMA: Record<string, string> = {
+        en: 'inglés', fr: 'francés', de: 'alemán', it: 'italiano', pt: 'portugués', nl: 'neerlandés'
+      }
+      const nombreIdioma = NOMBRES_IDIOMA[locale] || locale
+      systemPromptEnriquecido += `\n\n═══════════════════════════════════════
+🌍 IDIOMA DE RESPUESTA
+═══════════════════════════════════════
+El usuario usa la web en ${nombreIdioma}. RESPONDE SIEMPRE en ${nombreIdioma},
+independientemente del idioma de los datos de las áreas (que están en español).
+Si el usuario te escribe en otro idioma, responde en el idioma en que te escriba.`
+    }
     
     // 5. PREPARAR MENSAJES COMPLETOS
     const fullMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
@@ -542,115 +619,153 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
     // Crear cliente OpenAI (bajo demanda para asegurar que las env vars estén cargadas)
     const openai = getOpenAIClient()
     
-    // PRIMERA LLAMADA A OPENAI
-    console.log('🔮 Llamando a OpenAI (primera llamada)...')
-    const completion = await openai.chat.completions.create({
-      model: config.modelo,
-      messages: fullMessages,
-      functions: AVAILABLE_FUNCTIONS,
-      function_call: 'auto',
-      temperature: config.temperature,
-      ...buildTokensParam(config.max_tokens)
-    })
-    
-    const response = completion.choices[0].message
-    const tokensUsados = completion.usage?.total_tokens || 0
-    
-    console.log('✅ OpenAI respondió')
-    console.log('📊 Tokens usados:', tokensUsados)
-    
-    // ¿Llamó a alguna función?
-    if (response.function_call) {
-      const functionName = response.function_call.name
-      const functionArgsRaw = response.function_call.arguments
-      
-      console.log('🔧 Function call detectado:', functionName)
-      console.log('📝 Argumentos raw:', functionArgsRaw)
-      
-      let functionArgs: any
-      try {
-        functionArgs = JSON.parse(functionArgsRaw)
-      } catch (parseError) {
-        console.error('❌ Error parseando argumentos:', parseError)
-        return NextResponse.json(
-          { error: 'Error en los argumentos de la función' },
-          { status: 500 }
-        )
-      }
-      
-      // Si hay ubicación del usuario y no viene en los args, inyectarla
-      if (ubicacionUsuario && functionName === 'search_areas') {
-        if (!functionArgs.ubicacion?.lat) {
-          console.log('📍 Inyectando ubicación del usuario')
-          functionArgs.ubicacion = {
-            ...functionArgs.ubicacion,
-            lat: ubicacionUsuario.lat,
-            lng: ubicacionUsuario.lng,
-            radio_km: functionArgs.ubicacion?.radio_km || config.radio_busqueda_default_km || 50
-          }
-        }
-      }
-      
-      console.log('📝 Argumentos finales:', JSON.stringify(functionArgs, null, 2))
-      
-      // EJECUTAR LA FUNCIÓN
-      let functionResult: any
-      let areasEncontradas: AreaResumen[] | null = null
-      
-      try {
-        console.log(`⚡ Ejecutando función: ${functionName}`)
-        
-        switch (functionName) {
-          case 'search_areas':
-            functionResult = await searchAreas(functionArgs as BusquedaAreasParams)
-            areasEncontradas = functionResult
-            console.log(`✅ Encontradas ${functionResult.length} áreas`)
-            break
-            
-          case 'get_area_details':
-            functionResult = await getAreaDetails(functionArgs.area_id)
-            console.log('✅ Detalles obtenidos')
-            break
-            
-          case 'get_areas_by_country':
-            functionResult = await getAreasByCountry(functionArgs.pais, functionArgs.limit || 10)
-            areasEncontradas = functionResult
-            console.log(`✅ Encontradas ${functionResult.length} áreas en ${functionArgs.pais}`)
-            break
-            
-          default:
-            functionResult = { error: `Función ${functionName} no implementada` }
-            console.error('❌ Función desconocida:', functionName)
-        }
-      } catch (functionError: any) {
-        console.error('❌ Error ejecutando función:', functionError)
-        functionResult = { 
-          error: functionError.message || 'Error ejecutando la función',
-          details: String(functionError)
-        }
-      }
-      
-      // SEGUNDA LLAMADA A OPENAI con el resultado
-      console.log('🔮 Llamando a OpenAI (segunda llamada con resultado)...')
-      
-      const secondCompletion = await openai.chat.completions.create({
+    // ============================================
+    // BUCLE DE HERRAMIENTAS (tools API moderna)
+    // Permite encadenar y combinar varias búsquedas en un mismo mensaje
+    // (p.ej. "compara áreas gratis en Granada y Sevilla").
+    // ============================================
+    const tools: OpenAI.Chat.ChatCompletionTool[] = AVAILABLE_FUNCTIONS.map((f: any) => ({
+      type: 'function' as const,
+      function: f
+    }))
+
+    const MAX_TOOL_ROUNDS = 4
+    let totalTokens = 0
+    let rounds = 0
+    const todasLasAreas: AreaResumen[] = []
+    let firstFunctionName: string | null = null
+    let firstFunctionArgs: any = null
+    let lastFunctionResult: any = null
+    const funcionesEjecutadas: Array<{ name: string; args: any }> = []
+    const conversation: OpenAI.Chat.ChatCompletionMessageParam[] = [...fullMessages]
+    let finalResponse: string | null = null
+
+    while (rounds < MAX_TOOL_ROUNDS) {
+      rounds++
+      console.log(`🔮 Llamando a OpenAI (ronda ${rounds})...`)
+
+      const completion = await openai.chat.completions.create({
         model: config.modelo,
-        messages: [
-          ...fullMessages,
-          response as OpenAI.Chat.ChatCompletionMessage,
-          {
-            role: 'function',
-            name: functionName,
-            content: JSON.stringify(functionResult)
-          }
-        ],
+        messages: conversation,
+        tools,
+        tool_choice: 'auto',
         temperature: config.temperature,
         ...buildTokensParam(config.max_tokens)
       })
-      
-      const finalResponse = secondCompletion.choices[0].message.content
-      const totalTokens = tokensUsados + (secondCompletion.usage?.total_tokens || 0)
-      
+
+      const response = completion.choices[0].message
+      totalTokens += completion.usage?.total_tokens || 0
+
+      // Sin tool calls → respuesta final
+      if (!response.tool_calls || response.tool_calls.length === 0) {
+        finalResponse = response.content || ''
+        break
+      }
+
+      conversation.push(response as OpenAI.Chat.ChatCompletionMessageParam)
+
+      // Ejecutar TODAS las tool calls de la ronda (pueden ser varias en paralelo)
+      for (const toolCall of response.tool_calls) {
+        const fnName: string = (toolCall as any).function?.name
+        let fnArgs: any = {}
+        try {
+          fnArgs = JSON.parse((toolCall as any).function?.arguments || '{}')
+        } catch {
+          fnArgs = {}
+        }
+
+        if (!firstFunctionName) {
+          firstFunctionName = fnName
+          firstFunctionArgs = fnArgs
+        }
+        funcionesEjecutadas.push({ name: fnName, args: fnArgs })
+
+        // Inyectar GPS del usuario si busca sin ubicación explícita
+        if (
+          ubicacionUsuario &&
+          fnName === 'search_areas' &&
+          !fnArgs.ubicacion?.lat &&
+          !fnArgs.ubicacion?.nombre
+        ) {
+          console.log('📍 Inyectando ubicación del usuario')
+          fnArgs.ubicacion = {
+            ...fnArgs.ubicacion,
+            lat: ubicacionUsuario.lat,
+            lng: ubicacionUsuario.lng,
+            radio_km: fnArgs.ubicacion?.radio_km || config.radio_busqueda_default_km || 50
+          }
+        }
+
+        let functionResult: any
+        try {
+          console.log(`⚡ Ejecutando ${fnName}:`, JSON.stringify(fnArgs))
+          switch (fnName) {
+            case 'search_areas':
+              functionResult = await searchAreas(fnArgs as BusquedaAreasParams)
+              if (Array.isArray(functionResult)) todasLasAreas.push(...functionResult)
+              break
+            case 'get_area_details':
+              functionResult = await getAreaDetails(fnArgs.area_id)
+              break
+            case 'get_areas_by_country':
+              functionResult = await getAreasByCountry(fnArgs.pais, fnArgs.limit || 10)
+              if (Array.isArray(functionResult)) todasLasAreas.push(...functionResult)
+              break
+            case 'get_area_by_name':
+              functionResult = await buscarAreasPorNombre(fnArgs.nombre, fnArgs.limit || 5)
+              if (Array.isArray(functionResult)) todasLasAreas.push(...functionResult)
+              break
+            case 'search_areas_along_route':
+              functionResult = await searchAreasAlongRoute(fnArgs.origen, fnArgs.destino, fnArgs.corredor_km || 15)
+              if (functionResult?.areas) todasLasAreas.push(...functionResult.areas)
+              break
+            default:
+              functionResult = { error: `Función ${fnName} no implementada` }
+              console.error('❌ Función desconocida:', fnName)
+          }
+        } catch (functionError: any) {
+          console.error('❌ Error ejecutando función:', functionError)
+          functionResult = { error: functionError.message || 'Error ejecutando la función' }
+        }
+
+        lastFunctionResult = functionResult
+
+        conversation.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(functionResult)
+        })
+      }
+    }
+
+    // Si se agotaron las rondas con tools pendientes, pedir cierre sin herramientas
+    if (finalResponse == null) {
+      console.log('⏹️ Máximo de rondas alcanzado, generando respuesta de cierre...')
+      const closing = await openai.chat.completions.create({
+        model: config.modelo,
+        messages: conversation,
+        temperature: config.temperature,
+        ...buildTokensParam(config.max_tokens)
+      })
+      finalResponse = closing.choices[0].message.content || ''
+      totalTokens += closing.usage?.total_tokens || 0
+    }
+
+    // Deduplicar áreas por id para las tarjetas del chat
+    const vistos = new Set<string>()
+    const areasEncontradas: AreaResumen[] = []
+    for (const a of todasLasAreas) {
+      if (a && (a as any).id && !vistos.has((a as any).id)) {
+        vistos.add((a as any).id)
+        areasEncontradas.push(a)
+      }
+    }
+
+    const functionName = firstFunctionName
+    const functionArgs = firstFunctionArgs
+
+    if (functionName) {
+
       console.log('✅ Respuesta final generada')
       console.log('📊 Total tokens:', totalTokens)
       
@@ -669,7 +784,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
             temperatura_usada: config.temperature,
             function_call_name: functionName,
             function_call_args: functionArgs,
-            function_call_result: functionResult,
+            function_call_result: lastFunctionResult,
             areas_mencionadas: areasEncontradas?.map((a: any) => a.id) || []
           })
         
@@ -703,13 +818,27 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         detalles: {
           function_name: functionName,
           args: functionArgs,
-          results_count: Array.isArray(functionResult) ? functionResult.length : 1
+          results_count: areasEncontradas.length
         }
       })
       
       const duration = Date.now() - startTime
       console.log(`⏱️ Duración total: ${duration}ms`)
-      
+
+      // Registro para revisión (TODAS las respuestas, también anónimas)
+      await logRespuesta(supabase, {
+        conversacion_id: conversacionId || null,
+        user_id: userId || null,
+        locale: locale || 'es',
+        pregunta: messages[messages.length - 1]?.content || null,
+        respuesta: finalResponse,
+        funciones: funcionesEjecutadas,
+        areas_ids: areasEncontradas.map((a: any) => a.id),
+        tokens: totalTokens,
+        modelo: config.modelo,
+        duracion_ms: duration
+      })
+
       return NextResponse.json({
         message: finalResponse,
         conversacionId: conversacionId, // Retornar conversacionId para que el frontend lo guarde
@@ -722,9 +851,9 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       })
     }
     
-    // RESPUESTA DIRECTA (sin function call)
-    console.log('💬 Respuesta directa (sin function call)')
-    
+    // RESPUESTA DIRECTA (sin tool calls)
+    console.log('💬 Respuesta directa (sin tool calls)')
+
     // Guardar mensaje
     if (conversacionId) {
       await (supabase as any)
@@ -732,18 +861,18 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         .insert({
           conversacion_id: conversacionId,
           rol: 'assistant',
-          contenido: response.content,
-          tokens_usados: tokensUsados,
+          contenido: finalResponse,
+          tokens_usados: totalTokens,
           modelo_usado: config.modelo,
           temperatura_usada: config.temperature
         })
-      
+
       const { data: conversacionFinal } = await (supabase as any)
         .from('chatbot_conversaciones')
         .select('total_mensajes')
         .eq('id', conversacionId)
         .single()
-      
+
       await (supabase as any)
         .from('chatbot_conversaciones')
         .update({
@@ -752,14 +881,28 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         })
         .eq('id', conversacionId)
     }
-    
+
     const duration = Date.now() - startTime
     console.log(`⏱️ Duración total: ${duration}ms`)
-    
+
+    // Registro para revisión (TODAS las respuestas, también anónimas)
+    await logRespuesta(supabase, {
+      conversacion_id: conversacionId || null,
+      user_id: userId || null,
+      locale: locale || 'es',
+      pregunta: messages[messages.length - 1]?.content || null,
+      respuesta: finalResponse,
+      funciones: [],
+      areas_ids: [],
+      tokens: totalTokens,
+      modelo: config.modelo,
+      duracion_ms: duration
+    })
+
     return NextResponse.json({
-      message: response.content,
+      message: finalResponse,
       conversacionId: conversacionId, // Retornar conversacionId
-      tokensUsados: tokensUsados,
+      tokensUsados: totalTokens,
       modelo: config.modelo,
       duration: duration
     })
