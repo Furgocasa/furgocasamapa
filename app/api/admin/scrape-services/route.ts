@@ -51,12 +51,12 @@ function isReasoningModel(model: string): boolean {
  * Si no hay clave o falla, devolvemos cadena vacía: GPT-5.5 buscará por su cuenta.
  */
 async function buildSerpReinforcement(area: any): Promise<string> {
-  const serpApiKey = process.env.SERPAPI_KEY || process.env.NEXT_PUBLIC_SERPAPI_KEY_ADMIN
+  const serpApiKey = process.env.SERPAPI_KEY
   if (!serpApiKey) return ''
 
   const queries = [
-    `"${area.nombre}" ${area.ciudad} (Park4night OR Campercontact OR Caramaps) servicios autocaravanas agua electricidad vaciado`,
-    `"${area.nombre}" ${area.ciudad} ${area.provincia} opiniones servicios área autocaravanas`
+    `"${area.nombre}" ${area.ciudad || ''} (Park4night OR Campercontact OR Caramaps) agua electricidad vaciado duchas`,
+    `"${area.nombre}" ${area.ciudad || ''} ${area.provincia || ''} área autocaravanas (agua OR electricidad OR vaciado OR ducha OR WC)`
   ]
 
   let out = ''
@@ -154,24 +154,41 @@ export async function POST(request: NextRequest) {
       model = DEFAULT_MODEL
     }
 
-    const systemInstruction = `Eres un auditor crítico de áreas de autocaravanas. Tienes acceso a búsqueda web: ÚSALA para verificar qué servicios ofrece realmente el área consultando su web oficial, plataformas especializadas (Park4night, Campercontact, Caramaps, iOverlander) y reseñas.
+    const systemInstruction = `Eres un auditor crítico de áreas de autocaravanas/campers. Tienes búsqueda web: ÚSALA para verificar los servicios REALES del área (web oficial, Park4night, Campercontact, Caramaps, iOverlander, reseñas).
 
-REGLAS:
-- Confirma un servicio (true) SOLO si hay evidencia clara en fuentes fiables. Ante la duda, false.
-- No asumas servicios por el tipo de lugar.
-- Prioriza: web oficial > plataformas especializadas > reseñas de usuarios.
-- Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin markdown.
+PRIORIDAD (lo más importante; invierte aquí el esfuerzo de búsqueda):
+1) agua — toma/llenado de agua potable en el área
+2) electricidad — tomas eléctricas / enganche en parcela o punto común
+3) vaciado_aguas_negras — vaciado de WC químico / cassette / aguas negras
+4) vaciado_aguas_grises — desagüe / vaciado de aguas grises
+5) duchas y wc — instalaciones sanitarias EN el área
 
-SERVICIOS A DETECTAR (claves exactas):
+SECUNDARIOS (solo true con evidencia explícita en el propio recinto):
+wifi, lavanderia, restaurante, supermercado, zona_mascotas
+
+REGLAS DE EVIDENCIA:
+- true SOLO con evidencia clara de que el servicio está EN ESTA área concreta. Ante la duda → false.
+- Prioriza fuentes: web oficial > Park4night/Campercontact/Caramaps > reseñas coherentes entre sí.
+- NO copies servicios de otra área cercana ni del pueblo “cerca”.
+- restaurante/supermercado: true solo si están DENTRO o forman parte del área/camping; "a 200 m / en el pueblo" → false.
+- zona_mascotas: true SOLO si hay zona/área específica para mascotas. "Se admiten perros" / pet-friendly ≠ zona_mascotas.
+- Sinónimos útiles: "cambio de aguas", "punto de servicio", "borne", "vidange", "chemical toilet dump", "fresh water", "hook-up".
+- Si fuentes fiables dicen "área de servicio" / "cambio de aguas" / "servicios básicos para autocaravanas" → suele implicar agua + vaciados (negras y grises); confirma solo si encaja con esta área.
+- Electricidad: no la asumas; muchas áreas públicas tienen agua/vaciado sin luz.
+- Responde ÚNICAMENTE con un objeto JSON válido (claves exactas abajo), sin markdown ni texto extra.
+
+CLAVES EXACTAS:
 agua, electricidad, vaciado_aguas_negras, vaciado_aguas_grises, wifi, duchas, wc, lavanderia, restaurante, supermercado, zona_mascotas`
 
     const userPrompt = `ÁREA A ANALIZAR:
 - Nombre: ${area.nombre}
-- Ciudad: ${area.ciudad}
-- Provincia: ${area.provincia}
-- País: ${area.pais}
-${area.website ? `- Web: ${area.website}\n` : ''}${serpReinforcement ? `\nINFORMACIÓN DE REFUERZO (resultados de búsqueda, contrástala con tu propia búsqueda web):\n${serpReinforcement}\n` : ''}
-Busca en internet información actual sobre esta área concreta y devuelve SOLO este JSON (true/false en cada clave):
+- Ciudad: ${area.ciudad || ''}
+- Provincia: ${area.provincia || ''}
+- País: ${area.pais || ''}
+- Tipo: ${area.tipo_area || 'desconocido'}
+${area.website ? `- Web: ${area.website}\n` : ''}${serpReinforcement ? `\nINFORMACIÓN DE REFUERZO (contrástala con tu propia búsqueda web; no la tomes como verdad absoluta):\n${serpReinforcement}\n` : ''}
+Busca información actual de ESTA área y prioriza confirmar/rechazar: agua, electricidad, vaciado_aguas_negras, vaciado_aguas_grises, duchas, wc.
+Devuelve SOLO este JSON (true/false en cada clave):
 {
   "agua": false,
   "electricidad": false,

@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
           {
             id: 'sys-1',
             role: 'system',
-            content: 'Eres un auditor crítico de áreas de autocaravanas con acceso a búsqueda web. Verificas los servicios consultando webs oficiales, plataformas (Park4night, Campercontact, Caramaps) y reseñas. Solo confirmas un servicio con evidencia clara; ante la duda, false. Respondes únicamente con JSON válido, sin texto adicional.',
+            content: 'Eres un auditor crítico de áreas de autocaravanas/campers con búsqueda web. PRIORIZA agua, electricidad, vaciado_aguas_negras, vaciado_aguas_grises, duchas y wc. Secundarios (wifi, lavandería, restaurante, supermercado, zona_mascotas) solo con evidencia en el propio recinto. zona_mascotas ≠ admiten perros. No copies servicios de áreas cercanas. Ante la duda, false. Responde solo JSON válido.',
             order: 1,
             required: true
           },
