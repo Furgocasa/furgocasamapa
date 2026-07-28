@@ -340,7 +340,7 @@ export default function ChatbotWidget() {
       {isHidden && (
         <button
           onClick={handleShow}
-          className="fixed bottom-24 right-6 md:bottom-6 bg-blue-600 text-white rounded-full w-8 h-8 shadow-lg hover:bg-blue-700 transition-all z-50 flex items-center justify-center text-xl font-bold"
+          className="fixed bottom-24 right-6 md:bottom-6 bg-blue-600 text-white rounded-full w-8 h-8 shadow-lg hover:bg-blue-700 transition-all z-[11000] flex items-center justify-center text-xl font-bold"
           title="Mostrar Tío Viajero IA"
         >
           +
@@ -349,7 +349,7 @@ export default function ChatbotWidget() {
 
       {/* Botón flotante con avatar - cuando el chat está cerrado */}
       {!isOpen && !isHidden && (
-        <div className="fixed bottom-24 right-6 md:bottom-6 z-50 group">
+        <div className="fixed bottom-24 right-6 md:bottom-6 z-[11000] group">
           <button
             onClick={handleOpen}
             className="bg-gradient-to-r from-blue-600 to-gray-700 rounded-full p-2 shadow-2xl hover:scale-110 transition-transform relative"
@@ -378,7 +378,7 @@ export default function ChatbotWidget() {
       
       {/* Avatar minimizado con botón de expandir */}
       {isOpen && isMinimized && !isHidden && (
-        <div className="fixed bottom-24 right-6 md:bottom-6 z-50 group">
+        <div className="fixed bottom-24 right-6 md:bottom-6 z-[11000] group">
           <button
             onClick={handleExpand}
             className="bg-gradient-to-r from-blue-600 to-gray-700 rounded-full p-2 shadow-2xl hover:scale-110 transition-transform relative"
@@ -407,7 +407,7 @@ export default function ChatbotWidget() {
       
       {/* Ventana del chat */}
       {isOpen && !isMinimized && !isHidden && (
-        <div className="fixed bottom-24 right-6 md:bottom-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200 max-w-[calc(100vw-3rem)] max-h-[calc(100vh-3rem)]">
+        <div className="fixed bottom-24 right-6 md:bottom-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-[11000] border border-gray-200 max-w-[calc(100vw-3rem)] max-h-[calc(100vh-3rem)]">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-gray-700 text-white p-4 rounded-t-2xl flex justify-between items-center">
             <div className="flex items-center gap-3">
