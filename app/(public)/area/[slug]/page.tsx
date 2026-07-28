@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
@@ -10,9 +11,12 @@ import { ContactoInfo } from '@/components/area/ContactoInfo'
 import { GaleriaFotos } from '@/components/area/GaleriaFotos'
 import { ValoracionesCompleto } from '@/components/area/ValoracionesCompleto'
 import { AreasRelacionadas } from '@/components/area/AreasRelacionadas'
+import { ConfirmarDatosArea } from '@/components/area/ConfirmarDatosArea'
 import { BackToTop } from '@/components/area/BackToTop'
 import { BannerRotativo } from '@/components/banners/BannerRotativo'
 import { BannerProvider } from '@/components/banners/BannerContext'
+import { LANG_COOKIE, isTranslationLocale, normalizeLocale } from '@/lib/i18n/config'
+import { mergeAreaTranslation } from '@/lib/i18n/mergeAreaTranslation'
 import type { Metadata } from 'next'
 import Script from 'next/script'
 
@@ -52,17 +56,30 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function AreaPage({ params }: PageProps) {
   const supabase = await createClient()
+  const cookieStore = await cookies()
+  const locale = normalizeLocale(cookieStore.get(LANG_COOKIE)?.value)
 
   // Obtener datos del área
-  const { data: area, error } = await (supabase as any)
+  const { data: areaRaw, error } = await (supabase as any)
     .from('areas')
     .select('*')
     .eq('slug', params.slug)
     .eq('activo', true)
     .single()
 
-  if (error || !area) {
+  if (error || !areaRaw) {
     notFound()
+  }
+
+  let area = areaRaw
+  if (isTranslationLocale(locale)) {
+    const { data: trad } = await (supabase as any)
+      .from('areas_traducciones')
+      .select('nombre, descripcion, direccion, ciudad, provincia, comunidad, pais')
+      .eq('area_id', areaRaw.id)
+      .eq('idioma', locale)
+      .maybeSingle()
+    area = mergeAreaTranslation(areaRaw, trad, locale)
   }
 
   // Obtener valoraciones del área
@@ -74,14 +91,31 @@ export default async function AreaPage({ params }: PageProps) {
     .limit(10)
 
   // Obtener áreas relacionadas (misma provincia)
-  const { data: areasRelacionadas } = await (supabase as any)
+  let areasRelacionadasQuery = (supabase as any)
     .from('areas')
     .select('id, nombre, slug, ciudad, provincia, tipo_area, precio_noche, foto_principal, google_rating')
-    .eq('provincia', area.provincia)
+    .eq('provincia', areaRaw.provincia)
     .eq('activo', true)
     .neq('id', area.id)
     .order('google_rating', { ascending: false, nullsFirst: false })
     .limit(4)
+
+  const { data: areasRelacionadasRaw } = await areasRelacionadasQuery
+  let areasRelacionadas = areasRelacionadasRaw
+  if (isTranslationLocale(locale) && areasRelacionadasRaw?.length) {
+    const ids = areasRelacionadasRaw.map((a: any) => a.id)
+    const { data: trads } = await (supabase as any)
+      .from('areas_traducciones')
+      .select('area_id, nombre, ciudad, provincia')
+      .eq('idioma', locale)
+      .in('area_id', ids)
+    const byId = new Map((trads || []).map((t: any) => [t.area_id, t]))
+    areasRelacionadas = areasRelacionadasRaw.map((a: any) => {
+      const t = byId.get(a.id)
+      if (!t) return a
+      return { ...a, nombre: t.nombre || a.nombre, ciudad: t.ciudad || a.ciudad, provincia: t.provincia || a.provincia }
+    })
+  }
 
   // Preparar datos estructurados (JSON-LD)
   const schemaData = {
@@ -156,6 +190,14 @@ export default async function AreaPage({ params }: PageProps) {
               {area.servicios && (
                 <ServiciosGrid servicios={area.servicios as any} />
               )}
+
+              {/* Contribución de usuarios: confirmar datos del área */}
+              <ConfirmarDatosArea
+                areaId={area.id}
+                serviciosActuales={area.servicios as any}
+                precioActual={area.precio_noche}
+                plazasActuales={area.plazas_totales}
+              />
 
               {/* Galería de fotos */}
               {(() => {

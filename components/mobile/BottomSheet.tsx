@@ -43,6 +43,7 @@ export default function BottomSheet({
 
   const handleTouchMove = (e: React.TouchEvent) => {
     const currentY = e.touches[0].clientY
+    currentYRef.current = currentY // FIX: sin esto el gesto de cerrar nunca funcionaba
     const diff = currentY - dragStartRef.current
 
     // Solo permitir arrastrar hacia abajo
@@ -76,14 +77,14 @@ export default function BottomSheet({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden animate-fade-in"
         onClick={onClose}
       />
 
       {/* Bottom Sheet */}
       <div
         ref={sheetRef}
-        className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-50 transition-transform duration-300 ease-out md:hidden flex flex-col ${getHeightClass()}`}
+        className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-50 transition-transform duration-300 ease-out md:hidden flex flex-col animate-slide-up ${getHeightClass()}`}
       >
         {/* Drag Handle */}
         <div

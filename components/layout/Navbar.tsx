@@ -11,6 +11,7 @@ import {
   ArrowRightOnRectangleIcon,
   TruckIcon,
 } from "@heroicons/react/24/outline";
+import { LOCALES, LOCALE_LABELS, type Locale, useLanguage } from "@/lib/i18n";
 
 export function Navbar() {
   const [user, setUser] = useState<any>(null);
@@ -19,6 +20,7 @@ export function Navbar() {
   const [unreadReports, setUnreadReports] = useState(0);
   const router = useRouter();
   const pathname = usePathname();
+  const { locale, setLocale, t } = useLanguage();
 
   // Función para cargar reportes no leídos
   const loadUnreadReports = async (userId: string) => {
@@ -98,7 +100,7 @@ export function Navbar() {
       });
       
       // 3. Limpiar localStorage (mantener solo preferencias de UI)
-      const keysToPreserve = ['hasSeenWelcome']; // Preservar preferencias de UI
+      const keysToPreserve = ['hasSeenWelcome', 'fc_lang'];
       const itemsToPreserve: Record<string, string> = {};
       
       keysToPreserve.forEach(key => {
@@ -159,7 +161,7 @@ export function Navbar() {
                 pathname === "/mapa" ? "border-b-2 border-white pb-1" : ""
               }`}
             >
-              Mapa
+              {t('nav_mapa')}
             </Link>
             <Link
               href="/ruta"
@@ -167,7 +169,7 @@ export function Navbar() {
                 pathname === "/ruta" ? "border-b-2 border-white pb-1" : ""
               }`}
             >
-              Ruta
+              {t('nav_ruta')}
             </Link>
             <Link
               href="/accidente"
@@ -175,7 +177,7 @@ export function Navbar() {
                 pathname === "/accidente" ? "border-b-2 border-white pb-1" : ""
               }`}
             >
-              Reportar
+              {t('nav_reportar')}
             </Link>
           </nav>
 
@@ -187,7 +189,7 @@ export function Navbar() {
                 pathname === "/mapa" ? "border-b-2 border-white pb-1" : ""
               }`}
             >
-              Mapa
+              {t('nav_mapa')}
             </Link>
             <Link
               href="/ruta"
@@ -195,7 +197,7 @@ export function Navbar() {
                 pathname === "/ruta" ? "border-b-2 border-white pb-1" : ""
               }`}
             >
-              Ruta
+              {t('nav_ruta')}
             </Link>
             <Link
               href="/accidente"
@@ -203,12 +205,29 @@ export function Navbar() {
                 pathname === "/accidente" ? "border-b-2 border-white pb-1" : ""
               }`}
             >
-              Reportar Accidente
+              {t('nav_reportar_full')}
             </Link>
           </nav>
 
           {/* Usuario / Login */}
           <div className="flex items-center gap-2">
+            <label className="sr-only" htmlFor="lang-select">Language</label>
+            <select
+              id="lang-select"
+              value={locale}
+              onChange={(e) => {
+                setLocale(e.target.value as Locale)
+                router.refresh()
+              }}
+              className="bg-white/15 text-white border border-white/30 rounded-lg px-2 py-1.5 text-xs font-bold tracking-wide hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-white/40 cursor-pointer"
+              aria-label="Language"
+            >
+              {LOCALES.map((code) => (
+                <option key={code} value={code} className="text-gray-900">
+                  {LOCALE_LABELS[code]}
+                </option>
+              ))}
+            </select>
             {user ? (
               <div className="relative">
                 <button
@@ -271,7 +290,7 @@ export function Navbar() {
                             onClick={() => setShowUserMenu(false)}
                           >
                             <Cog6ToothIcon className="w-5 h-5" />
-                            Panel de Administración
+                            {t('nav_admin')}
                           </Link>
                         )}
                         <Link
@@ -280,7 +299,7 @@ export function Navbar() {
                           onClick={() => setShowUserMenu(false)}
                         >
                           <UserCircleIcon className="w-5 h-5" />
-                          Mi Perfil
+                          {t('nav_profile')}
                         </Link>
                         <Link
                           href="/mis-autocaravanas"
@@ -289,7 +308,7 @@ export function Navbar() {
                         >
                           <div className="flex items-center gap-3">
                             <TruckIcon className="w-5 h-5" />
-                            Mis Autocaravanas
+                            {t('nav_vehicles')}
                           </div>
                           {unreadReports > 0 && (
                             <span className="bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-[20px] text-center">
@@ -302,7 +321,7 @@ export function Navbar() {
                           className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                         >
                           <ArrowRightOnRectangleIcon className="w-5 h-5" />
-                          Cerrar Sesión
+                          {t('nav_logout')}
                         </button>
                       </div>
                     </div>
@@ -314,7 +333,7 @@ export function Navbar() {
                 href="/auth/login"
                 className="px-4 py-2 bg-white text-primary-600 rounded-lg font-semibold hover:bg-primary-50 transition-colors text-sm"
               >
-                Iniciar Sesión
+                {t('nav_login')}
               </Link>
             )}
           </div>

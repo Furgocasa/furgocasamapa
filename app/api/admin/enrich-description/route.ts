@@ -72,7 +72,7 @@ function cleanGeneratedText(text: string): string {
  * Si falla o no hay clave, devolvemos cadena vacía: el modelo buscará por su cuenta.
  */
 async function buildSerpReinforcement(area: any): Promise<string> {
-  const serpApiKey = process.env.SERPAPI_KEY || process.env.NEXT_PUBLIC_SERPAPI_KEY_ADMIN
+  const serpApiKey = process.env.SERPAPI_KEY
   if (!serpApiKey) return ''
 
   try {

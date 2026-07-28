@@ -1,13 +1,23 @@
 /**
  * Script para actualizar websites, teléfonos y ratings desde Google Places API
  * para áreas que ya existen pero no tienen estos datos.
- * 
+ *
+ * ⚠️ COSTE: usa Google Place Details (DE PAGO, ~$3-5 por 1.000 áreas con estos fields).
+ * Requiere el flag --confirm para ejecutarse y evitar gastos accidentales.
+ *
  * Uso:
- * node scripts/actualizar-websites-google.js
+ * node scripts/actualizar-websites-google.js --confirm
  */
 
 const { createClient } = require('@supabase/supabase-js')
 require('dotenv').config({ path: '.env.local' })
+
+// FRENO DE SEGURIDAD: este script genera coste en Google. Exigir confirmación explícita.
+if (!process.argv.includes('--confirm')) {
+  console.log('⚠️  Este script llama a Google Place Details (API DE PAGO).')
+  console.log('   Para ejecutarlo de verdad: node scripts/actualizar-websites-google.js --confirm')
+  process.exit(0)
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY

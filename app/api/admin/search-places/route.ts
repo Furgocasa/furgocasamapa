@@ -185,7 +185,9 @@ export async function POST(request: NextRequest) {
           const detailsUrl = new URL('https://maps.googleapis.com/maps/api/place/details/json')
           detailsUrl.searchParams.append('place_id', place.place_id)
           detailsUrl.searchParams.append('key', apiKey)
-          detailsUrl.searchParams.append('fields', 'name,formatted_address,formatted_phone_number,international_phone_number,website,opening_hours,price_level,rating,user_ratings_total,reviews,types,url,utc_offset,vicinity,business_status,address_components')
+          // AHORRO: solo pedimos los campos que realmente usamos (website y teléfono).
+          // Antes se pedían reviews/opening_hours/etc. (SKU caro) sin usarse.
+          detailsUrl.searchParams.append('fields', 'website,formatted_phone_number,international_phone_number')
           detailsUrl.searchParams.append('language', 'es')
 
           const detailsResponse = await fetch(detailsUrl.toString())

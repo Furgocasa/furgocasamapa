@@ -4,6 +4,7 @@ import './globals.css'
 import WelcomeModal from '@/components/ui/WelcomeModal'
 import ChatbotWidget from '@/components/chatbot/ChatbotWidget'
 import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
+import { LanguageProvider } from '@/lib/i18n/LanguageProvider'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.mapafurgocasa.com'),
@@ -119,10 +120,12 @@ export default function RootLayout({
           strategy="lazyOnload"
         />
 
-        <AnalyticsTracker />
-        <WelcomeModal />
-        <ChatbotWidget />
-        {children}
+        <LanguageProvider>
+          <AnalyticsTracker />
+          <WelcomeModal />
+          <ChatbotWidget />
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   )

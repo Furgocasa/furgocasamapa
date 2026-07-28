@@ -225,7 +225,18 @@ $env:NODE_TLS_REJECT_UNAUTHORIZED="0"; $env:BULK_DRYRUN="1"; node scripts/bulk-e
 $env:NODE_TLS_REJECT_UNAUTHORIZED="0"; node scripts/bulk-enrich.js
 ```
 
-Variables opcionales: `BULK_MODE` (`critical` | `all` | `everything`), `BULK_CONCURRENCY` (def 6), `BULK_LIMIT` (0 = todas), `BULK_MODEL` (def `gpt-5.5`), `BULK_DRYRUN` (1 = solo contar).
+Variables opcionales: `BULK_MODE` (`critical` | `all` | `everything`), `BULK_CONCURRENCY` (def 6), `BULK_LIMIT` (0 = todas), `BULK_MODEL` (def `gpt-5.5`), `BULK_DRYRUN` (1 = solo contar), `BULK_EFFORT` (def `medium`), `BULK_FORCE_SEARCH` (def 1 = web search obligatoria).
+
+### Auditoría y datos estructurados (jul 2026)
+
+| Comando | Qué hace | Coste |
+|---------|----------|-------|
+| `npm run db:audit` | Informe de calidad: textos incompletos, sin servicios/precio/plazas/foto → `scripts/audit-report.csv` | **0€** |
+| `npm run enrich:datos` | Investiga con GPT-5.5 + web search los datos estructurados que faltan → CSV de propuestas (no toca la BD) | Solo OpenAI |
+| `npm run enrich:datos:apply` | Aplica las propuestas de confianza alta SOLO en campos vacíos | Solo OpenAI |
+| `npm run enrich:textos` | Alias de `bulk-enrich.js` (descripciones) | Solo OpenAI |
+
+> 💰 **Política de costes**: el pipeline de enriquecimiento NO usa APIs de pago de Google. Los scripts de corrección de países usan Nominatim (OpenStreetMap, gratis). `actualizar-websites-google.js` requiere `--confirm` porque sí factura a Google.
 
 ---
 

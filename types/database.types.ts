@@ -125,6 +125,50 @@ export interface Database {
           created_by?: string | null
         }
       }
+      areas_traducciones: {
+        Row: {
+          id: string
+          area_id: string
+          idioma: 'fr' | 'de' | 'it' | 'en' | 'pt' | 'nl'
+          nombre: string | null
+          descripcion: string
+          direccion: string | null
+          ciudad: string | null
+          provincia: string | null
+          comunidad: string | null
+          pais: string | null
+          modelo: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          area_id: string
+          idioma: 'fr' | 'de' | 'it' | 'en' | 'pt' | 'nl'
+          nombre?: string | null
+          descripcion: string
+          direccion?: string | null
+          ciudad?: string | null
+          provincia?: string | null
+          comunidad?: string | null
+          pais?: string | null
+          modelo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          area_id?: string
+          idioma?: 'fr' | 'de' | 'it' | 'en' | 'pt' | 'nl'
+          nombre?: string | null
+          descripcion?: string
+          direccion?: string | null
+          ciudad?: string | null
+          provincia?: string | null
+          comunidad?: string | null
+          pais?: string | null
+          modelo?: string | null
+          updated_at?: string
+        }
+      }
       favoritos: {
         Row: {
           id: string
@@ -293,6 +337,7 @@ export interface Database {
 export type Area = Database['public']['Tables']['areas']['Row']
 export type AreaInsert = Database['public']['Tables']['areas']['Insert']
 export type AreaUpdate = Database['public']['Tables']['areas']['Update']
+export type AreaTraduccion = Database['public']['Tables']['areas_traducciones']['Row']
 
 export type Favorito = Database['public']['Tables']['favoritos']['Row']
 export type Valoracion = Database['public']['Tables']['valoraciones']['Row']

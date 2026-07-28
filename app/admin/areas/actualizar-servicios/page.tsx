@@ -125,30 +125,25 @@ export default function ActualizarServiciosPage() {
         serpApiError: null
       }
       
-      // 1. Verificar OpenAI Key con una petición de prueba
-      const openaiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY_ADMIN
-      if (openaiKey) {
-        try {
-          console.log('  🔍 Probando OpenAI API Key...')
-          const testResponse = await fetch('https://api.openai.com/v1/models', {
-            headers: { 'Authorization': `Bearer ${openaiKey}` }
-          })
-          
-          if (testResponse.ok) {
-            checks.openaiKeyValid = true
-            console.log('  ✅ OpenAI API Key válida')
+      // 1. Verificar OpenAI Key EN EL SERVIDOR (la clave nunca llega al navegador)
+      try {
+        console.log('  🔍 Verificando OpenAI API Key en el servidor...')
+        const statusRes = await fetch('/api/admin/api-status?deep=1')
+        if (statusRes.ok) {
+          const status = await statusRes.json()
+          checks.openaiKeyValid = !!status.openaiValid
+          if (!status.openaiValid) {
+            checks.openaiError = status.openaiError || 'OPENAI_API_KEY no válida o no configurada'
+            console.error('  ❌ OpenAI:', checks.openaiError)
           } else {
-            const error = await testResponse.json()
-            checks.openaiError = error.error?.message || 'Key inválida'
-            console.error('  ❌ OpenAI Key inválida:', checks.openaiError)
+            console.log('  ✅ OpenAI API Key válida')
           }
-        } catch (e: any) {
-          checks.openaiError = e.message
-          console.error('  ❌ Error probando OpenAI:', e.message)
+        } else {
+          checks.openaiError = 'No se pudo verificar la clave en el servidor'
         }
-      } else {
-        checks.openaiError = 'NEXT_PUBLIC_OPENAI_API_KEY_ADMIN no configurada'
-        console.error('  ❌', checks.openaiError)
+      } catch (e: any) {
+        checks.openaiError = e.message
+        console.error('  ❌ Error verificando OpenAI:', e.message)
       }
       
       // 2. Verificar SerpAPI (a través del proxy) con búsqueda de prueba

@@ -5,6 +5,7 @@ import type { Area } from '@/types/database.types'
 import { BuscadorGeografico } from './BuscadorGeografico'
 import { buildAreaPopupHTML } from './areaPopup'
 import Supercluster from 'supercluster'
+import { useLanguage } from '@/lib/i18n'
 
 // Importar Leaflet solo en cliente
 let L: any = null
@@ -39,6 +40,7 @@ export function LeafletMap({
   areasBusqueda,
   onSearchQuery,
 }: LeafletMapProps) {
+  const { locale } = useLanguage()
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
@@ -382,7 +384,7 @@ export function LeafletMap({
 
   // Crear contenido HTML para popup - SINCRONIZADO con Google y MapLibre
   const createInfoWindowContent = (area: Area): string => {
-    return buildAreaPopupHTML(area, getTipoAreaColor, -15)
+    return buildAreaPopupHTML(area, getTipoAreaColor, -15, locale)
   }
 
   // Función para activar/desactivar GPS

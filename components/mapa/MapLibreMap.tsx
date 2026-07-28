@@ -7,6 +7,7 @@ import Supercluster from 'supercluster'
 import type { Area } from '@/types/database.types'
 import { BuscadorGeografico } from './BuscadorGeografico'
 import { buildAreaPopupHTML } from './areaPopup'
+import { useLanguage } from '@/lib/i18n'
 
 interface MapLibreMapProps {
   areas: Area[]
@@ -33,6 +34,7 @@ export function MapLibreMap({
   areasBusqueda,
   onSearchQuery,
 }: MapLibreMapProps) {
+  const { locale } = useLanguage()
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<maplibregl.Map | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -396,7 +398,7 @@ export function MapLibreMap({
 
   // Crear contenido HTML para popup - SINCRONIZADO con Google y Leaflet
   const createInfoWindowContent = (area: Area): string => {
-    return buildAreaPopupHTML(area, getTipoAreaColor, -15)
+    return buildAreaPopupHTML(area, getTipoAreaColor, -15, locale)
   }
 
   // Función para activar/desactivar GPS

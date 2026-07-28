@@ -31,6 +31,18 @@ const config: Config = {
       animation: {
         'bounce-slow': 'bounce 3s infinite',
         'pulse-slow': 'pulse 3s infinite',
+        'slide-up': 'slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+        'fade-in': 'fadeIn 0.25s ease-out',
+      },
+      keyframes: {
+        slideUp: {
+          '0%': { transform: 'translateY(100%)' },
+          '100%': { transform: 'translateY(0)' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
       },
       boxShadow: {
         'mobile': '0 2px 8px rgba(0, 0, 0, 0.1)',

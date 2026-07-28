@@ -10,7 +10,9 @@ export interface MapConfig {
 }
 
 const DEFAULT_CONFIG: MapConfig = {
-  proveedor: 'google',
+  // MapLibre por defecto: gratis (Google Maps JS factura por carga).
+  // El admin puede seguir eligiendo Google o Leaflet desde /admin/configuracion.
+  proveedor: 'maplibre',
   estilo: 'default',
   activo: true
 }

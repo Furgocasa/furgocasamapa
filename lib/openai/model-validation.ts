@@ -7,7 +7,7 @@ let cachedModels: string[] = []
 let cachedAt = 0
 
 function getApiKey() {
-  return process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY_ADMIN || ''
+  return process.env.OPENAI_API_KEY || ''
 }
 
 export async function listAvailableOpenAIModels(forceRefresh = false): Promise<string[]> {

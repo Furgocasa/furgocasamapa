@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Toast } from '@/components/ui/Toast'
 import { useToast } from '@/hooks/useToast'
 import type { Area } from '@/types/database.types'
+import { useLanguage, getTipoAreaLabel } from '@/lib/i18n'
 
 interface Props {
   area: Area
@@ -20,6 +21,7 @@ export function DetalleAreaHeader({ area }: Props) {
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
   const { toast, showToast, hideToast } = useToast()
+  const { locale, t } = useLanguage()
 
   useEffect(() => {
     checkFavoriteStatus()
@@ -96,16 +98,6 @@ export function DetalleAreaHeader({ area }: Props) {
       navigator.clipboard.writeText(window.location.href)
       showToast('🔗 Enlace copiado al portapapeles', 'success')
     }
-  }
-
-  const getTipoAreaLabel = (tipo: string) => {
-    const labels: Record<string, string> = {
-      publica: 'Pública',
-      privada: 'Privada',
-      camping: 'Camping',
-      parking: 'Parking',
-    }
-    return labels[tipo] || tipo
   }
 
   const getTipoAreaColor = (tipo: string) => {
@@ -188,7 +180,7 @@ export function DetalleAreaHeader({ area }: Props) {
               <div className="flex flex-wrap items-center gap-3 mb-4">
                 {/* Badge tipo de área */}
                 <span className={`${getTipoAreaColor(area.tipo_area)} px-4 py-1.5 rounded-full text-xs font-bold tracking-wider shadow-sm`}>
-                  {getTipoAreaLabel(area.tipo_area)}
+                  {getTipoAreaLabel(area.tipo_area, locale)}
                 </span>
                 
                 {area.verificado && (
@@ -196,7 +188,7 @@ export function DetalleAreaHeader({ area }: Props) {
                     <svg className="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
-                    Verificado
+                    {t('verified')}
                   </span>
                 )}
               </div>
@@ -227,10 +219,10 @@ export function DetalleAreaHeader({ area }: Props) {
                 {area.precio_noche !== null && area.precio_noche !== undefined && (
                   <div className="flex flex-col items-center justify-center px-5">
                     <div className="text-white font-bold text-2xl">
-                      {area.precio_noche === 0 ? 'Gratis' : `${area.precio_noche}€`}
+                      {area.precio_noche === 0 ? t('free') : `${area.precio_noche}€`}
                     </div>
                     <span className="text-xs text-slate-300 font-medium tracking-wider uppercase mt-1">
-                      {area.precio_24h ? '/24h' : '/noche'}
+                      {area.precio_24h ? '/24h' : t('per_night')}
                     </span>
                   </div>
                 )}

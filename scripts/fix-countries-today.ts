@@ -41,13 +41,7 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Configurar Google Geocoding
-const googleApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-if (!googleApiKey) {
-  console.error("❌ Error: Falta NEXT_PUBLIC_GOOGLE_MAPS_API_KEY");
-  process.exit(1);
-}
+// Geocoding con Nominatim (OpenStreetMap): GRATIS, no requiere API key
 
 interface Area {
   id: string;
@@ -67,45 +61,34 @@ interface GeocodeResult {
 }
 
 /**
- * Función para obtener país desde coordenadas GPS usando Google Geocoding
+ * Función para obtener país desde coordenadas GPS usando Nominatim (OpenStreetMap)
+ * GRATIS - sin coste por petición (antes: Google Geocoding, $5/1000).
+ * Límite de uso: 1 petición/segundo.
  */
 async function reverseGeocode(
   lat: number,
   lng: number
 ): Promise<GeocodeResult | null> {
   try {
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&language=es&key=${googleApiKey}`;
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=es&zoom=10`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "MapaFurgocasa/1.0 (contacto@acttax.es)",
+      },
+    });
     const data: any = await response.json();
 
-    if (data.status !== "OK" || !data.results || data.results.length === 0) {
+    if (!data || data.error || !data.address) {
       return null;
     }
 
-    const components = data.results[0].address_components;
-
-    let country = "";
-    let province = "";
-    let city = "";
-
-    for (const component of components) {
-      if (component.types.includes("country")) {
-        country = component.long_name;
-      }
-      if (component.types.includes("administrative_area_level_2")) {
-        province = component.long_name;
-      }
-      if (
-        component.types.includes("administrative_area_level_1") &&
-        !province
-      ) {
-        province = component.long_name;
-      }
-      if (component.types.includes("locality")) {
-        city = component.long_name;
-      }
-    }
+    const addr = data.address;
+    const country = addr.country || "";
+    const province =
+      addr.province || addr.county || addr.state_district || addr.state || "";
+    const city =
+      addr.city || addr.town || addr.village || addr.municipality || "";
 
     return { country: country || "Desconocido", province, city };
   } catch (error) {
@@ -271,7 +254,7 @@ async function fixCountriesToday() {
       }
 
       // Delay para no saturar la API (25 requests/segundo = 40ms)
-      await delay(100);
+      await delay(1100); // Nominatim exige máximo 1 petición/segundo
     } catch (error: any) {
       errors++;
       console.error(`❌ Error procesando ${area.nombre}:`, error.message);

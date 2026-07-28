@@ -32,6 +32,12 @@ const CONCURRENCY = parseInt(process.env.BULK_CONCURRENCY || '6', 10)
 const LIMIT = parseInt(process.env.BULK_LIMIT || '0', 10)
 const MODE = (process.env.BULK_MODE || 'critical').toLowerCase()
 const MODEL = process.env.BULK_MODEL || 'gpt-5.5'
+// 'medium' por defecto: con 'low' el modelo a veces se salta la búsqueda web
+// y genera textos genéricos/incompletos. Con 'medium' investiga de verdad.
+const EFFORT = process.env.BULK_EFFORT || 'medium'
+// Forzar el uso de web_search (evita descripciones inventadas sin buscar).
+// Desactivable con BULK_FORCE_SEARCH=0 si la API diese problemas.
+const FORCE_SEARCH = !/^(0|false|no)$/i.test(process.env.BULK_FORCE_SEARCH || '1')
 const REQ_TIMEOUT_MS = parseInt(process.env.BULK_TIMEOUT_MS || '90000', 10)
 const CHECKPOINT = path.join(__dirname, process.env.BULK_CHECKPOINT || 'enrich-checkpoint.txt')
 
@@ -136,17 +142,27 @@ Devuelve solo el texto final, en párrafos, sin títulos ni viñetas.`
 }
 
 async function generate(openai, area, extraReminder) {
-  const resp = await openai.responses.create(
-    {
-      model: MODEL,
-      tools: [{ type: 'web_search' }],
-      reasoning: { effort: 'low' },
-      max_output_tokens: 2500,
-      input: buildMessages(area, extraReminder)
-    },
-    { timeout: REQ_TIMEOUT_MS }
-  )
-  return cleanText(resp.output_text || '')
+  const params = {
+    model: MODEL,
+    tools: [{ type: 'web_search' }],
+    reasoning: { effort: EFFORT },
+    max_output_tokens: 2500,
+    input: buildMessages(area, extraReminder)
+  }
+  if (FORCE_SEARCH) params.tool_choice = 'required'
+
+  try {
+    const resp = await openai.responses.create(params, { timeout: REQ_TIMEOUT_MS })
+    return cleanText(resp.output_text || '')
+  } catch (e) {
+    // Si la API rechaza tool_choice, reintentar sin forzar (no romper el lote)
+    if (FORCE_SEARCH && /tool_choice/i.test((e && e.message) || '')) {
+      delete params.tool_choice
+      const resp = await openai.responses.create(params, { timeout: REQ_TIMEOUT_MS })
+      return cleanText(resp.output_text || '')
+    }
+    throw e
+  }
 }
 
 async function fetchAllAreas(supa) {

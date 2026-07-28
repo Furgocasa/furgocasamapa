@@ -9,13 +9,14 @@ import { createClient } from '@/lib/supabase/client'
 import type { Area } from '@/types/database.types'
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { MapIcon, FunnelIcon, ListBulletIcon } from '@heroicons/react/24/outline'
-import LoginWall from '@/components/ui/LoginWall'
 import { usePersistentFilters } from '@/hooks/usePersistentFilters'
 import { ToastNotification } from '@/components/mapa/ToastNotification'
 import { reverseGeocode } from '@/lib/google/geocoding'
 import { track } from '@/lib/analytics/track'
+import { useLanguage } from '@/lib/i18n'
 
 export default function MapaPage() {
+  const { locale, t } = useLanguage()
   const [areas, setAreas] = useState<Area[]>([])
   const [loading, setLoading] = useState(true)
   const [initialLoading, setInitialLoading] = useState(true) // Para skeleton loader
@@ -75,20 +76,36 @@ export default function MapaPage() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // ✅ CARGAR TODAS LAS ÁREAS (SIN CACHÉ - siempre fresco)
+  // ✅ CARGAR TODAS LAS ÁREAS desde /api/areas (cacheado en CDN; se recarga al cambiar idioma)
   useEffect(() => {
     const loadAreas = async () => {
       try {
         setLoading(true)
-        
-        // Cargar DIRECTO desde Supabase - sin caché
+
+        // 1º intento: endpoint cacheado (rápido y barato en egress)
+        try {
+          const qs = locale && locale !== 'es' ? `?lang=${locale}` : ''
+          const res = await fetch(`/api/areas${qs}`)
+          if (res.ok) {
+            const json = await res.json()
+            if (Array.isArray(json.areas) && json.areas.length > 0) {
+              console.log(`✅ Total: ${json.areas.length} áreas cargadas (CDN, lang=${locale})`)
+              setAreas(json.areas as Area[])
+              setLoadingProgress({ loaded: json.areas.length, total: json.areas.length })
+              return
+            }
+          }
+        } catch {
+          // caemos al fallback
+        }
+
+        // Fallback: carga directa desde Supabase con paginación (comportamiento anterior)
+        console.warn('⚠️ /api/areas no disponible, cargando directo desde Supabase...')
         const supabase = createClient()
         const allAreas: Area[] = []
         const pageSize = 1000
         let page = 0
         let hasMore = true
-
-        console.log(`🔄 Cargando áreas desde Supabase...`)
 
         while (hasMore) {
           const { data, error } = await supabase
@@ -102,7 +119,6 @@ export default function MapaPage() {
 
           if (data && data.length > 0) {
             allAreas.push(...(data as Area[]))
-            console.log(`📦 Página ${page + 1}: ${data.length} áreas`)
             page++
             if (data.length < pageSize) hasMore = false
           } else {
@@ -123,7 +139,7 @@ export default function MapaPage() {
     }
 
     loadAreas()
-  }, []) // Solo cargar una vez al inicio
+  }, [locale])
 
   // ✅ OPTIMIZACIÓN #3: Obtener ubicación del usuario CON REVERSE GEOCODING (con cache)
   useEffect(() => {
@@ -472,20 +488,8 @@ export default function MapaPage() {
     setTimeout(() => setShowToast(false), 8000)
   }
 
-  // Mostrar loading mientras comprobamos autenticación
-  if (authLoading) {
-    return (
-      <div className="h-screen flex flex-col overflow-hidden">
-        <Navbar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Cargando...</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // El mapa es público: no se bloquea la carga esperando la autenticación.
+  // (El estado `user` se mantiene por si se necesita para funciones personales.)
 
   // Skeleton Loader MEJORADO - Solo primera carga, luego cache instantáneo
   if (initialLoading) {
@@ -507,15 +511,15 @@ export default function MapaPage() {
           </div>
 
           {/* Indicador de carga centrado */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-4">
+          <div className="absolute inset-0 flex items-center justify-center px-4">
+            <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl ring-1 ring-gray-900/5 p-8 max-w-md w-full">
               {/* Icono de mapa animado */}
               <div className="flex justify-center mb-6">
                 <div className="relative">
-                  <MapIcon className="w-16 h-16 text-sky-600 animate-pulse" />
-                  <div className="absolute inset-0 animate-ping opacity-20">
-                    <MapIcon className="w-16 h-16 text-sky-600" />
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/30">
+                    <MapIcon className="w-11 h-11 text-white" />
                   </div>
+                  <div className="absolute inset-0 rounded-2xl animate-ping opacity-10 bg-sky-500"></div>
                 </div>
               </div>
 
@@ -523,7 +527,7 @@ export default function MapaPage() {
               <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
                 {areas.length > 0 ? '⚡ Carga Instantánea' : 'Cargando Mapa'}
               </h2>
-              <p className="text-gray-600 text-center mb-6">
+              <p className="text-gray-500 text-center mb-6">
                 {areas.length > 0
                   ? `${areas.length} áreas desde cache...`
                   : loadingProgress.loaded > 0
@@ -533,7 +537,7 @@ export default function MapaPage() {
 
               {/* Barra de progreso - solo si está cargando desde servidor */}
               {loadingProgress.loaded > 0 && areas.length === 0 && (
-                <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
                   <div
                     className="bg-gradient-to-r from-sky-500 to-blue-600 h-full transition-all duration-300 ease-out rounded-full"
                     style={{
@@ -545,7 +549,7 @@ export default function MapaPage() {
 
               {/* Spinner */}
               <div className="flex justify-center mt-6">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-[3px] border-sky-100 border-t-sky-600"></div>
               </div>
             </div>
           </div>
@@ -559,8 +563,8 @@ export default function MapaPage() {
       {/* Navbar - siempre visible */}
       <Navbar />
 
-      {/* Layout principal - difuminado si no hay usuario */}
-      <main className={`flex-1 relative flex overflow-hidden min-h-0 ${!user ? 'blur-sm pointer-events-none select-none' : ''}`}>
+      {/* Layout principal - el mapa es PÚBLICO (el login se pide solo en favoritos/rutas/perfil) */}
+      <main className="flex-1 relative flex overflow-hidden min-h-0">
         {/* Panel de Filtros - Desktop y Tablet */}
         <aside className="hidden md:block md:w-72 lg:w-80 bg-white shadow-lg border-r overflow-y-auto overflow-x-hidden">
           <FiltrosMapa
@@ -590,16 +594,16 @@ export default function MapaPage() {
 
 
           {/* Contador de resultados con indicador de carga */}
-          <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg px-3 py-2 z-10">
-            <p className="text-sm font-semibold text-gray-700">
-              {areasParaMapa.length} {areasParaMapa.length === 1 ? 'área' : 'áreas'}
+          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md rounded-full shadow-lg ring-1 ring-gray-900/5 px-4 py-2 z-10">
+            <p className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
+              <span className="text-sky-600 font-bold tabular-nums">{areasParaMapa.length}</span>
+              {areasParaMapa.length === 1 ? 'área' : 'áreas'}
               {filtros.pais && !filtros.pais.startsWith('REGION_') && (
-                <span className="ml-2 text-xs text-gray-500">({filtros.pais})</span>
+                <span className="text-xs text-gray-500 font-normal">· {filtros.pais}</span>
               )}
               {loading && (
-                <span className="ml-2 inline-flex items-center">
-                  <span className="animate-spin rounded-full h-3 w-3 border-b-2 border-sky-600"></span>
-                  <span className="ml-1 text-xs text-gray-500">cargando...</span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="animate-spin rounded-full h-3 w-3 border-2 border-sky-200 border-t-sky-600"></span>
                 </span>
               )}
             </p>
@@ -618,25 +622,20 @@ export default function MapaPage() {
         </aside>
       </main>
 
-      {/* Modal de bloqueo si no hay usuario */}
-      {!user && <LoginWall feature="mapa" />}
-
-      {/* Toast Notification para GPS - Solo si está logueado */}
-      {user && (
-        <ToastNotification
-          show={showToast}
-          message={toastMessage}
-          country={detectedCountry || undefined}
-          onClose={() => setShowToast(false)}
-          onViewFilters={() => setMostrarFiltros(true)}
-        />
-      )}
+      {/* Toast Notification para GPS */}
+      <ToastNotification
+        show={showToast}
+        message={toastMessage}
+        country={detectedCountry || undefined}
+        onClose={() => setShowToast(false)}
+        onViewFilters={() => setMostrarFiltros(true)}
+      />
 
       {/* Bottom Sheet - Filtros (solo móvil) */}
       <BottomSheet
         isOpen={mostrarFiltros}
         onClose={() => setMostrarFiltros(false)}
-        title="Filtros"
+        title={t('filters')}
         snapPoints={['full']}
       >
         <FiltrosMapa
@@ -654,7 +653,7 @@ export default function MapaPage() {
       <BottomSheet
         isOpen={mostrarLista}
         onClose={() => setMostrarLista(false)}
-        title={`${areasParaLista.length} Lugares`}
+        title={`${areasParaLista.length} ${t('places')}`}
         snapPoints={['full', 'half']}
       >
         <ListaResultados
@@ -667,49 +666,64 @@ export default function MapaPage() {
       </BottomSheet>
 
       {/* Bottom Bar (solo móvil) - Mapa, Filtros, Lista */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-bottom z-40">
-        <div className="flex items-center justify-around h-16 px-2">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-200/80 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] safe-bottom z-40">
+        <div className="flex items-center justify-around h-16 px-3">
           {/* Mapa */}
           <button
             onClick={() => {
               setMostrarFiltros(false)
               setMostrarLista(false)
             }}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-              !mostrarFiltros && !mostrarLista ? 'text-primary-600' : 'text-gray-600'
+            className={`flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-200 active:scale-95 ${
+              !mostrarFiltros && !mostrarLista ? 'text-sky-600' : 'text-gray-500'
             }`}
           >
-            <MapIcon className="w-6 h-6 mb-1" />
-            <span className="text-xs font-medium">Mapa</span>
+            <span className={`px-4 py-1 rounded-full transition-colors duration-200 ${
+              !mostrarFiltros && !mostrarLista ? 'bg-sky-50' : 'bg-transparent'
+            }`}>
+              <MapIcon className="w-6 h-6" />
+            </span>
+            <span className={`text-[11px] ${!mostrarFiltros && !mostrarLista ? 'font-semibold' : 'font-medium'}`}>{t('nav_mapa')}</span>
           </button>
 
           {/* Filtros */}
           <button
             onClick={() => setMostrarFiltros(true)}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-              mostrarFiltros ? 'text-primary-600' : 'text-gray-600'
+            className={`flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-200 active:scale-95 relative ${
+              mostrarFiltros ? 'text-sky-600' : 'text-gray-500'
             }`}
           >
-            <FunnelIcon className="w-6 h-6 mb-1" />
-            <span className="text-xs font-medium">Filtros</span>
+            <span className={`px-4 py-1 rounded-full transition-colors duration-200 relative ${
+              mostrarFiltros ? 'bg-sky-50' : 'bg-transparent'
+            }`}>
+              <FunnelIcon className="w-6 h-6" />
+              {contarFiltrosActivos() > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#FF6B35] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold shadow-sm">
+                  {contarFiltrosActivos()}
+                </span>
+              )}
+            </span>
+            <span className={`text-[11px] ${mostrarFiltros ? 'font-semibold' : 'font-medium'}`}>{t('filters')}</span>
           </button>
 
           {/* Lista */}
           <button
             onClick={() => setMostrarLista(true)}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition-colors relative ${
-              mostrarLista ? 'text-primary-600' : 'text-gray-600'
+            className={`flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-200 active:scale-95 relative ${
+              mostrarLista ? 'text-sky-600' : 'text-gray-500'
             }`}
           >
-            <div className="relative">
-              <ListBulletIcon className="w-6 h-6 mb-1" />
+            <span className={`px-4 py-1 rounded-full transition-colors duration-200 relative ${
+              mostrarLista ? 'bg-sky-50' : 'bg-transparent'
+            }`}>
+              <ListBulletIcon className="w-6 h-6" />
               {areasParaLista.length > 0 && (
-                <span className="absolute -top-1 -right-2 bg-primary-600 text-white text-xs rounded-full px-1.5 py-0.5 font-bold min-w-[20px] text-center">
+                <span className="absolute -top-1.5 -right-3 bg-sky-600 text-white text-[10px] rounded-full px-1.5 py-px font-bold min-w-[20px] text-center shadow-sm">
                   {areasParaLista.length > 99 ? '99+' : areasParaLista.length}
                 </span>
               )}
-            </div>
-            <span className="text-xs font-medium">Lista</span>
+            </span>
+            <span className={`text-[11px] ${mostrarLista ? 'font-semibold' : 'font-medium'}`}>{t('places')}</span>
           </button>
         </div>
       </nav>

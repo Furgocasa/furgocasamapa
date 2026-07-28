@@ -10,11 +10,10 @@ import { createClient } from '@supabase/supabase-js'
 // Cliente de Supabase con service role para acceso completo
 function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !serviceRoleKey) {
-    const keysSeen = Object.keys(process.env).filter((k: any) => k.includes('SUPABASE'))
-    throw new Error(`Missing Supabase credentials (functions.ts) | has_url=${!!supabaseUrl} | has_service_role=${!!serviceRoleKey} | keys_seen=${JSON.stringify(keysSeen)}`)
+    throw new Error('Configuración de Supabase incompleta en el servidor')
   }
 
   return createClient(supabaseUrl, serviceRoleKey)

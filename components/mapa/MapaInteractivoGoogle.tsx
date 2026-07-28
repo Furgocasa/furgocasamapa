@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { BuscadorGeografico } from './BuscadorGeografico'
 import { buildAreaPopupHTML } from './areaPopup'
 import { getMapStyle } from '@/lib/mapStyles'
+import { useLanguage } from '@/lib/i18n'
 
 // Tipos simplificados para Google Maps (se cargan din├ímicamente)
 type GoogleMap = any
@@ -28,6 +29,7 @@ interface MapaInteractivoGoogleProps {
 }
 
 export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, mapRef: externalMapRef, onCountryChange, currentCountry, estilo, paisFiltro = '', areasBusqueda, onSearchQuery }: MapaInteractivoGoogleProps) {
+  const { locale } = useLanguage()
   const mapRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<GoogleMap | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -475,7 +477,7 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
 
   // Crear contenido HTML para InfoWindow - SINCRONIZADO con MapLibre y Leaflet (areaPopup.ts)
   const createInfoWindowContent = (area: Area): string => {
-    return buildAreaPopupHTML(area, getTipoAreaColor, -20)
+    return buildAreaPopupHTML(area, getTipoAreaColor, -20, locale)
   }
 
   // Funci├│n para activar/desactivar GPS (ANTES del return condicional)

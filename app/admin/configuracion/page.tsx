@@ -82,8 +82,19 @@ export default function ConfiguracionPage() {
 
   const checkApiConnections = async () => {
     try {
-      const openaiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY_ADMIN
-      const serpApiKey = process.env.NEXT_PUBLIC_SERPAPI_KEY_ADMIN
+      // Estado de claves verificado en el SERVIDOR (sin exponer claves al navegador)
+      let openaiOk = false
+      let serpApiOk = false
+      try {
+        const statusRes = await fetch('/api/admin/api-status')
+        if (statusRes.ok) {
+          const status = await statusRes.json()
+          openaiOk = !!status.openai
+          serpApiOk = !!status.serpapi
+        }
+      } catch {
+        // se mantienen en false
+      }
 
       // Check Supabase
       const { data, error } = await (supabase as any).from('areas').select('id').limit(1)
@@ -102,8 +113,8 @@ export default function ConfiguracionPage() {
       }
 
       setApiStatus({
-        openai: !!openaiKey,
-        serpapi: !!serpApiKey,
+        openai: openaiOk,
+        serpapi: serpApiOk,
         supabase: supabaseOk,
         chatbotOpenAI: chatbotOpenAIOk
       })

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { MagnifyingGlassIcon, XMarkIcon, ChevronRightIcon, CheckIcon, GlobeAltIcon } from '@heroicons/react/24/outline'
+import { useLanguage, getServicioLabel, SERVICIO_ICONS } from '@/lib/i18n'
 
 export interface Filtros {
   busqueda: string
@@ -25,31 +26,19 @@ interface FiltrosMapaProps {
   }
 }
 
-const SERVICIOS = [
-  { id: 'agua', label: '💧 Agua' },
-  { id: 'electricidad', label: '⚡ Electricidad' },
-  { id: 'vaciado_aguas_negras', label: '♻️ Vaciado Químico' },
-  { id: 'vaciado_aguas_grises', label: '🚰 Vaciado Aguas Grises' },
-  { id: 'wifi', label: '📶 WiFi' },
-  { id: 'duchas', label: '🚿 Duchas' },
-  { id: 'wc', label: '🚻 WC' },
-  { id: 'lavanderia', label: '🧺 Lavandería' },
-  { id: 'restaurante', label: '🍽️ Restaurante' },
-  { id: 'supermercado', label: '🛒 Supermercado' },
-  { id: 'zona_mascotas', label: '🐕 Zona Mascotas' }
-]
-
-const PRECIOS = [
-  { value: '', label: 'Todos los precios' },
-  { value: 'gratis', label: 'Gratis' },
-  { value: 'de-pago', label: 'De pago' },
-  { value: 'desconocido', label: 'Precio desconocido' }
-]
-
-const CARACTERISTICAS = [
-  { id: 'con_descuento_furgocasa', label: '🎫 Con descuento FURGOCASA' },
-  { id: 'verificado', label: '✓ Verificado oficialmente' }
-]
+const SERVICIO_IDS = [
+  'agua',
+  'electricidad',
+  'vaciado_aguas_negras',
+  'vaciado_aguas_grises',
+  'wifi',
+  'duchas',
+  'wc',
+  'lavanderia',
+  'restaurante',
+  'supermercado',
+  'zona_mascotas',
+] as const
 
 // Regiones para filtrar - EXPORTAR para uso en page.tsx
 export const REGIONES = {
@@ -159,8 +148,34 @@ export function paisPerteneceAFiltro(pais: string, filtro: string): boolean {
 }
 
 export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, totalResultados, paisesDisponibles, conteoPaisesRegion }: FiltrosMapaProps) {
+  const { locale, t } = useLanguage()
   const [busquedaLocal, setBusquedaLocal] = useState(filtros.busqueda)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const serviciosOpts = useMemo(
+    () =>
+      SERVICIO_IDS.map((id) => ({
+        id,
+        label: `${SERVICIO_ICONS[id] || '✓'} ${getServicioLabel(id, locale)}`,
+      })),
+    [locale]
+  )
+  const preciosOpts = useMemo(
+    () => [
+      { value: '', label: t('all_prices') },
+      { value: 'gratis', label: t('free') },
+      { value: 'de-pago', label: t('paid') },
+      { value: 'desconocido', label: t('price_unknown') },
+    ],
+    [t, locale]
+  )
+  const caracteristicasOpts = useMemo(
+    () => [
+      { id: 'con_descuento_furgocasa', label: `🎫 ${t('discount_furgocasa')}` },
+      { id: 'verificado', label: `✓ ${t('verified')}` },
+    ],
+    [t, locale]
+  )
   
   // Estado para el MODAL de países
   const [modalPaisesOpen, setModalPaisesOpen] = useState(false)
@@ -247,7 +262,7 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
     <div className="h-full flex flex-col bg-white">
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary-50 to-blue-50 border-b border-primary-200">
-        <h2 className="text-lg font-bold text-primary-900">Filtros de Búsqueda</h2>
+        <h2 className="text-lg font-bold text-primary-900">{t('filters')}</h2>
         {onClose && (
           <button
             onClick={onClose}
@@ -264,14 +279,14 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
         {/* Búsqueda */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            Buscar dirección o lugar
+            {t('search_placeholder')}
           </label>
           <div className="relative">
             <input
               type="text"
               value={busquedaLocal}
               onChange={(e) => handleBusquedaChange(e.target.value)}
-              placeholder="Nombre, ciudad o provincia..."
+              placeholder={t('search_placeholder')}
               className="w-full pl-8 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
             <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -289,7 +304,7 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
         {/* PAÍS/REGIÓN - BOTÓN QUE ABRE MODAL */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            País / Región ({paisesDisponibles.length} países)
+            {t('country_filter')} / {t('region')} ({paisesDisponibles.length})
           </label>
           <button
             type="button"
@@ -309,10 +324,10 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
         {/* Servicios */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            Servicios
+            {t('services')}
           </label>
           <div className="space-y-1 bg-gray-50 rounded-lg p-2">
-            {SERVICIOS.map((servicio) => (
+            {serviciosOpts.map((servicio) => (
               <label key={servicio.id} className="flex items-center cursor-pointer hover:bg-white py-1.5 px-2 rounded transition-colors">
                 <input
                   type="checkbox"
@@ -329,10 +344,10 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
         {/* Precio */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            Precio
+            {t('price')}
           </label>
           <div className="space-y-1 bg-gray-50 rounded-lg p-2">
-            {PRECIOS.map((precio) => (
+            {preciosOpts.map((precio) => (
               <label key={precio.value} className="flex items-center cursor-pointer hover:bg-white py-1.5 px-2 rounded transition-colors">
                 <input
                   type="radio"
@@ -351,10 +366,10 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
         {/* Características */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            Características
+            {t('characteristics')}
           </label>
           <div className="space-y-1 bg-gray-50 rounded-lg p-2">
-            {CARACTERISTICAS.map((caracteristica) => (
+            {caracteristicasOpts.map((caracteristica) => (
               <label key={caracteristica.id} className="flex items-center cursor-pointer hover:bg-white py-1.5 px-2 rounded transition-colors">
                 <input
                   type="checkbox"
@@ -372,13 +387,13 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
       {/* Footer */}
       <div className="border-t px-3 py-3 space-y-2 bg-gray-50">
         <div className="text-sm text-gray-600 text-center">
-          <span className="font-bold text-gray-900">{totalResultados}</span> {totalResultados === 1 ? 'área encontrada' : 'áreas encontradas'}
+          <span className="font-bold text-gray-900">{totalResultados}</span> {t('results')}
         </div>
         <button
           onClick={limpiarFiltros}
           className="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-100 transition-colors font-medium"
         >
-          Restablecer Filtros
+          {t('clear_filters')}
         </button>
       </div>
 
@@ -451,7 +466,7 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{REGIONES.EUROPA.emoji}</span>
                       <div>
-                        <span className="font-medium text-gray-900">{REGIONES.EUROPA.label}</span>
+                        <span className="font-medium text-gray-900">{t('europe')}</span>
                         <p className="text-xs text-gray-500">{conteoPaisesRegion?.europa || 0} países con áreas</p>
                       </div>
                     </div>
@@ -471,7 +486,7 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{REGIONES.SUDAMERICA.emoji}</span>
                       <div>
-                        <span className="font-medium text-gray-900">{REGIONES.SUDAMERICA.label}</span>
+                        <span className="font-medium text-gray-900">{t('south_america')}</span>
                         <p className="text-xs text-gray-500">{conteoPaisesRegion?.sudamerica || 0} países con áreas</p>
                       </div>
                     </div>
@@ -491,7 +506,7 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{REGIONES.CENTROAMERICA.emoji}</span>
                       <div>
-                        <span className="font-medium text-gray-900">{REGIONES.CENTROAMERICA.label}</span>
+                        <span className="font-medium text-gray-900">{t('central_america')}</span>
                         <p className="text-xs text-gray-500">{conteoPaisesRegion?.centroamerica || 0} países con áreas</p>
                       </div>
                     </div>

@@ -38,34 +38,20 @@ import { validateOpenAIModel, buildTokensParam } from '@/lib/openai/model-valida
 // Cliente Supabase (service role para acceso completo)
 function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-  
-  console.log('🔍 [SUPABASE] Buscando credenciales...')
-  console.log('  - NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? '✅ Encontrada' : '❌ FALTA')
-  console.log('  - SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '✅ Encontrada' : '❌ FALTA')
-  console.log('  - NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY:', process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY ? '✅ Encontrada' : '❌ FALTA')
-  console.log('  - Variables con SUPABASE:', Object.keys(process.env).filter((k: any) => k.includes('SUPABASE')))
-  console.log('  - TODAS las variables:', Object.keys(process.env).sort())
-  
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
   if (!supabaseUrl || !serviceRoleKey) {
-    console.error('❌ Supabase URL:', supabaseUrl ? '✅' : '❌ FALTA')
-    console.error('❌ Service Role Key:', serviceRoleKey ? '✅' : '❌ FALTA')
-    // Incluir diagnóstico en el mensaje de error para que llegue al cliente
-    const supabaseEnvKeys = Object.keys(process.env).filter((k: any) => k.includes('SUPABASE'))
-    throw new Error(
-      `Missing Supabase credentials | keys_seen=${JSON.stringify(supabaseEnvKeys)} | has_url=${!!supabaseUrl} | has_service_role=${!!serviceRoleKey}`
-    )
+    logger.error('Faltan credenciales de Supabase (URL o service role)')
+    throw new Error('Configuración de Supabase incompleta en el servidor')
   }
-  
-  console.log('✅ [SUPABASE] Credenciales encontradas correctamente')
+
   return createClient(supabaseUrl, serviceRoleKey)
 }
 
 // Cliente OpenAI (se crea bajo demanda para asegurar que las env vars estén cargadas)
 function getOpenAIClient() {
-  const apiKey = process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY_ADMIN
+  const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
-    console.error('❌ Variables OpenAI disponibles:', Object.keys(process.env).filter((k: any) => k.includes('OPENAI')))
     throw new Error('OPENAI_API_KEY no está configurada')
   }
   return new OpenAI({ apiKey })
@@ -358,17 +344,11 @@ export async function POST(req: NextRequest) {
     logger.debug('Verificando OPENAI_API_KEY')
     
     // Validar variables de entorno
-    const apiKey = process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY_ADMIN
+    const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) {
-      const allEnvVars = Object.keys(process.env)
-      logger.error('OPENAI_API_KEY no configurada', null, { 
-        openaiVars: allEnvVars.filter((k: any) => k.includes('OPENAI'))
-      })
+      logger.error('OPENAI_API_KEY no configurada')
       return NextResponse.json(
-        { 
-          error: 'Chatbot no configurado: falta OPENAI_API_KEY',
-          debug: { env_vars: allEnvVars }
-        },
+        { error: 'Chatbot no configurado: falta OPENAI_API_KEY' },
         { status: 500 }
       )
     }
@@ -836,47 +816,15 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 // ============================================
 
 export async function GET() {
-  // Verificar todas las posibles variables
-  const openaiKey = process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY_ADMIN
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY
-  
-  const hasOpenAI = !!openaiKey
-  const hasSupabase = !!(supabaseUrl && supabaseServiceRole)
-  
-  // Obtener TODAS las variables de entorno disponibles
-  const allEnvKeys = Object.keys(process.env)
-  const envVars = allEnvKeys.filter((k: any) => k.includes('OPENAI') || k.includes('SUPABASE') || k.includes('GOOGLE'))
-  
-  logger.debug('GET /api/chatbot - Verificando variables', {
-    hasOpenAI,
-    hasSupabase,
-    envVarsCount: envVars.length,
-    totalEnvVars: allEnvKeys.length
-  })
-  
+  const hasOpenAI = !!process.env.OPENAI_API_KEY
+  const hasSupabase = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
+
   return NextResponse.json({
     service: 'Chatbot Furgocasa',
-    version: '2.3-enhanced-debug',
+    version: '2.4',
     status: hasOpenAI ? 'active' : 'error',
     openai_configured: hasOpenAI,
     supabase_configured: hasSupabase,
-    debug: {
-      env_vars_found: envVars,
-      total_env_vars: allEnvKeys.length,
-      node_env: process.env.NODE_ENV,
-      has_openai_key: hasOpenAI,
-      openai_key_length: openaiKey?.length || 0,
-      has_supabase_url: !!supabaseUrl,
-      supabase_url_length: supabaseUrl?.length || 0,
-      has_supabase_service_role: !!supabaseServiceRole,
-      supabase_service_role_length: supabaseServiceRole?.length || 0,
-      // Mostrar primeros caracteres para debug (solo en dev)
-      ...(process.env.NODE_ENV === 'development' && {
-        supabase_url_preview: supabaseUrl?.substring(0, 30) || 'undefined',
-        openai_key_preview: openaiKey?.substring(0, 10) || 'undefined'
-      })
-    },
     endpoints: {
       POST: '/api/chatbot - Enviar mensaje al chatbot'
     },

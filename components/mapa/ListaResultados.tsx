@@ -4,6 +4,7 @@ import { Area } from '@/types/database.types'
 import { MapPinIcon, PhoneIcon, StarIcon, XMarkIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
 import { useState, useMemo } from 'react'
+import { useLanguage, getServicioLabel, SERVICIO_ICONS } from '@/lib/i18n'
 
 interface ListaResultadosProps {
   areas: Area[]
@@ -19,53 +20,12 @@ type SortDirection = 'asc' | 'desc'
 // Límite de 50 resultados en la lista (el mapa muestra todos los marcadores)
 const MAX_RESULTS = 50
 
-const getServicioIcon = (servicio: string): string => {
-  const iconos: Record<string, string> = {
-    agua: '💧',
-    electricidad: '⚡',
-    vaciado_aguas_negras: '♻️',
-    vaciado_aguas_grises: '🚰',
-    wifi: '📶',
-    duchas: '🚿',
-    wc: '🚻',
-    lavanderia: '🧺',
-    restaurante: '🍽️',
-    supermercado: '🛒',
-    zona_mascotas: '🐕'
-  }
-  return iconos[servicio] || '✓'
-}
-
-const getServicioLabel = (servicio: string): string => {
-  const etiquetas: Record<string, string> = {
-    agua: 'Agua',
-    electricidad: 'Electricidad',
-    vaciado_aguas_negras: 'Vaciado Químico',
-    vaciado_aguas_grises: 'Vaciado Aguas Grises',
-    wifi: 'WiFi',
-    duchas: 'Duchas',
-    wc: 'WC',
-    lavanderia: 'Lavandería',
-    restaurante: 'Restaurante',
-    supermercado: 'Supermercado',
-    zona_mascotas: 'Zona Mascotas'
-  }
-  return etiquetas[servicio] || servicio
-}
-
 export function ListaResultados({ areas, onAreaClick, onClose, userLocation, gpsActive }: ListaResultadosProps) {
+  const { locale, t } = useLanguage()
   const [sortBy, setSortBy] = useState<SortOption>('nombre')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
-  const getTipoAreaBadge = (tipo: string) => {
-    const badges = {
-      publica: { label: 'Pública', color: 'bg-primary-100 text-primary-800' },
-      privada: { label: 'Privada', color: 'bg-orange-100 text-orange-800' },
-      camping: { label: 'Camping', color: 'bg-green-100 text-green-800' },
-      parking: { label: 'Parking', color: 'bg-yellow-100 text-yellow-800' }
-    }
-    return badges[tipo as keyof typeof badges] || badges.publica
-  }
+  const getServicioIcon = (servicio: string): string => SERVICIO_ICONS[servicio] || '✓'
 
   // Calcular distancia entre dos puntos (Haversine formula)
   const calcularDistancia = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -132,13 +92,12 @@ export function ListaResultados({ areas, onAreaClick, onClose, userLocation, gps
       <div className="bg-gradient-to-r from-primary-50 to-blue-50 border-b border-primary-200 sticky top-0 z-10">
         <div className="flex items-center justify-between p-4">
           <div>
-            <h2 className="text-lg font-bold text-primary-900">Lugares Encontrados</h2>
+            <h2 className="text-lg font-bold text-primary-900">{t('places')}</h2>
             <p className="text-sm text-primary-700">
-              {totalResults} {totalResults === 1 ? 'resultado' : 'resultados'}
+              {totalResults} {t('results')}
               {hasMoreResults && (
                 <span className="block text-xs text-primary-600 mt-1 leading-relaxed">
-                  📍 Mostrando {visibleResults} de {totalResults} lugares<br />
-                  Usa los filtros para refinar tu búsqueda
+                  📍 {visibleResults} {t('of')} {totalResults}
                 </span>
               )}
             </p>
@@ -166,11 +125,11 @@ export function ListaResultados({ areas, onAreaClick, onClose, userLocation, gps
               onChange={(e) => setSortBy(e.target.value as SortOption)}
               className="flex-1 px-3 py-2 bg-white border border-primary-300 rounded-lg text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
-              <option value="nombre">🔤 Nombre</option>
-              <option value="valoracion">⭐ Valoración</option>
-              <option value="precio">💰 Precio</option>
+              <option value="nombre">🔤 {t('sort_name')}</option>
+              <option value="valoracion">⭐ {t('sort_rating')}</option>
+              <option value="precio">💰 {t('sort_price')}</option>
               <option value="proximidad" disabled={!gpsActive || !userLocation}>
-                📍 Proximidad {!gpsActive ? '(GPS off)' : ''}
+                📍 {t('sort_proximity')} {!gpsActive ? '(GPS off)' : ''}
               </option>
             </select>
             <button
@@ -273,15 +232,15 @@ export function ListaResultados({ areas, onAreaClick, onClose, userLocation, gps
                           : 'bg-blue-100 text-blue-800'
                       }`}>
                         {area.precio_noche === 0
-                          ? '✨ Gratis'
+                          ? `✨ ${t('free')}`
                           : area.precio_noche === null || area.precio_noche === undefined
-                          ? '❓ Precio no disponible'
-                          : `💰 ${area.precio_noche}€/noche`
+                          ? `❓ ${t('price_unknown')}`
+                          : `💰 ${area.precio_noche}€${t('per_night')}`
                         }
                       </span>
                       {area.verificado && (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                          ✓ Verificado
+                          ✓ {t('verified')}
                         </span>
                       )}
                     </div>
@@ -293,17 +252,17 @@ export function ListaResultados({ areas, onAreaClick, onClose, userLocation, gps
                           <div
                             key={idx}
                             className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded text-xs"
-                            title={getServicioLabel(servicio)}
+                            title={getServicioLabel(servicio, locale)}
                           >
                             <span>{getServicioIcon(servicio)}</span>
                             <span className="text-gray-700 font-medium hidden sm:inline">
-                              {getServicioLabel(servicio)}
+                              {getServicioLabel(servicio, locale)}
                             </span>
                           </div>
                         ))}
                         {serviciosDisponibles.length > 4 && (
                           <div className="flex items-center bg-gray-100 px-2 py-1 rounded text-xs text-gray-600 font-medium">
-                            +{serviciosDisponibles.length - 4} más
+                            +{serviciosDisponibles.length - 4}
                           </div>
                         )}
                       </div>
@@ -317,7 +276,7 @@ export function ListaResultados({ areas, onAreaClick, onClose, userLocation, gps
                         className="text-sm text-primary-600 hover:text-primary-700 font-semibold"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        Ver detalles →
+                        {t('view_details')} →
                       </Link>
                     </div>
                   </div>
