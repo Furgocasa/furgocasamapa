@@ -225,7 +225,7 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
   },
   {
     name: 'get_areas_by_country',
-    description: 'Lista las mejores áreas de un país específico ordenadas por valoración. Usar para preguntas como "áreas en Francia", "mejores zonas de Portugal", "dónde ir en Italia".',
+    description: 'Lista las mejores áreas de un país ordenadas por score ponderado (nota Google × nº de valoraciones, no solo estrellas). Usar para "mejores áreas de España", "áreas en Francia", "dónde ir en Italia". En la respuesta menciona ★ y el nº de valoraciones si viene en los datos.',
     parameters: {
       type: 'object',
       properties: {

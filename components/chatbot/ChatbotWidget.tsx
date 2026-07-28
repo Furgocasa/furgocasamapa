@@ -497,7 +497,12 @@ export default function ChatbotWidget() {
                                   {(!area.precio_noche || area.precio_noche === 0) ? 'Gratis' : `${area.precio_noche}€/noche`}
                                 </span>
                                 {area.google_rating && (
-                                  <span className="text-amber-500 font-medium">★ {Number(area.google_rating).toFixed(1)}</span>
+                                  <span className="text-amber-500 font-medium">
+                                    ★ {Number(area.google_rating).toFixed(1)}
+                                    {area.google_ratings_total > 0 ? (
+                                      <span className="text-amber-700/70 font-normal"> ({area.google_ratings_total})</span>
+                                    ) : null}
+                                  </span>
                                 )}
                                 {area.distancia_km !== undefined && (
                                   <span className="text-gray-500">{Number(area.distancia_km).toFixed(0)} km</span>

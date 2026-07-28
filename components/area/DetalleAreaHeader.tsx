@@ -212,7 +212,11 @@ export function DetalleAreaHeader({ area }: Props) {
                       <span className="text-amber-400 text-xl">★</span>
                       {area.google_rating.toFixed(1)}
                     </div>
-                    <span className="text-xs text-slate-300 font-medium tracking-wider uppercase mt-1">Rating</span>
+                    <span className="text-xs text-slate-300 font-medium tracking-wider uppercase mt-1">
+                      {area.google_ratings_total > 0
+                        ? `${area.google_ratings_total} valoraciones`
+                        : 'Rating'}
+                    </span>
                   </div>
                 )}
                 

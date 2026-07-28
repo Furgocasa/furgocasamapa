@@ -30,6 +30,7 @@ export interface Database {
           google_maps_url: string | null
           google_place_id: string | null
           google_rating: number | null
+          google_ratings_total: number | null
           google_types: string[] | null
           servicios: Json
           tipo_area: 'publica' | 'privada' | 'camping' | 'parking'
@@ -68,6 +69,7 @@ export interface Database {
           google_maps_url?: string | null
           google_place_id?: string | null
           google_rating?: number | null
+          google_ratings_total?: number | null
           google_types?: string[] | null
           servicios?: Json
           tipo_area: 'publica' | 'privada' | 'camping' | 'parking'
@@ -106,6 +108,7 @@ export interface Database {
           google_maps_url?: string | null
           google_place_id?: string | null
           google_rating?: number | null
+          google_ratings_total?: number | null
           google_types?: string[] | null
           servicios?: Json
           tipo_area?: 'publica' | 'privada' | 'camping' | 'parking'

@@ -52,10 +52,91 @@ export interface AreaResumen {
   servicios: Record<string, boolean>
   tipo_area: string
   google_rating: number | null
+  /** Nº de valoraciones Google (user_ratings_total). Null = desconocido. */
+  google_ratings_total?: number | null
   plazas_totales: number | null
   google_maps_url: string | null
   fotos_urls: string[]
   foto_principal?: string | null
+}
+
+/** Media global aproximada de la plataforma (priors bayesianos). */
+const RATING_PRIOR_MEAN = 4.2
+/** Cuántas reseñas “imaginarias” aporta el prior (más = más exigente con volumen). */
+const RATING_PRIOR_WEIGHT = 15
+
+/** Nombres que no son áreas de pernocta (alquileres, talleres…). */
+const NOMBRE_BASURA_RE =
+  /\b(rent|rental|alquiler|hire|vermietung|location de|autovermietung|car hire|campervan rent|rent a|noleggio)\b/i
+
+/**
+ * Score bayesiano: combina nota y nº de reseñas.
+ * Sin reseñas conocidas (null/0) cae hacia la media → un ★5 con 2 votos
+ * no gana a un ★4.6 con 80.
+ */
+export function scoreValoracionPonderada(
+  rating: number | null | undefined,
+  reviews: number | null | undefined
+): number {
+  if (rating == null || rating <= 0) return 0
+  const n = Math.max(0, Number(reviews) || 0)
+  return (RATING_PRIOR_WEIGHT * RATING_PRIOR_MEAN + n * rating) / (RATING_PRIOR_WEIGHT + n)
+}
+
+function contarServicios(servicios: Record<string, boolean> | null | undefined): number {
+  if (!servicios || typeof servicios !== 'object') return 0
+  return Object.values(servicios).filter((v) => v === true).length
+}
+
+function esNombreBasura(nombre: string | null | undefined): boolean {
+  return !nombre || NOMBRE_BASURA_RE.test(nombre)
+}
+
+/**
+ * Ordena áreas para respuestas "mejores / top":
+ * 1) score bayesiano (rating × volumen)
+ * 2) nº de servicios
+ * 3) tiene foto
+ * Filtra alquileres / nombres basura.
+ */
+export function rankMejoresAreas<T extends AreaResumen>(areas: T[], limit: number): T[] {
+  return [...areas]
+    .filter((a) => !esNombreBasura(a.nombre))
+    .map((a) => {
+      const bayes = scoreValoracionPonderada(a.google_rating, a.google_ratings_total)
+      const serv = contarServicios(a.servicios)
+      const foto = a.foto_principal || (Array.isArray(a.fotos_urls) && a.fotos_urls[0]) ? 1 : 0
+      // Empuje suave si hay volumen real de reseñas
+      const volumenBonus = Math.min(0.15, Math.log10(1 + (a.google_ratings_total || 0)) * 0.05)
+      return { area: a, score: bayes + serv * 0.03 + foto * 0.08 + volumenBonus }
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(({ area }) => area)
+}
+
+const AREA_SELECT_RESUMEN = `
+  id, nombre, slug, ciudad, provincia, pais,
+  latitud, longitud, precio_noche,
+  servicios, tipo_area, google_rating, google_ratings_total,
+  plazas_totales, google_maps_url, fotos_urls, foto_principal
+`
+
+const AREA_SELECT_RESUMEN_LEGACY = `
+  id, nombre, slug, ciudad, provincia, pais,
+  latitud, longitud, precio_noche,
+  servicios, tipo_area, google_rating,
+  plazas_totales, google_maps_url, fotos_urls, foto_principal
+`
+
+/** Select con fallback si aún no se ha ejecutado la migración google_ratings_total. */
+async function queryAreasResumen(build: (select: string) => any) {
+  let result = await build(AREA_SELECT_RESUMEN)
+  if (result.error && /google_ratings_total/i.test(result.error.message || '')) {
+    console.warn('⚠️ Columna google_ratings_total ausente: usa ranking heurístico (ejecuta migración 20260728_google_ratings_total.sql)')
+    result = await build(AREA_SELECT_RESUMEN_LEGACY)
+  }
+  return result
 }
 
 export interface AreaDetallada extends AreaResumen {
@@ -163,76 +244,64 @@ export async function searchAreas(params: BusquedaAreasParams): Promise<AreaResu
     
     // CASO 2: Búsqueda por nombre de ciudad/provincia/país
     console.log('📍 Búsqueda por nombre de ubicación')
-    
-    let query = (supabase as any).from('areas')
-      .select(`
-        id, nombre, slug, ciudad, provincia, pais, 
-        latitud, longitud, precio_noche, 
-        servicios, tipo_area, google_rating,
-        plazas_totales, google_maps_url, fotos_urls, foto_principal
-      `)
-      .eq('activo', true)
-    
-    // Filtro por ubicación (nombre)
-    if (params.ubicacion?.nombre) {
-      const nombreLike = `%${params.ubicacion.nombre}%`
-      console.log('🔎 Buscando en:', nombreLike)
-      
-      query = query.or(
-        `ciudad.ilike.${nombreLike},` +
-        `provincia.ilike.${nombreLike},` +
-        `pais.ilike.${nombreLike}`
-      )
-    }
-    
-    // Filtro por país específico
-    if (params.pais) {
-      console.log('🌍 Filtrando por país:', params.pais)
-      query = query.ilike('pais', `%${params.pais}%`)
-    }
-    
-    // Filtro por servicios
-    if (params.servicios && params.servicios.length > 0) {
-      console.log('🔧 Filtrando por servicios:', params.servicios)
-      params.servicios.forEach((servicio: any) => {
-        query = query.eq(`servicios->>${servicio}`, true)
-      })
-    }
-    
-    // Filtro por precio
-    if (params.solo_gratuitas) {
-      console.log('💰 Filtrando solo gratuitas')
-      query = query.or('precio_noche.is.null,precio_noche.eq.0')
-    } else if (params.precio_max) {
-      console.log(`💰 Filtrando precio máximo: ${params.precio_max}€`)
-      query = query.lte('precio_noche', params.precio_max)
-    }
-    
-    // Filtro por tipo
-    if (params.tipo_area) {
-      console.log('🏷️ Filtrando por tipo:', params.tipo_area)
-      query = query.eq('tipo_area', params.tipo_area)
-    }
 
-    // Filtro por valoración mínima
-    if (params.valoracion_minima) {
-      query = query.gte('google_rating', params.valoracion_minima)
-    }
+    const { data, error } = await queryAreasResumen((select) => {
+      let query = (supabase as any).from('areas')
+        .select(select)
+        .eq('activo', true)
 
-    // Ordenar por valoración (mejores primero)
-    query = query
-      .order('google_rating', { ascending: false, nullsFirst: false })
-      .limit(10)
-    
-    const { data, error } = await query
+      if (params.ubicacion?.nombre) {
+        const nombreLike = `%${params.ubicacion.nombre}%`
+        console.log('🔎 Buscando en:', nombreLike)
+        query = query.or(
+          `ciudad.ilike.${nombreLike},` +
+          `provincia.ilike.${nombreLike},` +
+          `pais.ilike.${nombreLike}`
+        )
+      }
+
+      if (params.pais) {
+        console.log('🌍 Filtrando por país:', params.pais)
+        query = query.ilike('pais', `%${params.pais}%`)
+      }
+
+      if (params.servicios && params.servicios.length > 0) {
+        console.log('🔧 Filtrando por servicios:', params.servicios)
+        params.servicios.forEach((servicio: any) => {
+          query = query.eq(`servicios->>${servicio}`, true)
+        })
+      }
+
+      if (params.solo_gratuitas) {
+        console.log('💰 Filtrando solo gratuitas')
+        query = query.or('precio_noche.is.null,precio_noche.eq.0')
+      } else if (params.precio_max) {
+        console.log(`💰 Filtrando precio máximo: ${params.precio_max}€`)
+        query = query.lte('precio_noche', params.precio_max)
+      }
+
+      if (params.tipo_area) {
+        console.log('🏷️ Filtrando por tipo:', params.tipo_area)
+        query = query.eq('tipo_area', params.tipo_area)
+      }
+
+      if (params.valoracion_minima) {
+        query = query.gte('google_rating', params.valoracion_minima)
+      }
+
+      return query
+        .order('google_rating', { ascending: false, nullsFirst: false })
+        .limit(40)
+    })
     
     if (error) {
       console.error('❌ Error en búsqueda:', error)
       throw error
     }
     
-    console.log(`✅ Encontradas ${data?.length || 0} áreas`)
-    return data || []
+    const ranked = rankMejoresAreas(data || [], 10)
+    console.log(`✅ Encontradas ${data?.length || 0} → top ${ranked.length} ponderadas`)
+    return ranked
     
   } catch (error) {
     console.error('❌ [searchAreas] Error:', error)
@@ -282,7 +351,7 @@ export async function getAreaDetails(areaId: string): Promise<AreaDetallada | nu
 // ============================================
 /**
  * Lista las mejores áreas de un país específico
- * Ordenadas por valoración
+ * Ordenadas por score bayesiano (rating × nº de reseñas) + señales de calidad
  */
 export async function getAreasByCountry(pais: string, limit: number = 10): Promise<AreaResumen[]> {
   const supabase = getSupabaseClient()
@@ -290,25 +359,25 @@ export async function getAreasByCountry(pais: string, limit: number = 10): Promi
   console.log('🌍 [getAreasByCountry] Buscando en:', pais, `(límite: ${limit})`)
   
   try {
-    const { data, error } = await (supabase as any).from('areas')
-      .select(`
-        id, nombre, slug, ciudad, provincia, pais, 
-        latitud, longitud, precio_noche, 
-        servicios, tipo_area, google_rating,
-        plazas_totales, google_maps_url, fotos_urls, foto_principal
-      `)
-      .eq('activo', true)
-      .ilike('pais', `%${pais}%`)
-      .order('google_rating', { ascending: false, nullsFirst: false })
-      .limit(limit)
+    const { data, error } = await queryAreasResumen((select) =>
+      (supabase as any).from('areas')
+        .select(select)
+        .eq('activo', true)
+        .ilike('pais', `%${pais}%`)
+        .not('google_rating', 'is', null)
+        .gte('google_rating', 3.5)
+        .order('google_rating', { ascending: false, nullsFirst: false })
+        .limit(Math.max(80, limit * 8))
+    )
     
     if (error) {
       console.error('❌ Error buscando por país:', error)
       throw error
     }
     
-    console.log(`✅ Encontradas ${data?.length || 0} áreas en ${pais}`)
-    return data || []
+    const ranked = rankMejoresAreas(data || [], limit)
+    console.log(`✅ ${data?.length || 0} candidatas en ${pais} → top ${ranked.length} ponderadas`)
+    return ranked
     
   } catch (error) {
     console.error('❌ [getAreasByCountry] Error:', error)
@@ -329,27 +398,24 @@ export async function getAreasPopulares(limit: number = 10): Promise<AreaResumen
   console.log('⭐ [getAreasPopulares] Obteniendo top', limit)
   
   try {
-    const { data, error } = await (supabase as any).from('areas')
-      .select(`
-        id, nombre, slug, ciudad, provincia, pais, 
-        latitud, longitud, precio_noche, 
-        servicios, tipo_area, google_rating,
-        plazas_totales, 
-        google_maps_url, fotos_urls, foto_principal
-      `)
-      .eq('activo', true)
-      .not('google_rating', 'is', null)
-      .gte('google_rating', 3) // Al menos rating de 3
-      .order('google_rating', { ascending: false })
-      .limit(limit)
+    const { data, error } = await queryAreasResumen((select) =>
+      (supabase as any).from('areas')
+        .select(select)
+        .eq('activo', true)
+        .not('google_rating', 'is', null)
+        .gte('google_rating', 3.5)
+        .order('google_rating', { ascending: false })
+        .limit(Math.max(80, limit * 8))
+    )
     
     if (error) {
       console.error('❌ Error obteniendo populares:', error)
       throw error
     }
     
-    console.log(`✅ ${data?.length || 0} áreas populares obtenidas`)
-    return data || []
+    const ranked = rankMejoresAreas(data || [], limit)
+    console.log(`✅ ${data?.length || 0} candidatas → top ${ranked.length} ponderadas`)
+    return ranked
     
   } catch (error) {
     console.error('❌ [getAreasPopulares] Error:', error)
@@ -370,26 +436,23 @@ export async function buscarAreasPorNombre(nombre: string, limit: number = 5): P
   console.log('🔎 [buscarAreasPorNombre] Buscando:', nombre)
   
   try {
-    const { data, error } = await (supabase as any).from('areas')
-      .select(`
-        id, nombre, slug, ciudad, provincia, pais, 
-        latitud, longitud, precio_noche, 
-        servicios, tipo_area, google_rating,
-        plazas_totales, 
-        google_maps_url, fotos_urls, foto_principal
-      `)
-      .eq('activo', true)
-      .ilike('nombre', `%${nombre}%`)
-      .order('google_rating', { ascending: false, nullsFirst: false })
-      .limit(limit)
+    const { data, error } = await queryAreasResumen((select) =>
+      (supabase as any).from('areas')
+        .select(select)
+        .eq('activo', true)
+        .ilike('nombre', `%${nombre}%`)
+        .order('google_rating', { ascending: false, nullsFirst: false })
+        .limit(Math.max(20, limit * 3))
+    )
     
     if (error) {
       console.error('❌ Error buscando por nombre:', error)
       throw error
     }
     
-    console.log(`✅ Encontradas ${data?.length || 0} áreas con nombre similar`)
-    return data || []
+    const ranked = rankMejoresAreas(data || [], limit)
+    console.log(`✅ Encontradas ${data?.length || 0} → top ${ranked.length} por nombre`)
+    return ranked
     
   } catch (error) {
     console.error('❌ [buscarAreasPorNombre] Error:', error)
@@ -481,16 +544,13 @@ export async function searchAreasAlongRoute(
   const minLng = Math.min(coordsOrigen.lng, coordsDestino.lng) - margenGrados
   const maxLng = Math.max(coordsOrigen.lng, coordsDestino.lng) + margenGrados
 
-  const { data, error } = await (supabase as any).from('areas')
-    .select(`
-      id, nombre, slug, ciudad, provincia, pais,
-      latitud, longitud, precio_noche,
-      servicios, tipo_area, google_rating,
-        plazas_totales, google_maps_url, fotos_urls, foto_principal
-  `)
-    .eq('activo', true)
-    .gte('latitud', minLat).lte('latitud', maxLat)
-    .gte('longitud', minLng).lte('longitud', maxLng)
+  const { data, error } = await queryAreasResumen((select) =>
+    (supabase as any).from('areas')
+      .select(select)
+      .eq('activo', true)
+      .gte('latitud', minLat).lte('latitud', maxLat)
+      .gte('longitud', minLng).lte('longitud', maxLng)
+  )
 
   if (error) {
     console.error('❌ [searchAreasAlongRoute] Error BD:', error)
@@ -559,7 +619,10 @@ export function formatAreaParaChat(area: AreaResumen): string {
   }
   
   if (area.google_rating && area.google_rating > 0) {
-    texto += `⭐ ${area.google_rating.toFixed(1)}/5 (Google)\n`
+    const n = area.google_ratings_total
+    texto += n != null && n > 0
+      ? `⭐ ${area.google_rating.toFixed(1)}/5 (${n} valoraciones)\n`
+      : `⭐ ${area.google_rating.toFixed(1)}/5 (Google)\n`
   }
   
   if (area.plazas_totales) {

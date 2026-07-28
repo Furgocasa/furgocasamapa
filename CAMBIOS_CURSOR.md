@@ -173,5 +173,8 @@
 5. `/mapa` accesible sin login y carga desde `/api/areas` (ver Network).
 6. Chatbot: funciona sin login; pregunta "voy de Madrid a Valencia, ¿dónde paro?" → usa `search_areas_along_route` y muestra tarjetas; cada respuesta crea fila en `chatbot_respuestas_log`.
 7. Página de área: componente "¿Has estado aquí?" visible y funcional.
-8. Migración pendiente: `20260728_chatbot_evaluacion_ia.sql` (las otras 4 ya ejecutadas).
+8. Migraciones pendientes en Supabase SQL Editor:
+   - `20260728_chatbot_evaluacion_ia.sql` (si aún no)
+   - `20260728_google_ratings_total.sql` (nº de reseñas para ranking ponderado del chat)
+   Tras la de ratings: `npm run backfill:ratings` (dry) y luego `npm run backfill:ratings:run` (Google de pago, por lotes).
 9. Deploy: push a `main` → Vercel. Antes/después: limpiar/rotar claves en Vercel (Bloque 1.5).
