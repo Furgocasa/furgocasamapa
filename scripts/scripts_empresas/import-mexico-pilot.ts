@@ -118,10 +118,91 @@ const REGIONES: Region[] = [
     bounds: { north: 21.85, south: 19.9, east: -99.65, west: -102.15 },
     gridSize: 0.9,
   },
+  // Fase 3 — Pacífico sur, Bajío, centro, Golfo
+  {
+    id: "michoacan",
+    nombre: "Michoacán",
+    bounds: { north: 20.4, south: 17.9, east: -100.1, west: -103.8 },
+    gridSize: 1.0,
+  },
+  {
+    id: "colima",
+    nombre: "Colima",
+    bounds: { north: 19.55, south: 18.65, east: -103.5, west: -104.8 },
+    gridSize: 0.6,
+  },
+  {
+    id: "guerrero",
+    nombre: "Guerrero",
+    bounds: { north: 18.9, south: 16.3, east: -98.3, west: -102.2 },
+    gridSize: 1.0,
+  },
+  {
+    id: "oaxaca",
+    nombre: "Oaxaca",
+    bounds: { north: 18.7, south: 15.65, east: -93.9, west: -98.55 },
+    gridSize: 1.1,
+  },
+  {
+    id: "chiapas",
+    nombre: "Chiapas",
+    bounds: { north: 17.95, south: 14.55, east: -90.4, west: -94.2 },
+    gridSize: 1.1,
+  },
+  {
+    id: "morelos",
+    nombre: "Morelos",
+    bounds: { north: 19.15, south: 18.3, east: -98.6, west: -99.55 },
+    gridSize: 0.5,
+  },
+  {
+    id: "edomex",
+    nombre: "Estado de México / CDMX",
+    bounds: { north: 20.15, south: 18.9, east: -98.6, west: -100.35 },
+    gridSize: 0.7,
+  },
+  {
+    id: "queretaro",
+    nombre: "Querétaro",
+    bounds: { north: 21.65, south: 20.0, east: -99.05, west: -100.6 },
+    gridSize: 0.7,
+  },
+  {
+    id: "puebla",
+    nombre: "Puebla",
+    bounds: { north: 20.85, south: 17.85, east: -96.95, west: -99.1 },
+    gridSize: 1.0,
+  },
+  {
+    id: "veracruz",
+    nombre: "Veracruz",
+    bounds: { north: 22.45, south: 17.15, east: -93.95, west: -98.7 },
+    gridSize: 1.2,
+  },
+  {
+    id: "nuevo_leon",
+    nombre: "Nuevo León",
+    // Sur del borde TX (~25.9 en Laredo; acotamos a 26.0)
+    bounds: { north: 26.0, south: 24.0, east: -98.9, west: -101.3 },
+    gridSize: 0.8,
+  },
 ];
 
 const PHASE1 = ["baja", "jalisco"];
 const PHASE2 = ["sonora", "nayarit", "sinaloa", "yucatan", "qroo", "guanajuato"];
+const PHASE3 = [
+  "michoacan",
+  "colima",
+  "guerrero",
+  "oaxaca",
+  "chiapas",
+  "morelos",
+  "edomex",
+  "queretaro",
+  "puebla",
+  "veracruz",
+  "nuevo_leon",
+];
 
 /**
  * Filtro anti-spillover EE.UU. (Nearby 50km cruza la frontera).
@@ -138,6 +219,8 @@ function isInMexico(lat: number, lng: number): boolean {
   if (lat > 31.78 && lng > -109.1 && lng < -103.0) return false;
   // Texas west tip rough
   if (lat > 31.7 && lng > -106.7 && lng < -103.0) return false;
+  // Texas / frontera Laredo–Brownsville (sur ~25.8–26.0)
+  if (lat > 25.95 && lng > -100.6 && lng < -97.0) return false;
   return true;
 }
 
@@ -339,7 +422,7 @@ async function importArea(hit: PlaceHit): Promise<boolean> {
     website: null,
     telefono: null,
     google_rating: hit.rating || null,
-    google_ratings_total: hit.user_ratings_total ?? hit.reviews ?? null,
+    google_ratings_total: hit.user_ratings_total ?? null,
     verificado: false,
     activo: true,
     servicios: {},
@@ -443,6 +526,8 @@ async function main() {
   let regiones = REGIONES.filter((r) => PHASE1.includes(r.id));
   if (phaseArg === "2") {
     regiones = REGIONES.filter((r) => PHASE2.includes(r.id));
+  } else if (phaseArg === "3") {
+    regiones = REGIONES.filter((r) => PHASE3.includes(r.id));
   } else if (phaseArg === "all") {
     regiones = REGIONES;
   }
