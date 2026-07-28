@@ -18,7 +18,7 @@ const CAMPOS_TRAD =
   'area_id, nombre, ciudad, provincia, pais'
 
 async function fetchAllPages(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   table: string,
   columns: string,
   filters?: (q: any) => any

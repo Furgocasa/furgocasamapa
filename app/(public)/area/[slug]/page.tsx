@@ -109,11 +109,13 @@ export default async function AreaPage({ params }: PageProps) {
       .select('area_id, nombre, ciudad, provincia')
       .eq('idioma', locale)
       .in('area_id', ids)
-    const byId = new Map((trads || []).map((t: any) => [t.area_id, t]))
+    const byId = new Map<string, { nombre?: string; ciudad?: string; provincia?: string }>(
+      (trads || []).map((t: any) => [t.area_id as string, t])
+    )
     areasRelacionadas = areasRelacionadasRaw.map((a: any) => {
-      const t = byId.get(a.id)
-      if (!t) return a
-      return { ...a, nombre: t.nombre || a.nombre, ciudad: t.ciudad || a.ciudad, provincia: t.provincia || a.provincia }
+      const tr = byId.get(a.id)
+      if (!tr) return a
+      return { ...a, nombre: tr.nombre || a.nombre, ciudad: tr.ciudad || a.ciudad, provincia: tr.provincia || a.provincia }
     })
   }
 
