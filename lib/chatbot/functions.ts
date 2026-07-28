@@ -55,6 +55,7 @@ export interface AreaResumen {
   plazas_totales: number | null
   google_maps_url: string | null
   fotos_urls: string[]
+  foto_principal?: string | null
 }
 
 export interface AreaDetallada extends AreaResumen {
@@ -168,7 +169,7 @@ export async function searchAreas(params: BusquedaAreasParams): Promise<AreaResu
         id, nombre, slug, ciudad, provincia, pais, 
         latitud, longitud, precio_noche, 
         servicios, tipo_area, google_rating,
-        plazas_totales, google_maps_url, fotos_urls
+        plazas_totales, google_maps_url, fotos_urls, foto_principal
       `)
       .eq('activo', true)
     
@@ -294,7 +295,7 @@ export async function getAreasByCountry(pais: string, limit: number = 10): Promi
         id, nombre, slug, ciudad, provincia, pais, 
         latitud, longitud, precio_noche, 
         servicios, tipo_area, google_rating,
-        plazas_totales, google_maps_url, fotos_urls
+        plazas_totales, google_maps_url, fotos_urls, foto_principal
       `)
       .eq('activo', true)
       .ilike('pais', `%${pais}%`)
@@ -334,7 +335,7 @@ export async function getAreasPopulares(limit: number = 10): Promise<AreaResumen
         latitud, longitud, precio_noche, 
         servicios, tipo_area, google_rating,
         plazas_totales, 
-        google_maps_url, fotos_urls
+        google_maps_url, fotos_urls, foto_principal
       `)
       .eq('activo', true)
       .not('google_rating', 'is', null)
@@ -375,7 +376,7 @@ export async function buscarAreasPorNombre(nombre: string, limit: number = 5): P
         latitud, longitud, precio_noche, 
         servicios, tipo_area, google_rating,
         plazas_totales, 
-        google_maps_url, fotos_urls
+        google_maps_url, fotos_urls, foto_principal
       `)
       .eq('activo', true)
       .ilike('nombre', `%${nombre}%`)
@@ -485,8 +486,8 @@ export async function searchAreasAlongRoute(
       id, nombre, slug, ciudad, provincia, pais,
       latitud, longitud, precio_noche,
       servicios, tipo_area, google_rating,
-      plazas_totales, google_maps_url, fotos_urls
-    `)
+        plazas_totales, google_maps_url, fotos_urls, foto_principal
+  `)
     .eq('activo', true)
     .gte('latitud', minLat).lte('latitud', maxLat)
     .gte('longitud', minLng).lte('longitud', maxLng)
@@ -528,6 +529,9 @@ export function formatAreaParaChat(area: AreaResumen): string {
   if (area.distancia_km !== undefined) {
     texto += `📏 ${area.distancia_km.toFixed(1)} km de distancia\n`
   }
+  if ((area as any).desvio_km !== undefined) {
+    texto += `↔ ${(area as any).desvio_km} km de desvío\n`
+  }
   
   if (area.precio_noche !== null && area.precio_noche > 0) {
     texto += `💰 ${area.precio_noche}€/noche\n`
@@ -560,6 +564,11 @@ export function formatAreaParaChat(area: AreaResumen): string {
   
   if (area.plazas_totales) {
     texto += `🅿️ ${area.plazas_totales} plazas\n`
+  }
+
+  // Link interno (las tarjetas del chat también lo muestran; evita Google Maps / markdown de imagen)
+  if (area.slug) {
+    texto += `🔗 /area/${area.slug}\n`
   }
   
   return texto

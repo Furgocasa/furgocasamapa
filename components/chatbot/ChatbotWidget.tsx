@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, type ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { formatErrorForUser } from '@/lib/chatbot/errors'
@@ -127,43 +127,72 @@ export default function ChatbotWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
   
-  // Función para convertir URLs en links clicables
+  // Links clicables: markdown [texto](url), /area/slug, /ruta y "Ver en Google Maps:"
   const renderMessageWithLinks = (text: string) => {
-    // Detectar URLs de Google Maps
-    const googleMapsRegex = /(Ver en Google Maps:\s*)(https:\/\/(?:www\.)?google\.com\/maps[^\s)]+)/gi;
-    
-    // Si no hay URLs, retornar texto normal
-    if (!googleMapsRegex.test(text)) {
-      return <span className="whitespace-pre-wrap">{text}</span>;
+    // Quitar imágenes markdown ![alt](url) — las tarjetas ya muestran foto
+    const sinImagenes = text.replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+    const tokenRegex =
+      /(\[[^\]]+\]\([^)]+\))|(Ver en Google Maps:\s*https?:\/\/[^\s)]+)|(\/area\/[a-z0-9\-]+)|(\/ruta(?:\?[^\s]*)?)|(https?:\/\/[^\s)]+)/gi
+
+    const nodes: ReactNode[] = []
+    let lastIndex = 0
+    let match: RegExpExecArray | null
+    let key = 0
+
+    while ((match = tokenRegex.exec(sinImagenes)) !== null) {
+      if (match.index > lastIndex) {
+        nodes.push(<span key={key++}>{sinImagenes.slice(lastIndex, match.index)}</span>)
+      }
+
+      const token = match[0]
+      const md = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
+      if (md) {
+        const [, label, href] = md
+        if (href.startsWith('/')) {
+          nodes.push(
+            <Link key={key++} href={href} target="_blank" className="text-sky-700 hover:text-sky-900 underline font-medium">
+              {label}
+            </Link>
+          )
+        } else {
+          nodes.push(
+            <a key={key++} href={href} target="_blank" rel="noopener noreferrer" className="text-sky-700 hover:text-sky-900 underline font-medium">
+              {label}
+            </a>
+          )
+        }
+      } else if (/^Ver en Google Maps:/i.test(token)) {
+        const url = token.replace(/^Ver en Google Maps:\s*/i, '')
+        nodes.push(
+          <a key={key++} href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sky-700 hover:text-sky-900 underline font-medium">
+            🗺️ Ver en Google Maps
+          </a>
+        )
+      } else if (/^\/area\//i.test(token) || /^\/ruta/i.test(token)) {
+        nodes.push(
+          <Link key={key++} href={token} target="_blank" className="text-sky-700 hover:text-sky-900 underline font-medium">
+            {token.startsWith('/area/') ? 'Ver área →' : 'Planificador de rutas →'}
+          </Link>
+        )
+      } else if (/^https?:\/\//i.test(token)) {
+        const esMaps = /google\.com\/maps|maps\.google\.com/i.test(token)
+        nodes.push(
+          <a key={key++} href={token} target="_blank" rel="noopener noreferrer" className="text-sky-700 hover:text-sky-900 underline font-medium break-all">
+            {esMaps ? '🗺️ Google Maps' : token}
+          </a>
+        )
+      } else {
+        nodes.push(<span key={key++}>{token}</span>)
+      }
+
+      lastIndex = match.index + token.length
     }
 
-    // Dividir el texto por URLs de Google Maps
-    const parts = text.split(/(Ver en Google Maps:\s*https:\/\/(?:www\.)?google\.com\/maps[^\s)]+)/gi);
-    
-    return (
-      <span className="whitespace-pre-wrap">
-        {parts.map((part: any, index: any) => {
-          const match = part.match(/Ver en Google Maps:\s*(https:\/\/(?:www\.)?google\.com\/maps[^\s)]+)/i);
-          
-          if (match) {
-            const url = match[1];
-            return (
-              <a
-                key={index}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 underline font-medium"
-              >
-                🗺️ Ver en Google Maps
-              </a>
-            );
-          }
-          
-          return <span key={index}>{part}</span>;
-        })}
-      </span>
-    );
+    if (lastIndex < sinImagenes.length) {
+      nodes.push(<span key={key++}>{sinImagenes.slice(lastIndex)}</span>)
+    }
+
+    return <span className="whitespace-pre-wrap">{nodes.length ? nodes : sinImagenes}</span>
   }
   
   // Obtener geolocalización (también para usuarios sin cuenta)
@@ -429,11 +458,20 @@ export default function ChatbotWidget() {
                   {msg.areas && msg.areas.length > 0 && (
                     <div className="mt-3 space-y-2">
                       {msg.areas.slice(0, 6).map((area: any) => {
-                        const foto = Array.isArray(area.fotos_urls) && area.fotos_urls.length > 0
-                          ? area.fotos_urls[0]
-                          : (typeof area.fotos_urls === 'string' && area.fotos_urls.trim().startsWith('http')
-                            ? area.fotos_urls.split(',')[0].trim()
-                            : null)
+                        const fotoCandidata = (() => {
+                          if (Array.isArray(area.fotos_urls) && area.fotos_urls.length > 0) return area.fotos_urls[0]
+                          if (typeof area.fotos_urls === 'string' && area.fotos_urls.trim().startsWith('http')) {
+                            return area.fotos_urls.split(',')[0].trim()
+                          }
+                          if (typeof area.foto_principal === 'string' && area.foto_principal.startsWith('http')) {
+                            return area.foto_principal
+                          }
+                          return null
+                        })()
+                        // PhotoService de Google no sirve como <img> directo
+                        const foto = fotoCandidata && !/PhotoService\.GetPhoto|maps\.googleapis\.com\/maps\/api\/place\/js/i.test(fotoCandidata)
+                          ? fotoCandidata
+                          : null
                         return (
                           <Link
                             key={area.id}
