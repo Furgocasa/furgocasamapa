@@ -274,48 +274,36 @@ export default function AdminAnalyticsPage() {
         totalUsers = 0
       }
 
-      // Obtener métricas de RUTAS
-      console.log('🗺️ Obteniendo métricas de rutas...')
-      const { data: rutas, error: rutasError } = await (supabase as any)
-        .from('rutas')
-        .select('*')
+      // ========== RUTAS + INTERACCIONES (service role: bypass RLS) ==========
+      // El cliente del navegador no ve todos los route_calculate / rutas ajenas por RLS.
+      // Misma idea que /api/admin/users y /api/admin/vehiculos.
+      console.log('🗺️📡 Cargando rutas e interacciones vía API admin...')
+      let rutas: any[] = []
+      let allInteractions: any[] = []
+      try {
+        const interactionsRes = await fetch(`/api/admin/analytics/interactions?t=${Date.now()}`, {
+          cache: 'no-store',
+        })
+        if (!interactionsRes.ok) {
+          const errBody = await interactionsRes.json().catch(() => ({}))
+          console.error('❌ Error API interactions:', interactionsRes.status, errBody)
+        } else {
+          const payload = await interactionsRes.json()
+          rutas = payload.rutas || []
+          allInteractions = payload.interactions || []
+          console.log(
+            `✅ API: ${payload.meta?.totalRutas ?? rutas.length} rutas, ` +
+              `${payload.meta?.routeCalculateCount ?? 0} route_calculate, ` +
+              `${allInteractions.length} interacciones`
+          )
+        }
+      } catch (error) {
+        console.error('❌ Error fetch interactions:', error)
+      }
 
       const totalRutas = rutas?.length || 0
       const distanciaTotal = rutas?.reduce((sum: number, r: any) => sum + (r.distancia_km || 0), 0) || 0
       console.log(`✅ ${totalRutas} rutas, ${distanciaTotal.toFixed(0)} km totales`)
-
-      // ========== INTERACCIONES DE USUARIO (user_interactions) ==========
-      // Cargamos TODAS las interacciones paginadas y luego filtramos en JS por event_type.
-      // Así, con una sola consulta, alimentamos: chatbot, planificador, page_views,
-      // dispositivos, sesiones, búsquedas, vistas de área, eventos más comunes...
-      console.log('📡 Cargando user_interactions (paginado)...')
-      const allInteractions: any[] = []
-      const intPageSize = 1000
-      let intPage = 0
-      let intHasMore = true
-      while (intHasMore) {
-        const { data: interactionsBatch, error: interactionsError } = await (supabase as any)
-          .from('user_interactions')
-          .select('id, created_at, timestamp, user_id, event_type, event_data, page_url, area_id')
-          .order('timestamp', { ascending: false })
-          .range(intPage * intPageSize, (intPage + 1) * intPageSize - 1)
-
-        if (interactionsError) {
-          console.error('❌ Error cargando user_interactions:', interactionsError)
-          break
-        }
-
-        if (interactionsBatch && interactionsBatch.length > 0) {
-          allInteractions.push(...interactionsBatch)
-          intPage++
-          if (interactionsBatch.length < intPageSize) intHasMore = false
-        } else {
-          intHasMore = false
-        }
-        // safety stop a 100k filas (~100 páginas)
-        if (intPage > 100) break
-      }
-      console.log(`✅ ${allInteractions.length} interacciones de usuario cargadas`)
 
       // Particionado por event_type
       const interactionsByType: Record<string, any[]> = {}
