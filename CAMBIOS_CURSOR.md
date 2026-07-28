@@ -178,3 +178,12 @@
    - `20260728_google_ratings_total.sql` (nº de reseñas para ranking ponderado del chat)
    Tras la de ratings: `npm run backfill:ratings` (dry) y luego `npm run backfill:ratings:run` (Google de pago, por lotes).
 9. Deploy: push a `main` → Vercel. Antes/después: limpiar/rotar claves en Vercel (Bloque 1.5).
+
+---
+
+## BLOQUE EXTRA — México (trailer / RV parks)
+
+- **Qué**: apertura de México en BD (~395 áreas) + agente `import-mexico-pilot.ts` + UI/SEO.
+- **Import**: fase 1 Baja+Jalisco (232) desde informe; fase 2 Sonora/Nayarit/Sinaloa/Yucatán/Q.Roo/Guanajuato (163).
+- **Archivos**: `scripts/scripts_empresas/import-mexico-pilot.ts`, `app/(public)/mapa/page.tsx`, mapas (zoom México), `config/paises-seo.ts`, `app/(public)/mapa-casas-rodantes-mexico/page.tsx`, chatbot stats LatAm.
+- **Verificar**: filtro país México en `/mapa` muestra ~395 pins; landing `/mapa-casas-rodantes-mexico`.

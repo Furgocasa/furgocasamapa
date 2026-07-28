@@ -34,17 +34,17 @@ export default function MapaPage() {
   const mapRef = useRef<any>(null) // Referencia al mapa para controlarlo
   const skipMapCenterRef = useRef(false) // Evitar centrado automático después de búsqueda geográfica
 
-  // Lista de países con áreas en la base de datos (26 países)
+  // Lista de países con áreas en la base de datos (27 países)
   const paisesDisponibles = [
     'Alemania', 'Andorra', 'Argentina', 'Austria', 'Bélgica', 'Chequia',
     'Chile', 'Colombia', 'Costa Rica', 'Dinamarca', 'Ecuador', 'Eslovenia',
-    'España', 'Francia', 'Italia', 'Luxemburgo', 'Noruega', 'Países Bajos',
+    'España', 'Francia', 'Italia', 'Luxemburgo', 'México', 'Noruega', 'Países Bajos',
     'Panamá', 'Paraguay', 'Perú', 'Portugal', 'Puerto Rico', 'Suecia',
     'Suiza', 'Uruguay'
   ]
 
   // Conteo de países por región (hardcodeado - actualizar si se añaden países)
-  const conteoPaisesRegion = { europa: 16, sudamerica: 7, centroamerica: 3 }
+  const conteoPaisesRegion = { europa: 16, sudamerica: 7, centroamerica: 4 }
 
   // Hook de filtros persistentes (reemplaza el useState anterior)
   const { filtros, setFiltros, metadata, setMetadata, limpiarFiltros, contarFiltrosActivos } = usePersistentFilters()
@@ -288,7 +288,8 @@ export default function MapaPage() {
       'Ecuador': { lat: -1.8312, lng: -78.1834 },
       'Colombia': { lat: 4.5709, lng: -74.2973 },
       'Venezuela': { lat: 6.4238, lng: -66.5897 },
-      // Centroamérica
+      // Norteamérica / Centroamérica
+      'México': { lat: 23.6345, lng: -102.5528 },
       'Costa Rica': { lat: 9.7489, lng: -83.7534 },
       'Panamá': { lat: 8.5380, lng: -80.7821 },
       'Nicaragua': { lat: 12.8654, lng: -85.2072 },

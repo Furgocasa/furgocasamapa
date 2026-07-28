@@ -585,6 +585,7 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
       'Uruguay': { center: { lat: -33, lng: -56 }, zoom: 6 },
       'Ecuador': { center: { lat: -2, lng: -78 }, zoom: 6 },
       'Paraguay': { center: { lat: -23, lng: -58 }, zoom: 6 },
+      'México': { center: { lat: 23.6, lng: -102.5 }, zoom: 5 },
       'Costa Rica': { center: { lat: 10, lng: -84 }, zoom: 7 },
       'Panamá': { center: { lat: 9, lng: -80 }, zoom: 7 },
       'Puerto Rico': { center: { lat: 18, lng: -66 }, zoom: 8 }

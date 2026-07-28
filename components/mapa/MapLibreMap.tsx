@@ -482,6 +482,7 @@ export function MapLibreMap({
       'Uruguay': { center: [-56, -33], zoom: 6 },
       'Ecuador': { center: [-78, -2], zoom: 6 },
       'Paraguay': { center: [-58, -23], zoom: 6 },
+      'México': { center: [-102.5, 23.6], zoom: 5 },
       'Costa Rica': { center: [-84, 10], zoom: 7 },
       'Panamá': { center: [-80, 9], zoom: 7 },
       'Puerto Rico': { center: [-66, 18], zoom: 8 }

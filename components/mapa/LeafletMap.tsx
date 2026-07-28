@@ -465,6 +465,7 @@ export function LeafletMap({
       'Uruguay': { center: [-33, -56], zoom: 6 },
       'Ecuador': { center: [-2, -78], zoom: 6 },
       'Paraguay': { center: [-23, -58], zoom: 6 },
+      'México': { center: [23.6, -102.5], zoom: 5 },
       'Costa Rica': { center: [10, -84], zoom: 7 },
       'Panamá': { center: [9, -80], zoom: 7 },
       'Puerto Rico': { center: [18, -66], zoom: 8 }

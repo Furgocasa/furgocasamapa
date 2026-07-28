@@ -316,7 +316,7 @@ async function getEstadisticasBD(supabase: any): Promise<EstadisticasBD> {
           .from('areas')
           .select('id', { count: 'exact', head: true })
           .eq('activo', true)
-          .in('pais', ['Argentina', 'Chile', 'Uruguay', 'Brasil', 'Colombia', 'Perú'])
+          .in('pais', ['Argentina', 'Chile', 'Uruguay', 'Brasil', 'Colombia', 'Perú', 'México', 'Costa Rica', 'Puerto Rico', 'Ecuador', 'Panamá', 'Paraguay'])
         
         return {
           totalAreas: totalAreas || 0,

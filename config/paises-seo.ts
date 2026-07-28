@@ -1,5 +1,5 @@
 // Configuración de países para landing pages SEO
-// 16 países de Europa + 3 de Sudamérica = 19 landing pages
+// 16 Europa + 3 Sudamérica + 1 Norteamérica (México)
 
 export interface PaisSEO {
   nombre: string
@@ -11,7 +11,7 @@ export interface PaisSEO {
   metaDescription: string // Meta description (max 160 chars)
   descripcion: string // Párrafo principal único
   keywords: string[] // Keywords principales
-  region: 'europa' | 'sudamerica'
+  region: 'europa' | 'sudamerica' | 'norteamerica'
   emoji: string
   lat: number
   lng: number
@@ -482,6 +482,40 @@ export const PAISES_SEO_CONFIG: Record<string, PaisSEO> = {
       'La Ruta del Vino en Carmelo tiene bodegas con pernocta'
     ],
     regulaciones: 'Pernocta permitida en campings y áreas habilitadas. País muy organizado y con buena infraestructura turística.'
+  },
+
+  // ============================================================================
+  // 🌎 NORTEAMÉRICA — Usar "casas rodantes" / trailer / RV park
+  // ============================================================================
+
+  'mexico': {
+    nombre: 'México',
+    slug: 'mexico',
+    terminologia: 'casas rodantes',
+    urlSlug: '/mapa-casas-rodantes-mexico',
+    titulo: 'Mapa de Áreas para Casas Rodantes en México',
+    metaTitle: 'Mapa Trailer Parks y RV Parks México | Baja y Pacífico',
+    metaDescription: 'Descubre trailer parks y RV parks en México: Baja California, Jalisco, Sonora, Nayarit, Yucatán. Mapa con cientos de ubicaciones.',
+    descripcion: 'México es el gran destino de casas rodantes y RV de Latinoamérica, impulsado por snowbirds de EE.UU. y Canadá y por el auge del vanlife. En lugar de «áreas de autocaravana» europeas, el país habla de trailer parks, RV parks y parques de casas rodantes. La península de Baja California, la costa del Pacífico (Sonora, Sinaloa, Nayarit, Jalisco) y la península de Yucatán concentran la mayor oferta, con hookups, dump stations y campos de playa. Temporada alta de noviembre a abril.',
+    keywords: [
+      'trailer park méxico',
+      'rv park méxico',
+      'casas rodantes méxico',
+      'camping baja california',
+      'mapa rv mexico'
+    ],
+    region: 'norteamerica',
+    emoji: '🇲🇽',
+    lat: 23.6345,
+    lng: -102.5528,
+    consejos: [
+      'En México se buscan «trailer park» o «RV park», no «área de autocaravana»',
+      'Baja California es el corredor RV más maduro; temporada nov–abr',
+      'Contrata seguro de auto mexicano: las pólizas de EE.UU. no valen',
+      'Muchos parques prefieren efectivo o WhatsApp; pocos tienen web',
+      'Puerto Peñasco, Mazatlán, Vallarta, Melaque y San Felipe son clásicos snowbird'
+    ],
+    regulaciones: 'Pernocta habitual en trailer/RV parks y campamentos privados. La acampada libre (wild) es frecuente en playas de Baja pero no siempre está regulada: verifica normas locales y seguridad.'
   }
 }
 
@@ -496,6 +530,7 @@ export function getPaisBySLug(slug: string): PaisSEO | undefined {
 // Exportar lista ordenada por región
 export const PAISES_EUROPA = Object.values(PAISES_SEO_CONFIG).filter(p => p.region === 'europa')
 export const PAISES_SUDAMERICA = Object.values(PAISES_SEO_CONFIG).filter(p => p.region === 'sudamerica')
+export const PAISES_NORTEAMERICA = Object.values(PAISES_SEO_CONFIG).filter(p => p.region === 'norteamerica')
 
 
 
