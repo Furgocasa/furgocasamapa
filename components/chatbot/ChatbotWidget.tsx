@@ -499,7 +499,7 @@ export default function ChatbotWidget() {
                                 {area.google_rating && (
                                   <span className="text-amber-500 font-medium">
                                     ★ {Number(area.google_rating).toFixed(1)}
-                                    {area.google_ratings_total > 0 ? (
+                                    {(area.google_ratings_total ?? 0) > 0 ? (
                                       <span className="text-amber-700/70 font-normal"> ({area.google_ratings_total})</span>
                                     ) : null}
                                   </span>
