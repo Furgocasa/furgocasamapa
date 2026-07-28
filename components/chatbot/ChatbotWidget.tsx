@@ -28,7 +28,7 @@ const TEXTOS: Record<string, {
       '⭐ Las mejores áreas de España',
       '🛣️ Voy de Madrid a Valencia, ¿dónde paro?',
       '💧 Áreas con agua y electricidad',
-      '🐕 Áreas que admiten mascotas'
+      '🐕 Áreas cerca de mí (mascotas bienvenidas)'
     ],
     placeholder: 'Pregunta al Tío Viajero...',
     enviar: 'Enviar',
@@ -41,7 +41,7 @@ const TEXTOS: Record<string, {
       '⭐ Best areas in Spain',
       '🛣️ Driving Madrid to Valencia, where to stop?',
       '💧 Areas with water and electricity',
-      '🐕 Pet-friendly areas'
+      '🐕 Areas near me (pets welcome)'
     ],
     placeholder: 'Ask Tío Viajero...',
     enviar: 'Send',

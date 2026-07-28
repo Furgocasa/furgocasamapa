@@ -126,7 +126,11 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
         },
         servicios: {
           type: 'array',
-          description: 'Lista de servicios que DEBE tener el área (filtro AND)',
+          description:
+            'Servicios que DEBE tener (filtro AND). ' +
+            'IMPORTANTE mascotas: zona_mascotas = solo si piden "zona/área específica para perros". ' +
+            'Si dicen "admiten mascotas", "pet-friendly" o el chip de mascotas, NO uses zona_mascotas (casi no hay datos); ' +
+            'busca áreas normales en la ubicación y comenta cuáles tienen zona_mascotas=true si aparece.',
           items: {
             type: 'string',
             enum: [

@@ -7,14 +7,17 @@
  * Uso (PowerShell):
  *   node scripts/backfill-google-ratings-total.js
  *   node scripts/backfill-google-ratings-total.js --confirm
+ *   node scripts/backfill-google-ratings-total.js --confirm --recover
  *   $env:BACKFILL_LIMIT="200"; node scripts/backfill-google-ratings-total.js --confirm
  *
- * Prioriza áreas con google_rating (las que el chat usa en "mejores").
+ * --recover: para los place_id NOT_FOUND, intenta Find Place From Text
+ *            y si falla marca google_ratings_total=0 (cierra la cola).
  */
 require('dotenv').config({ path: '.env.local' })
 const { createClient } = require('@supabase/supabase-js')
 
 const CONFIRM = process.argv.includes('--confirm')
+const RECOVER = process.argv.includes('--recover')
 const LIMIT = parseInt(process.env.BACKFILL_LIMIT || '300', 10)
 const DELAY_MS = parseInt(process.env.BACKFILL_DELAY_MS || '120', 10)
 
@@ -46,15 +49,35 @@ async function fetchRatings(placeId) {
   }
 }
 
+async function findPlaceId(nombre, ciudad, pais) {
+  const query = [nombre, ciudad, pais].filter(Boolean).join(', ')
+  const url = new URL('https://maps.googleapis.com/maps/api/place/findplacefromtext/json')
+  url.searchParams.set('input', query)
+  url.searchParams.set('inputtype', 'textquery')
+  url.searchParams.set('fields', 'place_id,name,rating,user_ratings_total')
+  url.searchParams.set('key', googleApiKey)
+  const res = await fetch(url.toString())
+  const data = await res.json()
+  if (data.status !== 'OK' || !data.candidates?.[0]) {
+    return { error: data.status || 'NO_CANDIDATE' }
+  }
+  const c = data.candidates[0]
+  return {
+    google_place_id: c.place_id,
+    google_rating: c.rating ?? null,
+    google_ratings_total: c.user_ratings_total ?? null
+  }
+}
+
 async function main() {
-  console.log(`⭐ Backfill google_ratings_total | limit=${LIMIT} | ${CONFIRM ? 'RUN' : 'DRY-RUN'}`)
+  console.log(`⭐ Backfill google_ratings_total | limit=${LIMIT} | ${CONFIRM ? 'RUN' : 'DRY-RUN'}${RECOVER ? ' | RECOVER' : ''}`)
   if (!CONFIRM) {
     console.log('👀 Sin --confirm no se llama a Google ni se escribe. Añade --confirm para ejecutar.\n')
   }
 
   const { data: areas, error } = await supabase
     .from('areas')
-    .select('id,nombre,google_place_id,google_rating,google_ratings_total')
+    .select('id,nombre,ciudad,pais,google_place_id,google_rating,google_ratings_total')
     .eq('activo', true)
     .not('google_place_id', 'is', null)
     .is('google_ratings_total', null)
@@ -78,11 +101,59 @@ async function main() {
 
   let ok = 0
   let fail = 0
+  let recovered = 0
+  let zeroed = 0
+
   for (let i = 0; i < areas.length; i++) {
     const area = areas[i]
     process.stdout.write(`[${i + 1}/${areas.length}] ${area.nombre.slice(0, 50)}... `)
     try {
-      const det = await fetchRatings(area.google_place_id)
+      let det = await fetchRatings(area.google_place_id)
+
+      if (det.error === 'NOT_FOUND' && RECOVER) {
+        const found = await findPlaceId(area.nombre, area.ciudad, area.pais)
+        await delay(DELAY_MS)
+        if (!found.error && found.google_ratings_total != null) {
+          const patchFull = {
+            google_place_id: found.google_place_id,
+            google_ratings_total: found.google_ratings_total
+          }
+          if (found.google_rating != null) patchFull.google_rating = found.google_rating
+          let { error: upErr } = await supabase.from('areas').update(patchFull).eq('id', area.id)
+          // Si el place_id nuevo ya existe en otra fila, guarda solo el nº de reseñas
+          if (upErr && /duplicate|unique/i.test(upErr.message || '')) {
+            const patchSoft = { google_ratings_total: found.google_ratings_total }
+            if (found.google_rating != null) patchSoft.google_rating = found.google_rating
+            ;({ error: upErr } = await supabase.from('areas').update(patchSoft).eq('id', area.id))
+          }
+          if (upErr) {
+            console.log('✗ DB', upErr.message)
+            fail++
+          } else {
+            console.log(`♻️ ★${found.google_rating} (${found.google_ratings_total})`)
+            recovered++
+            ok++
+          }
+          await delay(DELAY_MS)
+          continue
+        }
+        // Cerrar cola: place muerto sin sustituto
+        const { error: zErr } = await supabase
+          .from('areas')
+          .update({ google_ratings_total: 0 })
+          .eq('id', area.id)
+        if (zErr) {
+          console.log('✗ zero', zErr.message)
+          fail++
+        } else {
+          console.log('⌀ 0 (place_id muerto)')
+          zeroed++
+          ok++
+        }
+        await delay(DELAY_MS)
+        continue
+      }
+
       if (det.error) {
         console.log('✗', det.error)
         fail++
@@ -108,7 +179,7 @@ async function main() {
   }
 
   console.log('\n━━━━━━━━━━━━━━━━━━━━')
-  console.log(`OK: ${ok} | Fallos: ${fail}`)
+  console.log(`OK: ${ok} | Fallos: ${fail} | Recuperados: ${recovered} | Marcados 0: ${zeroed}`)
 }
 
 main().catch((e) => {
