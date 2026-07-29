@@ -202,6 +202,7 @@ type TabType = 'general' | 'areas' | 'usuarios' | 'rutas' | 'vehiculos' | 'engag
 export default function AdminAnalyticsPage() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<TabType>('general')
   const router = useRouter()
   
@@ -213,22 +214,32 @@ export default function AdminAnalyticsPage() {
   }, [])
 
   const checkAdminAndLoadAnalytics = async () => {
-    const supabase = createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
 
-    if (!session?.user || !session.user.user_metadata?.is_admin) {
-      router.push('/mapa')
-      return
+      if (!session?.user || !session.user.user_metadata?.is_admin) {
+        setLoading(false)
+        router.push('/mapa')
+        return
+      }
+
+      await loadAnalytics()
+    } catch (error) {
+      console.error('Error verificando admin:', error)
+      setLoadError('No se pudo verificar el acceso de administrador.')
+      setLoading(false)
     }
-
-    loadAnalytics()
   }
 
   const loadAnalytics = async () => {
     try {
+      setLoadError(null)
       const supabase = createClient()
 
-      // Obtener todas las áreas (con paginación)
+      // Columnas ligeras: sin descripciones largas ni arrays de fotos (payload mucho menor)
+      const AREAS_SELECT =
+        'id, nombre, pais, comunidad_autonoma, provincia, precio_noche, google_rating, verificado, created_at, servicios, foto_principal'
       const allAreas: Area[] = []
       const pageSize = 1000
       let page = 0
@@ -239,7 +250,7 @@ export default function AdminAnalyticsPage() {
       while (hasMore) {
         const { data, error } = await (supabase as any)
           .from('areas')
-          .select('*')
+          .select(AREAS_SELECT)
           .range(page * pageSize, (page + 1) * pageSize - 1)
 
         if (error) throw error
@@ -254,6 +265,7 @@ export default function AdminAnalyticsPage() {
         } else {
           hasMore = false
         }
+        if (page > 20) break
       }
 
       console.log(`✅ Total cargadas: ${allAreas.length} áreas`)
@@ -262,12 +274,13 @@ export default function AdminAnalyticsPage() {
       // Obtener USUARIOS REALES desde la API de Auth
       console.log('👥 Obteniendo usuarios desde Supabase Auth...')
       let totalUsers = 0
+      let usersDetailData: any = null
       try {
         const usersResponse = await fetch(`/api/admin/users?t=${Date.now()}`, {
           cache: 'no-store'
         })
-        const usersData = await usersResponse.json()
-        totalUsers = usersData.total || 0
+        usersDetailData = await usersResponse.json()
+        totalUsers = usersDetailData.total || 0
         console.log(`✅ ${totalUsers} usuarios obtenidos`)
       } catch (error) {
         console.error('❌ Error obteniendo usuarios:', error)
@@ -281,9 +294,13 @@ export default function AdminAnalyticsPage() {
       let rutas: any[] = []
       let allInteractions: any[] = []
       try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 55000)
         const interactionsRes = await fetch(`/api/admin/analytics/interactions?t=${Date.now()}`, {
           cache: 'no-store',
+          signal: controller.signal,
         })
+        clearTimeout(timeoutId)
         if (!interactionsRes.ok) {
           const errBody = await interactionsRes.json().catch(() => ({}))
           console.error('❌ Error API interactions:', interactionsRes.status, errBody)
@@ -638,19 +655,13 @@ export default function AdminAnalyticsPage() {
       console.log(`✅ Favoritos: ${favoritosHoy} hoy, ${favoritosEstaSemana} esta semana, ${favoritosEsteMes} este mes`)
 
       // ========== MÉTRICAS DE USUARIOS NUEVOS ==========
-      // Nota: Esto requerirá obtener los usuarios desde la API con metadata
       let usuariosNuevosHoy = 0
       let usuariosNuevosEstaSemana = 0
       let usuariosNuevosEsteMes = 0
       let crecimientoUsuariosMensual: { mes: string; nuevos: number }[] = []
 
       try {
-        const usersDetailResponse = await fetch(`/api/admin/users?t=${Date.now()}`, {
-          cache: 'no-store'
-        })
-        const usersDetailData = await usersDetailResponse.json()
-
-        if (usersDetailData.users && Array.isArray(usersDetailData.users)) {
+        if (usersDetailData?.users && Array.isArray(usersDetailData.users)) {
           const usuarios = usersDetailData.users
 
           usuariosNuevosHoy = usuarios.filter((u: any) =>
@@ -1395,18 +1406,20 @@ export default function AdminAnalyticsPage() {
       const promedioRating = areasConRating.length > 0 ? sumRatings / areasConRating.length : 0
 
       // ========== ÁREAS CON DESCRIPCIÓN E IMÁGENES ==========
-      const DESCRIPCION_MIN_LENGTH = 200
-      const PLACEHOLDER_TEXT = 'Área encontrada mediante búsqueda en Google Maps'
+      // Descripción: conteo head aparte (sin traer el texto completo al cliente)
+      let areasConDescripcion = 0
+      try {
+        const { count: descCount } = await (supabase as any)
+          .from('areas')
+          .select('id', { count: 'exact', head: true })
+          .not('descripcion', 'is', null)
+          .neq('descripcion', '')
+        areasConDescripcion = descCount || 0
+      } catch {
+        areasConDescripcion = 0
+      }
 
-      const areasConDescripcion = areas?.filter((a: any) =>
-        a.descripcion &&
-        a.descripcion.length >= DESCRIPCION_MIN_LENGTH &&
-        !a.descripcion.includes(PLACEHOLDER_TEXT)
-      ).length || 0
-
-      const areasConImagenes = areas?.filter((a: any) =>
-        a.foto_principal || (a.fotos_urls && Array.isArray(a.fotos_urls) && a.fotos_urls.length > 0)
-      ).length || 0
+      const areasConImagenes = areas?.filter((a: any) => !!a.foto_principal).length || 0
 
       // ========== CRECIMIENTO MENSUAL (últimos 6 meses) ==========
       const mesesAtras = 6
@@ -1612,6 +1625,11 @@ export default function AdminAnalyticsPage() {
 
     } catch (error) {
       console.error('Error cargando analíticas:', error)
+      setLoadError(
+        error instanceof Error
+          ? error.message
+          : 'Error al cargar las analíticas. Inténtalo de nuevo.'
+      )
     } finally {
       setLoading(false)
     }
@@ -1643,13 +1661,44 @@ export default function AdminAnalyticsPage() {
           <div className="text-center">
             <div className="spinner mb-4"></div>
             <p className="text-gray-600">Cargando analíticas...</p>
+            <p className="mt-2 text-sm text-gray-400">Puede tardar unos segundos si hay mucha actividad</p>
           </div>
         </div>
       </div>
     )
   }
 
-  if (!analytics) return null
+  if (loadError || !analytics) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center max-w-md px-4">
+            <p className="text-gray-800 font-medium mb-2">No se pudieron cargar las analíticas</p>
+            <p className="text-sm text-gray-500 mb-4">
+              {loadError || 'Respuesta vacía del servidor. Revisa la consola o inténtalo de nuevo.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setLoading(true)
+                setLoadError(null)
+                checkAdminAndLoadAnalytics()
+              }}
+              className="inline-flex items-center px-4 py-2 rounded-md bg-sky-600 text-white hover:bg-sky-700"
+            >
+              Reintentar
+            </button>
+            <div className="mt-4">
+              <Link href="/admin" className="text-sm text-primary-600 hover:text-primary-700">
+                Volver al Panel
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
