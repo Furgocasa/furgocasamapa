@@ -7,6 +7,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { InstallAppCTA } from '@/components/ui/InstallAppCTA'
 import { BackToTop } from '@/components/area/BackToTop'
+import { useLanguage } from '@/lib/i18n'
 import {
   MapIcon,
   MapPinIcon,
@@ -23,6 +24,7 @@ import {
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid'
 
 export default function HomePage() {
+  const { t } = useLanguage()
   /** Fallback alineado con metadatos (+3600) hasta cargar el conteo real desde Supabase */
   const [totalAreas, setTotalAreas] = useState(3600)
 
@@ -58,7 +60,7 @@ export default function HomePage() {
             {/* Badge superior */}
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full mb-8 border border-white/30">
               <SparklesIcon className="w-5 h-5" />
-              <span className="font-semibold">Ahora con Inteligencia Artificial GPT-4</span>
+              <span className="font-semibold">{t('home_badge_ai')}</span>
             </div>
 
             {/* Tres iconos principales */}
@@ -68,7 +70,7 @@ export default function HomePage() {
                 <div className="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/30 mb-2">
                   <MapIcon className="w-8 h-8 md:w-10 md:h-10 text-white" />
                 </div>
-                <span className="text-sm md:text-base font-semibold text-white/90">Mapa</span>
+                <span className="text-sm md:text-base font-semibold text-white/90">{t('home_icon_map')}</span>
               </div>
 
               {/* Icono Rutas */}
@@ -76,7 +78,7 @@ export default function HomePage() {
                 <div className="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/30 mb-2">
                   <ArrowPathIcon className="w-8 h-8 md:w-10 md:h-10 text-white" />
                 </div>
-                <span className="text-sm md:text-base font-semibold text-white/90">Rutas</span>
+                <span className="text-sm md:text-base font-semibold text-white/90">{t('home_icon_routes')}</span>
               </div>
 
               {/* Icono IA */}
@@ -84,16 +86,16 @@ export default function HomePage() {
                 <div className="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/30 mb-2">
                   <SparklesIcon className="w-8 h-8 md:w-10 md:h-10 text-white" />
                 </div>
-                <span className="text-sm md:text-base font-semibold text-white/90">IA</span>
+                <span className="text-sm md:text-base font-semibold text-white/90">{t('home_icon_ai')}</span>
               </div>
             </div>
 
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-              Mucho más que una <span className="text-yellow-400">app</span> de áreas de autocaravanas
+              {t('home_h1')}
             </h1>
 
             <p className="text-xl md:text-2xl text-white/90 mb-10 leading-relaxed max-w-3xl mx-auto">
-              Tu plataforma completa para gestionar tu autocaravana con IA. Valoraciones automáticas, rutas inteligentes y protección 24/7.
+              {t('home_lead')}
             </p>
 
             {/* CTAs principales */}
@@ -102,13 +104,13 @@ export default function HomePage() {
                 href="/auth/register"
                 className="inline-flex items-center justify-center px-8 py-4 bg-white text-[#0b3c74] rounded-xl font-bold text-lg hover:bg-gray-100 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
               >
-                Empezar Gratis
+                {t('home_cta_start')}
               </Link>
               <Link
                 href="/mapa"
                 className="inline-flex items-center justify-center px-8 py-4 bg-transparent text-white rounded-xl font-bold text-lg border-2 border-white hover:bg-white/10 transition-all"
               >
-                Ver Mapa de Áreas
+                {t('home_cta_map')}
               </Link>
             </div>
 
@@ -116,15 +118,15 @@ export default function HomePage() {
             <div className="grid grid-cols-3 gap-4 max-w-3xl mx-auto">
               <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-6 border border-white/20">
                 <div className="text-4xl md:text-5xl font-bold text-white mb-1">+{totalAreas}</div>
-                <div className="text-sm text-white/80">Áreas Verificadas</div>
+                <div className="text-sm text-white/80">{t('home_stat_areas')}</div>
               </div>
               <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-6 border border-white/20">
                 <div className="text-4xl md:text-5xl font-bold text-white mb-1">100%</div>
-                <div className="text-sm text-white/80">Gratis Siempre</div>
+                <div className="text-sm text-white/80">{t('home_stat_free')}</div>
               </div>
               <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-6 border border-white/20">
                 <div className="text-4xl md:text-5xl font-bold text-white mb-1">24/7</div>
-                <div className="text-sm text-white/80">Actualizado</div>
+                <div className="text-sm text-white/80">{t('home_stat_updated')}</div>
               </div>
             </div>
           </div>
@@ -136,10 +138,10 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 max-w-3xl mx-auto">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Todo lo que necesitas en una sola plataforma
+              {t('home_features_title')}
             </h2>
             <p className="text-xl text-gray-600">
-              Gestión completa de tu autocaravana con tecnología de última generación
+              {t('home_features_sub')}
             </p>
           </div>
 
@@ -150,10 +152,10 @@ export default function HomePage() {
                 <MapPinIcon className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                +{totalAreas} Áreas Actualizadas
+                {t('home_feat1_title', { n: totalAreas })}
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Base de datos completa con áreas públicas, privadas, campings y parkings. Información verificada de servicios, precios y ubicaciones exactas.
+                {t('home_feat1_body')}
               </p>
             </div>
 
@@ -163,10 +165,10 @@ export default function HomePage() {
                 <ArrowPathIcon className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                Planificador de Rutas
+                {t('home_feat2_title')}
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Crea rutas personalizadas y descubre automáticamente áreas de pernocta cercanas. Optimiza distancias y tiempos de viaje.
+                {t('home_feat2_body')}
               </p>
             </div>
 
@@ -176,10 +178,10 @@ export default function HomePage() {
                 <GlobeAltIcon className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                Cobertura Mundial
+                {t('home_feat3_title')}
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                España, Portugal, Francia, Andorra, Argentina y más países. Expandimos constantemente nuestra red global de áreas.
+                {t('home_feat3_body')}
               </p>
             </div>
           </div>
@@ -190,9 +192,9 @@ export default function HomePage() {
               href="/auth/register"
               className="inline-flex items-center justify-center px-8 py-4 bg-[#0b3c74] text-white rounded-xl font-bold text-lg hover:bg-[#0d4a8f] transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             >
-              Únete Gratis y Descubre Todo
+              {t('home_cta_join')}
             </Link>
-            <p className="text-gray-500 mt-3 text-sm">Sin tarjeta de crédito · Acceso inmediato</p>
+            <p className="text-gray-500 mt-3 text-sm">{t('home_cta_join_note')}</p>
           </div>
         </div>
       </section>
@@ -216,10 +218,10 @@ export default function HomePage() {
                 </div>
                 <div>
                   <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                    Gestión Inteligente de tu Autocaravana
+                    {t('home_ai_title')}
                   </h2>
                   <p className="text-xl text-gray-600 leading-relaxed">
-                    Valoración automática con GPT-4 en segundos. Control total con comparación de precios de mercado en tiempo real.
+                    {t('home_ai_lead')}
                   </p>
                 </div>
               </div>
@@ -228,33 +230,33 @@ export default function HomePage() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
                 <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
                   <div className="text-3xl mb-3">🤖</div>
-                  <p className="font-bold text-gray-900 mb-1">Valoración IA</p>
-                  <p className="text-sm text-gray-600">GPT-4 en segundos</p>
+                  <p className="font-bold text-gray-900 mb-1">{t('home_ai_card1')}</p>
+                  <p className="text-sm text-gray-600">{t('home_ai_card1_sub')}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
                   <div className="text-3xl mb-3">📊</div>
-                  <p className="font-bold text-gray-900 mb-1">Precios Mercado</p>
-                  <p className="text-sm text-gray-600">Comparación real</p>
+                  <p className="font-bold text-gray-900 mb-1">{t('home_ai_card2')}</p>
+                  <p className="text-sm text-gray-600">{t('home_ai_card2_sub')}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
                   <div className="text-3xl mb-3">🔧</div>
-                  <p className="font-bold text-gray-900 mb-1">Mantenimientos</p>
-                  <p className="text-sm text-gray-600">Historial completo</p>
+                  <p className="font-bold text-gray-900 mb-1">{t('home_ai_card3')}</p>
+                  <p className="text-sm text-gray-600">{t('home_ai_card3_sub')}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
                   <div className="text-3xl mb-3">💰</div>
-                  <p className="font-bold text-gray-900 mb-1">Control Gastos</p>
-                  <p className="text-sm text-gray-600">ROI automático</p>
+                  <p className="font-bold text-gray-900 mb-1">{t('home_ai_card4')}</p>
+                  <p className="text-sm text-gray-600">{t('home_ai_card4_sub')}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
                   <div className="text-3xl mb-3">📈</div>
-                  <p className="font-bold text-gray-900 mb-1">Histórico Valor</p>
-                  <p className="text-sm text-gray-600">Evolución precio</p>
+                  <p className="font-bold text-gray-900 mb-1">{t('home_ai_card5')}</p>
+                  <p className="text-sm text-gray-600">{t('home_ai_card5_sub')}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
                   <div className="text-3xl mb-3">📸</div>
-                  <p className="font-bold text-gray-900 mb-1">Gestión Fotos</p>
-                  <p className="text-sm text-gray-600">Galería completa</p>
+                  <p className="font-bold text-gray-900 mb-1">{t('home_ai_card6')}</p>
+                  <p className="text-sm text-gray-600">{t('home_ai_card6_sub')}</p>
                 </div>
               </div>
 
@@ -265,7 +267,7 @@ export default function HomePage() {
                   className="inline-flex items-center justify-center px-8 py-4 bg-[#0b3c74] text-white rounded-xl font-bold text-lg hover:bg-[#0d4a8f] transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                 >
                   <SparklesIcon className="w-5 h-5 mr-2" />
-                  Conoce más sobre Valoración IA
+                  {t('home_ai_cta')}
                 </Link>
               </div>
             </div>
@@ -281,7 +283,7 @@ export default function HomePage() {
             <div className="flex justify-center mb-8">
               <div className="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-full font-bold shadow-lg">
                 <ShieldCheckIcon className="w-5 h-5" />
-                SISTEMA ANTI DAÑOS
+                {t('home_qr_badge')}
               </div>
             </div>
 
@@ -292,10 +294,10 @@ export default function HomePage() {
                 </div>
                 <div>
                   <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                    Sistema QR Inteligente: Protección 24/7
+                    {t('home_qr_title')}
                   </h2>
                   <p className="text-xl text-gray-600 leading-relaxed">
-                    Código QR único para tu vehículo. Los testigos pueden reportar incidentes o daños escaneándolo. Recibe notificaciones instantáneas con fotos, GPS y datos.
+                    {t('home_qr_lead')}
                   </p>
                 </div>
               </div>
@@ -306,8 +308,8 @@ export default function HomePage() {
                   <div className="flex items-start gap-4">
                     <div className="text-3xl">🚨</div>
                     <div>
-                      <p className="font-bold text-gray-900 mb-1">Alertas de accidentes</p>
-                      <p className="text-sm text-gray-600">Con fotos y ubicación GPS</p>
+                      <p className="font-bold text-gray-900 mb-1">{t('home_qr_1')}</p>
+                      <p className="text-sm text-gray-600">{t('home_qr_1_sub')}</p>
                     </div>
                   </div>
                 </div>
@@ -315,8 +317,8 @@ export default function HomePage() {
                   <div className="flex items-start gap-4">
                     <div className="text-3xl">🔔</div>
                     <div>
-                      <p className="font-bold text-gray-900 mb-1">Notificación de daños</p>
-                      <p className="text-sm text-gray-600">Si ven daños en tu vehículo</p>
+                      <p className="font-bold text-gray-900 mb-1">{t('home_qr_2')}</p>
+                      <p className="text-sm text-gray-600">{t('home_qr_2_sub')}</p>
                     </div>
                   </div>
                 </div>
@@ -324,8 +326,8 @@ export default function HomePage() {
                   <div className="flex items-start gap-4">
                     <div className="text-3xl">📞</div>
                     <div>
-                      <p className="font-bold text-gray-900 mb-1">Contacto emergencia</p>
-                      <p className="text-sm text-gray-600">Para autoridades y aseguradoras</p>
+                      <p className="font-bold text-gray-900 mb-1">{t('home_qr_3')}</p>
+                      <p className="text-sm text-gray-600">{t('home_qr_3_sub')}</p>
                     </div>
                   </div>
                 </div>
@@ -333,8 +335,8 @@ export default function HomePage() {
                   <div className="flex items-start gap-4">
                     <div className="text-3xl">📋</div>
                     <div>
-                      <p className="font-bold text-gray-900 mb-1">Historial completo</p>
-                      <p className="text-sm text-gray-600">Todos los reportes guardados</p>
+                      <p className="font-bold text-gray-900 mb-1">{t('home_qr_4')}</p>
+                      <p className="text-sm text-gray-600">{t('home_qr_4_sub')}</p>
                     </div>
                   </div>
                 </div>
@@ -347,7 +349,7 @@ export default function HomePage() {
                   className="inline-flex items-center justify-center px-8 py-4 bg-red-600 text-white rounded-xl font-bold text-lg hover:bg-red-700 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                 >
                   <ShieldCheckIcon className="w-5 h-5 mr-2" />
-                  Descubre el Sistema de Alertas
+                  {t('home_qr_cta')}
                 </Link>
               </div>
             </div>
@@ -361,13 +363,13 @@ export default function HomePage() {
           <div className="text-center mb-16 max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-[#0b3c74] text-white px-6 py-3 rounded-full font-bold mb-6">
               <SparklesIcon className="w-5 h-5" />
-              INTELIGENCIA ARTIFICIAL
+              {t('home_tech_badge')}
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Tecnología que entiende tu autocaravana
+              {t('home_tech_title')}
             </h2>
             <p className="text-xl text-gray-600">
-              GPT-4 analiza, valora y te asesora en tiempo real
+              {t('home_tech_sub')}
             </p>
           </div>
 
@@ -376,10 +378,10 @@ export default function HomePage() {
             <div className="bg-white rounded-2xl p-8 border-2 border-[#0b3c74]/10 hover:shadow-xl transition-all">
               <div className="text-5xl mb-6 text-center">🧠</div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">
-                Valoración Inteligente
+                {t('home_tech1_title')}
               </h3>
               <p className="text-gray-600 leading-relaxed text-center">
-                GPT-4 analiza marca, modelo, año, kilometraje y mercado para darte una valoración precisa en segundos con informe PDF profesional.
+                {t('home_tech1_body')}
               </p>
             </div>
 
@@ -387,10 +389,10 @@ export default function HomePage() {
             <div className="bg-white rounded-2xl p-8 border-2 border-[#0b3c74]/10 hover:shadow-xl transition-all">
               <div className="text-5xl mb-6 text-center">📊</div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">
-                Comparación de Mercado
+                {t('home_tech2_title')}
               </h3>
               <p className="text-gray-600 leading-relaxed text-center">
-                Comparamos con miles de anuncios reales de portales especializados para determinar el precio justo de tu vehículo.
+                {t('home_tech2_body')}
               </p>
             </div>
 
@@ -398,10 +400,10 @@ export default function HomePage() {
             <div className="bg-white rounded-2xl p-8 border-2 border-[#0b3c74]/10 hover:shadow-xl transition-all">
               <div className="text-5xl mb-6 text-center">💬</div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">
-                Chatbot Experto
+                {t('home_tech3_title')}
               </h3>
               <p className="text-gray-600 leading-relaxed text-center">
-                Asistente IA disponible 24/7 para responder preguntas sobre áreas, rutas y recomendaciones personalizadas.
+                {t('home_tech3_body')}
               </p>
             </div>
           </div>
@@ -413,7 +415,7 @@ export default function HomePage() {
               className="inline-flex items-center justify-center px-8 py-4 bg-[#0b3c74] text-white rounded-xl font-bold text-lg hover:bg-[#0d4a8f] transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             >
               <SparklesIcon className="w-5 h-5 mr-2" />
-              Prueba la IA Gratis
+              {t('home_tech_cta')}
             </Link>
           </div>
         </div>
@@ -424,10 +426,10 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 max-w-3xl mx-auto">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Empieza en 3 simples pasos
+              {t('home_steps_title')}
             </h2>
             <p className="text-xl text-gray-600">
-              Desde el registro hasta tu primera valoración IA en menos de 5 minutos
+              {t('home_steps_sub')}
             </p>
           </div>
 
@@ -440,10 +442,10 @@ export default function HomePage() {
                 </div>
                 <div className="text-5xl mb-6 text-center">📝</div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">
-                  Regístrate Gratis
+                  {t('home_step1_title')}
                 </h3>
                 <p className="text-gray-600 leading-relaxed text-center">
-                  Crea tu cuenta en 30 segundos. Sin tarjeta de crédito. Acceso inmediato a todas las funciones.
+                  {t('home_step1_body')}
                 </p>
               </div>
             </div>
@@ -456,10 +458,10 @@ export default function HomePage() {
                 </div>
                 <div className="text-5xl mb-6 text-center">🚐</div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">
-                  Registra tu Vehículo
+                  {t('home_step2_title')}
                 </h3>
                 <p className="text-gray-600 leading-relaxed text-center">
-                  Añade marca, modelo, año y kilometraje. Sube fotos y obtén tu código QR de protección.
+                  {t('home_step2_body')}
                 </p>
               </div>
             </div>
@@ -472,10 +474,10 @@ export default function HomePage() {
                 </div>
                 <div className="text-5xl mb-6 text-center">🤖</div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">
-                  Valoración IA Instantánea
+                  {t('home_step3_title')}
                 </h3>
                 <p className="text-gray-600 leading-relaxed text-center">
-                  Clic en "Valorar con IA" y recibe un informe profesional en 30 segundos con precio real de mercado.
+                  {t('home_step3_body')}
                 </p>
               </div>
             </div>
@@ -487,7 +489,7 @@ export default function HomePage() {
               href="/auth/register"
               className="inline-flex items-center justify-center px-10 py-5 bg-[#0b3c74] text-white rounded-xl font-bold text-xl hover:bg-[#0d4a8f] transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
             >
-              Crear Cuenta Gratuita →
+              {t('home_steps_cta')}
             </Link>
           </div>
         </div>
@@ -499,10 +501,10 @@ export default function HomePage() {
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-5xl font-bold mb-4">
-                ¿Por qué deberías confiar en nosotros?
+                {t('home_trust_title')}
               </h2>
               <p className="text-xl text-white/80">
-                Tecnología de primera línea para darte la información más precisa y confiable
+                {t('home_trust_sub')}
               </p>
             </div>
 
@@ -514,9 +516,9 @@ export default function HomePage() {
                     <MapIcon className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold mb-2">Integración Google Maps API</h3>
+                    <h3 className="text-xl font-bold mb-2">{t('home_trust1_title')}</h3>
                     <p className="text-white/80">
-                      Datos verificados directamente de Google Maps. Ubicaciones precisas con GPS, fotos reales, horarios actualizados y valoraciones de usuarios. La información más confiable del mundo en tus manos.
+                      {t('home_trust1_body')}
                     </p>
                   </div>
                 </div>
@@ -529,9 +531,9 @@ export default function HomePage() {
                     <SparklesIcon className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold mb-2">Valoración con OpenAI GPT-4</h3>
+                    <h3 className="text-xl font-bold mb-2">{t('home_trust2_title')}</h3>
                     <p className="text-white/80">
-                      Inteligencia artificial de última generación analiza miles de datos del mercado real. Comparación con portales especializados, análisis de deprecación y precios justos basados en datos reales, no estimaciones.
+                      {t('home_trust2_body')}
                     </p>
                   </div>
                 </div>
@@ -544,9 +546,9 @@ export default function HomePage() {
                     <ChartBarIcon className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold mb-2">Historial y Trazabilidad Total</h3>
+                    <h3 className="text-xl font-bold mb-2">{t('home_trust3_title')}</h3>
                     <p className="text-white/80">
-                      Registra cada mantenimiento, gasto y valoración con fecha exacta. Base de datos segura que guarda toda la vida de tu vehículo. Acceso a tu información desde cualquier dispositivo, sincronización automática en la nube.
+                      {t('home_trust3_body')}
                     </p>
                   </div>
                 </div>
@@ -559,9 +561,9 @@ export default function HomePage() {
                     <ShieldCheckIcon className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold mb-2">Seguridad y Privacidad</h3>
+                    <h3 className="text-xl font-bold mb-2">{t('home_trust4_title')}</h3>
                     <p className="text-white/80">
-                      Encriptación de extremo a extremo para todos tus datos. Servidores seguros en Europa. Nunca compartimos tu información con terceros. Cumplimiento total con RGPD. Tus datos son solo tuyos.
+                      {t('home_trust4_body')}
                     </p>
                   </div>
                 </div>
@@ -574,9 +576,9 @@ export default function HomePage() {
                     <ClockIcon className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold mb-2">Actualizaciones en Tiempo Real</h3>
+                    <h3 className="text-xl font-bold mb-2">{t('home_trust5_title')}</h3>
                     <p className="text-white/80">
-                      Sistema de sincronización automática con fuentes oficiales. Los precios de mercado se actualizan diariamente. Nuevas áreas verificadas cada semana. Información siempre fresca y precisa.
+                      {t('home_trust5_body')}
                     </p>
                   </div>
                 </div>
@@ -589,9 +591,9 @@ export default function HomePage() {
                     <UserGroupIcon className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold mb-2">100% Independiente</h3>
+                    <h3 className="text-xl font-bold mb-2">{t('home_trust6_title')}</h3>
                     <p className="text-white/80">
-                      Sin conflictos de interés. No vendemos tus datos. Sin publicidad que influya en resultados. Información objetiva y neutral. Nuestro único compromiso es contigo y con la calidad de nuestro servicio.
+                      {t('home_trust6_body')}
                     </p>
                   </div>
                 </div>
@@ -615,7 +617,7 @@ export default function HomePage() {
                 </div>
               </div>
               <p className="text-lg text-white/90 mb-8">
-                Tecnología empresarial de primer nivel al servicio de los autocaravanistas
+                {t('home_tech_footer')}
               </p>
 
               {/* CTA final de confianza */}
@@ -623,7 +625,7 @@ export default function HomePage() {
                 href="/auth/register"
                 className="inline-flex items-center justify-center px-10 py-5 bg-yellow-400 text-[#0b3c74] rounded-xl font-bold text-xl hover:bg-yellow-300 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
               >
-                Crear Mi Cuenta Gratis
+                {t('home_trust_cta')}
               </Link>
             </div>
           </div>

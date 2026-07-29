@@ -12,12 +12,14 @@ import {
   MapPinIcon
 } from '@heroicons/react/24/solid'
 import { StarIcon as StarOutline } from '@heroicons/react/24/outline'
+import { useLanguage } from '@/lib/i18n'
 
 interface Props {
   userId: string
 }
 
 export function RutasTab({ userId }: Props) {
+  const { t, locale } = useLanguage()
   const [rutas, setRutas] = useState<Ruta[]>([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -46,7 +48,7 @@ export function RutasTab({ userId }: Props) {
   }
 
   const handleDelete = async (rutaId: string) => {
-    if (!confirm('¿Estás seguro de eliminar esta ruta?')) return
+    if (!confirm(t('tab_rutas_del_q'))) return
 
     setDeleting(rutaId)
     try {
@@ -60,7 +62,7 @@ export function RutasTab({ userId }: Props) {
       setRutas(rutas.filter((r: any) => r.id !== rutaId))
     } catch (error) {
       console.error('Error eliminando ruta:', error)
-      alert('Error al eliminar la ruta')
+      alert(t('tab_rutas_err'))
     } finally {
       setDeleting(null)
     }
@@ -101,7 +103,7 @@ export function RutasTab({ userId }: Props) {
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="spinner mb-4"></div>
-          <p className="text-gray-600">Cargando rutas...</p>
+          <p className="text-gray-600">{t('tab_rutas_loading')}</p>
         </div>
       </div>
     )
@@ -111,16 +113,16 @@ export function RutasTab({ userId }: Props) {
     return (
       <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
         <MapIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-600 mb-2">No has guardado ninguna ruta aún</p>
+        <p className="text-gray-600 mb-2">{t('tab_rutas_empty')}</p>
         <p className="text-sm text-gray-500 mb-4">
-          Crea rutas desde el planificador y guárdalas para acceder más tarde
+          {t('tab_rutas_empty_hint')}
         </p>
         <Link
           href="/ruta"
           className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
         >
           <MapIcon className="w-5 h-5" />
-          Ir al Planificador
+          {t('tab_rutas_go')}
         </Link>
       </div>
     )
@@ -131,14 +133,14 @@ export function RutasTab({ userId }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900">
-          Mis Rutas ({rutas.length})
+          {t('tab_rutas_title', { n: rutas.length })}
         </h3>
         <Link
           href="/ruta"
           className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm"
         >
           <MapIcon className="w-4 h-4" />
-          Nueva Ruta
+          {t('tab_rutas_new')}
         </Link>
       </div>
 
@@ -169,7 +171,7 @@ export function RutasTab({ userId }: Props) {
                     onClick={() => toggleFavorito(ruta.id, ruta.favorito)}
                     disabled={toggling === ruta.id}
                     className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-                    title={ruta.favorito ? 'Quitar de favoritos' : 'Marcar como favorito'}
+                    title={ruta.favorito ? t('tab_rutas_unfav') : t('tab_rutas_fav')}
                   >
                     {ruta.favorito ? (
                       <StarSolid className="w-5 h-5 text-yellow-500" />
@@ -181,7 +183,7 @@ export function RutasTab({ userId }: Props) {
                     onClick={() => handleDelete(ruta.id)}
                     disabled={deleting === ruta.id}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                    title="Eliminar ruta"
+                    title={t('tab_rutas_del')}
                   >
                     <TrashIcon className="w-5 h-5" />
                   </button>
@@ -196,7 +198,7 @@ export function RutasTab({ userId }: Props) {
                     <span className="text-green-600 font-bold">A</span>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{origen?.nombre || 'Origen'}</p>
+                    <p className="font-medium text-gray-900">{origen?.nombre || t('origin')}</p>
                     <p className="text-gray-600 text-xs">
                       {origen?.latitud?.toFixed(4)}, {origen?.longitud?.toFixed(4)}
                     </p>
@@ -223,7 +225,7 @@ export function RutasTab({ userId }: Props) {
                     <span className="text-red-600 font-bold">B</span>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{destino?.nombre || 'Destino'}</p>
+                    <p className="font-medium text-gray-900">{destino?.nombre || t('destination')}</p>
                     <p className="text-gray-600 text-xs">
                       {destino?.latitud?.toFixed(4)}, {destino?.longitud?.toFixed(4)}
                     </p>
@@ -249,7 +251,7 @@ export function RutasTab({ userId }: Props) {
                     )}
                   </div>
                   <span className="text-xs text-gray-500">
-                    {new Date(ruta.created_at).toLocaleDateString('es-ES')}
+                    {new Date(ruta.created_at).toLocaleDateString(locale)}
                   </span>
                 </div>
                 
@@ -260,7 +262,7 @@ export function RutasTab({ userId }: Props) {
                 >
                   <span className="flex items-center justify-center gap-2">
                     <MapIcon className="w-4 h-4" />
-                    Ver en Mapa
+                    {t('tab_rutas_map')}
                   </span>
                 </Link>
               </div>
@@ -271,4 +273,3 @@ export function RutasTab({ userId }: Props) {
     </div>
   )
 }
-

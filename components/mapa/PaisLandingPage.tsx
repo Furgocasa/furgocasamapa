@@ -6,6 +6,7 @@ import { PaisSEO } from '@/config/paises-seo'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import Link from 'next/link'
+import { useLanguage } from '@/lib/i18n'
 import { 
   MapPinIcon,
   MapIcon,
@@ -22,6 +23,7 @@ interface PaisLandingPageProps {
 }
 
 export function PaisLandingPage({ pais }: PaisLandingPageProps) {
+  const { t } = useLanguage()
   const [totalAreas, setTotalAreas] = useState(3600) // fallback hasta cargar conteo real
 
   useEffect(() => {
@@ -57,7 +59,7 @@ export function PaisLandingPage({ pais }: PaisLandingPageProps) {
             {/* Badge superior con emoji del país */}
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full mb-8 border border-white/30">
               <span className="text-2xl">{pais.emoji}</span>
-              <span className="font-semibold">{pais.nombre} - {pais.terminologia === 'autocaravanas' ? 'Autocaravanas' : 'Casas Rodantes'}</span>
+              <span className="font-semibold">{pais.nombre} - {pais.terminologia === 'autocaravanas' ? t('landing_motorhomes') : t('landing_rv')}</span>
             </div>
 
             {/* Tres iconos principales */}
@@ -66,19 +68,19 @@ export function PaisLandingPage({ pais }: PaisLandingPageProps) {
                 <div className="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/30 mb-2">
                   <MapIcon className="w-8 h-8 md:w-10 md:h-10 text-white" />
                 </div>
-                <span className="text-sm md:text-base font-semibold text-white/90">Mapa</span>
+                <span className="text-sm md:text-base font-semibold text-white/90">{t('home_icon_map')}</span>
               </div>
               <div className="flex flex-col items-center">
                 <div className="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/30 mb-2">
                   <ArrowPathIcon className="w-8 h-8 md:w-10 md:h-10 text-white" />
                 </div>
-                <span className="text-sm md:text-base font-semibold text-white/90">Rutas</span>
+                <span className="text-sm md:text-base font-semibold text-white/90">{t('home_icon_routes')}</span>
               </div>
               <div className="flex flex-col items-center">
                 <div className="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/30 mb-2">
                   <SparklesIcon className="w-8 h-8 md:w-10 md:h-10 text-white" />
                 </div>
-                <span className="text-sm md:text-base font-semibold text-white/90">IA</span>
+                <span className="text-sm md:text-base font-semibold text-white/90">{t('home_icon_ai')}</span>
               </div>
             </div>
 
@@ -96,13 +98,13 @@ export function PaisLandingPage({ pais }: PaisLandingPageProps) {
                 href="/auth/register"
                 className="inline-flex items-center justify-center px-8 py-4 bg-white text-[#0b3c74] rounded-xl font-bold text-lg hover:bg-gray-100 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
               >
-                Empezar Gratis
+                {t('home_cta_start')}
               </Link>
               <Link
                 href={`/mapa?pais=${encodeURIComponent(pais.nombre)}`}
                 className="inline-flex items-center justify-center px-8 py-4 bg-transparent text-white rounded-xl font-bold text-lg border-2 border-white hover:bg-white/10 transition-all"
               >
-                Ver Mapa de Áreas
+                {t('home_cta_map')}
               </Link>
             </div>
 
@@ -110,15 +112,15 @@ export function PaisLandingPage({ pais }: PaisLandingPageProps) {
             <div className="grid grid-cols-3 gap-4 max-w-3xl mx-auto">
               <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-6 border border-white/20">
                 <div className="text-4xl md:text-5xl font-bold text-white mb-1">+{totalAreas}</div>
-                <div className="text-sm text-white/80">Áreas Verificadas</div>
+                <div className="text-sm text-white/80">{t('home_stat_areas')}</div>
               </div>
               <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-6 border border-white/20">
                 <div className="text-4xl md:text-5xl font-bold text-white mb-1">100%</div>
-                <div className="text-sm text-white/80">Gratis Siempre</div>
+                <div className="text-sm text-white/80">{t('home_stat_free')}</div>
               </div>
               <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-6 border border-white/20">
                 <div className="text-4xl md:text-5xl font-bold text-white mb-1">24/7</div>
-                <div className="text-sm text-white/80">Actualizado</div>
+                <div className="text-sm text-white/80">{t('home_stat_updated')}</div>
               </div>
             </div>
           </div>

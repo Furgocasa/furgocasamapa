@@ -454,6 +454,43 @@ export default function MapaPage() {
     // En móvil se muestra el InfoWindow del mapa, no se abre la lista
   }, [paisFiltroLista, setFiltros, setMetadata])
 
+  // ✅ CONEXIÓN CHATBOT → MAPA: seleccionar un área por slug/id.
+  // Los 3 mapas ya centran y abren el popup al cambiar areaSeleccionada.
+  const selectAreaBySlug = useCallback((slug: string) => {
+    if (!slug) return false
+    const area = areas.find((a: any) => a.slug === slug || a.id === slug)
+    if (area) {
+      handleAreaClick(area as Area)
+      return true
+    }
+    return false
+  }, [areas, handleAreaClick])
+
+  // Caso 1: llegada con /mapa?area=slug (desde el chatbot en otra página)
+  const areaUrlProcesadaRef = useRef(false)
+  useEffect(() => {
+    if (areas.length === 0 || areaUrlProcesadaRef.current) return
+    const params = new URLSearchParams(window.location.search)
+    const slug = params.get('area')
+    if (slug) {
+      areaUrlProcesadaRef.current = true
+      // Pequeño margen para que el mapa esté montado antes de centrar
+      setTimeout(() => selectAreaBySlug(slug), 400)
+      // Limpiar la URL para no re-seleccionar al recargar
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [areas, selectAreaBySlug])
+
+  // Caso 2: el chatbot está abierto SOBRE el propio mapa → evento directo
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const slug = (e as CustomEvent).detail?.slug
+      if (slug) selectAreaBySlug(slug)
+    }
+    window.addEventListener('furgocasa:select-area', handler)
+    return () => window.removeEventListener('furgocasa:select-area', handler)
+  }, [selectAreaBySlug])
+
   // Sincronizar búsqueda del mapa con el panel lateral
   const handleMapSearchQuery = useCallback((query: string) => {
     setFiltros((prev) => ({ ...prev, busqueda: query }))

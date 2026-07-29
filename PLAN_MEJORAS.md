@@ -59,6 +59,12 @@ datos. Es el único activo que la competencia no puede copiar.
 - [x] Migración SQL `supabase/migrations/20260728_areas_traducciones_campos.sql` ✅ ejecutada
 - [x] Script `npm run translate` (dry-run por defecto; `TRAD_RUN=1` para traducir; JSON multi-campo; reanudable)
 - [x] `lib/i18n` + selector en Navbar + `/api/areas?lang=` + ficha de área
+- [x] UI pública ampliada: home, footer, welcome, auth, landings chrome, InstallAppCTA (admin sigue en ES)
+- [x] `/ruta`, LoginWall, PlanificadorRuta (chrome + modales)
+- [x] `/perfil` + tabs (favoritos, rutas, valoraciones, visitas)
+- [x] `/accidente` (formulario y mensajes; FAQ marketing residual en ES)
+- [ ] Residuales: FAQs, vehículos, SEO landings, copy marketing accidente
+- [ ] Reanudar `npm run translate` cuando haya cuota OpenAI (~1.6k pendientes)
 - [ ] (Backlog) Rutas SEO i18n en Next (`/fr/aire-camping-car-...`)
 
 ---
@@ -130,7 +136,7 @@ de BD falla, mejor caer en el gratuito.
 
 **Agente revisor IA** (28 jul 2026):
 - [x] Código y script listos (`npm run evaluar:chatbot`)
-- [ ] Migración `20260728_chatbot_evaluacion_ia.sql` — **PENDIENTE de ejecutar en Supabase SQL Editor**
+- [x] Migración `20260728_chatbot_evaluacion_ia.sql` — **ya aplicada en Supabase** (columnas `valoracion_ia`, etc. verificadas)
 - [x] `/admin/chatbot-respuestas`: filtros por veredicto IA, badges y bloque con motivo/sugerencia
 - Flujo de afinado: ejecutar el revisor periódicamente → filtrar "incorrectas" → aplicar las sugerencias al system prompt del chatbot (editable en /admin) → repetir y ver si baja el % de incorrectas
 
@@ -138,7 +144,7 @@ de BD falla, mejor caer en el gratuito.
 
 ## Pasos manuales pendientes (Narciso)
 
-1. **Supabase SQL Editor**: ejecutar `supabase/migrations/20260728_chatbot_evaluacion_ia.sql` (única migración pendiente).
+1. ~~**Supabase SQL Editor**: migraciones `chatbot_evaluacion_ia` y `google_ratings_total`~~ — **hechas** (verificado en BD). Backfill ratings casi completo (~4.9k con valor; residual opcional ~300 con `place_id` y total NULL).
 2. **Vercel**: borrar variables `NEXT_PUBLIC_OPENAI_API_KEY_ADMIN`,
    `NEXT_PUBLIC_SERPAPI_KEY_ADMIN` y `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY`
    si existen, y rotar las claves de OpenAI y SerpAPI.

@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useLanguage } from '@/lib/i18n'
 
 export default function WelcomeModal() {
   const [isOpen, setIsOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
+  const { t } = useLanguage()
 
   useEffect(() => {
     const checkUserAndModal = async () => {
@@ -66,7 +68,7 @@ export default function WelcomeModal() {
           <button
             onClick={handleClose}
             className="absolute top-3 right-3 sm:top-4 sm:right-4 text-white/80 hover:text-white transition-colors z-10 bg-white/20 rounded-full p-2"
-            aria-label="Cerrar"
+            aria-label={t('close')}
           >
             <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -85,9 +87,9 @@ export default function WelcomeModal() {
             </div>
           </div>
           
-          <h2 className="text-2xl sm:text-3xl font-bold mb-2">¡Únete a nuestra comunidad!</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2">{t('welcome_title')}</h2>
           <p className="text-blue-100 text-base sm:text-lg">
-            Comparte tus experiencias y ayuda a otros viajeros a encontrar los mejores lugares.
+            {t('welcome_sub')}
           </p>
           
           {/* Decoración de estrellas */}
@@ -104,16 +106,16 @@ export default function WelcomeModal() {
           <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6">
             <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center">
               <span className="text-xl sm:text-2xl mr-2">🎉</span>
-              ¡Hola aventurero!
+              {t('welcome_hello')}
             </h3>
             <p className="text-gray-700 mb-4">
-              Estás viendo información detallada de esta área para autocaravanas.
+              {t('welcome_seeing')}
             </p>
             <p className="text-gray-600 text-sm font-semibold mb-3">
-              💡 ¿Sabías que...?
+              {t('welcome_didyou')}
             </p>
             <p className="text-gray-600 text-sm mb-3">
-              Si te registras podrás:
+              {t('welcome_if_register')}
             </p>
           </div>
 
@@ -123,31 +125,31 @@ export default function WelcomeModal() {
               <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 mr-2 sm:mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              <span className="text-sm sm:text-base text-gray-700"><strong>Valorar las áreas</strong> que has visitado</span>
+              <span className="text-sm sm:text-base text-gray-700">{t('welcome_b1')}</span>
             </li>
             <li className="flex items-start">
               <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 mr-2 sm:mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              <span className="text-sm sm:text-base text-gray-700"><strong>Marcar áreas como visitadas</strong></span>
+              <span className="text-sm sm:text-base text-gray-700">{t('welcome_b2')}</span>
             </li>
             <li className="flex items-start">
               <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 mr-2 sm:mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              <span className="text-sm sm:text-base text-gray-700"><strong>Añadir áreas a tus favoritos</strong></span>
+              <span className="text-sm sm:text-base text-gray-700">{t('welcome_b3')}</span>
             </li>
             <li className="flex items-start">
               <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 mr-2 sm:mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              <span className="text-sm sm:text-base text-gray-700"><strong>Subir fotos</strong> de tus visitas</span>
+              <span className="text-sm sm:text-base text-gray-700">{t('welcome_b4')}</span>
             </li>
             <li className="flex items-start">
               <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 mr-2 sm:mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              <span className="text-sm sm:text-base text-gray-700"><strong>Proponer correcciones</strong> a la información</span>
+              <span className="text-sm sm:text-base text-gray-700">{t('welcome_b5')}</span>
             </li>
           </ul>
 
@@ -157,21 +159,21 @@ export default function WelcomeModal() {
               onClick={handleRegister}
               className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm sm:text-base"
             >
-              ✨ Registrarme ahora
+              {t('welcome_register')}
             </button>
             
             <button
               onClick={handleLogin}
               className="w-full bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl transition-all duration-200 text-sm sm:text-base"
             >
-              Ya tengo cuenta
+              {t('welcome_login')}
             </button>
             
             <button
               onClick={handleContinue}
               className="w-full text-gray-500 hover:text-gray-700 font-medium py-2 px-4 sm:px-6 rounded-xl transition-colors duration-200 text-xs sm:text-sm"
             >
-              Continuar sin registrarme
+              {t('welcome_skip')}
             </button>
           </div>
         </div>
@@ -179,5 +181,3 @@ export default function WelcomeModal() {
     </div>
   )
 }
-
-

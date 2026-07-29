@@ -6,6 +6,7 @@ import {
   StarIcon, 
   MapIcon 
 } from '@heroicons/react/24/outline'
+import { useLanguage } from '@/lib/i18n'
 
 interface Props {
   stats: {
@@ -18,16 +19,18 @@ interface Props {
 }
 
 export function DashboardStats({ stats }: Props) {
+  const { t } = useLanguage()
+
   const cards = [
     {
-      title: 'Visitas',
+      title: t('perfil_tab_visits'),
       value: stats.totalVisitas,
       icon: MapPinIcon,
       color: 'bg-blue-100 text-blue-600',
       bgColor: 'bg-blue-50',
     },
     {
-      title: 'Valoraciones',
+      title: t('perfil_tab_ratings'),
       value: stats.totalValoraciones,
       icon: StarIcon,
       color: 'bg-yellow-100 text-yellow-600',
@@ -35,14 +38,14 @@ export function DashboardStats({ stats }: Props) {
       subtitle: stats.promedioRating > 0 ? `${stats.promedioRating.toFixed(1)} ⭐` : null,
     },
     {
-      title: 'Favoritos',
+      title: t('perfil_tab_favs'),
       value: stats.totalFavoritos,
       icon: HeartIcon,
       color: 'bg-red-100 text-red-600',
       bgColor: 'bg-red-50',
     },
     {
-      title: 'Rutas',
+      title: t('perfil_tab_routes'),
       value: stats.totalRutas,
       icon: MapIcon,
       color: 'bg-green-100 text-green-600',
@@ -74,4 +77,3 @@ export function DashboardStats({ stats }: Props) {
     </div>
   )
 }
-

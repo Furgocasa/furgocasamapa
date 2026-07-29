@@ -45,7 +45,8 @@ async function fetchRatings(placeId) {
   }
   return {
     google_rating: data.result.rating ?? null,
-    google_ratings_total: data.result.user_ratings_total ?? null
+    // Sin reseñas Google omite el campo → 0 cierra la cola (null = aún desconocido)
+    google_ratings_total: data.result.user_ratings_total ?? 0
   }
 }
 
@@ -75,14 +76,14 @@ async function main() {
     console.log('👀 Sin --confirm no se llama a Google ni se escribe. Añade --confirm para ejecutar.\n')
   }
 
+  // Incluye residuales con rating NULL (tienen place_id pero nunca se rellenó el total)
   const { data: areas, error } = await supabase
     .from('areas')
     .select('id,nombre,ciudad,pais,google_place_id,google_rating,google_ratings_total')
     .eq('activo', true)
     .not('google_place_id', 'is', null)
     .is('google_ratings_total', null)
-    .not('google_rating', 'is', null)
-    .order('google_rating', { ascending: false })
+    .order('nombre', { ascending: true })
     .limit(LIMIT)
 
   if (error) {

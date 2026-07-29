@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Visita, Area } from '@/types/database.types'
 import { MapPinIcon, CalendarIcon, TrashIcon } from '@heroicons/react/24/outline'
 import dynamic from 'next/dynamic'
+import { useLanguage } from '@/lib/i18n'
 
 const MapaVisitas = dynamic(() => import('./MapaVisitas'), { ssr: false })
 
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function VisitasTab({ userId }: Props) {
+  const { t, locale } = useLanguage()
   const [visitas, setVisitas] = useState<VisitaConArea[]>([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -79,7 +81,7 @@ export function VisitasTab({ userId }: Props) {
   }
 
   const handleDelete = async (visitaId: string) => {
-    if (!confirm('¿Estás seguro de eliminar esta visita?')) return
+    if (!confirm(t('tab_vis_del_q'))) return
 
     setDeleting(visitaId)
     try {
@@ -93,7 +95,7 @@ export function VisitasTab({ userId }: Props) {
       setVisitas(visitas.filter((v: any) => v.id !== visitaId))
     } catch (error) {
       console.error('Error eliminando visita:', error)
-      alert('Error al eliminar la visita')
+      alert(t('tab_vis_err'))
     } finally {
       setDeleting(null)
     }
@@ -104,7 +106,7 @@ export function VisitasTab({ userId }: Props) {
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="spinner mb-4"></div>
-          <p className="text-gray-600">Cargando visitas...</p>
+          <p className="text-gray-600">{t('tab_vis_loading')}</p>
         </div>
       </div>
     )
@@ -115,7 +117,7 @@ export function VisitasTab({ userId }: Props) {
       {/* Controles de vista */}
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-900">
-          Mis Visitas ({visitas.length})
+          {t('tab_vis_title', { n: visitas.length })}
         </h3>
         <div className="flex gap-2">
           <button
@@ -126,7 +128,7 @@ export function VisitasTab({ userId }: Props) {
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            Lista
+            {t('tab_vis_list')}
           </button>
           <button
             onClick={() => setVistaActual('mapa')}
@@ -136,7 +138,7 @@ export function VisitasTab({ userId }: Props) {
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            Mapa
+            {t('tab_vis_map')}
           </button>
         </div>
       </div>
@@ -144,9 +146,9 @@ export function VisitasTab({ userId }: Props) {
       {visitas.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
           <MapPinIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 mb-2">No has registrado ninguna visita aún</p>
+          <p className="text-gray-600 mb-2">{t('tab_vis_empty')}</p>
           <p className="text-sm text-gray-500">
-            Explora el mapa y registra tus visitas a áreas
+            {t('tab_vis_empty_hint')}
           </p>
         </div>
       ) : vistaActual === 'mapa' ? (
@@ -169,7 +171,7 @@ export function VisitasTab({ userId }: Props) {
                   <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
                     <span className="flex items-center gap-1">
                       <CalendarIcon className="w-4 h-4" />
-                      {new Date(visita.fecha_visita).toLocaleDateString('es-ES', {
+                      {new Date(visita.fecha_visita).toLocaleDateString(locale, {
                         day: 'numeric',
                         month: 'long',
                         year: 'numeric',
@@ -190,7 +192,7 @@ export function VisitasTab({ userId }: Props) {
                   onClick={() => handleDelete(visita.id)}
                   disabled={deleting === visita.id}
                   className="ml-4 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                  title="Eliminar visita"
+                  title={t('tab_vis_del')}
                 >
                   <TrashIcon className="w-5 h-5" />
                 </button>
@@ -202,4 +204,3 @@ export function VisitasTab({ userId }: Props) {
     </div>
   )
 }
-

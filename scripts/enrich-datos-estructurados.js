@@ -42,6 +42,8 @@ const MODEL = process.env.DATOS_MODEL || 'gpt-5.5'
 const REQ_TIMEOUT_MS = parseInt(process.env.DATOS_TIMEOUT_MS || '90000', 10)
 const CHECKPOINT = path.join(__dirname, process.env.DATOS_CHECKPOINT || 'enrich-datos-checkpoint.txt')
 const APPLY = process.argv.includes('--apply')
+const paisArg = process.argv.find((a) => a.startsWith('--pais='))
+const PAIS_FILTER = process.env.DATOS_PAIS || (paisArg ? paisArg.split('=').slice(1).join('=') : '')
 const CSV_PATH = path.join(__dirname, 'enrich-datos-propuestas.csv')
 
 // Claves de servicios EXACTAS de la base de datos (ver FiltrosMapa.tsx)
@@ -145,12 +147,14 @@ async function fetchAllAreas(supa) {
   const pageSize = 1000
   let page = 0
   while (true) {
-    const { data, error } = await supa
+    let q = supa
       .from('areas')
       .select('id,nombre,ciudad,provincia,pais,tipo_area,latitud,longitud,precio_noche,plazas_totales,plazas_camper,servicios')
       .eq('activo', true)
       .order('nombre')
       .range(page * pageSize, (page + 1) * pageSize - 1)
+    if (PAIS_FILTER) q = q.eq('pais', PAIS_FILTER)
+    const { data, error } = await q
     if (error) throw error
     if (!data || data.length === 0) break
     all.push(...data)
@@ -165,7 +169,7 @@ async function main() {
     console.error('Faltan credenciales (.env.local): Supabase (service role) u OpenAI')
     process.exit(1)
   }
-  console.log(`🧭 Modelo: ${MODEL} | Concurrencia: ${CONCURRENCY} | Modo: ${APPLY ? '✍️ APLICAR (solo confianza alta)' : '👀 DRY-RUN (solo CSV de propuestas)'}`)
+  console.log(`🧭 Modelo: ${MODEL} | Concurrencia: ${CONCURRENCY} | Modo: ${APPLY ? '✍️ APLICAR (solo confianza alta)' : '👀 DRY-RUN (solo CSV de propuestas)'}${PAIS_FILTER ? ` | País: ${PAIS_FILTER}` : ''}`)
   const openai = new OpenAI({ apiKey: OPENAI_KEY, maxRetries: 2 })
   const supa = createClient(SUPA_URL, SUPA_KEY)
 

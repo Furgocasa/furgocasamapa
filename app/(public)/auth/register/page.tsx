@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/lib/i18n'
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
@@ -19,6 +20,7 @@ export default function RegisterPage() {
   const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false)
   const [registeredEmail, setRegisteredEmail] = useState('')
   const router = useRouter()
+  const { t } = useLanguage()
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,13 +29,13 @@ export default function RegisterPage() {
 
     // Validaciones
     if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden')
+      setError(t('auth_pass_mismatch'))
       setLoading(false)
       return
     }
 
     if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres')
+      setError(t('auth_pass_short'))
       setLoading(false)
       return
     }
@@ -185,7 +187,8 @@ export default function RegisterPage() {
               className="mx-auto mb-4"
             />
           </Link>
-          <p className="text-gray-600">Crea tu cuenta gratuita</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('auth_register_title')}</h1>
+          <p className="text-gray-600">{t('auth_register_sub')}</p>
         </div>
 
         {/* Formulario */}
@@ -195,7 +198,7 @@ export default function RegisterPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre
+                  {t('auth_first_name')}
                 </label>
                 <input
                   id="firstName"
@@ -209,7 +212,7 @@ export default function RegisterPage() {
               </div>
               <div>
                 <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
-                  Apellido
+                  {t('auth_last_name')}
                 </label>
                 <input
                   id="lastName"
@@ -226,7 +229,7 @@ export default function RegisterPage() {
             {/* Username */}
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                Nombre de usuario
+                {t('auth_username')}
               </label>
               <input
                 id="username"
@@ -241,7 +244,7 @@ export default function RegisterPage() {
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Correo electrónico
+                {t('auth_email')}
               </label>
               <input
                 id="email"
@@ -257,7 +260,7 @@ export default function RegisterPage() {
             {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Contraseña
+                {t('auth_password')}
               </label>
               <input
                 id="password"
@@ -273,7 +276,7 @@ export default function RegisterPage() {
             {/* Confirm Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                Confirmar contraseña
+                {t('auth_confirm_password')}
               </label>
               <input
                 id="confirmPassword"
@@ -319,7 +322,7 @@ export default function RegisterPage() {
               disabled={loading}
               className="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
+              {loading ? t('auth_loading') : t('auth_create')}
             </button>
           </form>
 
@@ -357,18 +360,18 @@ export default function RegisterPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Continuar con Google
+            {t('auth_google')}
           </button>
 
           {/* Link a login */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              ¿Ya tienes una cuenta?{' '}
+              {t('auth_have_account')}{' '}
               <Link
                 href="/auth/login"
                 className="font-medium text-sky-600 hover:text-sky-700 transition-colors"
               >
-                Inicia sesión
+                {t('auth_login_link')}
               </Link>
             </p>
           </div>

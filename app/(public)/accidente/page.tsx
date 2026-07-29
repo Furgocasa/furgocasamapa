@@ -13,6 +13,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { Loader } from "@googlemaps/js-api-loader";
 import { createClient } from "@/lib/supabase/client";
+import { useLanguage } from "@/lib/i18n";
 
 // Tipos simplificados para Google Maps (se cargan dinámicamente)
 type GoogleMap = any;
@@ -20,6 +21,7 @@ type GoogleMarker = any;
 type GoogleGeocoder = any;
 
 export default function ReporteAccidentePage() {
+  const { t } = useLanguage();
   const [busquedaMatricula, setBusquedaMatricula] = useState("");
   const [buscando, setBuscando] = useState(false);
   const [vehiculo, setVehiculo] = useState<any>(null);
@@ -95,21 +97,21 @@ export default function ReporteAccidentePage() {
         setNoEncontrado(false);
         setMessage({
           type: "success",
-          text: `✅ Vehículo encontrado: ${data.vehiculo.marca} ${data.vehiculo.modelo} - ${data.vehiculo.matricula}`,
+          text: `✅ ${t("acc_found")}: ${data.vehiculo.marca} ${data.vehiculo.modelo} - ${data.vehiculo.matricula}`,
         });
       } else {
         setVehiculo(null);
         setNoEncontrado(true);
         setMessage({
           type: "error",
-          text: "No tenemos a este vehículo en nuestra base de datos para avisarle automáticamente. ¡Pero aún puedes ayudar! Déjale una nota en el parabrisas con lo que has visto, el dueño te lo agradecerá eternamente.",
+          text: t("acc_not_found"),
         });
       }
     } catch (error) {
       console.error("Error buscando vehículo:", error);
       setMessage({
         type: "error",
-        text: "Error al buscar el vehículo. Inténtalo de nuevo.",
+        text: t("acc_err_search"),
       });
     } finally {
       setBuscando(false);
@@ -121,7 +123,7 @@ export default function ReporteAccidentePage() {
     e.preventDefault();
 
     if (!busquedaMatricula.trim()) {
-      setMessage({ type: "error", text: "Por favor, introduce una matrícula" });
+      setMessage({ type: "error", text: t("acc_err_plate") });
       return;
     }
 
@@ -134,7 +136,7 @@ export default function ReporteAccidentePage() {
     if (!navigator.geolocation) {
       setMessage({
         type: "error",
-        text: "Tu navegador no soporta geolocalización",
+        text: t("acc_err_geo"),
       });
       setObteniendoUbicacion(false);
       return;
@@ -171,14 +173,14 @@ export default function ReporteAccidentePage() {
 
           setMessage({
             type: "success",
-            text: "Ubicación obtenida correctamente",
+            text: t("acc_ok_loc"),
           });
         } catch (error) {
           console.error("Error en geocoding:", error);
           setUbicacion({ lat, lng });
           setMessage({
             type: "success",
-            text: "Ubicación obtenida (sin dirección)",
+            text: t("acc_ok_loc_no_addr"),
           });
         }
 
@@ -188,7 +190,7 @@ export default function ReporteAccidentePage() {
         console.error("Error obteniendo ubicación:", error);
         setMessage({
           type: "error",
-          text: "No se pudo obtener tu ubicación. Verifica los permisos.",
+          text: t("acc_err_loc"),
         });
         setObteniendoUbicacion(false);
       }
@@ -221,7 +223,7 @@ export default function ReporteAccidentePage() {
       const newMarker = new google.maps.Marker({
         position: { lat: ubicacion.lat, lng: ubicacion.lng },
         map: newMap,
-        title: "Arrastra para ajustar la ubicación exacta",
+        title: t("acc_drag"),
         draggable: true,
         animation: google.maps.Animation.DROP,
       }) as GoogleMarker;
@@ -247,7 +249,7 @@ export default function ReporteAccidentePage() {
             }));
             setMessage({
               type: "success",
-              text: "✅ Ubicación ajustada correctamente",
+              text: `✅ ${t("acc_ok_loc")}`,
             });
           } else {
             setUbicacion({ lat: newLat, lng: newLng });
@@ -272,7 +274,7 @@ export default function ReporteAccidentePage() {
     if (!vehiculo) {
       setMessage({
         type: "error",
-        text: "Primero debes buscar y encontrar un vehículo",
+        text: t("acc_err_need_vehicle"),
       });
       return;
     }
@@ -285,7 +287,7 @@ export default function ReporteAccidentePage() {
     ) {
       setMessage({
         type: "error",
-        text: "Por favor, completa todos los campos obligatorios",
+        text: t("acc_err_fields"),
       });
       return;
     }
@@ -293,7 +295,7 @@ export default function ReporteAccidentePage() {
     if (!ubicacion) {
       setMessage({
         type: "error",
-        text: "Por favor, obtén tu ubicación antes de enviar el reporte",
+        text: t("acc_err_need_loc"),
       });
       return;
     }
@@ -390,7 +392,7 @@ export default function ReporteAccidentePage() {
       if (response.ok) {
         setMessage({
           type: "success",
-          text: "¡Reporte enviado con éxito! El propietario será notificado.",
+          text: t("acc_success"),
         });
         // Resetear formulario
         setFormData({
@@ -414,7 +416,7 @@ export default function ReporteAccidentePage() {
       } else {
         const errorMsg = data.details
           ? `${data.error}: ${data.details}`
-          : data.error || "Error al enviar el reporte";
+          : data.error || t("acc_err_send");
 
         console.error("Error del servidor:", data);
         setMessage({
@@ -426,7 +428,7 @@ export default function ReporteAccidentePage() {
       console.error("Error enviando reporte:", error);
       setMessage({
         type: "error",
-        text: "Error al enviar el reporte. Inténtalo de nuevo.",
+        text: t("acc_err_send"),
       });
     } finally {
       setSubmitting(false);
@@ -441,7 +443,7 @@ export default function ReporteAccidentePage() {
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
             <p className="text-gray-600">
-              Cargando información del vehículo...
+              {t("acc_loading")}
             </p>
           </div>
         </main>
@@ -513,12 +515,11 @@ export default function ReporteAccidentePage() {
           </div>
 
           <h1 className="text-4xl font-bold text-gray-900 mb-3">
-            🚐 ¿Viste algo? ¡Ayuda a un compañero viajero!
+            {t("acc_title")}
           </h1>
 
           <p className="text-lg text-gray-700 max-w-2xl mx-auto mb-4 leading-relaxed">
-            Si has sido testigo de un golpe, rayón o accidente a una autocaravana,
-            <span className="font-semibold text-primary-600"> tu ayuda puede marcar la diferencia</span>.
+            {t("acc_sub")}
           </p>
 
           {/* Frases motivadoras */}
@@ -576,21 +577,11 @@ export default function ReporteAccidentePage() {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-2xl font-bold text-green-900 mb-2">
-                    🎉 ¡Eres un héroe viajero!
+                    {t("acc_success")}
                   </h3>
                   <p className="text-green-800 mb-3 text-lg">
-                    Tu reporte ha sido enviado con éxito. El propietario acaba de recibir una
-                    <span className="font-bold"> notificación instantánea</span>.
+                    {message.text}
                   </p>
-                  <div className="bg-white rounded-lg p-4 border-l-4 border-green-500">
-                    <p className="text-sm text-gray-700 mb-2">
-                      <span className="font-semibold">Gracias por tu solidaridad.</span>
-                      Personas como tú hacen que la comunidad viajera sea especial. 💚
-                    </p>
-                    <p className="text-xs text-gray-600 italic">
-                      "El karma viajero existe: lo que das, vuelve" 🔄✨
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>
@@ -610,7 +601,7 @@ export default function ReporteAccidentePage() {
             <span className="flex items-center justify-center w-8 h-8 bg-primary-100 text-primary-600 rounded-full font-bold text-sm">
               1
             </span>
-            Buscar Vehículo por Matrícula
+            {t("acc_plate")}
           </h2>
 
           <form onSubmit={buscarVehiculo} className="flex gap-3">
@@ -621,7 +612,7 @@ export default function ReporteAccidentePage() {
                 onChange={(e) =>
                   setBusquedaMatricula(e.target.value.toUpperCase())
                 }
-                placeholder="Ej: 1234ABC"
+                placeholder={t("acc_plate_ph")}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 uppercase"
                 disabled={buscando || vehiculo !== null}
               />
@@ -634,12 +625,12 @@ export default function ReporteAccidentePage() {
               {buscando ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Buscando...
+                  {t("acc_searching")}
                 </>
               ) : (
                 <>
                   <MagnifyingGlassIcon className="w-5 h-5" />
-                  Buscar
+                  {t("acc_search")}
                 </>
               )}
             </button>
@@ -651,11 +642,11 @@ export default function ReporteAccidentePage() {
                 <CheckCircleIcon className="w-8 h-8 text-green-600 flex-shrink-0 mt-1 animate-bounce" />
                 <div className="flex-1">
                   <h3 className="font-bold text-green-900 text-lg mb-2 flex items-center gap-2">
-                    🎉 ¡Genial! Vehículo encontrado
+                    🎉 {t("acc_found")}
                   </h3>
                   <p className="text-green-800 mb-3">
                     <span className="font-semibold text-lg">{vehiculo.marca} {vehiculo.modelo}</span>
-                    <span className="text-green-700"> • Matrícula: {vehiculo.matricula}</span>
+                    <span className="text-green-700"> • {t("acc_plate")}: {vehiculo.matricula}</span>
                   </p>
                   <div className="bg-white rounded-lg p-4 border-l-4 border-green-500">
                     <p className="text-green-700 text-sm mb-2">
@@ -790,12 +781,12 @@ export default function ReporteAccidentePage() {
                   {obteniendoUbicacion ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      Obteniendo ubicación...
+                      {t("acc_loading")}
                     </>
                   ) : (
                     <>
                       <MapPinIcon className="w-5 h-5" />
-                      Obtener Mi Ubicación
+                      {t("acc_get_loc")}
                     </>
                   )}
                 </button>
@@ -805,7 +796,7 @@ export default function ReporteAccidentePage() {
                     <div className="flex items-center gap-2 mb-2">
                       <CheckCircleIcon className="w-5 h-5 text-green-600" />
                       <span className="font-semibold text-green-900">
-                        Ubicación obtenida
+                        {t("acc_ok_loc")}
                       </span>
                     </div>
                     <p className="text-sm text-green-700">
@@ -822,10 +813,10 @@ export default function ReporteAccidentePage() {
                       <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="font-semibold text-yellow-900 mb-1">
-                          ⚠️ Verifica la ubicación en el mapa
+                          ⚠️ {t("acc_drag")}
                         </p>
                         <p className="text-sm text-yellow-700">
-                          Si la ubicación no es correcta, <strong>arrastra el marcador rojo</strong> en el mapa hasta el lugar exacto del accidente. La dirección se actualizará automáticamente.
+                          {t("acc_drag")}
                         </p>
                       </div>
                     </div>
@@ -885,7 +876,7 @@ export default function ReporteAccidentePage() {
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-lg">🎭</span>
                       <span className="font-bold text-gray-900">
-                        Hacer este reporte anónimo
+                        {t("acc_anon")}
                       </span>
                     </div>
                     <p className="text-sm text-gray-600">
@@ -979,7 +970,7 @@ export default function ReporteAccidentePage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tipo de Daño <span className="text-red-500">*</span>
+                    {t("acc_type")} <span className="text-red-500">*</span>
                   </label>
                   <select
                     required
@@ -992,7 +983,7 @@ export default function ReporteAccidentePage() {
                     }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
-                    <option value="">Selecciona un tipo</option>
+                    <option value="">{t("acc_type")}</option>
                     <option value="Rayón">Rayón</option>
                     <option value="Abolladura">Abolladura</option>
                     <option value="Choque">Choque</option>
@@ -1022,7 +1013,7 @@ export default function ReporteAccidentePage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Descripción del Accidente{" "}
+                    {t("acc_desc")}{" "}
                     <span className="text-red-500">*</span>
                   </label>
                   <textarea
@@ -1035,7 +1026,7 @@ export default function ReporteAccidentePage() {
                         descripcion: e.target.value,
                       }))
                     }
-                    placeholder="Describe lo que sucedió con el mayor detalle posible..."
+                    placeholder={t("acc_desc")}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   />
                 </div>
@@ -1082,7 +1073,7 @@ export default function ReporteAccidentePage() {
                 <div className="bg-gradient-to-r from-blue-50 to-sky-50 border-2 border-blue-200 rounded-xl p-5">
                   <label className="block text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
                     <CameraIcon className="w-6 h-6 text-blue-600" />
-                    Fotos del Accidente (opcional pero <span className="text-blue-600">MUY útiles</span>)
+                    {t("acc_photos")}
                   </label>
 
                   <div className="bg-white p-4 rounded-lg border-l-4 border-blue-400 mb-4">
@@ -1175,12 +1166,12 @@ export default function ReporteAccidentePage() {
               {submitting ? (
                 <>
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                  Enviando tu buena acción...
+                  {t("acc_sending")}
                 </>
               ) : (
                 <>
                   <span className="text-2xl">🦸‍♂️</span>
-                  ¡Enviar Reporte y Ser un Héroe!
+                  {t("acc_submit")}
                   <span className="text-2xl">✨</span>
                 </>
               )}

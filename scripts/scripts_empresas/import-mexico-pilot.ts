@@ -372,13 +372,18 @@ function createGrid(
 
 function isRelevant(name: string, types: string[]): boolean {
   if (US_NAME_RE.test(name)) return false;
-  // Ruido: parkings/miradores sin señal RV/camping
-  if (NOISE_NAME_RE.test(name) && !RELEVANCE_RE.test(name) && !types.includes("rv_park") && !types.includes("campground")) {
-    return false;
+  // En MX Google etiqueta parkings como rv_park: priorizar nombre
+  if (NOISE_NAME_RE.test(name) && !RELEVANCE_RE.test(name)) return false;
+  if (RELEVANCE_RE.test(name)) return true;
+  if (types.includes("campground")) return true;
+  // rv_park sin nombre camping/trailer solo si no parece hotel/parking
+  if (
+    types.includes("rv_park") &&
+    !/\b(hotel|motel|hostal|estacionamiento|parking)\b/i.test(name)
+  ) {
+    return true;
   }
-  if (types.includes("rv_park")) return true;
-  if (types.includes("campground") && RELEVANCE_RE.test(name)) return true;
-  return RELEVANCE_RE.test(name);
+  return false;
 }
 
 async function nearbySearch(

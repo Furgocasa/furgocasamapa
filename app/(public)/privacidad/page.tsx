@@ -3,8 +3,11 @@
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { BackToTop } from '@/components/area/BackToTop'
+import { useLanguage } from '@/lib/i18n'
 
 export default function PrivacidadPage() {
+  const { t, locale } = useLanguage()
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -14,7 +17,7 @@ export default function PrivacidadPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Política de Privacidad
+              {t('footer_privacy').replace(/^[^\p{L}]+/u, '')}
             </h1>
             <p className="text-xl md:text-2xl text-white/90 leading-relaxed">
               Última actualización: Enero 2025
@@ -27,6 +30,12 @@ export default function PrivacidadPage() {
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto prose prose-lg">
+
+            {locale !== 'es' && (
+              <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl mb-8 not-prose">
+                <p className="text-amber-900 text-sm m-0">{t('legal_es_only')}</p>
+              </div>
+            )}
 
             <div className="bg-blue-50 border-l-4 border-[#0b3c74] p-6 rounded-r-xl mb-12">
               <p className="text-gray-700 leading-relaxed m-0">

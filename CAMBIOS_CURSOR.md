@@ -147,11 +147,36 @@
 - **Página nueva**: `app/admin/chatbot-respuestas/page.tsx` — lista paginada, filtros pendientes/revisadas, detalle expandible, marcar revisada con nota. Con auth admin + Navbar. Enlace en `/admin`.
 
 ### 7.5 Agente revisor IA (respuesta a respuesta)
-- **Migración**: `supabase/migrations/20260728_chatbot_evaluacion_ia.sql` — ⚠️ **PENDIENTE de ejecutar en Supabase** (añade `valoracion_ia`, `motivo_ia`, `sugerencia_ia`, `evaluado_at`).
+- **Migración**: `supabase/migrations/20260728_chatbot_evaluacion_ia.sql` — ✅ **aplicada en Supabase** (`valoracion_ia`, `motivo_ia`, `sugerencia_ia`, `evaluado_at`).
 - **Script nuevo**: `scripts/evaluar-respuestas-chatbot.js` | **Comando**: `npm run evaluar:chatbot` (dry-run; `EVAL_RUN=1` ejecuta; `EVAL_LIMIT` def 200).
 - Clasifica cada respuesta como correcta/mejorable/incorrecta, con motivo y sugerencia. **Verifica hechos contra los datos reales de las áreas en BD** (carga las áreas de `areas_ids` y compara precios/servicios). Cola = filas con `evaluado_at IS NULL` (reanudable, sin duplicados).
 - La página `/admin/chatbot-respuestas` incluye filtros y badges por veredicto IA.
 - **Flujo de afinado**: evaluar → filtrar incorrectas → aplicar sugerencias al system prompt (editable en /admin) → repetir y comparar %.
+
+### 7.6 Conexión chatbot → mapa (tarjetas de área)
+- **Qué**: al clicar una tarjeta de área en el chat, ya NO se abre `/area/[slug]` en pestaña nueva; ahora lleva AL MAPA con esa área seleccionada (centrada y con popup abierto). El chat se minimiza para poder retomarlo. Desde el popup del mapa el usuario ya tiene "Ver detalles".
+- **Archivos**:
+  - `components/chatbot/ChatbotWidget.tsx`: tarjeta convertida de `<Link target="_blank">` a `<button onClick={irAlMapa(slug)}>`. Nueva función `irAlMapa`: si `pathname === '/mapa'` dispara el evento `furgocasa:select-area` (CustomEvent con `{slug}`); si no, `router.push('/mapa?area=slug')` en la misma pestaña. Emite evento analytics `chatbot_area_to_map`.
+  - `app/(public)/mapa/page.tsx`: nuevo `selectAreaBySlug(slug)` (busca por slug o id y llama a `handleAreaClick`, que ya ajusta el filtro de país si hace falta). Dos disparadores: (1) al cargar las áreas lee `?area=` de la URL (con ref anti-doble-ejecución, delay 400ms para que el mapa esté montado, y limpieza de la URL con `history.replaceState`); (2) listener del evento `furgocasa:select-area` para cuando el chat está abierto sobre el propio mapa.
+- **NO se tocaron los 3 componentes de mapa**: MapLibre/Google/Leaflet ya centran y abren el popup cuando cambia la prop `areaSeleccionada` (verificado en `MapLibreMap.tsx` líneas ~310-332), así que se respeta la regla de sincronización de `.cursor/rules/mapas.mdc`.
+- **Verificar**:
+  1. En cualquier página (p.ej. home), preguntar al chatbot por áreas → clic en tarjeta → navega a `/mapa`, el mapa se centra en el área y abre su popup; la URL queda limpia (`/mapa` sin query).
+  2. Con el chat abierto YA en `/mapa` → clic en tarjeta → el mapa se centra sin recargar la página y el chat queda minimizado.
+  3. Funciona con los 3 proveedores de mapa (cambiar en /admin/configuracion).
+
+### 7.7 Persistencia de la conversación + botón "Nueva conversación"
+- **Problema**: al refrescar la página o reabrir el chat, la conversación se reseteaba aunque el histórico existiera en BD.
+- **Archivos**:
+  - `app/api/chatbot/historial/route.ts` (NUEVO): GET que identifica al usuario por su COOKIE de sesión (nunca por parámetros → un usuario no puede leer conversaciones ajenas) y devuelve su última conversación con los últimos 30 mensajes (lectura con service role).
+  - `components/chatbot/ChatbotWidget.tsx`:
+    - Al montar, restaura la conversación: 1º desde localStorage (`fc_chat_msgs` + `fc_chat_conv_id`, funciona también para anónimos); 2º si no hay nada local y el usuario está logueado, desde `/api/chatbot/historial`.
+    - Persiste automáticamente los últimos 30 mensajes y el conversacionId en localStorage en cada cambio (solo si hay conversación real, no la bienvenida sola).
+    - Botón **↻ "Nueva conversación"** en la cabecera: limpia la vista y el localStorage y pone conversacionId a null (la siguiente pregunta crea conversación nueva). **NO borra nada de la base de datos**: las conversaciones anteriores permanecen en `chatbot_conversaciones`/`chatbot_mensajes`.
+- **Verificar**:
+  1. Conversar con el chatbot → F5 → al reabrir el chat, la conversación sigue ahí (logueado y anónimo).
+  2. Logueado, borrar localStorage → F5 → la conversación se recupera desde BD.
+  3. Botón ↻ → la vista se resetea con bienvenida; comprobar en Supabase que las filas de la conversación anterior siguen existiendo; el siguiente mensaje crea un conversacionId nuevo.
+  4. Seguridad: `/api/chatbot/historial` sin sesión devuelve `{conversacionId: null, messages: []}`.
 
 ---
 
@@ -173,10 +198,7 @@
 5. `/mapa` accesible sin login y carga desde `/api/areas` (ver Network).
 6. Chatbot: funciona sin login; pregunta "voy de Madrid a Valencia, ¿dónde paro?" → usa `search_areas_along_route` y muestra tarjetas; cada respuesta crea fila en `chatbot_respuestas_log`.
 7. Página de área: componente "¿Has estado aquí?" visible y funcional.
-8. Migraciones pendientes en Supabase SQL Editor:
-   - `20260728_chatbot_evaluacion_ia.sql` (si aún no)
-   - `20260728_google_ratings_total.sql` (nº de reseñas para ranking ponderado del chat)
-   Tras la de ratings: `npm run backfill:ratings` (dry) y luego `npm run backfill:ratings:run` (Google de pago, por lotes).
+8. ~~Migraciones Supabase + backfill ratings~~ — **hechas** (`chatbot_evaluacion_ia`, `google_ratings_total`; ~4932 áreas con total; residual opcional ~306 con place_id y NULL).
 9. Deploy: push a `main` → Vercel. Antes/después: limpiar/rotar claves en Vercel (Bloque 1.5).
 
 ---

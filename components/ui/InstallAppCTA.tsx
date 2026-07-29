@@ -1,8 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import { useLanguage } from '@/lib/i18n'
 
 export function InstallAppCTA() {
+  const { t } = useLanguage()
+
   return (
     <section className="py-20 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 relative overflow-hidden">
       {/* Patrón de fondo */}
@@ -18,15 +21,15 @@ export function InstallAppCTA() {
           <div className="text-white">
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
               <span className="text-2xl">📱</span>
-              <span className="font-semibold">Disponible como App</span>
+              <span className="font-semibold">{t('install_badge')}</span>
             </div>
             
             <h2 className="text-4xl sm:text-5xl font-bold mb-6 leading-tight">
-              Lleva Furgocasa en tu bolsillo
+              {t('install_title')}
             </h2>
             
             <p className="text-xl text-white/90 mb-8">
-              Instala nuestra app móvil y disfruta de acceso instantáneo, pantalla completa y funcionamiento offline. Todo en solo 3 pasos.
+              {t('install_lead')}
             </p>
 
             {/* Beneficios */}
@@ -39,8 +42,8 @@ export function InstallAppCTA() {
                   </svg>
                 </div>
                 <div>
-                  <p className="font-semibold text-lg">Inicio instantáneo</p>
-                  <p className="text-white/80 text-sm">Sin esperar a que cargue el navegador</p>
+                  <p className="font-semibold text-lg">{t('install_b1')}</p>
+                  <p className="text-white/80 text-sm">{t('install_b1_sub')}</p>
                 </div>
               </div>
 
@@ -51,8 +54,8 @@ export function InstallAppCTA() {
                   </svg>
                 </div>
                 <div>
-                  <p className="font-semibold text-lg">Pantalla completa</p>
-                  <p className="text-white/80 text-sm">Más espacio para el mapa</p>
+                  <p className="font-semibold text-lg">{t('install_b2')}</p>
+                  <p className="text-white/80 text-sm">{t('install_b2_sub')}</p>
                 </div>
               </div>
 
@@ -63,8 +66,8 @@ export function InstallAppCTA() {
                   </svg>
                 </div>
                 <div>
-                  <p className="font-semibold text-lg">Funciona offline</p>
-                  <p className="text-white/80 text-sm">Accede sin conexión a internet</p>
+                  <p className="font-semibold text-lg">{t('install_b3')}</p>
+                  <p className="text-white/80 text-sm">{t('install_b3_sub')}</p>
                 </div>
               </div>
 
@@ -75,8 +78,8 @@ export function InstallAppCTA() {
                   </svg>
                 </div>
                 <div>
-                  <p className="font-semibold text-lg">Apenas ocupa espacio</p>
-                  <p className="text-white/80 text-sm">Solo unos MB de caché</p>
+                  <p className="font-semibold text-lg">{t('install_b4')}</p>
+                  <p className="text-white/80 text-sm">{t('install_b4_sub')}</p>
                 </div>
               </div>
             </div>
@@ -90,7 +93,7 @@ export function InstallAppCTA() {
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
-                Ver cómo instalar
+                {t('install_cta')}
               </Link>
 
               <Link
@@ -180,8 +183,3 @@ export function InstallAppCTA() {
     </section>
   )
 }
-
-
-
-
-

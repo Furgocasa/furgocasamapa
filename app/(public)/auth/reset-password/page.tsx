@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useLanguage } from '@/lib/i18n'
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState('')
@@ -11,6 +12,7 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const isSubmitting = useRef(false)
+  const { t } = useLanguage()
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,7 +72,7 @@ export default function ResetPasswordPage() {
             href="/auth/login"
             className="inline-block bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
           >
-            Volver al inicio de sesión
+            {t('auth_login_link')}
           </Link>
         </div>
       </div>
@@ -91,9 +93,9 @@ export default function ResetPasswordPage() {
               className="mx-auto mb-4"
             />
           </Link>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">¿Olvidaste tu contraseña?</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('auth_reset_title')}</h2>
           <p className="text-gray-600">
-            No te preocupes, te enviaremos instrucciones para restablecerla.
+            {t('auth_reset_sub')}
           </p>
         </div>
 
@@ -103,7 +105,7 @@ export default function ResetPasswordPage() {
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Correo electrónico
+                {t('auth_email')}
               </label>
               <input
                 id="email"
@@ -143,7 +145,7 @@ export default function ResetPasswordPage() {
               }}
               className="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Enviando...' : 'Enviar Enlace de Recuperación'}
+              {loading ? t('auth_loading') : t('auth_reset_send')}
             </button>
           </form>
 
@@ -156,7 +158,7 @@ export default function ResetPasswordPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              Volver al inicio de sesión
+              {t('auth_login_link')}
             </Link>
           </div>
         </div>

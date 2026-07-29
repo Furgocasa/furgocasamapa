@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, type ReactNode } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { formatErrorForUser } from '@/lib/chatbot/errors'
@@ -91,6 +92,8 @@ const TEXTOS: Record<string, {
 export default function ChatbotWidget() {
   const { locale } = useLanguage()
   const txt = TEXTOS[locale] || TEXTOS.es
+  const router = useRouter()
+  const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
@@ -102,6 +105,59 @@ export default function ChatbotWidget() {
   const [conversacionId, setConversacionId] = useState<string | null>(null)
   const [ubicacion, setUbicacion] = useState<{lat: number, lng: number} | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const restauradoRef = useRef(false)
+
+  // ✅ RESTAURAR CONVERSACIÓN al montar (no se resetea al refrescar):
+  // 1º localStorage (funciona para todos, también anónimos)
+  // 2º si no hay nada local y el usuario está logueado, última conversación de BD
+  useEffect(() => {
+    if (loading || restauradoRef.current) return
+    restauradoRef.current = true
+
+    try {
+      const msgsGuardados = localStorage.getItem('fc_chat_msgs')
+      if (msgsGuardados) {
+        const parsed = JSON.parse(msgsGuardados)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed)
+          const convGuardada = localStorage.getItem('fc_chat_conv_id')
+          if (convGuardada) setConversacionId(convGuardada)
+          return
+        }
+      }
+    } catch {
+      // localStorage corrupto: seguimos al plan B
+    }
+
+    // Plan B: recuperar de BD la última conversación (solo logueados)
+    if (user) {
+      fetch('/api/chatbot/historial')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data && Array.isArray(data.messages) && data.messages.length > 0) {
+            setMessages(data.messages)
+            if (data.conversacionId) setConversacionId(data.conversacionId)
+          }
+        })
+        .catch(() => {})
+    }
+  }, [loading, user])
+
+  // ✅ PERSISTIR la conversación en localStorage (sobrevive al refresco).
+  // Solo cuando hay conversación real (más allá del mensaje de bienvenida).
+  useEffect(() => {
+    try {
+      const hayConversacion = messages.some((m) => m.rol === 'user')
+      if (hayConversacion) {
+        localStorage.setItem('fc_chat_msgs', JSON.stringify(messages.slice(-30)))
+      }
+      if (conversacionId) {
+        localStorage.setItem('fc_chat_conv_id', conversacionId)
+      }
+    } catch {
+      // sin espacio o modo privado: no pasa nada
+    }
+  }, [messages, conversacionId])
   
   // Comprobar autenticación
   useEffect(() => {
@@ -240,6 +296,32 @@ export default function ChatbotWidget() {
   // Minimizar chat
   const handleMinimize = () => {
     setIsMinimized(true)
+  }
+
+  // Nueva conversación: resetea SOLO la vista y el hilo actual.
+  // Las conversaciones anteriores permanecen intactas en la base de datos.
+  const nuevaConversacion = () => {
+    try {
+      localStorage.removeItem('fc_chat_msgs')
+      localStorage.removeItem('fc_chat_conv_id')
+    } catch {}
+    setConversacionId(null)
+    setMessages([{ rol: 'assistant', contenido: txt.bienvenida }])
+    track('chatbot_nueva_conversacion', {})
+  }
+
+  // Ir al MAPA con el área seleccionada (el chat se minimiza, no se pierde).
+  // Si ya estamos en /mapa, avisamos a la página con un evento; si no, navegamos
+  // en la MISMA pestaña con ?area=slug (la página del mapa lo lee al cargar).
+  const irAlMapa = (slug: string) => {
+    if (!slug) return
+    setIsMinimized(true)
+    track('chatbot_area_to_map', { event_data: { slug } })
+    if (pathname === '/mapa') {
+      window.dispatchEvent(new CustomEvent('furgocasa:select-area', { detail: { slug } }))
+    } else {
+      router.push(`/mapa?area=${encodeURIComponent(slug)}`)
+    }
   }
   
   // Expandir chat desde minimizado
@@ -423,13 +505,22 @@ export default function ChatbotWidget() {
                 <p className="text-xs opacity-90">IA · Respuestas en tiempo real</p>
               </div>
             </div>
-            <button 
-              onClick={handleMinimize} 
-              className="text-white hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-colors text-2xl font-bold leading-none pb-1"
-              title="Minimizar"
-            >
-              −
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={nuevaConversacion}
+                className="text-white hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-colors text-lg leading-none"
+                title="Nueva conversación (el historial anterior se conserva)"
+              >
+                ↻
+              </button>
+              <button
+                onClick={handleMinimize}
+                className="text-white hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-colors text-2xl font-bold leading-none pb-1"
+                title="Minimizar"
+              >
+                −
+              </button>
+            </div>
           </div>
           
           {/* Mensajes */}
@@ -473,11 +564,12 @@ export default function ChatbotWidget() {
                           ? fotoCandidata
                           : null
                         return (
-                          <Link
+                          <button
                             key={area.id}
-                            href={`/area/${area.slug}`}
-                            target="_blank"
-                            className="flex gap-2.5 bg-white hover:bg-sky-50 border border-gray-200 hover:border-sky-300 rounded-xl overflow-hidden transition-all group shadow-sm"
+                            type="button"
+                            onClick={() => irAlMapa(area.slug)}
+                            className="w-full text-left flex gap-2.5 bg-white hover:bg-sky-50 border border-gray-200 hover:border-sky-300 rounded-xl overflow-hidden transition-all group shadow-sm"
+                            title="Ver en el mapa"
                           >
                             {/* Foto */}
                             <div className="w-20 h-20 flex-shrink-0 bg-gradient-to-br from-sky-100 to-blue-100 flex items-center justify-center overflow-hidden">
@@ -510,9 +602,10 @@ export default function ChatbotWidget() {
                                 {area.desvio_km !== undefined && (
                                   <span className="text-gray-500">↔ {area.desvio_km} km</span>
                                 )}
+                                <span className="ml-auto text-sky-600 font-medium">🗺️</span>
                               </div>
                             </div>
-                          </Link>
+                          </button>
                         )
                       })}
                     </div>

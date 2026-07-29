@@ -6,6 +6,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import PlanificadorRuta from '@/components/ruta/PlanificadorRuta'
 import LoginWall from '@/components/ui/LoginWall'
 import { MapPinIcon, MapIcon, ListBulletIcon } from '@heroicons/react/24/outline'
+import { useLanguage } from '@/lib/i18n'
 
 type VistaRuta = 'ruta' | 'mapa' | 'lista'
 
@@ -14,6 +15,7 @@ export default function RutaPage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClientComponentClient()
+  const { t } = useLanguage()
 
   useEffect(() => {
     const getUser = async () => {
@@ -47,7 +49,7 @@ export default function RutaPage() {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Cargando...</p>
+            <p className="text-gray-600">{t('loading')}</p>
           </div>
         </div>
       </div>
@@ -65,7 +67,7 @@ export default function RutaPage() {
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Cargando planificador de rutas...</p>
+              <p className="text-gray-600">{t('ruta_loading_planner')}</p>
             </div>
           </div>
         }>
@@ -90,7 +92,7 @@ export default function RutaPage() {
             }`}
           >
             <MapPinIcon className="w-6 h-6 mb-1" />
-            <span className="text-xs font-medium">Ruta</span>
+            <span className="text-xs font-medium">{t('ruta_tab_route')}</span>
           </button>
 
           {/* Mapa */}
@@ -101,7 +103,7 @@ export default function RutaPage() {
             }`}
           >
             <MapIcon className="w-6 h-6 mb-1" />
-            <span className="text-xs font-medium">Mapa</span>
+            <span className="text-xs font-medium">{t('ruta_tab_map')}</span>
           </button>
 
           {/* Lista */}
@@ -112,11 +114,10 @@ export default function RutaPage() {
             }`}
           >
             <ListBulletIcon className="w-6 h-6 mb-1" />
-            <span className="text-xs font-medium">Lista</span>
+            <span className="text-xs font-medium">{t('ruta_tab_list')}</span>
           </button>
         </div>
       </nav>
     </div>
   )
 }
-

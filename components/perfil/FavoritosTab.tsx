@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Favorito, Area } from '@/types/database.types'
 import { HeartIcon, MapPinIcon, StarIcon } from '@heroicons/react/24/solid'
 import { HeartIcon as HeartOutlineIcon } from '@heroicons/react/24/outline'
+import { useLanguage } from '@/lib/i18n'
 
 interface FavoritoConArea extends Favorito {
   area: Area
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function FavoritosTab({ userId }: Props) {
+  const { t } = useLanguage()
   const [favoritos, setFavoritos] = useState<FavoritoConArea[]>([])
   const [loading, setLoading] = useState(true)
   const [removing, setRemoving] = useState<string | null>(null)
@@ -76,7 +78,7 @@ export function FavoritosTab({ userId }: Props) {
   }
 
   const handleRemove = async (favoritoId: string) => {
-    if (!confirm('¿Quitar de favoritos?')) return
+    if (!confirm(t('tab_fav_remove_q'))) return
 
     setRemoving(favoritoId)
     try {
@@ -90,7 +92,7 @@ export function FavoritosTab({ userId }: Props) {
       setFavoritos(favoritos.filter((f: any) => f.id !== favoritoId))
     } catch (error) {
       console.error('Error eliminando favorito:', error)
-      alert('Error al eliminar favorito')
+      alert(t('tab_fav_err'))
     } finally {
       setRemoving(null)
     }
@@ -101,7 +103,7 @@ export function FavoritosTab({ userId }: Props) {
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="spinner mb-4"></div>
-          <p className="text-gray-600">Cargando favoritos...</p>
+          <p className="text-gray-600">{t('tab_fav_loading')}</p>
         </div>
       </div>
     )
@@ -111,9 +113,9 @@ export function FavoritosTab({ userId }: Props) {
     return (
       <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
         <HeartOutlineIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-600 mb-2">No tienes áreas favoritas aún</p>
+        <p className="text-gray-600 mb-2">{t('tab_fav_empty')}</p>
         <p className="text-sm text-gray-500">
-          Marca tus áreas favoritas desde el mapa
+          {t('tab_fav_empty_hint')}
         </p>
       </div>
     )
@@ -122,7 +124,7 @@ export function FavoritosTab({ userId }: Props) {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-gray-900">
-        Mis Favoritos ({favoritos.length})
+        {t('tab_fav_title', { n: favoritos.length })}
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -197,4 +199,3 @@ export function FavoritosTab({ userId }: Props) {
     </div>
   )
 }
-

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/lib/i18n'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const isSubmitting = useRef(false)
   const router = useRouter()
+  const { t } = useLanguage()
 
   // Login con email y contraseña
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -44,7 +46,7 @@ export default function LoginPage() {
         const data = await response.json()
 
         if (!response.ok) {
-          throw new Error(data.error || 'Error al iniciar sesión')
+          throw new Error(data.error || t('auth_err_generic'))
         }
 
         // Establecer sesión manualmente usando el cliente
@@ -75,15 +77,15 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error('Error login email:', error)
       
-      // Traducir errores comunes a español
-      let errorMessage = error.message || 'Error al iniciar sesión'
+      // Mapear errores comunes a claves i18n
+      let errorMessage = error.message || t('auth_err_generic')
       
       if (errorMessage.includes('Invalid login credentials')) {
-        errorMessage = 'Credenciales incorrectas. Verifica tu email y contraseña.'
+        errorMessage = t('auth_err_credentials')
       } else if (errorMessage.includes('Email not confirmed')) {
-        errorMessage = 'Debes confirmar tu email antes de iniciar sesión. Revisa tu correo.'
+        errorMessage = t('auth_err_confirm')
       } else if (errorMessage.includes('rate limit')) {
-        errorMessage = 'Demasiados intentos. Por favor, espera unos minutos antes de intentarlo de nuevo.'
+        errorMessage = t('auth_err_rate')
       }
       
       setError(errorMessage)
@@ -124,7 +126,7 @@ export default function LoginPage() {
       // La redirección a Google es automática
     } catch (error: any) {
       console.error('Error login Google:', error)
-      setError(error.message || 'Error al iniciar sesión con Google')
+      setError(error.message || t('auth_err_generic'))
       setLoading(false)
       isSubmitting.current = false
     }
@@ -146,9 +148,9 @@ export default function LoginPage() {
             />
           </div>
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Bienvenido a FurgoCasa
+            {t('auth_login_title')}
           </h1>
-          <p className="text-gray-600">Inicia sesión para continuar</p>
+          <p className="text-gray-600">{t('auth_login_sub')}</p>
         </div>
 
         {/* Tarjeta de login */}
@@ -167,7 +169,7 @@ export default function LoginPage() {
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Email
+                {t('auth_email')}
               </label>
               <input
                 id="email"
@@ -186,7 +188,7 @@ export default function LoginPage() {
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Contraseña
+                {t('auth_password')}
               </label>
               <div className="relative">
                 <input
@@ -204,7 +206,7 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none focus:text-gray-700 disabled:opacity-50"
                   disabled={loading}
-                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-label={showPassword ? t('auth_hide') : t('auth_show')}
                 >
                   {showPassword ? (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,7 +227,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              {loading ? t('auth_loading') : t('auth_submit')}
             </button>
           </form>
 
@@ -238,7 +240,7 @@ export default function LoginPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
               </svg>
-              ¿Olvidaste tu contraseña?
+              {t('auth_forgot')}
             </Link>
           </div>
 
@@ -277,18 +279,18 @@ export default function LoginPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Continuar con Google
+            {t('auth_google')}
           </button>
 
           {/* Link a registro */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              ¿No tienes una cuenta?{' '}
+              {t('auth_no_account')}{' '}
               <Link
                 href="/auth/register"
                 className="text-sky-600 hover:text-sky-700 font-semibold"
               >
-                Regístrate aquí
+                {t('auth_register_link')}
               </Link>
             </p>
           </div>
@@ -296,7 +298,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-500">
-          <p>© 2024 FurgoCasa. Todos los derechos reservados.</p>
+          <p>{t('footer_rights', { y: new Date().getFullYear() })}</p>
         </div>
       </div>
     </div>

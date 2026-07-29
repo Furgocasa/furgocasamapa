@@ -4,8 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useLanguage } from "@/lib/i18n";
 
 export function Footer() {
+  const { t } = useLanguage();
   const currentYear = new Date().getFullYear();
   const [totalAreas, setTotalAreas] = useState(3600); // fallback hasta cargar conteo real
 
@@ -46,8 +48,7 @@ export function Footer() {
               />
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed">
-              Tu guía completa de áreas para autocaravanas, campers y furgonetas
-              camperizadas en Europa y Latinoamérica.
+              {t("footer_tagline")}
             </p>
             <div className="mt-4 flex gap-3">
               {/* Redes sociales */}
@@ -117,7 +118,7 @@ export function Footer() {
           {/* Columna 2: Enlaces Rápidos */}
           <div>
             <h3 className="text-white font-bold text-lg mb-4">
-              Enlaces Rápidos
+              {t("footer_quick")}
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
@@ -125,7 +126,7 @@ export function Footer() {
                   href="/mapa"
                   className="hover:text-white transition-colors"
                 >
-                  🗺️ Mapa de Áreas
+                  {t("footer_map")}
                 </Link>
               </li>
               <li>
@@ -133,7 +134,7 @@ export function Footer() {
                   href="/ruta"
                   className="hover:text-white transition-colors"
                 >
-                  🚗 Planificador de Rutas
+                  {t("footer_routes")}
                 </Link>
               </li>
               <li>
@@ -141,7 +142,7 @@ export function Footer() {
                   href="/perfil"
                   className="hover:text-white transition-colors"
                 >
-                  👤 Mi Perfil
+                  {t("footer_profile")}
                 </Link>
               </li>
               <li>
@@ -149,7 +150,7 @@ export function Footer() {
                   href="/accidente"
                   className="hover:text-white transition-colors"
                 >
-                  🚨 Reportar Accidente
+                  {t("footer_accident")}
                 </Link>
               </li>
               <li>
@@ -157,7 +158,7 @@ export function Footer() {
                   href="/auth/register"
                   className="hover:text-white transition-colors"
                 >
-                  📝 Registrarse
+                  {t("footer_register")}
                 </Link>
               </li>
             </ul>
@@ -165,14 +166,14 @@ export function Footer() {
 
           {/* Columna 3: Información */}
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">Información</h3>
+            <h3 className="text-white font-bold text-lg mb-4">{t("footer_info")}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
                   href="/sobre-nosotros"
                   className="hover:text-white transition-colors"
                 >
-                  ℹ️ Sobre Nosotros
+                  {t("footer_about")}
                 </Link>
               </li>
               <li>
@@ -180,7 +181,7 @@ export function Footer() {
                   href="/contacto"
                   className="hover:text-white transition-colors"
                 >
-                  📧 Contacto
+                  {t("footer_contact")}
                 </Link>
               </li>
               <li>
@@ -188,7 +189,7 @@ export function Footer() {
                   href="/faqs"
                   className="hover:text-white transition-colors"
                 >
-                  ❓ Preguntas Frecuentes
+                  {t("footer_faqs")}
                 </Link>
               </li>
               <li>
@@ -196,7 +197,7 @@ export function Footer() {
                   href="/condiciones"
                   className="hover:text-white transition-colors"
                 >
-                  📜 Condiciones del Servicio
+                  {t("footer_terms")}
                 </Link>
               </li>
               <li>
@@ -204,7 +205,7 @@ export function Footer() {
                   href="/privacidad"
                   className="hover:text-white transition-colors"
                 >
-                  🔒 Política de Privacidad
+                  {t("footer_privacy")}
                 </Link>
               </li>
               <li>
@@ -212,7 +213,7 @@ export function Footer() {
                   href="/comparativa"
                   className="hover:text-white transition-colors text-primary-400 font-semibold"
                 >
-                  ⚡ vs Park4Night
+                  {t("footer_compare")}
                 </Link>
               </li>
               <li>
@@ -220,7 +221,7 @@ export function Footer() {
                   href="/valoracion-ia-vehiculos"
                   className="hover:text-white transition-colors text-purple-400 font-semibold"
                 >
-                  🤖 Valoración IA
+                  {t("footer_ai")}
                 </Link>
               </li>
               <li>
@@ -228,7 +229,7 @@ export function Footer() {
                   href="/sistema-reporte-accidentes"
                   className="hover:text-white transition-colors text-orange-400 font-semibold"
                 >
-                  🚨 Sistema de Alertas
+                  {t("footer_alerts")}
                 </Link>
               </li>
             </ul>
@@ -236,7 +237,7 @@ export function Footer() {
 
           {/* Columna 4: Estadísticas */}
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">Comunidad</h3>
+            <h3 className="text-white font-bold text-lg mb-4">{t("footer_community")}</h3>
             <div className="space-y-3 text-sm">
               <div className="flex items-center gap-2">
                 <div className="bg-primary-600 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold">
@@ -244,9 +245,9 @@ export function Footer() {
                 </div>
                 <div>
                   <div className="text-white font-semibold">
-                    +{totalAreas} Áreas
+                    {t("footer_areas", { n: totalAreas })}
                   </div>
-                  <div className="text-xs text-gray-500">Europa y LATAM</div>
+                  <div className="text-xs text-gray-500">{t("footer_areas_sub")}</div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -255,9 +256,9 @@ export function Footer() {
                 </div>
                 <div>
                   <div className="text-white font-semibold">
-                    Comunidad activa
+                    {t("footer_active")}
                   </div>
-                  <div className="text-xs text-gray-500">Viajeros como tú</div>
+                  <div className="text-xs text-gray-500">{t("footer_active_sub")}</div>
                 </div>
               </div>
             </div>
@@ -268,11 +269,11 @@ export function Footer() {
         <div className="border-t border-gray-800 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
             <p className="text-center md:text-left">
-              © {currentYear} Mapa Furgocasa. Todos los derechos reservados.
+              {t("footer_rights", { y: currentYear })}
             </p>
             <p className="flex flex-col sm:flex-row items-center gap-1 text-center md:text-right">
               <span className="flex items-center gap-1">
-                Una herramienta de{" "}
+                {t("footer_tool_of")}{" "}
                 <a
                   href="https://www.furgocasa.com"
                   target="_blank"
@@ -284,7 +285,7 @@ export function Footer() {
               </span>
               <span className="hidden sm:inline">-</span>
               <span className="flex items-center gap-1">
-                Hecho con <span className="text-red-500">❤️</span> en España
+                {t("footer_made")}
               </span>
             </p>
           </div>

@@ -21,7 +21,7 @@ import { t as translate } from './ui'
 type LanguageContextValue = {
   locale: Locale
   setLocale: (locale: Locale) => void
-  t: (key: string) => string
+  t: (key: string, vars?: Record<string, string | number>) => string
 }
 
 const LanguageContext = createContext<LanguageContextValue | null>(null)
@@ -72,7 +72,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     () => ({
       locale,
       setLocale,
-      t: (key: string) => translate(locale, key),
+      t: (key: string, vars?: Record<string, string | number>) => translate(locale, key, vars),
     }),
     [locale, setLocale]
   )
@@ -89,7 +89,8 @@ export function useLanguage(): LanguageContextValue {
     return {
       locale: DEFAULT_LOCALE,
       setLocale: () => {},
-      t: (key: string) => translate(DEFAULT_LOCALE, key),
+      t: (key: string, vars?: Record<string, string | number>) =>
+        translate(DEFAULT_LOCALE, key, vars),
     }
   }
   return ctx

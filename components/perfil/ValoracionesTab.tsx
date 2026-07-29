@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Valoracion, Area } from '@/types/database.types'
 import { StarIcon, TrashIcon, PencilIcon } from '@heroicons/react/24/solid'
 import { MapPinIcon } from '@heroicons/react/24/outline'
+import { useLanguage } from '@/lib/i18n'
 
 interface ValoracionConArea extends Valoracion {
   area: Area
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function ValoracionesTab({ userId }: Props) {
+  const { t, locale } = useLanguage()
   const [valoraciones, setValoraciones] = useState<ValoracionConArea[]>([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -76,7 +78,7 @@ export function ValoracionesTab({ userId }: Props) {
   }
 
   const handleDelete = async (valoracionId: string) => {
-    if (!confirm('¿Estás seguro de eliminar esta valoración?')) return
+    if (!confirm(t('tab_val_del_q'))) return
 
     setDeleting(valoracionId)
     try {
@@ -90,7 +92,7 @@ export function ValoracionesTab({ userId }: Props) {
       setValoraciones(valoraciones.filter((v: any) => v.id !== valoracionId))
     } catch (error) {
       console.error('Error eliminando valoración:', error)
-      alert('Error al eliminar la valoración')
+      alert(t('tab_val_err'))
     } finally {
       setDeleting(null)
     }
@@ -101,7 +103,7 @@ export function ValoracionesTab({ userId }: Props) {
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="spinner mb-4"></div>
-          <p className="text-gray-600">Cargando valoraciones...</p>
+          <p className="text-gray-600">{t('tab_val_loading')}</p>
         </div>
       </div>
     )
@@ -111,9 +113,9 @@ export function ValoracionesTab({ userId }: Props) {
     return (
       <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
         <StarIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-600 mb-2">No has valorado ninguna área aún</p>
+        <p className="text-gray-600 mb-2">{t('tab_val_empty')}</p>
         <p className="text-sm text-gray-500">
-          Visita áreas y comparte tu experiencia
+          {t('tab_val_empty_hint')}
         </p>
       </div>
     )
@@ -127,7 +129,7 @@ export function ValoracionesTab({ userId }: Props) {
       <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 border border-yellow-200">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">Valoración Promedio</p>
+            <p className="text-sm font-medium text-gray-600">{t('tab_val_avg')}</p>
             <div className="flex items-center gap-2 mt-2">
               <span className="text-3xl font-bold text-gray-900">
                 {promedioRating.toFixed(1)}
@@ -147,7 +149,7 @@ export function ValoracionesTab({ userId }: Props) {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-sm font-medium text-gray-600">Total</p>
+            <p className="text-sm font-medium text-gray-600">{t('tab_val_total')}</p>
             <p className="text-3xl font-bold text-gray-900 mt-2">
               {valoraciones.length}
             </p>
@@ -201,7 +203,7 @@ export function ValoracionesTab({ userId }: Props) {
 
                 {/* Fecha */}
                 <p className="text-xs text-gray-500">
-                  {new Date(valoracion.created_at).toLocaleDateString('es-ES', {
+                  {new Date(valoracion.created_at).toLocaleDateString(locale, {
                     day: 'numeric',
                     month: 'long',
                     year: 'numeric',
@@ -214,7 +216,7 @@ export function ValoracionesTab({ userId }: Props) {
                 <Link
                   href={`/area/${valoracion.area.slug}`}
                   className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                  title="Editar valoración"
+                  title={t('tab_val_edit')}
                 >
                   <PencilIcon className="w-5 h-5" />
                 </Link>
@@ -222,7 +224,7 @@ export function ValoracionesTab({ userId }: Props) {
                   onClick={() => handleDelete(valoracion.id)}
                   disabled={deleting === valoracion.id}
                   className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                  title="Eliminar valoración"
+                  title={t('tab_val_del')}
                 >
                   <TrashIcon className="w-5 h-5" />
                 </button>
@@ -234,4 +236,3 @@ export function ValoracionesTab({ userId }: Props) {
     </div>
   )
 }
-

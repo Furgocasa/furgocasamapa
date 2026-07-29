@@ -1,4 +1,6 @@
 import type { Locale } from './config'
+import { PUBLIC_UI } from './public-ui'
+import { APP_UI } from './app-ui'
 
 type UiDict = Record<string, string>
 
@@ -300,10 +302,31 @@ const UI: Record<Locale, UiDict> = {
   },
 }
 
-export function t(locale: Locale, key: string): string {
-  return UI[locale]?.[key] || UI.es[key] || key
+export function t(
+  locale: Locale,
+  key: string,
+  vars?: Record<string, string | number>
+): string {
+  let s =
+    UI[locale]?.[key] ||
+    PUBLIC_UI[locale]?.[key] ||
+    APP_UI[locale]?.[key] ||
+    UI.es[key] ||
+    PUBLIC_UI.es[key] ||
+    APP_UI.es[key] ||
+    key
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) {
+      s = s.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v))
+    }
+  }
+  return s
 }
 
 export function uiDict(locale: Locale): UiDict {
-  return UI[locale] || UI.es
+  return {
+    ...(UI[locale] || UI.es),
+    ...(PUBLIC_UI[locale] || PUBLIC_UI.es),
+    ...(APP_UI[locale] || APP_UI.es),
+  }
 }

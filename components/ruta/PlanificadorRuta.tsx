@@ -35,6 +35,7 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useLanguage, getServicioLabel, getTipoAreaLabel } from '@/lib/i18n'
 
 // Tipos simplificados para Google Maps
 type GoogleMap = any
@@ -85,6 +86,7 @@ interface SortableWaypointProps {
 }
 
 function SortableWaypoint({ waypoint, index, onUpdate, onDelete, map, disabled }: SortableWaypointProps) {
+  const { t } = useLanguage()
   const {
     attributes,
     listeners,
@@ -99,6 +101,8 @@ function SortableWaypoint({ waypoint, index, onUpdate, onDelete, map, disabled }
     transition,
     opacity: isDragging ? 0.5 : 1,
   }
+
+  const stopLabel = t('ruta_stop_n', { n: index + 1 })
 
   return (
     <div
@@ -118,7 +122,7 @@ function SortableWaypoint({ waypoint, index, onUpdate, onDelete, map, disabled }
 
       <input
         type="text"
-        placeholder={`Parada ${index + 1}${waypoint.name ? `: ${waypoint.name}` : '...'}`}
+        placeholder={`${stopLabel}${waypoint.name ? `: ${waypoint.name}` : '...'}`}
         defaultValue={waypoint.name}
         className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
         onChange={(e) => {
@@ -133,7 +137,7 @@ function SortableWaypoint({ waypoint, index, onUpdate, onDelete, map, disabled }
             if (place.geometry?.location) {
               onUpdate(index, {
                 id: waypoint.id,
-                name: place.name || place.formatted_address || `Parada ${index + 1}`,
+                name: place.name || place.formatted_address || stopLabel,
                 lat: place.geometry.location.lat(),
                 lng: place.geometry.location.lng()
               })
@@ -147,7 +151,7 @@ function SortableWaypoint({ waypoint, index, onUpdate, onDelete, map, disabled }
         type="button"
         onClick={() => onDelete(index)}
         className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-        title="Eliminar parada"
+        title={t('ruta_remove_stop')}
       >
         <XMarkIcon className="w-4 h-4" />
       </button>
@@ -161,6 +165,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
   const destinoInputRef = useRef<HTMLInputElement>(null)
   const { toast, showToast, hideToast } = useToast()
   const searchParams = useSearchParams()
+  const { t, locale } = useLanguage()
 
   const [map, setMap] = useState<GoogleMap | null>(null)
   const [directionsService, setDirectionsService] = useState<GoogleDirectionsService | null>(null)
@@ -328,7 +333,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
           const place = origenAutocomplete.getPlace()
           if (place.geometry?.location) {
             setOrigen({
-              name: place.name || place.formatted_address || 'Origen',
+              name: place.name || place.formatted_address || t('origin'),
               lat: place.geometry.location.lat(),
               lng: place.geometry.location.lng()
             })
@@ -347,7 +352,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
           const place = destinoAutocomplete.getPlace()
           if (place.geometry?.location) {
             setDestino({
-              name: place.name || place.formatted_address || 'Destino',
+              name: place.name || place.formatted_address || t('destination'),
               lat: place.geometry.location.lat(),
               lng: place.geometry.location.lng()
             })
@@ -417,7 +422,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
                 strokeWeight: 3,
               },
               zIndex: 999999,
-              title: 'Tu ubicación'
+              title: t('ruta_your_location')
             })
 
             // Solo centrar si es activación MANUAL (clic en botón), no auto-activación
@@ -476,7 +481,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
                 strokeWeight: 3,
               },
               zIndex: 999999,
-              title: 'Tu ubicación'
+              title: t('ruta_your_location')
             })
             console.log('✅ Marcador GPS creado en RUTA (NO se centra el mapa)')
           } else {
@@ -518,12 +523,12 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
     setIsCalculating(false)
     setProgreso(0)
     setMensajeProgreso('')
-    showToast('Cálculo de ruta cancelado', 'info')
+    showToast(t('ruta_err_cancel'), 'info')
   }
 
   const calcularRuta = async () => {
     if (!origen || !destino || !directionsService || !directionsRenderer || !map) {
-      showToast('Por favor, selecciona origen y destino', 'error')
+      showToast(t('ruta_err_od'), 'error')
       return
     }
 
@@ -628,14 +633,14 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
             setCalculandoRuta(false)
           }, 800)
         } else {
-          showToast('No se pudo calcular la ruta', 'error')
+          showToast(t('ruta_err_calc'), 'error')
           setCalculandoRuta(false)
         }
         setIsCalculating(false)
       })
     } catch (error) {
       console.error('Error calculando ruta:', error)
-      showToast('Error al calcular la ruta', 'error')
+      showToast(t('ruta_err_calc'), 'error')
       setIsCalculating(false)
       setCalculandoRuta(false)
     }
@@ -814,31 +819,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
     return iconos[servicio] || '✓'
   }
 
-  const getServicioLabel = (servicio: string): string => {
-    const etiquetas: Record<string, string> = {
-      agua: 'Agua',
-      electricidad: 'Electricidad',
-      vaciado_aguas_negras: 'Vaciado Químico',
-      vaciado_aguas_grises: 'Vaciado Aguas Grises',
-      wifi: 'WiFi',
-      duchas: 'Duchas',
-      wc: 'WC',
-      lavanderia: 'Lavandería',
-      restaurante: 'Restaurante',
-      supermercado: 'Supermercado',
-      zona_mascotas: 'Zona Mascotas'
-    }
-    return etiquetas[servicio] || servicio
-  }
-
   const createInfoWindowContent = (area: Area): string => {
-    const tipoLabels: Record<string, string> = {
-      publica: 'Pública',
-      privada: 'Privada',
-      camping: 'Camping',
-      parking: 'Parking'
-    }
-
     const serviciosValidos = [
       'agua',
       'electricidad',
@@ -858,7 +839,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
           .filter(([key, value]) => value === true && serviciosValidos.includes(key))
           .map(([key]: any) => ({
             icon: getServicioIcon(key),
-            label: getServicioLabel(key)
+            label: getServicioLabel(key, locale)
           }))
       : []
 
@@ -906,16 +887,16 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
 
           <div style="display: flex; gap: 6px; margin: 12px 0; flex-wrap: wrap;">
             <span style="background: ${getTipoAreaColor(area.tipo_area)}20; color: ${getTipoAreaColor(area.tipo_area)}; padding: 6px 12px; border-radius: 14px; font-size: 12px; font-weight: 600; border: 1px solid ${getTipoAreaColor(area.tipo_area)}30;">
-              ${tipoLabels[area.tipo_area] || 'Pública'}
+              ${getTipoAreaLabel(area.tipo_area, locale)}
             </span>
             ${area.precio_noche !== null && area.precio_noche !== undefined ? `
               <span style="background: #F3F4F6; color: #374151; padding: 6px 12px; border-radius: 14px; font-size: 12px; font-weight: 600; border: 1px solid #E5E7EB;">
-                ${area.precio_noche === 0 ? '✨ Gratis' : `💰 ${area.precio_noche}€/noche`}
+                ${area.precio_noche === 0 ? `✨ ${t('free')}` : `💰 ${area.precio_noche}€${t('per_night')}`}
               </span>
             ` : ''}
             ${area.verificado ? `
               <span style="background: #D1FAE5; color: #059669; padding: 6px 12px; border-radius: 14px; font-size: 12px; font-weight: 600; border: 1px solid #A7F3D0;">
-                ✓ Verificado
+                ✓ ${t('verified')}
               </span>
             ` : ''}
           </div>
@@ -926,7 +907,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
                 <svg style="width: 16px; height: 16px; margin-right: 6px; color: #6B7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
-                <span style="font-size: 12px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.5px;">Servicios Disponibles</span>
+                <span style="font-size: 12px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.5px;">${t('services')}</span>
               </div>
               <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
                 ${mostrarServicios.map((s: any) => `
@@ -938,7 +919,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
               </div>
               ${serviciosRestantes > 0 ? `
                 <div style="margin-top: 8px; text-align: center; font-size: 11px; color: #0284c7; font-weight: 600;">
-                  +${serviciosRestantes} servicio${serviciosRestantes > 1 ? 's' : ''} más
+                  +${serviciosRestantes} ${t('services').toLowerCase()}
                 </div>
               ` : ''}
             </div>
@@ -950,7 +931,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
               </svg>
               <span style="font-size: 13px; color: #1E40AF; font-weight: 500;">
-                <strong>${area.plazas_camper}</strong> plazas disponibles
+                <strong>${area.plazas_camper}</strong> ${t('spots')} ${t('available')}
               </span>
             </div>
           ` : ''}
@@ -967,7 +948,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
               </svg>
-              Ver Detalles
+              ${t('view_details')}
             </a>
 
             ${area.google_maps_url || (area.latitud && area.longitud) ? `
@@ -1054,7 +1035,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
       })
 
       // Mostrar mensaje
-      showToast('📍 Orden de paradas actualizado. Recalcula la ruta para ver cambios.', 'info')
+      showToast(t('ruta_ok_reorder'), 'info')
     }
   }
 
@@ -1265,7 +1246,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
             buscarAreasCercanasARuta(result.routes[0])
           } else {
             console.error('Error calculando ruta:', status)
-            showToast('No se pudo calcular la ruta', 'error')
+            showToast(t('ruta_err_calc'), 'error')
           }
           setIsCalculating(false)
         }
@@ -1273,7 +1254,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
     } catch (error) {
       console.error('Error al calcular la ruta:', error)
       setIsCalculating(false)
-      showToast('Error al calcular la ruta', 'error')
+      showToast(t('ruta_err_calc'), 'error')
     }
   }
 
@@ -1316,7 +1297,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
       const { data: { session } } = await supabase.auth.getSession()
 
       if (!session?.user) {
-        showToast('Debes iniciar sesión para guardar rutas', 'error')
+        showToast(t('ruta_err_login_save'), 'error')
         window.location.href = '/auth/login'
         return
       }
@@ -1440,7 +1421,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
 
       // Luego mostrar el toast con un pequeño delay
       setTimeout(() => {
-        showToast('✅ Ruta guardada correctamente', 'success')
+        showToast(t('ruta_ok_saved'), 'success')
       }, 100)
     } catch (error: any) {
       console.error('Error guardando ruta:', error)
@@ -1510,10 +1491,10 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
       // Descargar archivo
       downloadGPX(gpxContent, filename)
 
-      showToast('📥 Archivo GPX descargado correctamente', 'success')
+      showToast(t('ruta_ok_gpx'), 'success')
     } catch (error) {
       console.error('Error exportando a GPX:', error)
-      showToast('Error al exportar la ruta a GPX', 'error')
+      showToast(t('ruta_err_calc'), 'error')
     }
   }
 
@@ -1524,7 +1505,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-900">Guardar Ruta</h3>
+              <h3 className="text-xl font-bold text-gray-900">{t('ruta_save')}</h3>
               <button
                 onClick={() => {
                   setShowSaveModal(false)
@@ -1539,13 +1520,13 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre de la ruta *
+                  {t('ruta_modal_name')}
                 </label>
                 <input
                   type="text"
                   value={saveForm.nombre}
                   onChange={(e) => setSaveForm({ ...saveForm, nombre: e.target.value })}
-                  placeholder="De Murcia a Lugo"
+                  placeholder={t('ruta_modal_name_ph')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   maxLength={100}
                 />
@@ -1553,12 +1534,12 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Descripción (opcional)
+                  {t('ruta_modal_desc')}
                 </label>
                 <textarea
                   value={saveForm.descripcion}
                   onChange={(e) => setSaveForm({ ...saveForm, descripcion: e.target.value })}
-                  placeholder="Añade notas o detalles sobre esta ruta..."
+                  placeholder={t('ruta_modal_desc_ph')}
                   rows={3}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
                   maxLength={500}
@@ -1567,15 +1548,15 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
 
               {rutaInfo && (
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Resumen de la ruta:</h4>
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">{t('ruta_modal_summary')}</h4>
                   <div className="space-y-1 text-sm text-gray-600">
-                    <p>📍 Origen: <strong>{origen?.name}</strong></p>
-                    <p>🏁 Destino: <strong>{destino?.name}</strong></p>
+                    <p>📍 {t('origin')}: <strong>{origen?.name}</strong></p>
+                    <p>🏁 {t('destination')}: <strong>{destino?.name}</strong></p>
                     {waypoints.length > 0 && (
-                      <p>📌 Paradas: <strong>{waypoints.length}</strong></p>
+                      <p>📌 {t('stops')}: <strong>{waypoints.length}</strong></p>
                     )}
-                    <p>📏 Distancia: <strong>{rutaInfo.distancia}</strong></p>
-                    <p>⏱️ Duración: <strong>{rutaInfo.duracion}</strong></p>
+                    <p>📏 {t('distance')}: <strong>{rutaInfo.distancia}</strong></p>
+                    <p>⏱️ {t('duration')}: <strong>{rutaInfo.duracion}</strong></p>
                   </div>
                 </div>
               )}
@@ -1586,7 +1567,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
                   disabled={saving || !saveForm.nombre.trim()}
                   className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {saving ? 'Guardando...' : 'Guardar'}
+                  {saving ? t('saving') : t('save')}
                 </button>
                 <button
                   onClick={() => {
@@ -1595,7 +1576,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
                   }}
                   className="px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
                 >
-                  Cancelar
+                  {t('cancel')}
                 </button>
               </div>
             </div>
@@ -1609,14 +1590,14 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
       }`}>
         {/* Header Azulado */}
         <div className="bg-gradient-to-r from-primary-50 to-blue-50 border-b border-primary-200 p-4 sticky top-0 z-10">
-          <h2 className="text-lg font-bold text-primary-900">Planifica tu Ruta</h2>
+          <h2 className="text-lg font-bold text-primary-900">{t('ruta_title')}</h2>
           <p className="text-sm text-primary-700 mb-2">
-            Encuentra áreas a lo largo de tu viaje
+            {t('ruta_sub')}
           </p>
           {/* Mensaje informativo */}
           <div className="mt-3 p-3 bg-blue-100 border border-blue-300 rounded-lg">
             <p className="text-xs text-blue-900 leading-relaxed">
-              💡 <strong>Importante:</strong> Debes seleccionar los puntos de ruta de la lista desplegable que aparece al escribir cada lugar.
+              💡 {t('ruta_hint')}
             </p>
           </div>
         </div>
@@ -1625,14 +1606,14 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
           {/* Origen */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              🚩 Punto de Origen
+              🚩 {t('ruta_origin')}
             </label>
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 ref={origenInputRef}
                 type="text"
-                placeholder="Buscar ciudad o dirección..."
+                placeholder={t('ruta_search_ph')}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 disabled={isLoading}
               />
@@ -1648,14 +1629,14 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">
-                📌 Puntos Intermedios {waypoints.length > 0 && `(${waypoints.length})`}
+                📌 {t('ruta_waypoints')} {waypoints.length > 0 && `(${waypoints.length})`}
               </label>
               <button
                 onClick={agregarPuntoIntermedio}
                 className="text-xs px-2 py-1 bg-primary-100 text-primary-700 rounded hover:bg-primary-200 transition-colors font-medium"
                 disabled={isLoading}
               >
-                + Añadir
+                {t('ruta_add')}
               </button>
             </div>
 
@@ -1688,7 +1669,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
 
             {waypoints.length === 0 && (
               <p className="text-xs text-gray-500 italic">
-                Añade paradas intermedias a tu ruta
+                {t('ruta_add_hint')}
               </p>
             )}
           </div>
@@ -1696,14 +1677,14 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
           {/* Destino */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              🏁 Punto de Destino
+              🏁 {t('ruta_dest')}
             </label>
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 ref={destinoInputRef}
                 type="text"
-                placeholder="Buscar ciudad o dirección..."
+                placeholder={t('ruta_search_ph')}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 disabled={isLoading}
               />
@@ -1718,7 +1699,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
           {/* Radio de búsqueda */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              📏 Radio de búsqueda: <strong>{radio} km</strong>
+              📏 {t('ruta_radius', { n: radio })}
             </label>
             <div className="grid grid-cols-4 gap-2">
               {[5, 10, 20, 50].map((r: number) => (
@@ -1747,12 +1728,12 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
               {isCalculating ? (
                 <>
                   <ArrowPathIcon className="w-5 h-5 animate-spin" />
-                  Calculando...
+                  {t('ruta_calculating')}
                 </>
               ) : (
                 <>
                   <MapPinIcon className="w-5 h-5" />
-                  Calcular Ruta
+                  {t('ruta_calc')}
                 </>
               )}
             </button>
@@ -1772,14 +1753,14 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
                     className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-lg shadow-green-500/30"
                   >
                     <BookmarkIcon className="w-5 h-5" />
-                    Guardar Ruta
+                    {t('ruta_save')}
                   </button>
                 ) : (
                   <div className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-600 rounded-lg font-semibold border-2 border-green-500">
                     <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    Ruta Guardada
+                    {t('ruta_saved')}
                   </div>
                 )}
               </>
@@ -1790,10 +1771,10 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
               <button
                 onClick={handleExportarGPX}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30"
-                title="Descargar ruta en formato GPX para GPS (Garmin, TomTom, etc.)"
+                title={t('ruta_export_gpx')}
               >
                 <ArrowDownTrayIcon className="w-5 h-5" />
-                Exportar GPX
+                {t('ruta_export_gpx')}
               </button>
             )}
 
@@ -1801,7 +1782,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
               onClick={limpiarRuta}
               className="w-full py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium"
             >
-              Limpiar Ruta
+              {t('ruta_clear')}
             </button>
           </div>
 
@@ -1812,7 +1793,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
-                Información de la Ruta
+                {t('ruta_info')}
               </h3>
               <div className="space-y-2">
                 <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2">
@@ -1820,7 +1801,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                     </svg>
-                    Distancia
+                    {t('distance')}
                   </span>
                   <span className="text-sm font-bold text-primary-700">{rutaInfo.distancia}</span>
                 </div>
@@ -1829,7 +1810,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Duración
+                    {t('duration')}
                   </span>
                   <span className="text-sm font-bold text-primary-700">{rutaInfo.duracion}</span>
                 </div>
@@ -1838,7 +1819,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
                 <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
-                <span>Usa el botón "+ Añadir" para incluir paradas intermedias en tu ruta</span>
+                <span>{t('ruta_add_hint2')}</span>
               </div>
             </div>
           )}
@@ -1856,7 +1837,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
           <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90">
             <div className="text-center">
               <ArrowPathIcon className="w-12 h-12 text-primary-600 animate-spin mx-auto mb-4" />
-              <p className="text-gray-600 font-semibold">Cargando mapa...</p>
+              <p className="text-gray-600 font-semibold">{t('ruta_loading_map')}</p>
             </div>
           </div>
         )}
@@ -1890,7 +1871,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          <span className="text-sm" suppressHydrationWarning>{gpsActive ? 'GPS Activo' : 'Ver ubicación'}</span>
+          <span className="text-sm" suppressHydrationWarning>{gpsActive ? t('ruta_gps_on') : t('ruta_see_location')}</span>
         </button>
 
         {/* Botón Restablecer Zoom - Abajo Centro (más arriba en móvil para evitar bottom bar) */}
@@ -1907,7 +1888,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
           </svg>
-          <span className="text-sm">Restablecer Zoom</span>
+          <span className="text-sm">{t('ruta_reset_zoom')}</span>
         </button>
       </div>
 
@@ -1944,7 +1925,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
             <button
               onClick={cancelarCalculo}
               className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors group"
-              title="Cancelar cálculo"
+              title={t('ruta_cancel_calc')}
             >
               <svg className="w-5 h-5 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1961,7 +1942,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
             </div>
 
             <h3 className="text-2xl font-bold text-gray-900 text-center mb-2">
-              {progreso === 100 ? '¡Ruta Calculada!' : 'Calculando Ruta'}
+              {progreso === 100 ? t('ruta_progress_done') : t('ruta_progress_title')}
             </h3>
 
             <p className="text-center text-gray-600 mb-6 min-h-[24px] font-medium">
@@ -1971,7 +1952,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
             {/* Barra de Progreso */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-gray-700">Progreso</span>
+                <span className="text-sm font-semibold text-gray-700">{t('ruta_progress')}</span>
                 <span className="text-sm font-bold text-[#0b3c74]">{progreso}%</span>
               </div>
               <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
@@ -1990,10 +1971,10 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
             {progreso < 70 && (
               <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 text-center animate-pulse">
                 <p className="text-sm text-blue-800 font-semibold">
-                  ⏱️ Las rutas largas pueden tardar unos momentos...
+                  ⏱️ {t('ruta_long_note')}
                 </p>
                 <p className="text-xs text-blue-600 mt-1">
-                  Estamos analizando miles de áreas para encontrar las mejores opciones en tu camino.
+                  {t('ruta_analyzing')}
                 </p>
               </div>
             )}
@@ -2002,10 +1983,10 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
             {progreso >= 70 && progreso < 92 && (
               <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4 text-center">
                 <p className="text-sm text-orange-800 font-semibold">
-                  🔍 Analizando áreas cercanas a tu ruta...
+                  🔍 {t('ruta_analyzing2')}
                 </p>
                 <p className="text-xs text-orange-600 mt-1">
-                  Este proceso puede tardar un poco más en rutas largas. ¡Ya casi terminamos!
+                  {t('ruta_almost')}
                 </p>
               </div>
             )}

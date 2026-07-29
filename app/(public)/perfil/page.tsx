@@ -11,6 +11,7 @@ import { VisitasTab } from '@/components/perfil/VisitasTab'
 import { ValoracionesTab } from '@/components/perfil/ValoracionesTab'
 import { FavoritosTab } from '@/components/perfil/FavoritosTab'
 import { RutasTab } from '@/components/perfil/RutasTab'
+import { useLanguage } from '@/lib/i18n'
 import {
   UserCircleIcon,
   EnvelopeIcon,
@@ -26,6 +27,7 @@ import {
 type TabType = 'perfil' | 'visitas' | 'valoraciones' | 'favoritos' | 'rutas'
 
 export default function PerfilPage() {
+  const { t, locale } = useLanguage()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
@@ -142,14 +144,14 @@ export default function PerfilPage() {
 
       if (error) throw error
 
-      setMessage({ type: 'success', text: '¡Perfil actualizado correctamente!' })
+      setMessage({ type: 'success', text: t('perfil_ok') })
       setEditing(false)
 
       // Recargar usuario
       const { data: { user: updatedUser } } = await supabase.auth.getUser()
       if (updatedUser) setUser(updatedUser)
     } catch (error: any) {
-      setMessage({ type: 'error', text: error.message || 'Error al actualizar el perfil' })
+      setMessage({ type: 'error', text: error.message || t('perfil_err') })
     } finally {
       setSaving(false)
     }
@@ -160,7 +162,7 @@ export default function PerfilPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="spinner mb-4"></div>
-          <p className="text-gray-600">Cargando perfil...</p>
+          <p className="text-gray-600">{t('perfil_loading')}</p>
         </div>
       </div>
     )
@@ -177,15 +179,15 @@ export default function PerfilPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Mi Perfil</h1>
-              <p className="mt-1 text-sm text-gray-500">Gestiona tu información personal</p>
+              <h1 className="text-3xl font-bold text-gray-900">{t('perfil_title')}</h1>
+              <p className="mt-1 text-sm text-gray-500">{t('perfil_sub')}</p>
             </div>
             <Link
               href="/mapa"
               className="inline-flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors"
             >
               <ArrowLeftIcon className="w-5 h-5" />
-              Volver al Mapa
+              {t('perfil_back_map')}
             </Link>
           </div>
         </div>
@@ -212,7 +214,7 @@ export default function PerfilPage() {
                 )}
 
                 <h2 className="mt-4 text-xl font-bold text-gray-900">
-                  {user.user_metadata?.full_name || 'Usuario'}
+                  {user.user_metadata?.full_name || t('perfil_user')}
                 </h2>
                 <p className="text-sm text-gray-500">{user.email}</p>
 
@@ -234,7 +236,7 @@ export default function PerfilPage() {
                   }`}
                 >
                   <UserCircleIcon className="w-5 h-5" />
-                  Mi Perfil
+                  {t('perfil_title')}
                 </button>
                 <button
                   onClick={() => setActiveTab('visitas')}
@@ -245,7 +247,7 @@ export default function PerfilPage() {
                   }`}
                 >
                   <MapPinIcon className="w-5 h-5" />
-                  Visitas
+                  {t('perfil_tab_visits')}
                   <span className="ml-auto text-xs bg-gray-200 px-2 py-1 rounded-full">
                     {stats.totalVisitas}
                   </span>
@@ -259,7 +261,7 @@ export default function PerfilPage() {
                   }`}
                 >
                   <StarIcon className="w-5 h-5" />
-                  Valoraciones
+                  {t('perfil_tab_ratings')}
                   <span className="ml-auto text-xs bg-gray-200 px-2 py-1 rounded-full">
                     {stats.totalValoraciones}
                   </span>
@@ -273,7 +275,7 @@ export default function PerfilPage() {
                   }`}
                 >
                   <HeartIcon className="w-5 h-5" />
-                  Favoritos
+                  {t('perfil_tab_favs')}
                   <span className="ml-auto text-xs bg-gray-200 px-2 py-1 rounded-full">
                     {stats.totalFavoritos}
                   </span>
@@ -287,7 +289,7 @@ export default function PerfilPage() {
                   }`}
                 >
                   <MapIcon className="w-5 h-5" />
-                  Rutas
+                  {t('perfil_tab_routes')}
                   <span className="ml-auto text-xs bg-gray-200 px-2 py-1 rounded-full">
                     {stats.totalRutas}
                   </span>
@@ -299,11 +301,11 @@ export default function PerfilPage() {
                 <div className="flex items-center justify-between text-sm text-gray-600">
                   <span className="flex items-center gap-2">
                     <ClockIcon className="w-4 h-4" />
-                    Miembro desde
+                    {t('perfil_member_since')}
                   </span>
                 </div>
                 <p className="text-sm font-semibold text-gray-900 mt-1">
-                  {new Date(user.created_at).toLocaleDateString('es-ES', {
+                  {new Date(user.created_at).toLocaleDateString(locale, {
                     month: 'long',
                     year: 'numeric'
                   })}
@@ -333,13 +335,13 @@ export default function PerfilPage() {
                   {/* Información Personal */}
                   <div>
                     <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-lg font-semibold text-gray-900">Información Personal</h3>
+                      <h3 className="text-lg font-semibold text-gray-900">{t('perfil_personal')}</h3>
                       {!editing && (
                         <button
                           onClick={() => setEditing(true)}
                           className="px-4 py-2 text-sm font-medium text-sky-600 hover:text-sky-700 transition-colors"
                         >
-                          Editar
+                          {t('edit')}
                         </button>
                       )}
                     </div>
@@ -349,7 +351,7 @@ export default function PerfilPage() {
                         {/* Nombre */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Nombre
+                            {t('auth_first_name')}
                           </label>
                           {editing ? (
                             <input
@@ -368,7 +370,7 @@ export default function PerfilPage() {
                         {/* Apellido */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Apellido
+                            {t('auth_last_name')}
                           </label>
                           {editing ? (
                             <input
@@ -388,7 +390,7 @@ export default function PerfilPage() {
                       {/* Username */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Nombre de usuario
+                          {t('auth_username')}
                         </label>
                         {editing ? (
                           <input
@@ -407,14 +409,14 @@ export default function PerfilPage() {
                       {/* Email (no editable) */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Correo electrónico
+                          {t('auth_email')}
                         </label>
                         <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg text-gray-900">
                           <EnvelopeIcon className="w-5 h-5 text-gray-400" />
                           {user.email}
                         </div>
                         <p className="mt-1 text-xs text-gray-500">
-                          El correo no puede ser modificado desde aquí
+                          {t('perfil_email_locked')}
                         </p>
                       </div>
 
@@ -426,7 +428,7 @@ export default function PerfilPage() {
                             disabled={saving}
                             className="flex-1 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            {saving ? 'Guardando...' : 'Guardar Cambios'}
+                            {saving ? t('saving') : t('perfil_save')}
                           </button>
                           <button
                             onClick={() => {
@@ -439,7 +441,7 @@ export default function PerfilPage() {
                             }}
                             className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
                           >
-                            Cancelar
+                            {t('cancel')}
                           </button>
                         </div>
                       )}
@@ -448,13 +450,13 @@ export default function PerfilPage() {
 
                   {/* Seguridad */}
                   <div className="pt-6 border-t border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Seguridad</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('perfil_security')}</h3>
                     <Link
                       href="/auth/reset-password"
                       className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                     >
                       <KeyIcon className="w-5 h-5" />
-                      Cambiar Contraseña
+                      {t('perfil_change_pass')}
                     </Link>
                   </div>
                 </div>
