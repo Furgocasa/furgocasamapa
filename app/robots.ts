@@ -1,50 +1,64 @@
 import { MetadataRoute } from 'next'
 
+const baseUrl = 'https://www.mapafurgocasa.com'
+
+const publicAllow = [
+  '/',
+  '/mapa',
+  '/area/',
+  '/ruta',
+  '/sobre-nosotros',
+  '/contacto',
+  '/privacidad',
+  '/condiciones',
+]
+
+const publicDisallow = [
+  '/admin/',
+  '/api/',
+  '/perfil',
+]
+
+/** Crawlers de IA bienvenidos (OpenAI, Anthropic, Google, Perplexity, Apple, Meta). */
+const aiCrawlers = [
+  'GPTBot',
+  'OAI-SearchBot',
+  'ChatGPT-User',
+  'ClaudeBot',
+  'Claude-SearchBot',
+  'Claude-User',
+  'Google-Extended',
+  'PerplexityBot',
+  'Perplexity-User',
+  'Applebot-Extended',
+  'meta-externalagent',
+] as const
+
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://www.mapafurgocasa.com'
-  
   return {
     rules: [
       {
         userAgent: '*',
         allow: [
-          '/',
-          '/mapa',
-          '/area/',
-          '/ruta',
+          ...publicAllow,
           '/auth/',
-          '/sobre-nosotros',
-          '/contacto',
-          '/privacidad',
-          '/condiciones',
         ],
-        disallow: [
-          '/admin/',
-          '/api/',
-          '/perfil',
-        ],
+        disallow: publicDisallow,
       },
       {
         userAgent: 'Googlebot',
-        allow: [
-          '/',
-          '/mapa',
-          '/area/',
-          '/ruta',
-          '/sobre-nosotros',
-          '/contacto',
-          '/privacidad',
-          '/condiciones',
-        ],
+        allow: publicAllow,
         disallow: [
-          '/admin/',
-          '/api/',
-          '/perfil',
+          ...publicDisallow,
           '/auth/',
         ],
       },
+      ...aiCrawlers.map((userAgent) => ({
+        userAgent,
+        allow: publicAllow,
+        disallow: publicDisallow,
+      })),
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
   }
 }
-
