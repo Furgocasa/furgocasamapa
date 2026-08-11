@@ -35,6 +35,8 @@ const ALLOWED_EVENTS = new Set([
   'map_interaction',
   'chatbot_open',
   'chatbot_message',
+  'chatbot_nueva_conversacion',
+  'chatbot_area_to_map',
   'vehicle_register',
   'vehicle_update',
   'profile_view',
@@ -78,8 +80,13 @@ export async function POST(request: Request) {
       // Normalizamos a 'other' antes que rechazar (evita perder métricas por typos del cliente)
       eventType = 'other'
     }
-    // session_start no existe en el CHECK de la tabla, lo mapeamos a 'login' o 'other'
-    if (eventType === 'session_start') eventType = 'other'
+    // Eventos no presentes en el CHECK de user_interactions → 'other' + original en event_data
+    const originalEventType = eventType
+    const needsDbRemap =
+      eventType === 'session_start' ||
+      eventType === 'chatbot_nueva_conversacion' ||
+      eventType === 'chatbot_area_to_map'
+    if (needsDbRemap) eventType = 'other'
 
     const eventData =
       body.event_data && typeof body.event_data === 'object' ? body.event_data : {}
@@ -90,6 +97,7 @@ export async function POST(request: Request) {
     const enrichedData: Record<string, unknown> = {
       ...(eventData as Record<string, unknown>),
       ...(sessionIdClient ? { session_id_client: sessionIdClient } : {}),
+      ...(needsDbRemap ? { original_event_type: originalEventType } : {}),
     }
 
     const pageUrl =
