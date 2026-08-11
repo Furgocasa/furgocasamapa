@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useDragToScroll } from '@/hooks/useDragToScroll'
 import { Navbar } from '@/components/layout/Navbar'
+import { ChartCard, SerieDiaria, BarrasMensuales, DonutDistribucion, KpiCard } from '@/components/admin/AnalyticsCharts'
 import Link from 'next/link'
 import type { Area } from '@/types/database.types'
 import {
@@ -163,6 +164,18 @@ interface AnalyticsData {
   precioPromedioMercado: number
   marcasMasPopulares: { marca: string; count: number; porcentaje: number }[]
   modelosMasPopulares: { marca: string; modelo: string; count: number }[]
+
+  // Comparables reales (datos_mercado_autocaravanas) — Indie Campers y resto
+  totalComparablesMercado: number
+  precioPromedioComparables: number
+  indieCampersTotal: number
+  indieCampersPrecioPromedioNeto: number
+  indieCampersValorTotal: number
+  indieCampersKmPromedio: number
+  indieCampersPorMarca: { marca: string; count: number; porcentaje: number; precioMedio: number }[]
+  indieCampersPorPais: { pais: string; count: number; porcentaje: number; precioMedio: number }[]
+  indieCampersMasCaros: { marca: string; modelo: string; año: number | null; precio: number; pais: string | null; kilometros: number | null }[]
+  indieCampersMasBaratos: { marca: string; modelo: string; año: number | null; precio: number; pais: string | null; kilometros: number | null }[]
 
   // Vehículos - Valoraciones IA
   vehiculosValorados: number
@@ -902,12 +915,25 @@ export default function AdminAnalyticsPage() {
 
         if (!kmError) registrosKilometraje = kmData || []
 
-        // Obtener datos de mercado IA
-        const { data: mercadoData, error: mercadoError } = await (supabase as any)
-          .from('datos_mercado_autocaravanas')
-          .select('*')
+        // Obtener comparables de mercado (paginado: Supabase limita ~1000 por request)
+        const PAGE = 1000
+        let from = 0
+        while (true) {
+          const { data: mercadoPage, error: mercadoError } = await (supabase as any)
+            .from('datos_mercado_autocaravanas')
+            .select('id, marca, modelo, año, precio, kilometros, origen, pais, verificado, tipo_dato')
+            .range(from, from + PAGE - 1)
 
-        if (!mercadoError) datosMercado = mercadoData || []
+          if (mercadoError) {
+            console.error('❌ Error datos_mercado:', mercadoError)
+            break
+          }
+          const page = mercadoPage || []
+          datosMercado = datosMercado.concat(page)
+          if (page.length < PAGE) break
+          from += PAGE
+        }
+        console.log(`✅ Comparables mercado: ${datosMercado.length}`)
 
         // Obtener valoraciones IA
         const { data: valoracionesIAData, error: valoracionesIAError } = await (supabase as any)
@@ -1082,6 +1108,87 @@ export default function AdminAnalyticsPage() {
           año: v.año,
           precio: v.precio_objetivo || 0
         }))
+
+      // ========== COMPARABLES REALES (datos_mercado_autocaravanas) ==========
+      const conPrecioComparable = datosMercado.filter((d: any) => d.precio && Number(d.precio) > 0)
+      const totalComparablesMercado = datosMercado.length
+      const precioPromedioComparables = conPrecioComparable.length > 0
+        ? conPrecioComparable.reduce((sum: number, d: any) => sum + Number(d.precio), 0) / conPrecioComparable.length
+        : 0
+
+      const esIndie = (d: any) => String(d.origen || '').toLowerCase().includes('indie campers')
+      const indieRows = datosMercado.filter(esIndie)
+      const indieConPrecio = indieRows.filter((d: any) => d.precio && Number(d.precio) > 0)
+      const indieCampersTotal = indieRows.length
+      const indieCampersValorTotal = indieConPrecio.reduce((sum: number, d: any) => sum + Number(d.precio), 0)
+      const indieCampersPrecioPromedioNeto = indieConPrecio.length > 0
+        ? indieCampersValorTotal / indieConPrecio.length
+        : 0
+      const indieConKm = indieRows.filter((d: any) => d.kilometros != null && Number(d.kilometros) > 0)
+      const indieCampersKmPromedio = indieConKm.length > 0
+        ? indieConKm.reduce((sum: number, d: any) => sum + Number(d.kilometros), 0) / indieConKm.length
+        : 0
+
+      const aggIndie = (keyFn: (d: any) => string) => {
+        const map = new Map<string, { count: number; sumaPrecio: number; conPrecio: number }>()
+        for (const d of indieRows) {
+          const key = keyFn(d)
+          if (!key) continue
+          const prev = map.get(key) || { count: 0, sumaPrecio: 0, conPrecio: 0 }
+          prev.count += 1
+          if (d.precio && Number(d.precio) > 0) {
+            prev.sumaPrecio += Number(d.precio)
+            prev.conPrecio += 1
+          }
+          map.set(key, prev)
+        }
+        return Array.from(map.entries())
+          .map(([key, v]) => ({
+            key,
+            count: v.count,
+            porcentaje: indieCampersTotal > 0 ? (v.count / indieCampersTotal) * 100 : 0,
+            precioMedio: v.conPrecio > 0 ? v.sumaPrecio / v.conPrecio : 0
+          }))
+          .sort((a, b) => b.count - a.count)
+      }
+
+      const indieCampersPorMarca = aggIndie((d) => String(d.marca || '').trim())
+        .slice(0, 10)
+        .map(({ key, count, porcentaje, precioMedio }) => ({
+          marca: key,
+          count,
+          porcentaje,
+          precioMedio
+        }))
+
+      const indieCampersPorPais = aggIndie((d) => String(d.pais || 'Sin país').trim())
+        .map(({ key, count, porcentaje, precioMedio }) => ({
+          pais: key,
+          count,
+          porcentaje,
+          precioMedio
+        }))
+
+      const mapIndieTop = (d: any) => ({
+        marca: d.marca || 'N/A',
+        modelo: d.modelo || '',
+        año: d.año ?? null,
+        precio: Number(d.precio) || 0,
+        pais: d.pais || null,
+        kilometros: d.kilometros != null ? Number(d.kilometros) : null
+      })
+
+      const indieCampersMasCaros = [...indieConPrecio]
+        .sort((a: any, b: any) => Number(b.precio) - Number(a.precio))
+        .slice(0, 5)
+        .map(mapIndieTop)
+
+      const indieCampersMasBaratos = [...indieConPrecio]
+        .sort((a: any, b: any) => Number(a.precio) - Number(b.precio))
+        .slice(0, 5)
+        .map(mapIndieTop)
+
+      console.log(`🚐 Indie Campers: ${indieCampersTotal} | neto medio ${Math.round(indieCampersPrecioPromedioNeto).toLocaleString()}€ | comparables totales ${totalComparablesMercado}`)
 
       // ========== VALORACIONES IA ==========
       // Usar valoracionesIA (de la tabla valoracion_ia_informes) en lugar de valoracionesEconomicas
@@ -1298,6 +1405,8 @@ export default function AdminAnalyticsPage() {
         map_interaction: 'Interacción con mapa',
         chatbot_open: 'Abrir chatbot',
         chatbot_message: 'Mensaje al chatbot',
+        chatbot_nueva_conversacion: 'Nueva conversación chatbot',
+        chatbot_area_to_map: 'Chatbot → mapa (área)',
         vehicle_register: 'Registrar vehículo',
         vehicle_update: 'Actualizar vehículo',
         profile_view: 'Ver perfil',
@@ -1577,6 +1686,18 @@ export default function AdminAnalyticsPage() {
         precioPromedioMercado,
         marcasMasPopulares,
         modelosMasPopulares,
+
+        // Comparables reales + Indie Campers
+        totalComparablesMercado,
+        precioPromedioComparables,
+        indieCampersTotal,
+        indieCampersPrecioPromedioNeto,
+        indieCampersValorTotal,
+        indieCampersKmPromedio,
+        indieCampersPorMarca,
+        indieCampersPorPais,
+        indieCampersMasCaros,
+        indieCampersMasBaratos,
 
         // Vehículos - Valoraciones IA
         vehiculosValorados,
@@ -2497,7 +2618,39 @@ export default function AdminAnalyticsPage() {
         {/* Tab: RUTAS */}
         {activeTab === 'rutas' && (
           <div>
-        {/* ========== GRÁFICOS TEMPORALES - ÚLTIMOS 30 DÍAS ========== */}
+        {/* ========== KPIs DE RUTAS ========== */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <KpiCard
+            icono="🧭"
+            etiqueta="Cálculos de ruta"
+            valor={analytics.totalRutasCalculadas}
+            detalle={`Hoy ${analytics.rutasCalculadasHoy} · Semana ${analytics.rutasCalculadasEstaSemana} · Mes ${analytics.rutasCalculadasEsteMes}`}
+            color="text-indigo-600"
+          />
+          <KpiCard
+            icono="💾"
+            etiqueta="Rutas guardadas"
+            valor={analytics.totalRutas}
+            detalle={`Hoy ${analytics.rutasHoy} · Semana ${analytics.rutasEstaSemana} · Mes ${analytics.rutasEsteMes}`}
+            color="text-cyan-600"
+          />
+          <KpiCard
+            icono="🛣️"
+            etiqueta="Distancia total"
+            valor={`${Math.round(analytics.distanciaTotal).toLocaleString('es-ES')} km`}
+            detalle={`Media ${Math.round(analytics.distanciaPromedio)} km · Máx ${Math.round(analytics.rutaMasLarga)} km`}
+            color="text-emerald-600"
+          />
+          <KpiCard
+            icono="👤"
+            etiqueta="Rutas por usuario"
+            valor={analytics.promedioRutasPorUsuario.toFixed(1)}
+            detalle={`Conversión cálculo→guardado: ${analytics.totalRutasCalculadas > 0 ? ((analytics.totalRutas / analytics.totalRutasCalculadas) * 100).toFixed(1) : '0'}%`}
+            color="text-violet-600"
+          />
+        </div>
+
+        {/* ========== TENDENCIAS DIARIAS (30 DÍAS) ========== */}
         <div className="mb-8">
           <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl shadow-lg p-6 mb-6">
             <h2 className="text-2xl font-bold text-white flex items-center gap-3">
@@ -2508,270 +2661,122 @@ export default function AdminAnalyticsPage() {
             </p>
           </div>
 
-          {/* Gráfico: Cálculos planificador por día */}
-          <div className="bg-white rounded-xl shadow mb-6">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">🧭 Cálculos de ruta - Últimos 30 días</h3>
-              <p className="text-sm text-gray-500">Cada vez que el planificador obtiene una ruta de Google (OK)</p>
-            </div>
-            <div className="p-6">
-              <div className="flex items-end justify-between gap-1 h-64">
-                {analytics.rutasCalculadasPorDia.map((dia: any, index: any) => {
-                  const maxCount = Math.max(...analytics.rutasCalculadasPorDia.map((d: any) => d.count), 1)
-                  const altura = (dia.count / maxCount) * 100
-                  return (
-                    <div key={index} className="flex-1 flex flex-col items-center gap-1">
-                      <div className="text-center">
-                        {dia.count > 0 && (
-                          <p className="text-xs font-bold text-indigo-600">{dia.count}</p>
-                        )}
-                      </div>
-                        <div
-                          className="w-full bg-gradient-to-t from-indigo-500 to-indigo-400 rounded-t hover:from-indigo-600 hover:to-indigo-500 transition-all cursor-pointer shadow-sm"
-                          style={{ height: `${dia.count === 0 ? '10' : Math.min(Math.max(altura, 40), 95)}%` }}
-                          title={`${dia.fecha}: ${dia.count} cálculos`}
-                        />
-                      {index % 5 === 0 && (
-                        <p className="text-[9px] text-gray-500 mt-1 rotate-45 origin-top-left">{dia.fecha}</p>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
-                <p className="text-sm text-gray-600">
-                  Total últimos 30 días: <span className="font-bold text-indigo-600">
-                    {analytics.rutasCalculadasPorDia.reduce((sum: any, d: any) => sum + d.count, 0).toLocaleString()}
-                  </span> cálculos
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+            <ChartCard
+              titulo="🧭 Cálculos de ruta"
+              subtitulo="Cada vez que el planificador obtiene una ruta (últimos 30 días)"
+              footer={
+                <p className="text-xs text-gray-600">
+                  Total: <span className="font-bold text-indigo-600">{analytics.rutasCalculadasPorDia.reduce((s: number, d: any) => s + d.count, 0).toLocaleString('es-ES')}</span>
+                  {' · '}Media diaria: {(analytics.rutasCalculadasPorDia.reduce((s: number, d: any) => s + d.count, 0) / Math.max(analytics.rutasCalculadasPorDia.length, 1)).toFixed(1)}
                 </p>
-                <p className="text-xs text-gray-500">
-                  Promedio diario: {(analytics.rutasCalculadasPorDia.reduce((sum: any, d: any) => sum + d.count, 0) / 30).toFixed(1)}
+              }
+            >
+              <SerieDiaria data={analytics.rutasCalculadasPorDia} nombre="Cálculos" color="#6366f1" />
+            </ChartCard>
+
+            <ChartCard
+              titulo="💾 Rutas guardadas en perfil"
+              subtitulo="Usuario guardó la ruta (tabla rutas, últimos 30 días)"
+              footer={
+                <p className="text-xs text-gray-600">
+                  Total: <span className="font-bold text-cyan-600">{analytics.rutasPorDia.reduce((s: number, d: any) => s + d.count, 0).toLocaleString('es-ES')}</span>
+                  {' · '}Media diaria: {(analytics.rutasPorDia.reduce((s: number, d: any) => s + d.count, 0) / Math.max(analytics.rutasPorDia.length, 1)).toFixed(1)}
                 </p>
-              </div>
-            </div>
+              }
+            >
+              <SerieDiaria data={analytics.rutasPorDia} nombre="Guardadas" color="#06b6d4" />
+            </ChartCard>
           </div>
 
-          {/* Gráfico: Rutas guardadas por día */}
-          <div className="bg-white rounded-xl shadow mb-6">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">💾 Rutas guardadas en perfil - Últimos 30 días</h3>
-              <p className="text-sm text-gray-500">Usuario guardó la ruta (tabla rutas)</p>
-            </div>
-            <div className="p-6">
-              <div className="flex items-end justify-between gap-1 h-64">
-                {analytics.rutasPorDia.map((dia: any, index: any) => {
-                  const maxCount = Math.max(...analytics.rutasPorDia.map((d: any) => d.count), 1)
-                  const altura = (dia.count / maxCount) * 100
-                  return (
-                    <div key={index} className="flex-1 flex flex-col items-center gap-1">
-                      <div className="text-center">
-                        {dia.count > 0 && (
-                          <p className="text-xs font-bold text-cyan-700">{dia.count}</p>
-                        )}
-                      </div>
-                        <div
-                          className="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t hover:from-cyan-600 hover:to-cyan-500 transition-all cursor-pointer shadow-sm"
-                          style={{ height: `${dia.count === 0 ? '10' : Math.min(Math.max(altura, 40), 95)}%` }}
-                          title={`${dia.fecha}: ${dia.count} guardadas`}
-                        />
-                      {index % 5 === 0 && (
-                        <p className="text-[9px] text-gray-500 mt-1 rotate-45 origin-top-left">{dia.fecha}</p>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
-                <p className="text-sm text-gray-600">
-                  Total últimos 30 días: <span className="font-bold text-cyan-700">
-                    {analytics.rutasPorDia.reduce((sum: any, d: any) => sum + d.count, 0).toLocaleString()}
-                  </span> guardadas
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+            <ChartCard
+              titulo="📍 Visitas registradas"
+              subtitulo="Usuarios registrando visitas a áreas (últimos 30 días)"
+              footer={
+                <p className="text-xs text-gray-600">
+                  Total: <span className="font-bold text-green-600">{analytics.visitasPorDia.reduce((s: number, d: any) => s + d.count, 0).toLocaleString('es-ES')}</span>
+                  {' · '}Media diaria: {(analytics.visitasPorDia.reduce((s: number, d: any) => s + d.count, 0) / Math.max(analytics.visitasPorDia.length, 1)).toFixed(1)}
                 </p>
-                <p className="text-xs text-gray-500">
-                  Promedio diario: {(analytics.rutasPorDia.reduce((sum: any, d: any) => sum + d.count, 0) / 30).toFixed(1)}
+              }
+            >
+              <SerieDiaria data={analytics.visitasPorDia} nombre="Visitas" color="#10b981" />
+            </ChartCard>
+
+            <ChartCard
+              titulo="🤖 Interacciones con IA"
+              subtitulo="Actividad del chatbot Tío Viajero (últimos 30 días)"
+              footer={
+                <p className="text-xs text-gray-600">
+                  Total: <span className="font-bold text-purple-600">{analytics.interaccionesIAPorDia.reduce((s: number, d: any) => s + d.count, 0).toLocaleString('es-ES')}</span>
+                  {' · '}Media diaria: {(analytics.interaccionesIAPorDia.reduce((s: number, d: any) => s + d.count, 0) / Math.max(analytics.interaccionesIAPorDia.length, 1)).toFixed(1)}
                 </p>
-              </div>
-            </div>
+              }
+            >
+              <SerieDiaria data={analytics.interaccionesIAPorDia} nombre="Mensajes" color="#8b5cf6" />
+            </ChartCard>
           </div>
 
-          {/* Gráfico: Visitas por Día */}
-          <div className="bg-white rounded-xl shadow mb-6">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">📍 Visitas Registradas - Últimos 30 Días</h3>
-              <p className="text-sm text-gray-500">Usuarios registrando visitas a áreas</p>
-            </div>
-            <div className="p-6">
-              <div className="flex items-end justify-between gap-1 h-64">
-                {analytics.visitasPorDia.map((dia: any, index: any) => {
-                  const maxCount = Math.max(...analytics.visitasPorDia.map((d: any) => d.count), 1)
-                  const altura = (dia.count / maxCount) * 100
-                  return (
-                    <div key={index} className="flex-1 flex flex-col items-center gap-1">
-                      <div className="text-center">
-                        {dia.count > 0 && (
-                          <p className="text-xs font-bold text-green-600">{dia.count}</p>
-                        )}
-                      </div>
-                        <div
-                          className="w-full bg-gradient-to-t from-green-500 to-green-400 rounded-t hover:from-green-600 hover:to-green-500 transition-all cursor-pointer shadow-sm"
-                          style={{ height: `${dia.count === 0 ? '10' : Math.min(Math.max(altura, 40), 95)}%` }}
-                          title={`${dia.fecha}: ${dia.count} visitas`}
-                        />
-                      {index % 5 === 0 && (
-                        <p className="text-[9px] text-gray-500 mt-1 rotate-45 origin-top-left">{dia.fecha}</p>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
-                <p className="text-sm text-gray-600">
-                  Total últimos 30 días: <span className="font-bold text-green-600">
-                    {analytics.visitasPorDia.reduce((sum: any, d: any) => sum + d.count, 0).toLocaleString()}
-                  </span> visitas
+          {/* ========== EVOLUCIÓN MENSUAL (12 MESES) ========== */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+            <ChartCard
+              titulo="🧭 Cálculos de ruta por mes"
+              subtitulo="Uso del planificador (12 meses) con km de los eventos"
+              footer={
+                <p className="text-xs text-gray-600">
+                  Total: <span className="font-bold text-indigo-600">{analytics.rutasCalculadasPorMes.reduce((s: number, m: any) => s + m.count, 0).toLocaleString('es-ES')}</span>
+                  {' · '}Km ref.: <span className="font-bold text-emerald-600">{Math.round(analytics.rutasCalculadasPorMes.reduce((s: number, m: any) => s + m.distancia, 0)).toLocaleString('es-ES')} km</span>
                 </p>
-                <p className="text-xs text-gray-500">
-                  Promedio diario: {(analytics.visitasPorDia.reduce((sum: any, d: any) => sum + d.count, 0) / 30).toFixed(1)}
+              }
+            >
+              <BarrasMensuales
+                data={analytics.rutasCalculadasPorMes}
+                barNombre="Cálculos"
+                lineKey="distancia"
+                lineNombre="Km"
+                barColor="#6366f1"
+                lineColor="#10b981"
+                unidades={{ distancia: 'km' }}
+              />
+            </ChartCard>
+
+            <ChartCard
+              titulo="💾 Rutas guardadas y distancia por mes"
+              subtitulo="Tabla rutas del perfil (12 meses)"
+              footer={
+                <p className="text-xs text-gray-600">
+                  Total: <span className="font-bold text-cyan-600">{analytics.rutasPorMes.reduce((s: number, m: any) => s + m.count, 0).toLocaleString('es-ES')}</span>
+                  {' · '}Distancia: <span className="font-bold text-emerald-600">{Math.round(analytics.rutasPorMes.reduce((s: number, m: any) => s + m.distancia, 0)).toLocaleString('es-ES')} km</span>
                 </p>
-              </div>
-            </div>
+              }
+            >
+              <BarrasMensuales
+                data={analytics.rutasPorMes}
+                barNombre="Guardadas"
+                lineKey="distancia"
+                lineNombre="Km"
+                barColor="#06b6d4"
+                lineColor="#10b981"
+                unidades={{ distancia: 'km' }}
+              />
+            </ChartCard>
           </div>
 
-          {/* Gráfico: Interacciones IA por Día */}
-          <div className="bg-white rounded-xl shadow mb-6">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">🤖 Interacciones con IA - Últimos 30 Días</h3>
-              <p className="text-sm text-gray-500">Actividad del chatbot asistente</p>
-            </div>
-            <div className="p-6">
-              <div className="flex items-end justify-between gap-1 h-64">
-                {analytics.interaccionesIAPorDia.map((dia: any, index: any) => {
-                  const maxCount = Math.max(...analytics.interaccionesIAPorDia.map((d: any) => d.count), 1)
-                  const altura = (dia.count / maxCount) * 100
-                  return (
-                    <div key={index} className="flex-1 flex flex-col items-center gap-1">
-                      <div className="text-center">
-                        {dia.count > 0 && (
-                          <p className="text-xs font-bold text-purple-600">{dia.count}</p>
-                        )}
-                      </div>
-                        <div
-                          className="w-full bg-gradient-to-t from-purple-500 to-purple-400 rounded-t hover:from-purple-600 hover:to-purple-500 transition-all cursor-pointer shadow-sm"
-                          style={{ height: `${dia.count === 0 ? '10' : Math.min(Math.max(altura, 40), 95)}%` }}
-                          title={`${dia.fecha}: ${dia.count} mensajes`}
-                        />
-                      {index % 5 === 0 && (
-                        <p className="text-[9px] text-gray-500 mt-1 rotate-45 origin-top-left">{dia.fecha}</p>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
-                <p className="text-sm text-gray-600">
-                  Total últimos 30 días: <span className="font-bold text-purple-600">
-                    {analytics.interaccionesIAPorDia.reduce((sum: any, d: any) => sum + d.count, 0).toLocaleString()}
-                  </span> mensajes
-                </p>
-                <p className="text-xs text-gray-500">
-                  Promedio diario: {(analytics.interaccionesIAPorDia.reduce((sum: any, d: any) => sum + d.count, 0) / 30).toFixed(1)}
-                </p>
-              </div>
-            </div>
-          </div>
+          {/* ========== DISTRIBUCIONES (antes existían en los datos pero no se mostraban) ========== */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+            <ChartCard
+              titulo="🛑 Rutas por número de paradas"
+              subtitulo="¿Cuántos puntos añaden los usuarios a sus rutas?"
+            >
+              <DonutDistribucion data={analytics.rutasPorNumeroPuntos} nameKey="puntos" />
+            </ChartCard>
 
-          {/* Gráfico: Cálculos por mes */}
-          <div className="bg-white rounded-xl shadow mb-6">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">🧭 Cálculos de ruta por mes - Últimos 12 meses</h3>
-              <p className="text-sm text-gray-500">Uso del planificador; km estimados desde eventos (si se enviaron)</p>
-            </div>
-            <div className="p-6">
-              <div className="flex items-end justify-between gap-2 h-64">
-                {analytics.rutasCalculadasPorMes.map((mes: any, index: any) => {
-                  const maxCount = Math.max(...analytics.rutasCalculadasPorMes.map((m: any) => m.count), 1)
-                  const altura = (mes.count / maxCount) * 100
-                  return (
-                    <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                      <div className="text-center">
-                        <p className="text-xs font-bold text-indigo-600">{mes.count}</p>
-                        {mes.distancia > 0 && (
-                          <p className="text-[9px] text-teal-600">{mes.distancia.toFixed(0)} km</p>
-                        )}
-                      </div>
-                      <div
-                        className="w-full bg-gradient-to-t from-indigo-500 to-indigo-400 rounded-t hover:from-indigo-600 hover:to-indigo-500 transition-all cursor-pointer"
-                        style={{ height: `${Math.min(Math.max(altura, 40), 95)}%` }}
-                        title={`${mes.mes}: ${mes.count} cálculos, ~${mes.distancia.toFixed(0)} km`}
-                      />
-                      <p className="text-xs font-medium text-gray-600">{mes.mes}</p>
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">
-                    Total cálculos (12 meses): <span className="font-bold text-indigo-600">
-                      {analytics.rutasCalculadasPorMes.reduce((sum: any, m: any) => sum + m.count, 0).toLocaleString()}
-                    </span>
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">
-                    Km ref. en eventos: <span className="font-bold text-teal-600">
-                      {analytics.rutasCalculadasPorMes.reduce((sum: any, m: any) => sum + m.distancia, 0).toLocaleString()} km
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Gráfico: Rutas guardadas por mes */}
-          <div className="bg-white rounded-xl shadow mb-6">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">💾 Rutas guardadas y distancia por mes - 12 meses</h3>
-              <p className="text-sm text-gray-500">Tabla rutas (perfil)</p>
-            </div>
-            <div className="p-6">
-              <div className="flex items-end justify-between gap-2 h-64">
-                {analytics.rutasPorMes.map((mes: any, index: any) => {
-                  const maxCount = Math.max(...analytics.rutasPorMes.map((m: any) => m.count), 1)
-                  const altura = (mes.count / maxCount) * 100
-                  return (
-                    <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                      <div className="text-center">
-                        <p className="text-xs font-bold text-cyan-700">{mes.count}</p>
-                        <p className="text-[9px] text-teal-600">{mes.distancia.toFixed(0)} km</p>
-                      </div>
-                      <div
-                        className="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t hover:from-cyan-600 hover:to-cyan-500 transition-all cursor-pointer"
-                        style={{ height: `${Math.min(Math.max(altura, 40), 95)}%` }}
-                        title={`${mes.mes}: ${mes.count} guardadas, ${mes.distancia.toFixed(0)} km`}
-                      />
-                      <p className="text-xs font-medium text-gray-600">{mes.mes}</p>
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">
-                    Total guardadas (12 meses): <span className="font-bold text-cyan-700">
-                      {analytics.rutasPorMes.reduce((sum: any, m: any) => sum + m.count, 0).toLocaleString()}
-                    </span>
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">
-                    Distancia total: <span className="font-bold text-teal-600">
-                      {analytics.rutasPorMes.reduce((sum: any, m: any) => sum + m.distancia, 0).toLocaleString()} km
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </div>
+            <ChartCard
+              titulo="📏 Distribución de distancias"
+              subtitulo="Longitud de las rutas guardadas"
+            >
+              <DonutDistribucion data={analytics.distribucionDistancias} nameKey="rango" />
+            </ChartCard>
           </div>
 
         </div>
@@ -3122,23 +3127,215 @@ export default function AdminAnalyticsPage() {
               </div>
             </div>
 
-            {/* SECCIÓN 4B: Base de Datos de Mercado (IA) */}
+            {/* SECCIÓN 4B: Valoraciones IA realizadas a usuarios */}
             <div className="mb-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">🤖 Base de Datos de Mercado (IA)</h3>
-              <p className="text-sm text-gray-600 mb-4">Datos recopilados automáticamente de internet por valoraciones IA</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">🤖 Valoraciones IA a Usuarios</h3>
+              <p className="text-sm text-gray-600 mb-4">Informes de valoración generados para vehículos registrados (no son anuncios scrapeados)</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-6 border-2 border-teal-300">
-                  <p className="text-sm font-semibold text-teal-700 mb-2">📊 Total Registros Mercado</p>
+                  <p className="text-sm font-semibold text-teal-700 mb-2">📊 Total Valoraciones IA</p>
                   <p className="text-4xl font-black text-teal-900">{analytics.totalDatosMercado.toLocaleString()}</p>
-                  <p className="text-xs text-teal-600 mt-2">anuncios recopilados por IA</p>
+                  <p className="text-xs text-teal-600 mt-2">informes generados</p>
                 </div>
 
                 <div className="bg-gradient-to-br from-sky-50 to-sky-100 rounded-xl p-6 border-2 border-sky-300">
-                  <p className="text-sm font-semibold text-sky-700 mb-2">💵 Precio Promedio Mercado</p>
+                  <p className="text-sm font-semibold text-sky-700 mb-2">💵 Precio Objetivo Promedio</p>
                   <p className="text-4xl font-black text-sky-900">{analytics.precioPromedioMercado.toLocaleString('es-ES')}€</p>
-                  <p className="text-xs text-sky-600 mt-2">según anuncios de internet</p>
+                  <p className="text-xs text-sky-600 mt-2">según valoraciones a usuarios</p>
                 </div>
               </div>
+            </div>
+
+            {/* SECCIÓN 4C: Comparables Indie Campers */}
+            <div className="mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">🚐 Flota Indie Campers (Comparables)</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Precios NETOS sin IVA de salida de flota de alquiler · alimentan el paso 2B de valoración IA
+                  </p>
+                </div>
+                <Link
+                  href="/admin/datos-mercado"
+                  className="text-sm font-semibold text-orange-700 hover:text-orange-900 underline underline-offset-2"
+                >
+                  Ver en Datos de Mercado →
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="bg-gradient-to-br from-orange-50 to-amber-100 rounded-xl p-5 border-2 border-orange-300">
+                  <p className="text-sm font-semibold text-orange-700 mb-2">Registros Indie Campers</p>
+                  <p className="text-4xl font-black text-orange-900">{analytics.indieCampersTotal.toLocaleString('es-ES')}</p>
+                  <p className="text-xs text-orange-600 mt-2">
+                    de {analytics.totalComparablesMercado.toLocaleString('es-ES')} comparables totales
+                  </p>
+                </div>
+                <div className="bg-gradient-to-br from-amber-50 to-yellow-100 rounded-xl p-5 border-2 border-amber-300">
+                  <p className="text-sm font-semibold text-amber-700 mb-2">Precio Neto Medio</p>
+                  <p className="text-3xl font-black text-amber-900">
+                    {Math.round(analytics.indieCampersPrecioPromedioNeto).toLocaleString('es-ES')}€
+                  </p>
+                  <p className="text-xs text-amber-600 mt-2">sin IVA (país de matriculación)</p>
+                </div>
+                <div className="bg-gradient-to-br from-yellow-50 to-orange-100 rounded-xl p-5 border-2 border-yellow-300">
+                  <p className="text-sm font-semibold text-yellow-800 mb-2">Valor Total Flota (neto)</p>
+                  <p className="text-3xl font-black text-yellow-900">
+                    {Math.round(analytics.indieCampersValorTotal).toLocaleString('es-ES')}€
+                  </p>
+                  <p className="text-xs text-yellow-700 mt-2">suma precios netos Indie</p>
+                </div>
+                <div className="bg-gradient-to-br from-stone-50 to-orange-50 rounded-xl p-5 border-2 border-stone-300">
+                  <p className="text-sm font-semibold text-stone-700 mb-2">Km Promedio</p>
+                  <p className="text-3xl font-black text-stone-900">
+                    {Math.round(analytics.indieCampersKmPromedio).toLocaleString('es-ES')}
+                  </p>
+                  <p className="text-xs text-stone-600 mt-2">km · flota alquiler</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="bg-white rounded-xl shadow border border-orange-100">
+                  <div className="px-6 py-4 border-b border-orange-100 bg-gradient-to-r from-orange-500 to-amber-500">
+                    <h4 className="text-lg font-semibold text-white">🏭 Top Marcas Indie Campers</h4>
+                  </div>
+                  <div className="p-6">
+                    {analytics.indieCampersPorMarca.length > 0 ? (
+                      <div className="space-y-3">
+                        {analytics.indieCampersPorMarca.map((item, index) => (
+                          <div key={item.marca}>
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-orange-400">#{index + 1}</span>
+                                <span className="font-semibold text-gray-900">{item.marca}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="font-bold text-orange-700">{item.count}</span>
+                                <span className="text-xs text-gray-500 ml-2">
+                                  ({item.porcentaje.toFixed(1)}%) · {Math.round(item.precioMedio).toLocaleString('es-ES')}€
+                                </span>
+                              </div>
+                            </div>
+                            <div className="w-full bg-orange-100 rounded-full h-2">
+                              <div
+                                className="bg-orange-500 h-2 rounded-full"
+                                style={{ width: `${Math.min(100, item.porcentaje)}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sin datos Indie Campers</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow border border-amber-100">
+                  <div className="px-6 py-4 border-b border-amber-100 bg-gradient-to-r from-amber-500 to-yellow-500">
+                    <h4 className="text-lg font-semibold text-white">🌍 Por País de Matriculación</h4>
+                  </div>
+                  <div className="p-6">
+                    {analytics.indieCampersPorPais.length > 0 ? (
+                      <div className="space-y-3">
+                        {analytics.indieCampersPorPais.map((item, index) => (
+                          <div key={item.pais}>
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-amber-400">#{index + 1}</span>
+                                <span className="font-semibold text-gray-900">{item.pais}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="font-bold text-amber-700">{item.count}</span>
+                                <span className="text-xs text-gray-500 ml-2">
+                                  ({item.porcentaje.toFixed(1)}%) · {Math.round(item.precioMedio).toLocaleString('es-ES')}€
+                                </span>
+                              </div>
+                            </div>
+                            <div className="w-full bg-amber-100 rounded-full h-2">
+                              <div
+                                className="bg-amber-500 h-2 rounded-full"
+                                style={{ width: `${Math.min(100, item.porcentaje)}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sin datos Indie Campers</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white rounded-xl shadow border border-orange-100">
+                  <div className="px-6 py-4 border-b border-orange-100">
+                    <h4 className="text-lg font-semibold text-gray-900">🔥 Top 5 Más Caros (neto)</h4>
+                    <p className="text-sm text-gray-500">Indie Campers · precio sin IVA</p>
+                  </div>
+                  <div className="p-6">
+                    {analytics.indieCampersMasCaros.length > 0 ? (
+                      <div className="space-y-3">
+                        {analytics.indieCampersMasCaros.map((item, index) => (
+                          <div key={`indie-caro-${index}`} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xl font-bold text-orange-600">#{index + 1}</span>
+                              <div>
+                                <p className="font-semibold text-gray-900">{item.marca} {item.modelo}</p>
+                                <p className="text-sm text-gray-600">
+                                  {item.año || 'Año N/A'}
+                                  {item.pais ? ` · ${item.pais}` : ''}
+                                  {item.kilometros != null ? ` · ${item.kilometros.toLocaleString('es-ES')} km` : ''}
+                                </p>
+                              </div>
+                            </div>
+                            <p className="text-xl font-bold text-orange-700">{item.precio.toLocaleString('es-ES')}€</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sin datos</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow border border-amber-100">
+                  <div className="px-6 py-4 border-b border-amber-100">
+                    <h4 className="text-lg font-semibold text-gray-900">💎 Top 5 Más Económicos (neto)</h4>
+                    <p className="text-sm text-gray-500">Indie Campers · precio sin IVA</p>
+                  </div>
+                  <div className="p-6">
+                    {analytics.indieCampersMasBaratos.length > 0 ? (
+                      <div className="space-y-3">
+                        {analytics.indieCampersMasBaratos.map((item, index) => (
+                          <div key={`indie-barato-${index}`} className="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-200">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xl font-bold text-amber-600">#{index + 1}</span>
+                              <div>
+                                <p className="font-semibold text-gray-900">{item.marca} {item.modelo}</p>
+                                <p className="text-sm text-gray-600">
+                                  {item.año || 'Año N/A'}
+                                  {item.pais ? ` · ${item.pais}` : ''}
+                                  {item.kilometros != null ? ` · ${item.kilometros.toLocaleString('es-ES')} km` : ''}
+                                </p>
+                              </div>
+                            </div>
+                            <p className="text-xl font-bold text-amber-700">{item.precio.toLocaleString('es-ES')}€</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sin datos</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-500 mt-4">
+                Precio promedio de todos los comparables en BD: {Math.round(analytics.precioPromedioComparables).toLocaleString('es-ES')}€
+                {' · '}Sesgo: salida de flota de alquiler (km altos), no retail particular puro.
+              </p>
             </div>
 
             {/* SECCIÓN 5: Top Vehículos Más Caros/Baratos (USUARIOS) */}
@@ -3471,8 +3668,8 @@ export default function AdminAnalyticsPage() {
                 <div className="bg-white/10 backdrop-blur rounded-lg p-4">
                   <h4 className="font-semibold text-white mb-2">📊 Para Furgocasa</h4>
                   <ul className="text-sm text-indigo-100 space-y-1">
-                    <li>• Base de datos: <strong>{analytics.totalDatosMercado}</strong> registros</li>
-                    <li>• Precio mercado promedio: <strong>{analytics.precioPromedioMercado.toLocaleString()}€</strong></li>
+                    <li>• Comparables mercado: <strong>{analytics.totalComparablesMercado}</strong></li>
+                    <li>• Indie Campers: <strong>{analytics.indieCampersTotal}</strong> (neto medio {Math.round(analytics.indieCampersPrecioPromedioNeto).toLocaleString()}€)</li>
                     <li>• Usuarios con datos: <strong>{analytics.vehiculosConDatosFinancieros}</strong></li>
                   </ul>
                 </div>
