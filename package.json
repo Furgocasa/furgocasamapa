@@ -43,7 +43,10 @@
     "import:empresas:dry": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-empresas-espana.ts -- --dry",
     "monitor:import": "ts-node --project tsconfig.scripts.json scripts/monitor-import-progress.ts",
     "update:google-types": "ts-node --project tsconfig.scripts.json scripts/update-google-types.ts",
-    "update:google-types:apply": "ts-node --project tsconfig.scripts.json scripts/update-google-types.ts -- --apply"
+    "update:google-types:apply": "ts-node --project tsconfig.scripts.json scripts/update-google-types.ts -- --apply",
+    "parse:indie-campers": "python scripts/parse-indie-campers-pdf.py",
+    "import:indie-campers": "node scripts/import-indie-campers-mercado.js",
+    "import:indie-campers:confirm": "node scripts/import-indie-campers-mercado.js --confirm"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

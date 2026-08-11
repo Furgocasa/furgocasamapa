@@ -189,6 +189,35 @@
 
 ---
 
+## BLOQUE 9 — Analytics: pestaña RUTAS remozada (29 jul 2026)
+
+- **Qué**: los 6 gráficos de la pestaña Rutas de `/admin/analytics` eran divs
+  caseros sin ejes y con alturas distorsionadas (mínimo 40% para cualquier
+  valor > 0, lo que hacía que un día con 1 evento pareciera casi igual que uno
+  con 20). Sustituidos por gráficos recharts reales.
+- **Archivo nuevo**: `components/admin/AnalyticsCharts.tsx` — componentes
+  reutilizables: `ChartCard`, `SerieDiaria` (área con degradado, ejes, tooltip
+  y línea de media), `BarrasMensuales` (barras + línea de km en eje secundario),
+  `DonutDistribucion`, `KpiCard`. Usables desde cualquier otra pestaña.
+- **Archivo**: `app/admin/analytics/page.tsx` — reescrito el bloque
+  `{activeTab === 'rutas'}` (antes líneas ~2498-2779):
+  - Fila de 4 KPIs nuevos: cálculos de ruta, rutas guardadas, distancia total
+    y rutas/usuario, con hoy/semana/mes y **tasa de conversión cálculo→guardado**.
+  - 4 series diarias (cálculos, guardadas, visitas, IA) ahora en grid 2×2 con
+    ejes reales, tooltip y media de referencia.
+  - 2 gráficos mensuales combinados: barras (conteo) + línea (km) con doble eje.
+  - 2 donuts NUEVOS con datos que ya se calculaban pero no se mostraban:
+    `rutasPorNumeroPuntos` y `distribucionDistancias`.
+- **Verificar**:
+  1. `npm run type-check` y `npm run build` (el sandbox local no pudo ejecutar
+     tsc en esta sesión; verificar antes de push).
+  2. `/admin/analytics` → pestaña Rutas: KPIs arriba, 4 series diarias con ejes,
+     2 mensuales con línea de km, 2 donuts. Tooltips al pasar el ratón.
+  3. Las demás pestañas (general, áreas, usuarios, tops, vehículos, engagement)
+     quedan EXACTAMENTE igual — solo se tocó el bloque de rutas + 1 import.
+
+---
+
 ## CHECKLIST DE VERIFICACIÓN RÁPIDA (para el agente)
 
 1. `npm run type-check` → sin errores.
@@ -209,3 +238,27 @@
 - **Import**: fase 1 Baja+Jalisco (232) desde informe; fase 2 Sonora/Nayarit/Sinaloa/Yucatán/Q.Roo/Guanajuato (163).
 - **Archivos**: `scripts/scripts_empresas/import-mexico-pilot.ts`, `app/(public)/mapa/page.tsx`, mapas (zoom México), `config/paises-seo.ts`, `app/(public)/mapa-casas-rodantes-mexico/page.tsx`, chatbot stats LatAm.
 - **Verificar**: filtro país México en `/mapa` muestra ~395 pins; landing `/mapa-casas-rodantes-mexico`.
+
+---
+
+## BLOQUE — Indie Campers → datos de mercado (valoración)
+
+- **Qué**: ingesta de ~693 precios de flota Indie Campers en `datos_mercado_autocaravanas` para nutrir el paso 2B de valoración IA.
+- **Criterio fiscal**: el precio listado trae IVA del **país de matriculación**. Se guarda `precio` = **neto sin IVA** (`bruto / (1+IVA)`). IVA usados: DE 19%, IT 22%, PT 23%, ES/BE 21%, FR 20%.
+- **Metadatos por fila**:
+  - `origen` = `Indie Campers`
+  - `tipo_dato` = `venta_anuncio`
+  - `pais` = país de matriculación
+  - `region` = `IVA xx% | bruto xxxx€ | VIN …` (auditoría)
+  - `verificado` = true, `estado` = Usado
+- **Sesgo**: son precios de **salida de flota de alquiler** (km altos), no particular retail puro. La IA los ve etiquetados como flota / neto sin IVA.
+- **Archivos**:
+  - `scripts/parse-indie-campers-pdf.py` — parseo PDF → `scripts/data/indie-campers-fleet.json`
+  - `scripts/import-indie-campers-mercado.js` — dry-run / `--confirm` (dedupe por VIN)
+  - `app/api/vehiculos/[id]/ia-valoracion/route.ts` — etiquetado de comparables Indie en título/fuente/nota
+  - npm: `parse:indie-campers`, `import:indie-campers`, `import:indie-campers:confirm`
+- **Lote importado (2026-08-11)**: 693 filas (VW 330, Weinsberg 281, Mercedes 32, Trigano/Carado/Etrusco/Pilote…). Países: DE 542, IT 59, PT 41, BE 26, ES 21, FR 4. Neto medio ~41.656 €.
+- **Verificar**:
+  1. En Supabase: `select count(*) from datos_mercado_autocaravanas where origen = 'Indie Campers'` → 693.
+  2. Re-ejecutar `npm run import:indie-campers` → 0 nuevos (idempotente).
+  3. Lanzar valoración IA de un Weinsberg/VW California y comprobar comparables con fuente Indie Campers.

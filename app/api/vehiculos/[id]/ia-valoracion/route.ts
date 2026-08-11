@@ -506,17 +506,27 @@ async function procesarValoracionIA(
       // Agregar datos de mercado scrapeados (con relevancia y filtrado)
       if (datosMercado && datosMercado.length > 0) {
         const comparablesMercado = datosMercado.map((d: any) => {
+          const esIndie = String(d.origen || "").toLowerCase().includes("indie campers");
+          const notaFiscal = esIndie
+            ? "precio NETO sin IVA (flota alquiler Indie Campers)"
+            : null;
+          const tituloBase = `${d.marca || ""} ${d.modelo || ""} - ${
+            d.pais || "España"
+          }`.trim();
           const comparable = {
-            titulo: `${d.marca || ""} ${d.modelo || ""} - ${
-              d.pais || "España"
-            }`.trim(),
+            titulo: notaFiscal ? `${tituloBase} [${notaFiscal}]` : tituloBase,
             precio: d.precio,
             año: d.año || null,
             kilometros: d.kilometros,
             ubicacion: d.pais || "España",
             link: null,
-            fuente: d.origen || "BD Interna - Mercado",
+            fuente: d.origen
+              ? `${d.origen}${esIndie ? " (flota; IVA país matrícula ya descontado)" : ""}`
+              : "BD Interna - Mercado",
             fecha: d.fecha_transaccion || d.created_at,
+            descripcion: notaFiscal
+              ? `Origen flota alquiler. País matriculación: ${d.pais || "n/d"}. ${d.region || ""}`.trim()
+              : d.region || null,
             vehiculo_id: null, // No tiene vehiculo_id asociado
             relevancia: 0,
           };
@@ -939,6 +949,7 @@ async function procesarValoracionIA(
    }
    - Año: ${c.año || "No especificado"}
    - Fuente: ${c.fuente}
+   ${c.descripcion ? `- Nota: ${c.descripcion}` : ""}
    ${c.url ? `- URL: ${c.url}` : ""}`
             )
             .join("\n\n")
