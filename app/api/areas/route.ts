@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     const supabase = createClient(supabaseUrl, anonKey)
 
     const allAreas = await fetchAllPages(supabase, 'areas', CAMPOS_MAPA, (q) =>
-      q.eq('activo', true).order('nombre')
+      q.eq('activo', true).order('id')
     )
 
     if (isTranslationLocale(locale)) {
@@ -90,7 +90,9 @@ export async function GET(request: NextRequest) {
       },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=180, stale-while-revalidate=180',
+          'Cache-Control': 'public, max-age=0, s-maxage=30, stale-while-revalidate=0, must-revalidate',
+          'CDN-Cache-Control': 'public, s-maxage=30, stale-while-revalidate=0',
+          'Vercel-CDN-Cache-Control': 'public, s-maxage=30, stale-while-revalidate=0',
           Vary: 'Accept-Encoding',
         },
       }
