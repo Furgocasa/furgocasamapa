@@ -62,11 +62,20 @@ function isMotorhomeWording(n: string): boolean {
 }
 
 function esStopoverHint(n: string): boolean {
+  if (/\b(weingut|chez l.habitant|parking de passage|brit.?stop)\b/.test(n)) {
+    return true
+  }
+  const motorhome =
+    /\b(autocaravana|autocaravanes|camper|wohnmobil|reisemobil|camping[-\s]?car|motorhome)\b/.test(n) ||
+    /wohnmobil|reisemobil/.test(n)
+  if (!motorhome && !/\b(stopover|stop over|overnight parking)\b/.test(n)) {
+    return false
+  }
   return (
-    /\b(stopover|stop over|brit.?stop|overnight parking)\b/.test(n) ||
-    (/\b(parking|aparcamiento|estacionamiento|estacionamento)\b/.test(n) &&
+    /\b(stopover|stop over|overnight parking)\b/.test(n) ||
+    (/\b(parking|aparcamiento|estacionamiento|estacionamento|parkplatz|parcheggio)\b/.test(n) &&
       !/\barea de (servicio|servicios|autocaravanas|aparcamiento)\b/.test(n) &&
-      !/\bstellplatz\b/.test(n))
+      !/\b(stellplatz|area sosta|sosta camper)\b/.test(n))
   )
 }
 
@@ -153,7 +162,7 @@ export function classifyTipoArea(
     /\barea(s)? (de )?(camping|camper|autocaravanas?|autocaravanes)\b/.test(n)
   if (esAreaEnNombre) {
     if (
-      /\b(camper ?park|caravan park|privad|low cost|granja)\b/.test(n) ||
+      /\b(camper ?park|camper ?stop|caravan park|privad|low cost|granja)\b/.test(n) ||
       /\barea(s)? (de )?camping\b/.test(n)
     ) {
       return 'privada'
@@ -175,6 +184,11 @@ export function classifyTipoArea(
     return 'camping'
   }
 
+  // Weingut / chez l'habitant = stopover (pernocta de paso), aunque digan Stellplatz
+  if (/\b(weingut|chez l.habitant|parking de passage)\b/.test(n)) {
+    return 'parking'
+  }
+
   // En DACH el Stellplatz es el área (municipal o privada), no un stopover UK
   if (/\b(wohnmobilstellplatz|reisemobilstellplatz|stellplatz)\b/.test(n)) {
     if (/\bprivat/.test(n)) return 'privada'
@@ -193,7 +207,7 @@ export function classifyTipoArea(
     return 'parking'
   }
 
-  if (/\b(particular|finca|camper ?park|autocaravaning)\b/.test(n)) {
+  if (/\b(particular|finca|camper ?park|camper ?stop|autocaravaning)\b/.test(n)) {
     return 'privada'
   }
 
