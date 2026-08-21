@@ -17,6 +17,7 @@ import * as dotenv from 'dotenv'
 dotenv.config({ path: '.env.local' })
 import {
   altoUrlsOf,
+  isImagenIA,
   removeUrlsFromArea,
   uniqueUrlsOf,
   type AreaImagenMin,
@@ -31,11 +32,15 @@ const args = process.argv.slice(2)
 const SOLO_IA = args.includes('--solo-ia')
 const SOLO_PURGA = args.includes('--solo-purga')
 const REWATERMARK = args.includes('--rewatermark')
+const REGENERATE = args.includes('--regenerate')
+const DELETE_GENERATED = args.includes('--delete-generated')
 const LIMIT_ONE = args.includes('--una')
 const limitArg = args.find((a) => a.startsWith('--limit='))
 const LIMIT = limitArg ? parseInt(limitArg.slice('--limit='.length), 10) : 0
 const idsFileArg = args.find((a) => a.startsWith('--ids-file='))
 const IDS_FILE = idsFileArg ? idsFileArg.slice('--ids-file='.length) : ''
+const previewsDirArg = args.find((a) => a.startsWith('--previews-dir='))
+const PREVIEWS_DIR = previewsDirArg ? previewsDirArg.slice('--previews-dir='.length) : ''
 const CHECKPOINT = path.join(__dirname, 'imagenes-ia-checkpoint.txt')
 
 async function fetchAllAreas(supa: any): Promise<AreaImagenMin[]> {
@@ -65,6 +70,21 @@ function loadCheckpoint(): Set<string> {
 
 function appendCheckpoint(id: string) {
   fs.appendFileSync(CHECKPOINT, id + '\n', 'utf8')
+}
+
+function removeFromCheckpoint(ids: Set<string>) {
+  if (!fs.existsSync(CHECKPOINT)) return
+  const remaining = fs
+    .readFileSync(CHECKPOINT, 'utf8')
+    .split(/\r?\n/)
+    .filter((id) => id && !ids.has(id))
+  fs.writeFileSync(CHECKPOINT, remaining.length ? `${remaining.join('\n')}\n` : '', 'utf8')
+}
+
+function storagePathFromPublicUrl(url: string): string | null {
+  const marker = '/storage/v1/object/public/areas/'
+  const index = url.indexOf(marker)
+  return index === -1 ? null : decodeURIComponent(url.slice(index + marker.length))
 }
 
 async function main() {
@@ -142,19 +162,58 @@ async function main() {
     areas = await fetchAllAreas(supabase)
   }
 
+  if (DELETE_GENERATED) {
+    const targetIds = new Set(emptiedIds)
+    let deletedImages = 0
+    let updatedAreas = 0
+
+    for (const area of areas.filter((item) => targetIds.has(item.id))) {
+      const currentUrls = uniqueUrlsOf(area)
+      const aiUrls = currentUrls.filter((url) => isImagenIA(url))
+      if (!aiUrls.length) continue
+
+      const remainingUrls = currentUrls.filter((url) => !isImagenIA(url))
+      const storagePaths = aiUrls
+        .map(storagePathFromPublicUrl)
+        .filter((value): value is string => Boolean(value))
+      if (storagePaths.length) {
+        const { error } = await supabase.storage.from('areas').remove(storagePaths)
+        if (error) throw error
+      }
+
+      const { error } = await supabase
+        .from('areas')
+        .update({
+          foto_principal: remainingUrls[0] || null,
+          fotos_urls: remainingUrls,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', area.id)
+      if (error) throw error
+      updatedAreas++
+      deletedImages += aiUrls.length
+    }
+
+    removeFromCheckpoint(targetIds)
+    console.log(`🗑️ Eliminadas ${deletedImages} imágenes IA en ${updatedAreas} áreas`)
+    console.log(`🔄 ${targetIds.size} áreas retiradas del checkpoint y listas para regenerar`)
+    return
+  }
+
   if (SOLO_PURGA) {
     console.log('Fin (solo purga).')
     return
   }
 
   const done = loadCheckpoint()
-  let pendientes = emptiedIds.filter((id) => !done.has(id))
+  let pendientes = REGENERATE ? emptiedIds : emptiedIds.filter((id) => !done.has(id))
   if (LIMIT_ONE) pendientes = pendientes.slice(0, 1)
   else if (LIMIT > 0) pendientes = pendientes.slice(0, LIMIT)
   console.log(`\n🎨 Generar IA: ${pendientes.length} pendientes (${done.size} ya hechas)`)
 
   let ok = 0
   let fail = 0
+  if (PREVIEWS_DIR) fs.mkdirSync(path.resolve(PREVIEWS_DIR), { recursive: true })
   for (let i = 0; i < pendientes.length; i++) {
     const id = pendientes[i]
     const area = areas.find((a) => a.id === id)
@@ -164,8 +223,16 @@ async function main() {
     }
     process.stdout.write(`  [${i + 1}/${pendientes.length}] ${area.nombre} ... `)
     try {
-      await generateAndStoreAreaImage(supabase as any, area)
-      appendCheckpoint(id)
+      const result = await generateAndStoreAreaImage(supabase as any, area)
+      if (!done.has(id)) appendCheckpoint(id)
+      if (PREVIEWS_DIR) {
+        const response = await fetch(result.publicUrl)
+        if (!response.ok) throw new Error(`No se pudo descargar la previsualización (${response.status})`)
+        fs.writeFileSync(
+          path.join(path.resolve(PREVIEWS_DIR), `${String(i + 1).padStart(2, '0')}-${area.id}.jpg`),
+          Buffer.from(await response.arrayBuffer())
+        )
+      }
       ok++
       console.log('OK')
     } catch (e: any) {

@@ -110,14 +110,61 @@ function tipoAreaTexto(tipo?: string | null) {
   return 'aire de service / motorhome rest area'
 }
 
+function hashArea(area: AreaImageInput) {
+  return `${area.id || ''}-${area.nombre || ''}`
+    .split('')
+    .reduce((total, char) => total + char.charCodeAt(0), 0)
+}
+
+function indiceComposicion(area: AreaImageInput) {
+  return hashArea(area) % 5
+}
+
+function tipoVehiculo(area: AreaImageInput) {
+  // Variación determinista: un mismo área conserva su tipo al regenerarse,
+  // pero el conjunto de imágenes no acaba lleno de la misma perfilada blanca.
+  const variantes = [
+    'white coachbuilt low-profile motorhome',
+    'white integrated A-class motorhome with a full-width cab',
+    'white camper van conversion',
+  ]
+  return variantes[hashArea(area) % variantes.length]
+}
+
+function composicionArea(area: AreaImageInput) {
+  const variantes = [
+    'GROUND-LEVEL OVERVIEW: show the whole facility from its internal access road, with 3 to 6 occupied pitches and a natural mix of coachbuilt motorhomes, integrated motorhomes and camper vans. Make the grid of pitches, internal road and service points easy to understand.',
+    'OBLIQUE AERIAL / DRONE OVERVIEW: MANDATORY camera position 20–40 metres above the facility, at a 35-degree oblique angle. This must visibly be a drone view: the complete organised layout, several marked pitches, internal access lanes and service point occupy the image; 4 to 10 small motorhomes/campers are seen from above. Never return a ground-level view, map or satellite screenshot.',
+    'FACILITY-FOCUSED SCENE: prioritise the maintained designated bays, hookups, water/waste service point, entrance or sanitary/reception building as the main subject. If vehicles appear, show at most two and keep them secondary to the facility.',
+    `SINGLE-PITCH DETAIL: show one ${tipoVehiculo(area)} inside a maintained designated pitch, but include neighbouring empty pitches and visible shared service infrastructure so the whole place still unmistakably reads as an area.`,
+    'LIVELY AREA SCENE: show two or three varied motorhomes/camper vans in separate marked pitches, with a visible service bollard, waste point or small facility building. The scene must show an organised place, not an isolated vehicle.',
+  ]
+  return variantes[indiceComposicion(area)]
+}
+
+function esVistaAerea(area: AreaImageInput) {
+  return indiceComposicion(area) === 1
+}
+
 export function buildAreaImagePrompt(area: AreaImageInput, tieneMapa = false): string {
   const lugar = [area.ciudad, area.provincia, area.pais].filter(Boolean).join(', ') || 'Europa'
   const tipo = tipoAreaTexto(area.tipo_area)
+  const composicion = composicionArea(area)
   const coords = Number.isFinite(Number(area.latitud)) && Number.isFinite(Number(area.longitud))
     ? `${Number(area.latitud).toFixed(5)}, ${Number(area.longitud).toFixed(5)}`
     : null
   const paisaje = paisajeDeUbicacion(area)
   const nombre = (area.nombre || '').trim()
+
+  if (esVistaAerea(area)) {
+    return [
+      'MANDATORY CAMERA ANGLE: high oblique drone photograph, camera 35 metres above ground and looking down at 35 degrees. This is NOT a ground-level photo. Vehicles must be visibly small because the camera is high above them.',
+      `Show ${nombre || 'a motorhome area'} in ${lugar}${coords ? ` at coordinates ${coords}` : ''}: a clearly organised ${tipo}.`,
+      `Real regional landscape: ${paisaje}.`,
+      'The facility must fill most of the frame: show the complete pitch layout, several marked bays, internal access lanes, service/utility point and 4 to 10 small varied motorhomes or camper vans. No logos, names, readable text or licence plates.',
+      'Photorealistic aerial drone image, original and unbranded. Do NOT render a map, satellite screenshot, street-level photograph, close vehicle portrait or isolated camper in nature.',
+    ].join(' ')
+  }
 
   return [
     tieneMapa
@@ -125,13 +172,15 @@ export function buildAreaImagePrompt(area: AreaImageInput, tieneMapa = false): s
       : `Generate a scene that belongs specifically to ${lugar}${coords ? ` (${coords})` : ''}.`,
     `Place: ${nombre || 'motorhome area'} — ${lugar}${coords ? ` — coordinates ${coords}` : ''}.`,
     `Real landscape to match: ${paisaje}.`,
-    `Original cinematic photograph-style illustration of a peaceful ${tipo} standing in THIS same place, as if someone looked at that map and then photographed the spot from the ground. Do NOT return a map, satellite view or screenshot; return a ground-level scene.`,
+    `Original cinematic photograph-style illustration of a peaceful, clearly identifiable ${tipo} standing in THIS same place, as if someone looked at that map and then photographed the spot. Do NOT return a map, satellite view or screenshot; return a photographic scene from the requested perspective.`,
     'Match the real terrain: same ground color, vegetation density, tree or shrub types, relief (flat / hills / mountains), climate and light. It does not need to be the literal parking lot, but it MUST look like that region.',
-    'A single generic white camper van with no logos, no brand names, no license plates and no readable text, parked on a tidy pitch that fits the local ground.',
-    'VEHICLE ACCESS (mandatory, realistic): the camper must look like it drove in. A continuous dirt or gravel track must run from the foreground into the pitch, wide enough for a long van, with visible wheel-worn ground. If there are rocks, timber or curbs, they may only line the SIDES of that track — never close in front of the van, never form a sealed rectangle, never block the wheels. No logs, fences, ditches, cacti or posts in the driving path. Wheels sit naturally on the ground, not floating or spawned inside a pad.',
+    'AREA INFRASTRUCTURE IS MANDATORY AND MUST BE PROMINENT: show a maintained, clearly designated camper pitch or parking bay, with compacted gravel/asphalt/paving, defined edges or painted bay markings, and at least one visible area element such as a power hookup pedestal, water tap, waste-service point, small reception/sanitary building, service bollard, or a simple entrance sign with NO readable text. The image must immediately read as an organised motorhome area, camping or parking facility — never as wild camping, an isolated desert stop, a remote dirt track, a wilderness landscape, or a van parked in nature.',
+    'All vehicles, when present, must have no logos, no brand names, no license plates and no readable text. Do not add people as the focal point.',
+    'VEHICLE ACCESS (when a vehicle is present, mandatory and realistic): it must look like it drove in. A continuous dirt or gravel track must run from the foreground into the pitch, wide enough for a long van, with visible wheel-worn ground. If there are rocks, timber or curbs, they may only line the SIDES of that track — never close in front of the vehicle, never form a sealed rectangle, never block the wheels. No logs, fences, ditches, cacti or posts in the driving path. Wheels sit naturally on the ground, not floating or spawned inside a pad.',
     'STRICTLY FORBIDDEN unless clearly visible in the satellite/map reference: palm trees, Andalusian white villages, Tabernas/Almeria desert, tropical beach, generic Mediterranean postcard, alpine snow.',
     'Late afternoon, natural light, no people faces, no watermarks, no signage with letters.',
     'This must be an original generated scene, not a copy of any stock photo, magazine cover or real campsite photograph.',
+    `FINAL, NON-NEGOTIABLE COMPOSITION REQUIREMENT: ${composicion}`,
   ].join(' ')
 }
 
@@ -317,7 +366,9 @@ export async function generateAndStoreAreaImage(
   await ensureAreasBucket(supabase)
   const lat = Number(area.latitud)
   const lng = Number(area.longitud)
-  const mapa = Number.isFinite(lat) && Number.isFinite(lng)
+  // Para la toma aérea el modelo sigue mejor la instrucción de cámara sin
+  // recibir una captura satélite que tienda a convertir en plano horizontal.
+  const mapa = !esVistaAerea(area) && Number.isFinite(lat) && Number.isFinite(lng)
     ? await fetchLocationMapSnapshot(lat, lng)
     : null
   const generated = await generateBytes(buildAreaImagePrompt(area, !!mapa), mapa)
