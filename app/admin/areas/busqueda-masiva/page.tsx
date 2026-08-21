@@ -46,6 +46,13 @@ const TIPO_LABEL: Record<TipoArea, string> = {
   camping: 'Camping',
 }
 
+function labelTipoArea(tipo?: TipoArea | null): string {
+  if (tipo === 'publica' || tipo === 'privada' || tipo === 'camping') {
+    return TIPO_LABEL[tipo]
+  }
+  return 'Nueva'
+}
+
 function placeAdmite(place: PlaceResult): boolean {
   if (typeof place.admite === 'boolean') return place.admite
   return decidirUbicacion(place.name, { types: place.types || [] }).admite
@@ -1335,7 +1342,7 @@ export default function BusquedaMasivaPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {mapResults.map((place: any) => (
+                    {mapResults.map((place: PlaceResult) => (
                       <tr
                         key={place.place_id}
                         className={`${
@@ -1402,7 +1409,7 @@ export default function BusquedaMasivaPage() {
                           ) : (
                             <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                               <PlusIcon className="w-4 h-4" />
-                              {place.tipo_area ? TIPO_LABEL[place.tipo_area] : 'Nueva'}
+                              {labelTipoArea(place.tipo_area)}
                             </span>
                           )}
                         </td>
@@ -1480,7 +1487,7 @@ export default function BusquedaMasivaPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {results.map((place: any) => (
+                    {results.map((place: PlaceResult) => (
                       <tr
                         key={place.place_id}
                         className={`${
@@ -1547,7 +1554,7 @@ export default function BusquedaMasivaPage() {
                           ) : (
                             <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                               <PlusIcon className="w-4 h-4" />
-                              {place.tipo_area ? TIPO_LABEL[place.tipo_area] : 'Nueva'}
+                              {labelTipoArea(place.tipo_area)}
                             </span>
                           )}
                         </td>
