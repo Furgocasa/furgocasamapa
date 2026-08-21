@@ -16,13 +16,15 @@
  *   npm run import:francia:gaps -- --solo-stopover
  *   npm run import:italia:gaps -- --solo-stopover
  *   npm run import:iberia:gaps -- --solo-stopover
+ *   npm run import:suiza:gaps
+ *   npm run import:austria:gaps
  */
 
 import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
-import { classifyTipoArea, esPernoctaSinServicio } from "../../lib/areas/tipo-area";
+import { decidirUbicacion } from "../../lib/areas/tipo-area";
 
 if (process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0") {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -51,6 +53,10 @@ let REPORT_NAME =
         ? "francia-gaps-dry-report.json"
         : REGION === "italia"
           ? "italia-gaps-dry-report.json"
+        : REGION === "suiza"
+          ? "suiza-gaps-dry-report.json"
+        : REGION === "austria"
+          ? "austria-gaps-dry-report.json"
         : "iberia-gaps-dry-report.json";
 if (SOLO_STOPOVER) {
   REPORT_NAME = REPORT_NAME.replace("-gaps-dry-report.json", "-stopover-dry-report.json");
@@ -151,6 +157,46 @@ const HUECOS_ITALIA = [
   { id: 16, zona: "Basilicata", lat: 40.55, lng: 15.8, pais: "Italia" },
 ];
 
+/** Suiza: 41 áreas. Malla + cobertura del país (DE/FR/IT según cantón). */
+const HUECOS_SUIZA = [
+  { id: 1, zona: "Ginebra / Léman", lat: 46.22, lng: 6.14, pais: "Suiza", lang: "fr" },
+  { id: 2, zona: "Lausana / Vaud", lat: 46.52, lng: 6.63, pais: "Suiza", lang: "fr" },
+  { id: 3, zona: "Jura / Yverdon", lat: 46.78, lng: 6.64, pais: "Suiza", lang: "fr" },
+  { id: 4, zona: "Valais / Sion", lat: 46.23, lng: 7.36, pais: "Suiza", lang: "fr" },
+  { id: 5, zona: "Valais / Brig", lat: 46.32, lng: 8.0, pais: "Suiza", lang: "de" },
+  { id: 6, zona: "Berna", lat: 46.95, lng: 7.45, pais: "Suiza", lang: "de" },
+  { id: 7, zona: "Oberland / Interlaken", lat: 46.68, lng: 7.86, pais: "Suiza", lang: "de" },
+  { id: 8, zona: "Basilea", lat: 47.48, lng: 7.6, pais: "Suiza", lang: "de" },
+  { id: 9, zona: "Argovia / Aarau", lat: 47.39, lng: 8.05, pais: "Suiza", lang: "de" },
+  { id: 10, zona: "Zúrich", lat: 47.38, lng: 8.54, pais: "Suiza", lang: "de" },
+  { id: 11, zona: "Lucerna", lat: 47.05, lng: 8.3, pais: "Suiza", lang: "de" },
+  { id: 12, zona: "Tesino / Lugano", lat: 46.15, lng: 8.95, pais: "Suiza", lang: "it" },
+  { id: 13, zona: "Grisones / Coira", lat: 46.85, lng: 9.53, pais: "Suiza", lang: "de" },
+  { id: 14, zona: "Engadina", lat: 46.5, lng: 9.84, pais: "Suiza", lang: "de" },
+  { id: 15, zona: "San Galo / Appenzell", lat: 47.42, lng: 9.38, pais: "Suiza", lang: "de" },
+  { id: 16, zona: "Friburgo / Gruyère", lat: 46.8, lng: 7.15, pais: "Suiza", lang: "fr" },
+];
+
+/** Austria: 89 áreas. Huecos tierra (sin Baviera, Tirol del Sur ni Hungría). */
+const HUECOS_AUSTRIA = [
+  { id: 1, zona: "Ausserfern / Reutte", lat: 47.48, lng: 10.72, pais: "Austria" },
+  { id: 2, zona: "Landeck / Paznaun", lat: 47.14, lng: 10.57, pais: "Austria" },
+  { id: 3, zona: "Ötztal / Imst", lat: 47.2, lng: 10.92, pais: "Austria" },
+  { id: 4, zona: "Mühlviertel", lat: 48.55, lng: 14.15, pais: "Austria" },
+  { id: 5, zona: "Südburgenland", lat: 47.08, lng: 16.2, pais: "Austria" },
+  { id: 6, zona: "Hochschwab / Mariazell", lat: 47.6, lng: 15.3, pais: "Austria" },
+  { id: 7, zona: "Weinviertel", lat: 48.55, lng: 16.45, pais: "Austria" },
+  { id: 8, zona: "Weststeiermark", lat: 46.8, lng: 15.2, pais: "Austria" },
+  { id: 9, zona: "Gailtal / Hermagor", lat: 46.63, lng: 13.37, pais: "Austria" },
+  { id: 10, zona: "Pinzgau / Zell am See", lat: 47.25, lng: 12.78, pais: "Austria" },
+  { id: 11, zona: "Mittelkärnten", lat: 46.8, lng: 14.37, pais: "Austria" },
+  { id: 12, zona: "Oststeiermark", lat: 47.2, lng: 15.95, pais: "Austria" },
+  { id: 13, zona: "Lungau / Murau", lat: 47.12, lng: 13.7, pais: "Austria" },
+  { id: 14, zona: "Traunviertel / Steyr", lat: 48.04, lng: 14.42, pais: "Austria" },
+  { id: 15, zona: "Mostviertel", lat: 48.1, lng: 15.5, pais: "Austria" },
+  { id: 16, zona: "Waldviertel", lat: 48.65, lng: 15.2, pais: "Austria" },
+];
+
 const HUECOS =
   REGION === "baleares"
     ? HUECOS_BALEARES
@@ -160,7 +206,11 @@ const HUECOS =
         ? HUECOS_FRANCIA
         : REGION === "italia"
           ? HUECOS_ITALIA
-        : HUECOS_PENINSULA;
+          : REGION === "suiza"
+            ? HUECOS_SUIZA
+            : REGION === "austria"
+              ? HUECOS_AUSTRIA
+              : HUECOS_PENINSULA;
 
 const TERMINOS_ES = [
   "área autocaravanas",
@@ -201,7 +251,19 @@ const STOPOVER_DE = ["Wohnmobilparkplatz", "Weingut Wohnmobil"];
 const STOPOVER_FR = ["parking camping-car", "chez l'habitant camping-car"];
 const STOPOVER_IT = ["parcheggio camper"];
 
-function terminosDe(hueco: { pais?: string }) {
+function terminosDe(hueco: { pais?: string; lang?: string }) {
+  if (REGION === "suiza") {
+    if (hueco.lang === "fr") {
+      return SOLO_STOPOVER ? STOPOVER_FR : [...TERMINOS_FR, ...STOPOVER_FR];
+    }
+    if (hueco.lang === "it") {
+      return SOLO_STOPOVER ? STOPOVER_IT : [...TERMINOS_IT, ...STOPOVER_IT];
+    }
+    return SOLO_STOPOVER ? STOPOVER_DE : [...TERMINOS_DE, ...STOPOVER_DE];
+  }
+  if (REGION === "austria") {
+    return SOLO_STOPOVER ? STOPOVER_DE : [...TERMINOS_DE, ...STOPOVER_DE];
+  }
   const areaCamping =
     REGION === "baleares"
       ? TERMINOS_BALEARES
@@ -285,6 +347,37 @@ function isInGermany(lat: number, lng: number): boolean {
   return true;
 }
 
+function isInSwitzerland(lat: number, lng: number): boolean {
+  if (lat < 45.82 || lat > 47.81 || lng < 5.96 || lng > 10.49) return false;
+  if (lng < 6.47 && lat > 46.4) return false;
+  if (lat < 46.38 && lng > 6.22 && lng < 6.85) return false;
+  if (lng < 6.9 && lat > 47.15 && lat < 47.55) return false;
+  if (lat > 47.52 && lng < 7.15) return false;
+  if (lat > 47.6 && lng < 8.45) return false;
+  if (lat > 47.65 && lng > 8.7) return false;
+  if (lng > 9.55 && lat > 47.02 && lat < 47.5) return false;
+  if (lng > 9.75 && lat > 47.05) return false;
+  if (lat < 46.3 && lng > 9.16) return false;
+  if (lat < 45.9 && lng < 8.75) return false;
+  if (lat < 46.08 && lng > 8.1 && lng < 8.45) return false;
+  return true;
+}
+
+function isInAustria(lat: number, lng: number): boolean {
+  if (lat < 46.37 || lat > 49.02 || lng < 9.53 || lng > 17.16) return false;
+  if (lng < 9.72) return false;
+  if (lng < 10.15 && lat < 47.0) return false;
+  if (lat < 46.72 && lng < 12.15) return false;
+  if (lat < 46.56 && lng < 13.15) return false;
+  if (lat > 47.55 && lng >= 10.15 && lng <= 12.15) return false;
+  if (lat > 47.92 && lng < 12.8) return false;
+  if (lat > 48.58 && lng < 13.35) return false;
+  if (lat < 46.42 && lng > 14.5) return false;
+  if (lng > 16.55 && lat < 46.95) return false;
+  if (lng > 17.05 && lat < 48.12) return false;
+  return true;
+}
+
 function isInBaleares(lat: number, lng: number): boolean {
   if (lat >= 39.25 && lat <= 39.97 && lng >= 2.3 && lng <= 3.48) return true; // Mallorca
   if (lat >= 39.78 && lat <= 40.1 && lng >= 3.78 && lng <= 4.33) return true; // Menorca
@@ -305,11 +398,11 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
 }
 
 function classifyTipo(name: string, types: string[], pais?: string) {
-  return classifyTipoArea(name, { types, pais });
+  return decidirUbicacion(name, { types, pais }).tipo;
 }
 
-function isRelevant(name: string, types: string[]): boolean {
-  if (esPernoctaSinServicio(name)) return false;
+function isRelevant(name: string, types: string[], pais?: string): boolean {
+  if (!decidirUbicacion(name, { types, pais }).admite) return false;
   if (/\b(glamping|b[ií]blico|biblico)\b/i.test(name) && !/\b(autocaravana|camper|aire)\b/i.test(name)) {
     return false;
   }
@@ -347,9 +440,11 @@ function isRelevant(name: string, types: string[]): boolean {
       return false;
     }
   }
-  if (REGION === "alemania") {
+  if (REGION === "alemania" || REGION === "austria" || REGION === "suiza") {
     if (
-      !/wohnmobil|reisemobil|stellplatz|weingut|campingplatz|\bcamper\b/i.test(name) &&
+      !/wohnmobil|reisemobil|stellplatz|weingut|campingplatz|\bcamper\b|camping-car|sosta|\baire\b/i.test(
+        name
+      ) &&
       !types.includes("campground") &&
       !types.includes("rv_park")
     ) {
@@ -361,7 +456,7 @@ function isRelevant(name: string, types: string[]): boolean {
   return false;
 }
 
-async function nearby(query: string, lat: number, lng: number) {
+async function nearby(query: string, lat: number, lng: number, language = "es") {
   const url = new URL(
     "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
   );
@@ -369,10 +464,7 @@ async function nearby(query: string, lat: number, lng: number) {
   url.searchParams.set("radius", "40000");
   url.searchParams.set("keyword", query);
   url.searchParams.set("key", googleApiKey);
-  url.searchParams.set(
-    "language",
-    REGION === "alemania" ? "de" : REGION === "francia" ? "fr" : REGION === "italia" ? "it" : "es"
-  );
+  url.searchParams.set("language", language);
 
   const res = await fetch(url.toString());
   const data: any = await res.json();
@@ -481,6 +573,12 @@ async function importUtiles(utiles: any[]) {
     } else if (REGION === "italia") {
       if (cc && cc !== "IT") continue;
       if (!isInItaly(hit.lat, hit.lng)) continue;
+    } else if (REGION === "suiza") {
+      if (cc && cc !== "CH") continue;
+      if (!isInSwitzerland(hit.lat, hit.lng)) continue;
+    } else if (REGION === "austria") {
+      if (cc && cc !== "AT") continue;
+      if (!isInAustria(hit.lat, hit.lng)) continue;
     } else if (cc && cc !== "ES" && cc !== "PT") {
       continue;
     }
@@ -493,17 +591,38 @@ async function importUtiles(utiles: any[]) {
           ? "Francia"
           : REGION === "italia" || cc === "IT"
             ? "Italia"
+          : REGION === "suiza" || cc === "CH"
+            ? "Suiza"
+            : REGION === "austria" || cc === "AT"
+              ? "Austria"
           : cc === "PT"
             ? "Portugal"
             : "España";
     const slugSuffix =
-      pais === "Alemania" ? "de" : pais === "Francia" ? "fr" : pais === "Italia" ? "it" : pais === "Portugal" ? "pt" : "es";
+      pais === "Alemania"
+        ? "de"
+        : pais === "Francia"
+          ? "fr"
+          : pais === "Italia"
+            ? "it"
+            : pais === "Suiza"
+              ? "ch"
+              : pais === "Austria"
+                ? "at"
+                : pais === "Portugal"
+                  ? "pt"
+                  : "es";
     const slug = `${normalizeText(hit.name).replace(/\s+/g, "-").slice(0, 80)}-${slugSuffix}-${hit.place_id.slice(-8)}`;
+    const decision = decidirUbicacion(hit.name, { types: hit.types || [], pais });
+    if (!decision.admite || !decision.tipo) {
+      console.log(`  ↷ fuera de las 4: ${hit.name} (${decision.motivo})`);
+      continue;
+    }
     const { error } = await supabase.from("areas").insert([
       {
         nombre: hit.name,
         slug,
-        tipo_area: classifyTipo(hit.name, hit.types || [], pais),
+        tipo_area: decision.tipo,
         pais,
         comunidad: onBalears ? "Illes Balears" : details?.comunidad || null,
         comunidad_autonoma: onBalears ? "Illes Balears" : details?.comunidad || null,
@@ -554,7 +673,7 @@ async function main() {
     const report = JSON.parse(fs.readFileSync(REPORT_PATH, "utf8"));
     const { placeIds } = await loadExisting();
     const utiles = (report.allHits || [])
-      .filter((h: any) => isRelevant(h.name, h.types || []))
+      .filter((h: any) => isRelevant(h.name, h.types || [], h.pais))
       .filter((h: any) => !placeIds.has(h.place_id) && !h.cercaExistente && !h.inDb);
     console.log(`Import desde informe: ${utiles.length} candidatos`);
     await importUtiles(utiles);
@@ -570,6 +689,10 @@ async function main() {
           ? "\nFrancia — 16 huecos (radio 40 km)"
         : REGION === "italia"
           ? "\nItalia — 16 huecos (radio 40 km)"
+        : REGION === "suiza"
+          ? "\nSuiza — 16 disparos (radio 40 km, DE/FR/IT)"
+        : REGION === "austria"
+          ? "\nAustria — 16 huecos (radio 40 km)"
         : "\nPenínsula — búsqueda en 16 huecos (radio 40 km)"
   );
   if (SOLO_STOPOVER) {
@@ -590,7 +713,16 @@ async function main() {
     for (const termino of terminos) {
       busquedas++;
       process.stdout.write(`   "${termino}"… `);
-      const results = await nearby(termino, hueco.lat, hueco.lng);
+      const lang =
+        (hueco as { lang?: string }).lang ||
+        (REGION === "alemania" || REGION === "austria"
+          ? "de"
+          : REGION === "francia"
+            ? "fr"
+            : REGION === "italia"
+              ? "it"
+              : "es");
+      const results = await nearby(termino, hueco.lat, hueco.lng, lang);
       let nuevos = 0;
       for (const r of results) {
         if (!r.place_id || seen.has(r.place_id)) continue;
@@ -601,8 +733,11 @@ async function main() {
         if (REGION === "alemania" && !isInGermany(r.lat, r.lng)) continue;
         if (REGION === "francia" && !isInFrance(r.lat, r.lng)) continue;
         if (REGION === "italia" && !isInItaly(r.lat, r.lng)) continue;
+        if (REGION === "suiza" && !isInSwitzerland(r.lat, r.lng)) continue;
+        if (REGION === "austria" && !isInAustria(r.lat, r.lng)) continue;
         seen.add(r.place_id);
-        const relevant = isRelevant(r.name, r.types);
+        const decision = decidirUbicacion(r.name, { types: r.types, pais: hueco.pais });
+        const relevant = decision.admite;
         const inDb = placeIds.has(r.place_id);
         const cercaExistente = tooCloseToExisting(r.lat, r.lng, coords);
         hits.push({
@@ -610,7 +745,7 @@ async function main() {
           relevant,
           inDb,
           cercaExistente,
-          tipo_area: classifyTipo(r.name, r.types, hueco.pais),
+          tipo_area: decision.tipo,
           hueco: hueco.zona,
           huecoId: hueco.id,
           paisHint: hueco.pais,

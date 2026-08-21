@@ -38,6 +38,8 @@
     "import:alemania:stopover": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-iberia-gaps.ts --region=alemania --solo-stopover",
     "import:francia:stopover": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-iberia-gaps.ts --region=francia --solo-stopover",
     "import:italia:stopover": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-iberia-gaps.ts --region=italia --solo-stopover",
+    "import:suiza:gaps": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-iberia-gaps.ts --region=suiza",
+    "import:austria:gaps": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-iberia-gaps.ts --region=austria",
     "import:wales:pilot": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-wales-pilot.ts",
     "import:wales:from-report": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-wales-pilot.ts -- --from-report --import",
     "import:mexico:pilot": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-mexico-pilot.ts",
