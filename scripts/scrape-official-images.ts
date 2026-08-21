@@ -21,6 +21,7 @@ import { generateAndStoreAreaImage } from '../lib/areas/generate-area-image'
 const PAIS = (process.env.IMG_PAIS || '').trim()
 const PROVINCIA = (process.env.IMG_PROVINCIA || '').trim()
 const TIPO = (process.env.IMG_TIPO || '').trim()
+const NOMBRE = (process.env.IMG_NOMBRE || '').trim()
 const DRY = /^(1|true|yes)$/i.test(process.env.IMG_DRYRUN || '')
 const FORCE = /^(1|true|yes)$/i.test(process.env.IMG_FORCE || '')
 
@@ -38,6 +39,7 @@ async function main() {
     if (PAIS) q = q.eq('pais', PAIS)
     if (PROVINCIA) q = q.eq('provincia', PROVINCIA)
     if (TIPO) q = q.eq('tipo_area', TIPO)
+    if (NOMBRE) q = q.ilike('nombre', `%${NOMBRE}%`)
     const { data, error } = await q
     if (error) throw error
     if (!data?.length) break
