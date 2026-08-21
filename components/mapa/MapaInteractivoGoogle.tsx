@@ -10,6 +10,7 @@ import { buildAreaPopupHTML } from './areaPopup'
 import { getMapStyle } from '@/lib/mapStyles'
 import { useLanguage } from '@/lib/i18n'
 import { getTipoAreaColor } from '@/lib/areas/tipo-area'
+import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
 
 // Tipos simplificados para Google Maps (se cargan din├ímicamente)
 type GoogleMap = any
@@ -37,6 +38,7 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
   const markersRef = useRef<GoogleMarker[]>([])
   const markerIdsRef = useRef<string[]>([])
   const infoWindowRef = useRef<GoogleInfoWindow | null>(null)
+  const hoverInfoWindowRef = useRef<GoogleInfoWindow | null>(null)
   const markerClustererRef = useRef<MarkerClusterer | null>(null)
   const userMarkerRef = useRef<GoogleMarker | null>(null)
   const [gpsActive, setGpsActive] = useState(false) // Siempre false inicialmente para evitar hidrataci├│n
@@ -154,6 +156,11 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
             maxWidth: 340,
           })
 
+          hoverInfoWindowRef.current = new google.maps.InfoWindow({
+            disableAutoPan: true,
+            maxWidth: 260,
+          })
+
           console.log('Ô£à Mapa inicializado correctamente en Madrid, zoom 6')
           
           // Ô£à FORZAR RESIZE DEL MAPA PARA ASEGURAR RENDERIZADO CORRECTO
@@ -242,6 +249,7 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
 
       // Evento click en marcador
       marker.addListener('click', () => {
+        hoverInfoWindowRef.current?.close()
         // Notificar al componente padre
         onAreaClick(area)
         
@@ -255,6 +263,17 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
           map.panTo(marker.getPosition()!)
         }
       })
+
+      if (hasFinePointer()) {
+        marker.addListener('mouseover', () => {
+          if (!hoverInfoWindowRef.current || !map) return
+          hoverInfoWindowRef.current.setContent(buildMarkerTooltipHTML(area.nombre))
+          hoverInfoWindowRef.current.open({ map, anchor: marker, shouldFocus: false })
+        })
+        marker.addListener('mouseout', () => {
+          hoverInfoWindowRef.current?.close()
+        })
+      }
 
       return marker
     })
@@ -656,6 +675,7 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
         .gm-ui-hover-effect > span {
           margin: 0 !important;
         }
+        ${MARKER_TOOLTIP_CSS}
       `}</style>
       {/* Mapa */}
       <div 

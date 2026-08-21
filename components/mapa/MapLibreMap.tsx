@@ -9,6 +9,7 @@ import { BuscadorGeografico } from './BuscadorGeografico'
 import { buildAreaPopupHTML } from './areaPopup'
 import { useLanguage } from '@/lib/i18n'
 import { getTipoAreaColor } from '@/lib/areas/tipo-area'
+import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
 
 interface MapLibreMapProps {
   areas: Area[]
@@ -41,6 +42,7 @@ export function MapLibreMap({
   const [error, setError] = useState<string | null>(null)
   const markersRef = useRef<{ [key: string]: maplibregl.Marker }>({}) // Mapa de markers por ID
   const popupRef = useRef<maplibregl.Popup | null>(null) // Popup singleton como InfoWindow
+  const hoverTooltipRef = useRef<maplibregl.Popup | null>(null)
   const clusterIndexRef = useRef<Supercluster | null>(null)
   const areasMapRef = useRef<Map<string, Area>>(new Map()) // Mapa de áreas por ID
   const userMarkerRef = useRef<maplibregl.Marker | null>(null)
@@ -106,6 +108,15 @@ export function MapLibreMap({
         className: 'maplibre-popup-custom'
       })
 
+      hoverTooltipRef.current = new maplibregl.Popup({
+        offset: 14,
+        closeButton: false,
+        closeOnClick: false,
+        closeOnMove: false,
+        maxWidth: '260px',
+        className: 'map-marker-tooltip-popup',
+      })
+
       mapInstance.on('load', () => {
         console.log('✅ MapLibre cargado')
         setMapLoaded(true)
@@ -119,6 +130,7 @@ export function MapLibreMap({
 
       return () => {
         if (popupRef.current) popupRef.current.remove()
+        if (hoverTooltipRef.current) hoverTooltipRef.current.remove()
         mapInstance.remove()
       }
     } catch (err) {
@@ -169,9 +181,21 @@ export function MapLibreMap({
     index.load(points)
     clusterIndexRef.current = index
 
+    const hideHoverTooltip = () => hoverTooltipRef.current?.remove()
+
+    const showHoverTooltip = (lng: number, lat: number, nombre: string) => {
+      if (!hasFinePointer() || !map || !hoverTooltipRef.current) return
+      hoverTooltipRef.current
+        .setLngLat([lng, lat])
+        .setHTML(buildMarkerTooltipHTML(nombre))
+        .addTo(map)
+    }
+
     // Función para actualizar marcadores según zoom/bounds
     const updateMarkers = () => {
       if (!map || !clusterIndexRef.current) return
+
+      hideHoverTooltip()
 
       const zoom = Math.floor(map.getZoom())
       const bounds = map.getBounds()
@@ -266,9 +290,13 @@ export function MapLibreMap({
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
           `
 
+          el.addEventListener('mouseenter', () => showHoverTooltip(lng, lat, area.nombre))
+          el.addEventListener('mouseleave', hideHoverTooltip)
+
           // Click en área: mostrar popup
           el.addEventListener('click', (e) => {
             e.stopPropagation()
+            hideHoverTooltip()
             onAreaClick(area)
             
             if (popupRef.current) {
@@ -532,6 +560,7 @@ export function MapLibreMap({
             max-width: 90vw !important;
           }
         }
+        ${MARKER_TOOLTIP_CSS}
       `}</style>
 
       {/* Mapa */}

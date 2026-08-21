@@ -7,6 +7,7 @@ import { buildAreaPopupHTML } from './areaPopup'
 import Supercluster from 'supercluster'
 import { useLanguage } from '@/lib/i18n'
 import { getTipoAreaColor } from '@/lib/areas/tipo-area'
+import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
 
 // Importar Leaflet solo en cliente
 let L: any = null
@@ -266,6 +267,15 @@ export function LeafletMap({
           })
 
           const marker = L.marker([lat, lng], { icon }).addTo(map)
+
+          if (hasFinePointer()) {
+            marker.bindTooltip(buildMarkerTooltipHTML(area.nombre), {
+              direction: 'top',
+              offset: [0, -12],
+              opacity: 1,
+              className: 'map-marker-hover-tooltip-leaflet',
+            })
+          }
 
           marker.on('click', () => {
             onAreaClick(area)
@@ -529,6 +539,7 @@ export function LeafletMap({
             max-width: 90vw !important;
           }
         }
+        ${MARKER_TOOLTIP_CSS}
       `}</style>
 
       {/* Mapa */}
