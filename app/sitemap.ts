@@ -206,6 +206,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly',
       priority: 0.7,
     },
+    {
+      url: `${baseUrl}/mapa-autocaravanas-reino-unido`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.75,
+    },
     // Sudamérica (3 países) - casas rodantes
     {
       url: `${baseUrl}/mapa-casas-rodantes-argentina`,

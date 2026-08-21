@@ -29,6 +29,8 @@
     "db:fix:countries:today": "ts-node --project tsconfig.scripts.json scripts/fix-countries-today.ts",
     "import:latam": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-latam-massive.ts",
     "import:latam:dry": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-latam-massive.ts -- --dry",
+    "import:wales:pilot": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-wales-pilot.ts",
+    "import:wales:from-report": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-wales-pilot.ts -- --from-report --import",
     "import:mexico:pilot": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-mexico-pilot.ts",
     "import:mexico:from-report": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-mexico-pilot.ts -- --from-report --import",
     "import:mexico:phase2": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-mexico-pilot.ts -- --phase=2 --import",

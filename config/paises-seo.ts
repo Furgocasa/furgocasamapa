@@ -408,6 +408,37 @@ export const PAISES_SEO_CONFIG: Record<string, PaisSEO> = {
     regulaciones: 'Obligatoria viñeta para autopistas. Pernocta en áreas designadas. Respeta señales locales.'
   },
 
+  'reino-unido': {
+    nombre: 'Reino Unido',
+    slug: 'reino-unido',
+    terminologia: 'autocaravanas',
+    urlSlug: '/mapa-autocaravanas-reino-unido',
+    titulo: 'Mapa de Motorhome Aires y Stopovers en Reino Unido',
+    metaTitle: 'Mapa Motorhomes Reino Unido | Aires y Stopovers',
+    metaDescription: 'Aires, stopovers, CL y touring sites para motorhomes y campers en Reino Unido. Empezamos por Gales: Snowdonia, Pembrokeshire y costa.',
+    descripcion: 'En Reino Unido casi no existen las áreas municipales al estilo Francia o España. El mapa cubre el mix real: motorhome aires, stopovers de una noche, Certified Locations (CL) en granjas y touring parks. El primer territorio es Gales: Eryri/Snowdonia, Pembrokeshire, Gower, Bannau Brycheiniog y la costa de Ceredigion. La acampada libre está prohibida en Inglaterra y Gales; pernocta solo en sitios habilitados.',
+    keywords: [
+      'motorhome aire wales',
+      'motorhome stopover uk',
+      'campervan sites wales',
+      'certified location wales',
+      'mapa autocaravanas reino unido',
+      'touring park gales'
+    ],
+    region: 'europa',
+    emoji: '🇬🇧',
+    lat: 52.4,
+    lng: -3.8,
+    consejos: [
+      'No busques “área de autocaravanas”: en UK se dice motorhome aire, stopover, CL o touring site',
+      'La acampada libre está prohibida en Gales e Inglaterra; en Escocia hay más margen',
+      'Muchas carreteras de Snowdonia, Pembrokeshire y Gower son estrechas: mejor camper que autocaravana grande',
+      'Un stopover de pub o granja suele ser 1 noche y casi nunca tiene vaciado',
+      'El vaciado (elsan / chemical disposal) está en campings o service points, no en cada pernocta'
+    ],
+    regulaciones: 'Pernocta solo en aires, stopovers, CL y campings. Acampada libre prohibida en Gales e Inglaterra. Conduce por la izquierda. Tras el Brexit, límite de 90 días en 180 para viajeros de la UE.'
+  },
+
   // ============================================================================
   // 🌎 SUDAMÉRICA (3 países) - Usar "casas rodantes"
   // ============================================================================
