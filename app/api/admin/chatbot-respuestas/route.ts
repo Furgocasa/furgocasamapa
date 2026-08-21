@@ -32,19 +32,50 @@ export async function GET(request: NextRequest) {
     const pagina = Math.max(0, parseInt(searchParams.get('pagina') || '0', 10) || 0)
 
     const admin = createServiceClient()
+
+    const applyRevisionFilter = (q: any) => {
+      if (filtro === 'pendientes') return q.eq('revisado', false)
+      if (filtro === 'revisadas') return q.eq('revisado', true)
+      return q
+    }
+
+    const countCat = async (extra?: (q: any) => any) => {
+      let q = applyRevisionFilter(
+        (admin as any).from('chatbot_respuestas_log').select('id', { count: 'exact', head: true })
+      )
+      if (extra) q = extra(q)
+      const { count: n, error: countError } = await q
+      if (countError) throw countError
+      return n || 0
+    }
+
     let query = (admin as any)
       .from('chatbot_respuestas_log')
       .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(pagina * PAGE_SIZE, (pagina + 1) * PAGE_SIZE - 1)
 
-    if (filtro === 'pendientes') query = query.eq('revisado', false)
-    if (filtro === 'revisadas') query = query.eq('revisado', true)
+    query = applyRevisionFilter(query)
 
     if (filtroIA === 'sin_evaluar') query = query.is('evaluado_at', null)
     else if (filtroIA !== 'todas') query = query.eq('valoracion_ia', filtroIA)
 
-    const { data, error, count } = await query
+    const [{ data, error, count }, stats] = await Promise.all([
+      query,
+      Promise.all([
+        countCat((q) => q.eq('valoracion_ia', 'correcta')),
+        countCat((q) => q.eq('valoracion_ia', 'mejorable')),
+        countCat((q) => q.eq('valoracion_ia', 'incorrecta')),
+        countCat((q) => q.is('evaluado_at', null)),
+        countCat(),
+      ]).then(([correcta, mejorable, incorrecta, sin_evaluar, total]) => ({
+        correcta,
+        mejorable,
+        incorrecta,
+        sin_evaluar,
+        total,
+      })),
+    ])
     if (error) {
       console.error('[admin/chatbot-respuestas] GET', error)
       return NextResponse.json(
@@ -83,7 +114,7 @@ export async function GET(request: NextRequest) {
       usuario: r.user_id ? usuarios[r.user_id] || null : null,
     }))
 
-    return NextResponse.json({ data: enriched, total: count || 0 })
+    return NextResponse.json({ data: enriched, total: count || 0, stats })
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || 'Error cargando respuestas' },

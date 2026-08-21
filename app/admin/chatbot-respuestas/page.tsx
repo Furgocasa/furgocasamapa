@@ -9,6 +9,7 @@
 
 import { Fragment, useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { createClient } from '@/lib/supabase/client'
 import { Navbar } from '@/components/layout/Navbar'
 
@@ -45,6 +46,35 @@ const BADGE_IA: Record<string, { label: string; clase: string }> = {
   incorrecta: { label: 'Incorrecta', clase: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-200' },
 }
 
+type FiltroIA = 'todas' | 'correcta' | 'mejorable' | 'incorrecta' | 'sin_evaluar'
+
+interface StatsIA {
+  correcta: number
+  mejorable: number
+  incorrecta: number
+  sin_evaluar: number
+  total: number
+}
+
+const CATEGORIAS_PIE: Array<{
+  key: Exclude<FiltroIA, 'todas'>
+  name: string
+  color: string
+}> = [
+  { key: 'correcta', name: 'Correctas', color: '#16a34a' },
+  { key: 'mejorable', name: 'Mejorables', color: '#d97706' },
+  { key: 'incorrecta', name: 'Incorrectas', color: '#dc2626' },
+  { key: 'sin_evaluar', name: 'Sin evaluar', color: '#9ca3af' },
+]
+
+const STATS_VACIOS: StatsIA = {
+  correcta: 0,
+  mejorable: 0,
+  incorrecta: 0,
+  sin_evaluar: 0,
+  total: 0,
+}
+
 const PAGE_SIZE = 25
 
 function formatFecha(iso: string) {
@@ -69,9 +99,10 @@ export default function ChatbotRespuestasPage() {
   const [logs, setLogs] = useState<RespuestaLog[]>([])
   const [loading, setLoading] = useState(true)
   const [filtro, setFiltro] = useState<'pendientes' | 'revisadas' | 'todas'>('todas')
-  const [filtroIA, setFiltroIA] = useState<'todas' | 'correcta' | 'mejorable' | 'incorrecta' | 'sin_evaluar'>('todas')
+  const [filtroIA, setFiltroIA] = useState<FiltroIA>('todas')
   const [pagina, setPagina] = useState(0)
   const [total, setTotal] = useState(0)
+  const [stats, setStats] = useState<StatsIA>(STATS_VACIOS)
   const [expandido, setExpandido] = useState<string | null>(null)
   const [notas, setNotas] = useState<Record<string, string>>({})
   const [errorCarga, setErrorCarga] = useState<string | null>(null)
@@ -104,10 +135,12 @@ export default function ChatbotRespuestasPage() {
       if (!res.ok) throw new Error(json.details || json.error || 'Error cargando respuestas')
       setLogs(json.data || [])
       setTotal(json.total || 0)
+      setStats(json.stats || STATS_VACIOS)
     } catch (e: any) {
       console.error('Error cargando respuestas:', e)
       setLogs([])
       setTotal(0)
+      setStats(STATS_VACIOS)
       setErrorCarga(e?.message || 'Error cargando respuestas')
     } finally {
       setLoading(false)
@@ -139,6 +172,16 @@ export default function ChatbotRespuestasPage() {
   }
 
   const totalPaginas = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const totalGrafico = stats.total || 0
+  const pieData = CATEGORIAS_PIE
+    .map((c) => ({ ...c, value: stats[c.key] || 0 }))
+    .filter((c) => c.value > 0)
+
+  const seleccionarCategoria = (key: FiltroIA) => {
+    setFiltroIA((prev) => (prev === key ? 'todas' : key))
+    setPagina(0)
+    setExpandido(null)
+  }
 
   if (!authorized) {
     return (
@@ -157,6 +200,91 @@ export default function ChatbotRespuestasPage() {
           <p className="text-gray-500 text-sm mt-1">
             Registro de preguntas y respuestas para revisión de calidad, incluidos usuarios anónimos.
           </p>
+        </div>
+
+        <div className="bg-white rounded-lg shadow mb-6 overflow-hidden">
+          <div className="px-5 py-3 border-b border-gray-100">
+            <h2 className="text-sm font-semibold text-gray-900">Distribución por categorización</h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {totalGrafico} respuestas
+              {filtro !== 'todas' ? ` · filtro ${filtro}` : ''}
+              . Pulsa un quesito para filtrar la tabla.
+            </p>
+          </div>
+          {totalGrafico === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-10">Sin datos todavía</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] items-center gap-2 p-4">
+              <div className="h-[240px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={92}
+                      paddingAngle={2}
+                      stroke="#fff"
+                      strokeWidth={2}
+                      label={({ percent }: any) => `${Math.round((percent || 0) * 100)}%`}
+                      labelLine={false}
+                      fontSize={12}
+                      onClick={(_, index) => {
+                        const item = pieData[index]
+                        if (item) seleccionarCategoria(item.key)
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {pieData.map((slice) => (
+                        <Cell
+                          key={slice.key}
+                          fill={slice.color}
+                          opacity={filtroIA === 'todas' || filtroIA === slice.key ? 1 : 0.35}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number, name: string) => {
+                        const pct = totalGrafico ? Math.round((value / totalGrafico) * 100) : 0
+                        return [`${value} (${pct}%)`, name]
+                      }}
+                    />
+                    <Legend
+                      verticalAlign="bottom"
+                      iconType="circle"
+                      wrapperStyle={{ fontSize: 12 }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {CATEGORIAS_PIE.map((c) => {
+                  const valor = stats[c.key] || 0
+                  const pct = totalGrafico ? Math.round((valor / totalGrafico) * 100) : 0
+                  const activo = filtroIA === c.key
+                  return (
+                    <button
+                      key={c.key}
+                      type="button"
+                      onClick={() => seleccionarCategoria(c.key)}
+                      className={`text-left rounded-lg border px-3 py-3 transition-colors ${
+                        activo ? 'border-gray-900 bg-gray-50' : 'border-gray-100 hover:border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
+                        <span className="text-xs font-medium text-gray-600">{c.name}</span>
+                      </div>
+                      <div className="text-xl font-semibold text-gray-900 tabular-nums">{pct}%</div>
+                      <div className="text-xs text-gray-500">{valor} respuestas</div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2 mb-3 flex-wrap">
