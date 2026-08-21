@@ -67,7 +67,7 @@ function norm(text: string): string {
 
 /** Evita tratar "camping-car" (autocaravana) como camping. */
 function isMotorhomeWording(n: string): boolean {
-  return /\bcamping[-\s]?cars?\b|\bcampingcar\b/.test(n)
+  return /\bcamping[-\s]?cars?\b|\bcamping[-\s]?ca\b|\bcampingcar\b/.test(n)
 }
 
 /** Anfitrión que invita una noche. No es un área: el sitio existe para otra cosa. */
@@ -93,7 +93,7 @@ function esAnfitrionPrivado(n: string): boolean {
 
 function esMarcaPrivada(n: string): boolean {
   return (
-    /\b(camper ?park|camperpark|camper ?parking|camper ?stop|camperstop|vanventure|low cost|bon bini|stop and go|barcelona beach|granadaparking|portaventura|ciutat caravaning|parkingvan|mundo autocaravanas|valcaravan|webcaravan|sol calnegre|tortuga mora|los narejos|maravilla parking|el moreral|murcia rio|anibal)\b/.test(
+    /\b(camper ?park(?!ing)|camperpark|camperparking|camper ?stop|camperstop|vanventure|low cost|bon bini|stop and go|barcelona beach|granadaparking|portaventura|ciutat caravaning|parkingvan|mundo autocaravanas|valcaravan|webcaravan|sol calnegre|tortuga mora|los narejos|maravilla parking|el moreral|murcia rio|anibal)\b/.test(
       n
     ) ||
     (/\bgranja\b/.test(n) && !/\bla granja(\s+d|\s*$)/.test(n) && !/\barea(s)? autocaravanas la granja\b/.test(n)) ||
@@ -107,7 +107,8 @@ function esAreaHabilitadaEnNombre(n: string): boolean {
     isMotorhomeWording(n) ||
     /\b(area de (autocaravanas?|autocaravanes|servicio|servicios)|area autocaravanas?|aire de services?|aire d'accueil|area sosta|sosta camper|camperplaats)\b/.test(
       n
-    )
+    ) ||
+    /stallplats|bobilplass|autocamperplads/.test(n)
   )
 }
 
@@ -126,7 +127,7 @@ export function esPernoctaSinServicio(name: string): boolean {
     /\bzona camping\b/.test(n) ||
     /\bacampada (libre|rural)\b/.test(n) ||
     /\baires? naturelles?\b/.test(n) ||
-    /\b(wild ?camp(ing)?|wildcamping|boondock(ing)?|dispersed camping|bivouac)\b/.test(n)
+    /\b(wild ?camp(ing)?|wildcamping|boondock(ing)?|dispersed camping|bivouac|allemansratt|allemannsrett|fri teltning)\b/.test(n)
   )
 }
 
@@ -139,8 +140,9 @@ function tieneSenalDeLasCuatro(n: string, types: string[]): boolean {
     /\b(stellplatz|wohnmobilstellplatz|reisemobilstellplatz|area sosta|sosta camper|arosfan|camperplaats)\b/.test(
       n
     ) ||
+    /stallplats|bobilplass|autocamperplads/.test(n) ||
     (/\baires?\b/.test(n) && !/\b(airport|aire acondicionado)\b/.test(n)) ||
-    /\b(camping|campeggio|campismo|campsite|camp site|campground|caravan park|holiday park|touring park|trailer park|rv park|campingplatz|parque de campismo)\b/.test(
+    /\b(camping|campeggio|campismo|campsite|camp site|campground|caravan park|holiday park|touring park|trailer park|rv park|campingplatz|campingplads|campingplass|parque de campismo)\b/.test(
       n
     ) ||
     /\b(certified location|certificated (site|location)|certified site|cl site|c&cc|club cs)\b/.test(
@@ -288,6 +290,22 @@ export function classifyTipoArea(
 
   const esUk = pais === 'Reino Unido' || pais === 'United Kingdom'
 
+  // En España «área camping» / «área camper» es un área, no un recinto.
+  const esAreaEnNombre =
+    /\barea(s)? (de )?(camping|camper|autocaravanas?|autocaravanes)\b/.test(n)
+
+  const nameIsCamping =
+    !isMotorhomeWording(n) &&
+    !esAreaEnNombre &&
+    !/\b(rimessaggio|soccorso|storage|invernaje)\b/.test(n) &&
+    /\b(camping|campeggio|campismo|campground|campamentos?|campament|acampada|caravan park|holiday park|touring park|trailer park|rv park|rv resort|parque de trailers?|parque de campismo|campingplads|campingplass)\b/.test(
+      n
+    )
+
+  if (nameIsCamping) {
+    return 'camping'
+  }
+
   if (esAnfitrionPrivado(n) || esMarcaPrivada(n) || /\bcamping[-\s]?car park\b/.test(n)) {
     return 'privada'
   }
@@ -296,9 +314,6 @@ export function classifyTipoArea(
     return 'privada'
   }
 
-  // En España «área camping» / «área camper» es un área, no un recinto.
-  const esAreaEnNombre =
-    /\barea(s)? (de )?(camping|camper|autocaravanas?|autocaravanes)\b/.test(n)
   if (esAreaEnNombre) {
     if (/\barea(s)? (de )?camping\b/.test(n)) {
       return 'privada'
@@ -310,13 +325,6 @@ export function classifyTipoArea(
   if (esParkingAutocaravana(n)) {
     return 'publica'
   }
-
-  const nameIsCamping =
-    !isMotorhomeWording(n) &&
-    !esAreaEnNombre &&
-    /\b(camping|campeggio|campismo|campground|campamentos?|campament|acampada|caravan park|holiday park|touring park|trailer park|rv park|rv resort|parque de trailers?|parque de campismo)\b/.test(
-      n
-    )
   const typeIsCamping =
     LATAM.has(pais) && (types.includes('campground') || types.includes('rv_park'))
 
@@ -334,6 +342,12 @@ export function classifyTipoArea(
     return 'publica'
   }
 
+  // Nordics: ställplats / bobilplass / autocamperplads = área
+  if (/stallplats|bobilplass|autocamperplads/.test(n)) {
+    if (/\bprivat/.test(n)) return 'privada'
+    return 'publica'
+  }
+
   if (esAire || municipal) {
     return 'publica'
   }
@@ -342,7 +356,7 @@ export function classifyTipoArea(
     return 'privada'
   }
 
-  if (/\b(particular|finca|camper ?park|camper ?stop|autocaravaning)\b/.test(n)) {
+  if (/\b(particular|finca|camper ?park(?!ing)|camper ?stop|autocaravaning)\b/.test(n)) {
     return 'privada'
   }
 

@@ -1,12 +1,10 @@
 /**
- * Recategoriza tipo_area en ES, PT y LatAm.
- * Reino Unido se deja (ya clasificado en el piloto de Gales).
+ * Recategoriza tipo_area país a país. España y Reino Unido no se tocan.
  *
- *   npx ts-node --project tsconfig.scripts.json scripts/scripts_empresas/reclassify-tipos.ts
- *   npx ts-node --project tsconfig.scripts.json scripts/scripts_empresas/reclassify-tipos.ts --apply
- *   npx ts-node --project tsconfig.scripts.json scripts/scripts_empresas/reclassify-tipos.ts --ocultar-sin-servicio
- *   npx ts-node --project tsconfig.scripts.json scripts/scripts_empresas/reclassify-tipos.ts --ocultar-sin-servicio --apply
- *   npx ts-node --project tsconfig.scripts.json scripts/scripts_empresas/reclassify-tipos.ts --pais España --apply
+ *   npx ts-node --project tsconfig.scripts.json scripts/scripts_empresas/reclassify-tipos.ts --pais Portugal
+ *   npx ts-node --project tsconfig.scripts.json scripts/scripts_empresas/reclassify-tipos.ts --pais Francia --apply
+ *
+ * Checklist: scripts/scripts_empresas/reclassify-paises.md
  */
 import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
@@ -28,36 +26,7 @@ const PAIS_ARG = (() => {
   const i = process.argv.indexOf("--pais");
   return i >= 0 ? process.argv[i + 1] : "";
 })();
-const LATAM = new Set([
-  "México",
-  "Mexico",
-  "Guatemala",
-  "Belice",
-  "Honduras",
-  "El Salvador",
-  "Nicaragua",
-  "Costa Rica",
-  "Panamá",
-  "Panama",
-  "Cuba",
-  "República Dominicana",
-  "Puerto Rico",
-  "Jamaica",
-  "Haití",
-  "Argentina",
-  "Chile",
-  "Uruguay",
-  "Paraguay",
-  "Brasil",
-  "Brazil",
-  "Bolivia",
-  "Perú",
-  "Peru",
-  "Ecuador",
-  "Colombia",
-  "Venezuela",
-]);
-const TARGET_PAISES = new Set(["España", "Portugal", ...LATAM]);
+const SKIP_PAISES = new Set(["España", "Reino Unido", "United Kingdom"]);
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -81,6 +50,7 @@ async function loadAreas() {
       .range(page * 1000, (page + 1) * 1000 - 1);
     if (SOLO_PARKING) q = q.eq("tipo_area", "parking");
     else q = q.eq("activo", true);
+    if (PAIS_ARG) q = q.eq("pais", PAIS_ARG);
     const { data, error } = await q;
     if (error) throw error;
     if (!data?.length) break;
@@ -141,10 +111,19 @@ async function main() {
     to: TipoArea;
   }> = [];
 
+  if (!SOLO_PARKING && !PAIS_ARG) {
+    console.error("Indica --pais \"Francia\" (o el país). No hay apply mundial.\n");
+    process.exit(1);
+  }
+  if (PAIS_ARG && SKIP_PAISES.has(PAIS_ARG)) {
+    console.error(`${PAIS_ARG} no se recategoriza (ya hecha).\n`);
+    process.exit(1);
+  }
+
   for (const a of areas) {
     if (SOLO_PARKING) {
       if (a.tipo_area !== "parking") continue;
-    } else if (!TARGET_PAISES.has(a.pais)) {
+    } else if (SKIP_PAISES.has(a.pais)) {
       continue;
     }
     if (PAIS_ARG && a.pais !== PAIS_ARG) continue;
@@ -174,25 +153,20 @@ async function main() {
     .sort()
     .forEach((p) => console.log(p, byPais[p]));
 
-  const show = (pais: string, to: string, n = 8) => {
-    const xs = changes.filter((c) => c.pais === pais && c.to === to).slice(0, n);
+  const show = (to: string, n = 15) => {
+    const xs = changes.filter((c) => c.to === to).slice(0, n);
     if (!xs.length) return;
-    console.log(`\n${pais} → ${to}:`);
+    console.log(`\n→ ${to} (${changes.filter((c) => c.to === to).length}):`);
     xs.forEach((c) => console.log(`  [${c.from}] ${c.nombre}`));
   };
-  show("España", "camping");
-  show("España", "privada", 40);
-  show("España", "parking");
-  show("España", "publica", 200);
-  const warn = changes.filter(
-    (c) => c.pais === "España" && (c.from === "privada" || c.from === "camping")
-  );
+  show("camping");
+  show("privada", 25);
+  show("publica", 15);
+  const warn = changes.filter((c) => c.from === "privada" || c.from === "camping");
   if (warn.length) {
     console.log("\nREVISAR (salen de privada/camping):");
-    warn.forEach((c) => console.log(`  [${c.from}→${c.to}] ${c.nombre}`));
+    warn.slice(0, 40).forEach((c) => console.log(`  [${c.from}→${c.to}] ${c.nombre}`));
   }
-  show("México", "camping");
-  show("México", "privada");
 
   if (!APPLY) {
     console.log("\nPara escribir: --apply\n");
