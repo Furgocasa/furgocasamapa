@@ -78,7 +78,7 @@ Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMEN
 | Mapas | Google Maps API, MapLibre GL JS, Leaflet |
 | Clustering | Supercluster |
 | IA (texto) | OpenAI `gpt-5.6-terra` |
-| IA (imágenes) | OpenAI `gpt-image-2` / `gpt-image-1` / `dall-e-3` |
+| IA (imágenes) | Colchón si no hay foto de la web oficial. OpenAI `gpt-image-2` / `gpt-image-1` / `dall-e-3`. Nunca Google. |
 | Búsqueda Web (textos) | OpenAI `web_search` (Terra) |
 | Hosting | Vercel |
 

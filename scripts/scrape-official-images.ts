@@ -1,5 +1,6 @@
 /**
- * Sustituye fotos IA por fotos de la web oficial del recinto.
+ * Fotos: web oficial del recinto. Si no hay, IA propia.
+ * No usa Google ni directorios de terceros.
  *
  * Uso (PowerShell):
  *   $env:NODE_TLS_REJECT_UNAUTHORIZED="0"
@@ -15,6 +16,7 @@ import * as dotenv from 'dotenv'
 dotenv.config({ path: '.env.local' })
 import { isImagenIA } from '../lib/areas/image-copyright'
 import { scrapeFotosWebOficial } from '../lib/areas/scrape-official-images'
+import { generateAndStoreAreaImage } from '../lib/areas/generate-area-image'
 
 const PAIS = (process.env.IMG_PAIS || '').trim()
 const PROVINCIA = (process.env.IMG_PROVINCIA || '').trim()
@@ -45,9 +47,9 @@ async function main() {
   }
 
   const targets = all.filter((a) => {
-    if (!a.website) return false
     if (FORCE) return true
-    return isImagenIA(a.foto_principal)
+    if (a.website) return isImagenIA(a.foto_principal) || !a.foto_principal
+    return !a.foto_principal
   })
 
   console.log(`🧭 ${PAIS || 'todos'} ${PROVINCIA || ''} ${TIPO || ''} | ${all.length} áreas, ${targets.length} a rascar`)
@@ -59,10 +61,16 @@ async function main() {
   let ok = 0
   let miss = 0
   for (const area of targets) {
-    const fotos = await scrapeFotosWebOficial(area.website, 7)
+    const fotos = area.website ? await scrapeFotosWebOficial(area.website, 7) : []
     if (!fotos.length) {
-      miss++
-      console.log(`✗ ${area.nombre} -> sin fotos en ${area.website}`)
+      try {
+        const ia = await generateAndStoreAreaImage(supa, area)
+        ok++
+        console.log(`🛋️ ${area.nombre} -> IA ${ia.foto_principal.slice(0, 80)}`)
+      } catch (e: any) {
+        miss++
+        console.log(`✗ ${area.nombre} -> sin web oficial y falló IA: ${e.message}`)
+      }
       continue
     }
     const { error } = await supa

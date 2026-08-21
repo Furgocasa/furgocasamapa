@@ -91,11 +91,9 @@ export default function EnriquecerImagenesPage() {
 
     const confirmacion = confirm(
       `¿Enriquecer imágenes de ${selectedIds.length} área(s)?\n\n` +
-      `Esto buscará imágenes en:\n` +
-      `- Web oficial del área\n` +
-      `- Park4night\n` +
-      `- Google Images\n\n` +
-      `Tiempo estimado: ${selectedIds.length * 15} segundos`
+      `Orden: web oficial del recinto. Si no hay fotos propias, se genera IA.\n` +
+      `No se usa Google ni directorios con fotos de terceros.\n\n` +
+      `Tiempo estimado: ${selectedIds.length * 20} segundos`
     )
 
     if (!confirmacion) return
@@ -256,7 +254,7 @@ export default function EnriquecerImagenesPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Enriquecer Imágenes</h1>
-              <p className="text-gray-600 mt-1">Busca y añade imágenes automáticamente a las áreas</p>
+              <p className="text-gray-600 mt-1">Web oficial del recinto; si no hay foto propia, IA. Sin Google.</p>
             </div>
           </div>
         </div>

@@ -14,7 +14,7 @@ Una revisión de área es un ciclo de **auditar → investigar → corregir → 
 1. **Identidad y geografía**: nombre, `slug`, coordenadas, dirección, localidad, país y tipo. Solo existen `publica`, `privada` y `camping`.
 2. **Datos estructurados**: servicios, plazas, precio y acceso. `precio_noche = null` significa precio no disponible; solo `0` significa gratuita.
 3. **Texto español**: investigar con GPT-5.6 Terra y `web_search`. Debe describir el recinto y aportar SEO local natural: municipio/provincia, accesos, transporte y 3–5 referencias locales verificables. No usar relleno turístico ni repetir keywords. Antes de publicar, comprobar que no omite datos operativos confirmados: temporada, cierre temporal y reapertura, horarios, precio y extras, plazas, acceso, estancia máxima y servicios. Un cierre temporal o estacional se indica al principio.
-4. **Imágenes**: quitar stock, catálogo, prensa, redes, basura y URLs compartidas de riesgo. Si la ficha queda vacía, generar imagen IA propia en `areas/ia/`.
+4. **Imágenes**: primero fotos de la web oficial del recinto. Si no hay, generar imagen IA propia en `areas/ia/`. Nunca Google Places/Images, ni stock, catálogo, prensa, redes o directorios de terceros.
 5. **Traducciones**: regenerar FR, DE, IT y EN solo después de cerrar el texto español.
 6. **Cierre**: revisar `https://www.mapafurgocasa.com/area/[slug]`, comprobar que los datos visibles coinciden y marcar `verificado`.
 
@@ -44,7 +44,7 @@ $env:BULK_CHECKPOINT="enrich-murcia-checkpoint.txt"
 node scripts/bulk-enrich.js
 ```
 
-3. Imágenes: purgar las de riesgo alto y generar IA para las fichas vacías:
+3. Imágenes: web oficial; si no hay foto propia, IA. Purgar riesgo alto (stock, Google, redes):
 
 ```powershell
 npm run imagenes:purga-ia
@@ -75,6 +75,6 @@ node scripts/translate-descriptions.js
 - Usar las credenciales de `.env.local`, nunca el MCP de Supabase de otra cuenta.
 - No inventar servicios, precios, aforo, horarios, distancias ni frecuencias.
 - `enrich-datos --apply` solo rellena campos vacíos; las correcciones de datos existentes requieren revisión explícita.
-- Las imágenes de Google pueden generar coste; las de terceros pueden tener riesgos de derechos. Priorizar imagen IA propia cuando no haya una foto segura.
+- No pagar ni usar fotos de Google. Tampoco stock ni fotos ajenas con derechos. Web oficial o, si no hay, IA propia.
 - Los scripts que usan Google o importan lugares se ejecutan primero en dry-run y solo con su confirmación explícita.
 - Para acotar los lotes sin mezclar países: `BULK_PROVINCIA`, `DATOS_PROVINCIA` y `TRAD_PROVINCIA`. Para traducir solo fichas ya cerradas: `TRAD_IDS` admite IDs separados por comas.
