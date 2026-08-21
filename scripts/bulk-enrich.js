@@ -9,7 +9,8 @@
  *   $env:NODE_TLS_REJECT_UNAUTHORIZED="0"; node scripts/bulk-enrich.js
  * Variables opcionales:
  *   BULK_CONCURRENCY  (def 6)   BULK_LIMIT (0=todas)
- *   BULK_MODE         critical | all | everything   (def critical)
+ *   BULK_MODE         empty | critical | all | everything   (def critical)
+ *   BULK_PAIS         filtra por país (ej. España). Vacío = todos
  *   BULK_MODEL        (def gpt-5.6-terra)
  *   BULK_TIMEOUT_MS   (def 90000)
  *   BULK_CHECKPOINT   (def enrich-checkpoint.txt)
@@ -31,6 +32,7 @@ const OPENAI_KEY = process.env.OPENAI_API_KEY
 const CONCURRENCY = parseInt(process.env.BULK_CONCURRENCY || '6', 10)
 const LIMIT = parseInt(process.env.BULK_LIMIT || '0', 10)
 const MODE = (process.env.BULK_MODE || 'critical').toLowerCase()
+const PAIS = (process.env.BULK_PAIS || '').trim()
 const MODEL = process.env.BULK_MODEL || 'gpt-5.6-terra'
 // 'medium' por defecto: con 'low' el modelo a veces se salta la búsqueda web
 // y genera textos genéricos/incompletos. Con 'medium' investiga de verdad.
@@ -66,9 +68,12 @@ function appendCheckpoint(id) { try { fs.appendFileSync(CHECKPOINT, id + '\n') }
 
 function needsWork(desc) {
   if (MODE === 'everything') return true
-  if (!desc) return true
+  if (!desc || !desc.trim()) return true
   const t = desc.trim()
   if (t.includes(PLACEHOLDER)) return true
+  // empty: solo sin texto o placeholder. No reescribe textos largos
+  // que coincidan con frases tipo "no hay información".
+  if (MODE === 'empty') return false
   if (LOW_QUALITY.some((re) => re.test(t))) return true
   if (MODE === 'all' && t.length < 200) return true
   return false
@@ -190,7 +195,7 @@ async function main() {
     console.error('Faltan credenciales (.env.local): Supabase u OpenAI')
     process.exit(1)
   }
-  console.log(`🧭 Modo: ${MODE} | Modelo: ${MODEL} | Concurrencia: ${CONCURRENCY}`)
+  console.log(`🧭 Modo: ${MODE} | País: ${PAIS || 'todos'} | Modelo: ${MODEL} | Concurrencia: ${CONCURRENCY}`)
   const openai = new OpenAI({ apiKey: OPENAI_KEY, maxRetries: 2 })
   const supa = createClient(SUPA_URL, SUPA_KEY)
 
@@ -200,7 +205,10 @@ async function main() {
   const areas = await fetchAllAreas(supa)
   console.log(`   Total activas: ${areas.length}`)
 
-  let targets = areas.filter((a) => !checkpoint.has(a.id) && needsWork(a.descripcion))
+  let targets = areas.filter((a) => {
+    if (PAIS && a.pais !== PAIS) return false
+    return !checkpoint.has(a.id) && needsWork(a.descripcion)
+  })
   if (LIMIT > 0) targets = targets.slice(0, LIMIT)
   console.log(`🎯 Áreas a procesar: ${targets.length}`)
 
