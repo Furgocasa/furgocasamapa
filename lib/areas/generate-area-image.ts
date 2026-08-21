@@ -106,7 +106,7 @@ function paisajeDeUbicacion(area: AreaImageInput): string {
 
 function tipoAreaTexto(tipo?: string | null) {
   if (tipo === 'camping') return 'campsite with motorhome pitches'
-  if (tipo === 'parking') return 'overnight motorhome parking area'
+  if (tipo === 'privada') return 'private motorhome aire'
   return 'aire de service / motorhome rest area'
 }
 

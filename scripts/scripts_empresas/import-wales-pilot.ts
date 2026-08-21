@@ -46,7 +46,7 @@ const REPORT_PATH = path.join(
   "wales-pilot-dry-report.json"
 );
 
-type TipoArea = "publica" | "privada" | "camping" | "parking";
+type TipoArea = "publica" | "privada" | "camping";
 
 interface Region {
   id: string;

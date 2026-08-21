@@ -24,13 +24,6 @@ export const TIPO_AREA_LABELS: Record<string, Dict> = {
     de: 'Campingplatz',
     it: 'Campeggio',
   },
-  parking: {
-    es: 'Stopover',
-    en: 'Stopover',
-    fr: 'Stopover',
-    de: 'Stopover',
-    it: 'Stopover',
-  },
 }
 
 /** Labels cortos para chips/filtros/popups */
@@ -130,6 +123,7 @@ export const SERVICIO_ICONS: Record<string, string> = {
 }
 
 export function getTipoAreaLabel(tipo: string, locale: Locale = 'es'): string {
+  if (tipo === 'parking') return TIPO_AREA_LABELS.privada[locale]
   return TIPO_AREA_LABELS[tipo]?.[locale] || TIPO_AREA_LABELS.publica[locale]
 }
 

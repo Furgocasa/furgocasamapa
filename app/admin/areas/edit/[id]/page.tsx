@@ -330,13 +330,12 @@ export default function EditAreaPage() {
                 <select
                   required
                   value={area.tipo_area || 'publica'}
-                  onChange={(e) => setArea({ ...area, tipo_area: e.target.value as 'publica' | 'privada' | 'camping' | 'parking' })}
+                  onChange={(e) => setArea({ ...area, tipo_area: e.target.value as 'publica' | 'privada' | 'camping' })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                 >
                   <option value="publica">Pública</option>
                   <option value="privada">Privada</option>
                   <option value="camping">Camping</option>
-                  <option value="parking">Parking</option>
                 </select>
               </div>
 

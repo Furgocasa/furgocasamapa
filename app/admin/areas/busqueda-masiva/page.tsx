@@ -44,7 +44,6 @@ const TIPO_LABEL: Record<TipoArea, string> = {
   publica: 'Área pública',
   privada: 'Área privada',
   camping: 'Camping',
-  parking: 'Stopover',
 }
 
 function placeAdmite(place: PlaceResult): boolean {

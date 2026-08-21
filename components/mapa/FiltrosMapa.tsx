@@ -345,9 +345,7 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
                   ? 'type_public_hint'
                   : tipo === 'privada'
                     ? 'type_private_hint'
-                    : tipo === 'camping'
-                      ? 'type_camping_hint'
-                      : 'type_stopover_hint'
+                    : 'type_camping_hint'
               return (
                 <label
                   key={tipo}

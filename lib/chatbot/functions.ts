@@ -33,7 +33,7 @@ export interface BusquedaAreasParams {
   servicios?: string[]
   precio_max?: number
   solo_gratuitas?: boolean
-  tipo_area?: 'publica' | 'privada' | 'camping' | 'parking'
+  tipo_area?: 'publica' | 'privada' | 'camping'
   pais?: string
   valoracion_minima?: number
 }

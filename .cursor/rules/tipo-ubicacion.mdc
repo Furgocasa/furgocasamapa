@@ -1,39 +1,27 @@
 ---
-description: Qué entra en el mapa (4 tipos) y qué se descarta
+description: Qué entra en el mapa (3 tipos) y qué se descarta
 alwaysApply: true
 ---
 
 # Tipo de ubicación
 
-Solo entran cuatro cosas. Si no es una de ellas, no está en el mapa.
+Solo entran tres cosas. Si no es una de ellas, no está en el mapa.
 
 | Código | UI | Significado |
 |--------|-----|-------------|
 | `publica` | Área pública | Área de autocaravanas de ayuntamiento / organismo público |
 | `privada` | Área privada | Área de autocaravanas de empresa o particular (casi siempre de cobro) |
 | `camping` | Camping | Recinto: valla, parcela, a menudo tiendas / bungalows |
-| `parking` | Stopover | Pernocta de paso **ofrecida** por un anfitrión (pub, tienda, granja) |
 
-No hay quinto tipo. El nombre local (aire, sosta, Stellplatz, CL, «parking autocaravanas») es etiqueta.
-
-## Área vs stopover (en el mundo y aquí)
-
-- **Área de autocaravanas:** el sitio **existe para la furgo**. Hay plazas pensadas para pernocta (y a menudo agua/vaciado). Puede ser municipal (`publica`) o de empresa (`privada`). En España el ayuntamiento a menudo lo llama «parking / aparcamiento de autocaravanas»: **sigue siendo un área**, no un stopover.
-- **Stopover:** el sitio **existe para otra cosa** (pub, tienda, bodega, granja) y **invita** a la furgo una noche. En UK se llama stopover / Brit Stops; en Francia parking de passage / chez l’habitant; en Alemania a veces Weingut. Puede no tener servicios. Eso no lo convierte en «parking cualquiera».
-
-Pregunta: ¿el sitio existe para la furgo (área) o la furgo es invitada una noche (stopover)?
-
-**No es stopover:** «Parking Autocaravanas Riaño», aparcamiento municipal, parking de un camper park, el solar del polideportivo, «alguien durmió aquí».
+No hay cuarto tipo. El nombre local (aire, sosta, Stellplatz, CL, «parking autocaravanas», Weingut) es etiqueta.
 
 ## Pública vs privada
 
-Es **titularidad**, no precio. Un área municipal de pago sigue siendo pública. Una granja o camper park gratis sigue siendo privada.
+Es **titularidad**, no precio. Un área municipal de pago sigue siendo pública. Una granja, Weingut o camper park gratis sigue siendo privada.
 
-En España:
-
-- «Área de autocaravanas [pueblo]» o «Parking autocaravanas [pueblo]» → **pública** salvo marca de empresa.
-- «Área camper [pueblo]» (Guitiriz, Mondoñedo, Villafáfila) → a menudo **municipal**. No volcar a privada solo por decir «camper».
-- Camper park, camperstop, «área camping» + nombre comercial, granja (excepto el pueblo La Granja d’Escarp), finca-caravana, Barcelona Beach, PortAventura → **privada**.
+- «Área / parking / parcheggio / Parkplatz de autocaravanas» → **pública** salvo marca de empresa.
+- Camper park, camperstop, granja, Weingut, Brit Stop, CL británico, finca-caravana → **privada**.
+- En España «área camper + pueblo» (Guitiriz) suele ser municipal. No volcar a privada solo por decir «camper».
 
 ## Camping
 
@@ -41,28 +29,19 @@ Recinto de acampada. En España «área camping» / «área camper» es un **ár
 
 ## No entra
 
-Parking del polideportivo, solar, arcén, «alguien durmió aquí», zona de acampada, wild camp, aire naturelle de campo, parking de coches (Atocha), storage / marina seca.
+Parking del polideportivo, solar, arcén, «alguien durmió aquí», zona de acampada, wild camp, aire naturelle de campo, parking de coches, storage / marina seca, taller, hire.
 
-**Un stopover puede no tener servicios.** No se admite ni se oculta por el JSON `servicios` (casi siempre vacío). No filtrar por ficha vacía.
+No filtrar por el JSON `servicios` (casi siempre vacío).
 
 ## Reino Unido / Gales
 
-No es España. El inventario es touring park, CL y alguna aire del consejo.
-
 | Señal en el nombre | Tipo |
 |---|---|
-| Arosfan, Y Glyn, aire de Gwynedd (Pwllheli, Llanberis) | `publica` (consejo) |
-| «Aire» CAMpRA / anfitrión (Cross Hands, Carreg Y Fran) | `privada` |
-| CL / CS / Certified Location (máx. ~5 furgos, granja) | `privada` |
+| Arosfan, Y Glyn, aire de Gwynedd | `publica` |
+| «Aire» CAMpRA / anfitrión, CL/CS | `privada` |
 | Club Campsite, touring/holiday/caravan park | `camping` |
-| Brit Stop, pub que invita una noche | `parking` (stopover) |
-| «Motorhome stopover» de 3 parcelas con enganche | `privada` (existe para la furgo) |
+| Brit Stop / pub / motorhome stopover de parcelas | `privada` |
 
-**No entra:** parking pay-and-display del consejo si prohíbe pernocta (Conwy Morfa Bach), taller, hire, tienda de autocaravanas.
+**Búsquedas nuevas:** clasificar al encontrar con `decidirUbicacion`. Si no encaja en una de las tres, no insertar. No default a `publica`.
 
-El piloto de Gales (`import-wales-pilot.ts`) usa `decidirUbicacion` / `classifyTipoArea` con país Reino Unido.
-
-**Búsquedas nuevas:** clasificar al encontrar. Si no encaja en una de las cuatro, no insertar. No default a `publica`. Lo usan admin `/areas/busqueda-masiva` y los imports (Iberia, Gales, México, LatAm).
-
-Código: `lib/areas/tipo-area.ts`. Doc: README § Tipo de ubicación.
-Revisar tipos en España: no usar `reclassify-tipos.ts` a ciegas sobre Europa; el sesgo histórico era «área + nombre = pública» y «parking = stopover».
+Código: `lib/areas/tipo-area.ts`.

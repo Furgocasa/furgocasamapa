@@ -23,6 +23,7 @@ dotenv.config({ path: ".env.local" });
 
 const APPLY = process.argv.includes("--apply");
 const OCULTAR_SIN_SERVICIO = process.argv.includes("--ocultar-sin-servicio");
+const SOLO_PARKING = process.argv.includes("--solo-parking");
 const PAIS_ARG = (() => {
   const i = process.argv.indexOf("--pais");
   return i >= 0 ? process.argv[i + 1] : "";
@@ -74,11 +75,13 @@ async function loadAreas() {
   }> = [];
   let page = 0;
   while (true) {
-    const { data, error } = await supabase
+    let q = supabase
       .from("areas")
       .select("id,nombre,tipo_area,pais,google_types")
-      .eq("activo", true)
       .range(page * 1000, (page + 1) * 1000 - 1);
+    if (SOLO_PARKING) q = q.eq("tipo_area", "parking");
+    else q = q.eq("activo", true);
+    const { data, error } = await q;
     if (error) throw error;
     if (!data?.length) break;
     all.push(...data);
@@ -139,7 +142,11 @@ async function main() {
   }> = [];
 
   for (const a of areas) {
-    if (!TARGET_PAISES.has(a.pais)) continue;
+    if (SOLO_PARKING) {
+      if (a.tipo_area !== "parking") continue;
+    } else if (!TARGET_PAISES.has(a.pais)) {
+      continue;
+    }
     if (PAIS_ARG && a.pais !== PAIS_ARG) continue;
     const types = Array.isArray(a.google_types) ? a.google_types : [];
     const next = classifyTipoArea(a.nombre, { pais: a.pais, types });

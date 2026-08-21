@@ -33,7 +33,7 @@ export interface Database {
           google_ratings_total: number | null
           google_types: string[] | null
           servicios: Json
-          tipo_area: 'publica' | 'privada' | 'camping' | 'parking'
+          tipo_area: 'publica' | 'privada' | 'camping'
           precio_noche: number | null
           precio_24h: boolean
           plazas_totales: number | null
@@ -72,7 +72,7 @@ export interface Database {
           google_ratings_total?: number | null
           google_types?: string[] | null
           servicios?: Json
-          tipo_area: 'publica' | 'privada' | 'camping' | 'parking'
+          tipo_area: 'publica' | 'privada' | 'camping'
           precio_noche?: number | null
           precio_24h?: boolean
           plazas_totales?: number | null
@@ -111,7 +111,7 @@ export interface Database {
           google_ratings_total?: number | null
           google_types?: string[] | null
           servicios?: Json
-          tipo_area?: 'publica' | 'privada' | 'camping' | 'parking'
+          tipo_area?: 'publica' | 'privada' | 'camping'
           precio_noche?: number | null
           precio_24h?: boolean
           plazas_totales?: number | null
