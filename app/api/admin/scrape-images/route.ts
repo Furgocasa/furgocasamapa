@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { isProhibidaParaEnriquecer } from '@/lib/areas/image-copyright'
+import { scrapeFotosWebOficial } from '@/lib/areas/scrape-official-images'
 
 function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -24,16 +25,6 @@ export async function POST(request: NextRequest) {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
   try {
-    // Validar API key
-    if (!process.env.SERPAPI_KEY) {
-      console.error('❌ [IMAGES] SERPAPI_KEY no configurada')
-      return NextResponse.json({
-        error: 'SERPAPI_KEY no configurada',
-        details: 'Añade SERPAPI_KEY al archivo .env.local',
-        errorType: 'CONFIG_ERROR'
-      }, { status: 500 })
-    }
-
     const { areaId } = await request.json()
     console.log('📝 [IMAGES] Area ID recibido:', areaId)
 
@@ -63,7 +54,22 @@ export async function POST(request: NextRequest) {
       prioridad: number
     }> = []
 
-    // ETAPA 1: Buscar imágenes en Google Images con SerpAPI
+    if (area.website) {
+      console.log('🌐 [IMAGES] Etapa 0: Web oficial...')
+      const oficiales = await scrapeFotosWebOficial(area.website, 7)
+      oficiales.forEach((url) => {
+        imagenesEncontradas.push({ url, fuente: 'Web Oficial', prioridad: 0 })
+      })
+      console.log(`  ✅ ${oficiales.length} fotos de la web oficial`)
+    }
+
+    const usarSerp = imagenesEncontradas.length < 2 && !!process.env.SERPAPI_KEY
+    if (imagenesEncontradas.length >= 2) {
+      console.log('✅ [IMAGES] Bastantes fotos oficiales; se omite Google/Park4night')
+    }
+
+    // ETAPA 1: Google Images solo si la web oficial no dio fotos
+    if (usarSerp) {
     console.log('🔎 [IMAGES] Etapa 1: Buscando en Google Images...')
     const queryImages = `"${area.nombre}" ${area.ciudad} autocaravanas`
     
@@ -90,55 +96,13 @@ export async function POST(request: NextRequest) {
       console.log('  ⚠️ Error buscando imágenes:', e)
     }
 
-    // ETAPA 2: Buscar imágenes en la web oficial si existe
-    if (area.website) {
-      console.log('🌐 [IMAGES] Etapa 2: Scrapeando web oficial...')
-      try {
-        const webResp = await fetch(area.website, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          },
-          signal: AbortSignal.timeout(5000)
-        })
-
-        if (webResp.ok) {
-          const html = await webResp.text()
-          
-          // Extraer URLs de imágenes del HTML
-          const imgRegex = /<img[^>]+src=["']([^"']+)["']/gi
-          let match
-          let count = 0
-          
-          while ((match = imgRegex.exec(html)) !== null && count < 15) {
-            let imgUrl = match[1]
-            
-            // Convertir URLs relativas a absolutas
-            if (imgUrl.startsWith('/')) {
-              const urlObj = new URL(area.website)
-              imgUrl = `${urlObj.protocol}//${urlObj.host}${imgUrl}`
-            } else if (!imgUrl.startsWith('http')) {
-              continue // Ignorar URLs inválidas
-            }
-
-            if (esImagenValida(imgUrl)) {
-              imagenesEncontradas.push({
-                url: imgUrl,
-                fuente: 'Web Oficial',
-                prioridad: 1 // Máxima prioridad
-              })
-              count++
-            }
-          }
-          
-          console.log(`  ✅ Extraídas ${count} imágenes de la web oficial`)
-        }
-      } catch (e) {
-        console.log('  ⚠️ Error scrapeando web oficial:', e)
-      }
+    // ETAPA 2: Park4night
+    } else if (imagenesEncontradas.length < 2) {
+      console.log('⚠️ [IMAGES] Sin fotos oficiales y sin SERPAPI_KEY')
     }
 
-    // ETAPA 3: Buscar imágenes en Park4night
-    console.log('🏕️ [IMAGES] Etapa 3: Buscando en Park4night...')
+    if (usarSerp) {
+    console.log('🏕️ [IMAGES] Etapa 2: Buscando en Park4night...')
     const queryPark4night = `"${area.nombre}" ${area.ciudad} site:park4night.com`
     
     try {
@@ -162,6 +126,7 @@ export async function POST(request: NextRequest) {
       }
     } catch (e) {
       console.log('  ⚠️ Error buscando Park4night:', e)
+    }
     }
 
     // Filtrar imágenes duplicadas

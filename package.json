@@ -73,7 +73,8 @@
     "import:indie-campers:confirm": "node scripts/import-indie-campers-mercado.js --confirm",
     "imagenes:purga": "ts-node --project tsconfig.scripts.json scripts/limpiar-y-generar-imagenes-ia.ts -- --solo-purga",
     "imagenes:ia": "ts-node --project tsconfig.scripts.json scripts/limpiar-y-generar-imagenes-ia.ts -- --solo-ia",
-    "imagenes:purga-ia": "ts-node --project tsconfig.scripts.json scripts/limpiar-y-generar-imagenes-ia.ts"
+    "imagenes:purga-ia": "ts-node --project tsconfig.scripts.json scripts/limpiar-y-generar-imagenes-ia.ts",
+    "imagenes:oficial": "ts-node --project tsconfig.scripts.json scripts/scrape-official-images.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

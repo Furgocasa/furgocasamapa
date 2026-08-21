@@ -7,8 +7,6 @@ import { ArrowLeftIcon, PhotoIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import type { Area } from '@/types/database.types'
 import { createClient } from '@/lib/supabase/client'
-import { isProhibidaParaEnriquecer } from '@/lib/areas/image-copyright'
-
 export default function EnriquecerImagenesPage() {
   const [areas, setAreas] = useState<Area[]>([])
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -66,181 +64,23 @@ export default function EnriquecerImagenesPage() {
   const enrichImages = async (areaId: string): Promise<boolean> => {
     try {
       console.log('🖼️ [IMAGES] Buscando imágenes para área:', areaId)
-      
-      // 1. Obtener datos del área
-      const { data: area, error: areaError } = await (supabase as any)
-        .from('areas')
-        .select('*')
-        .eq('id', areaId)
-        .single()
-
-      if (areaError || !area) {
-        console.error('❌ Área no encontrada')
-        setProcessLog(prev => [...prev, `  ❌ Área no encontrada`])
+      const resp = await fetch('/api/admin/scrape-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ areaId }),
+      })
+      const data = await resp.json()
+      if (!resp.ok || !data.success) {
+        setProcessLog((prev) => [...prev, `  ✗ ${data.message || data.error || 'Sin imágenes'}`])
         return false
       }
-
-      const imagenesEncontradas: Array<{
-        url: string
-        fuente: string
-        titulo?: string
-        prioridad: number
-      }> = []
-
-      // 2. Buscar en Google Images (vía proxy)
-      console.log('🔎 Buscando en Google Images (vía proxy)...')
-      const queryImages = `"${area.nombre}" ${area.ciudad} autocaravanas`
-      setProcessLog(prev => [...prev, `🔎 Buscando imágenes: "${queryImages}"`])
-      
-      try {
-        const respImages = await fetch('/api/admin/serpapi-proxy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: queryImages, engine: 'google_images' })
-        })
-
-        if (!respImages.ok) {
-          const errorData = await respImages.json().catch(() => ({ error: 'Error desconocido' }))
-          console.log('  ⚠️ Error con el proxy de SerpAPI:', errorData)
-          setProcessLog(prev => [...prev, `  ⚠️ Error SerpAPI: ${errorData.error || 'HTTP ' + respImages.status}`])
-          setProcessLog(prev => [...prev, `  ⚠️ Detalles: ${JSON.stringify(errorData.debug || {})}`])
-          // NO retornar false, seguir intentando otras fuentes
-        } else {
-          const resultImages = await respImages.json()
-          const dataImages = resultImages.success ? resultImages.data : null
-
-          if (dataImages && dataImages.images_results) {
-            console.log(`  ✅ ${dataImages.images_results.length} imágenes en Google Images`)
-            setProcessLog(prev => [...prev, `  ✅ ${dataImages.images_results.length} imágenes encontradas en Google`])
-            
-            dataImages.images_results.slice(0, 10).forEach((img: any) => {
-              if (img.original && esImagenValida(img.original)) {
-                imagenesEncontradas.push({
-                  url: img.original,
-                  fuente: 'Google Images',
-                  titulo: img.title,
-                  prioridad: 2
-                })
-              }
-            })
-          } else {
-            setProcessLog(prev => [...prev, `  ⚠️ No se encontraron imágenes en Google`])
-          }
-        }
-      } catch (e: any) {
-        console.log('  ⚠️ Error buscando imágenes:', e)
-        setProcessLog(prev => [...prev, `  ⚠️ Error de red: ${e.message}`])
-      }
-
-      // 3. Buscar en Park4night (vía proxy)
-      console.log('🏕️ Buscando en Park4night (vía proxy)...')
-      const queryPark4night = `"${area.nombre}" ${area.ciudad} site:park4night.com`
-      setProcessLog(prev => [...prev, `🏕️ Buscando en Park4night...`])
-      
-      try {
-        const respPark = await fetch('/api/admin/serpapi-proxy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: queryPark4night, engine: 'google_images' })
-        })
-
-        if (!respPark.ok) {
-          console.log('  ⚠️ Error con el proxy de SerpAPI para Park4night')
-          setProcessLog(prev => [...prev, `  ⚠️ Error buscando en Park4night`])
-        } else {
-          const resultPark = await respPark.json()
-          const dataPark = resultPark.success ? resultPark.data : null
-
-          if (dataPark && dataPark.images_results) {
-            console.log(`  ✅ ${dataPark.images_results.length} imágenes en Park4night`)
-            setProcessLog(prev => [...prev, `  ✅ ${dataPark.images_results.length} imágenes en Park4night`])
-            
-            dataPark.images_results.forEach((img: any) => {
-              if (img.original && esImagenValida(img.original)) {
-                imagenesEncontradas.push({
-                  url: img.original,
-                  fuente: 'Park4night',
-                  titulo: img.title,
-                  prioridad: 1 // Alta prioridad
-                })
-              }
-            })
-          } else {
-            setProcessLog(prev => [...prev, `  ⚠️ No se encontraron imágenes en Park4night`])
-          }
-        }
-      } catch (e: any) {
-        console.log('  ⚠️ Error buscando Park4night:', e)
-        setProcessLog(prev => [...prev, `  ⚠️ Error de red Park4night: ${e.message}`])
-      }
-
-      // 4. Filtrar duplicados y ordenar
-      const imagenesUnicas = eliminarDuplicados(imagenesEncontradas)
-      imagenesUnicas.sort((a: any, b: any) => a.prioridad - b.prioridad)
-
-      console.log(`📊 Total imágenes encontradas: ${imagenesUnicas.length}`)
-      setProcessLog(prev => [...prev, `📊 Total: ${imagenesUnicas.length} imágenes únicas`])
-
-      if (imagenesUnicas.length === 0) {
-        setProcessLog(prev => [...prev, `  ✗ No se encontraron imágenes válidas`])
-        return false
-      }
-
-      // 5. Guardar en BD
-      const foto_principal = imagenesUnicas[0]?.url || null
-      const fotos_urls = imagenesUnicas.slice(0, 7).map((img: any) => img.url)
-
-      console.log('💾 Actualizando base de datos...')
-      const { error: updateError } = await (supabase as any)
-        .from('areas')
-        .update({
-          foto_principal: foto_principal,
-          fotos_urls: fotos_urls,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', areaId)
-
-      if (updateError) {
-        console.error('❌ Error al actualizar BD:', updateError)
-        setProcessLog(prev => [...prev, `  ❌ Error guardando imágenes`])
-        return false
-      }
-
-      console.log('✅ Imágenes guardadas exitosamente!')
+      setProcessLog((prev) => [...prev, `  ✓ ${data.total_imagenes} fotos (${data.imagenes?.[0]?.fuente || 'web'})`])
       return true
-
     } catch (error) {
       console.error('❌ Error enriqueciendo imágenes:', error)
-      setProcessLog(prev => [...prev, `  ❌ Error de red: ${error}`])
+      setProcessLog((prev) => [...prev, `  ❌ Error de red: ${error}`])
       return false
     }
-  }
-
-  const esImagenValida = (url: string): boolean => {
-    if (!url) return false
-    if (isProhibidaParaEnriquecer(url)) return false
-
-    const blacklist = [
-      'logo', 'icon', 'avatar', 'pixel', 'badge',
-      'tracking', 'analytics', 'ad.', '/ads/',
-      'favicon', 'sprite', 'thumb',
-      '1x1', '16x16', '32x32', '64x64',
-      'data:image', 'base64'
-    ]
-
-    const urlLower = url.toLowerCase()
-    return !blacklist.some((term: any) => urlLower.includes(term))
-  }
-
-  const eliminarDuplicados = (imagenes: Array<{url: string, fuente: string, titulo?: string, prioridad: number}>) => {
-    const urlsVistas = new Set<string>()
-    return imagenes.filter((img: any) => {
-      if (urlsVistas.has(img.url)) {
-        return false
-      }
-      urlsVistas.add(img.url)
-      return true
-    })
   }
 
   const handleEnrichSelected = async () => {
