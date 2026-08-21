@@ -205,7 +205,7 @@ export default function HomePage() {
 
       {/* HERO - Azul corporativo con stats */}
       <section className="relative bg-gradient-to-br from-[#0b3c74] via-[#0d4a8f] to-[#0b3c74] text-white overflow-hidden">
-        <div className="container mx-auto px-4 py-8 md:py-24">
+        <div className="container mx-auto px-4 py-8 pb-16 md:py-24">
           <div className="max-w-4xl mx-auto text-center">
             {/* Badge superior */}
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-2 md:px-6 md:py-3 rounded-full mb-5 md:mb-8 border border-white/30 max-w-full">
@@ -265,18 +265,18 @@ export default function HomePage() {
             </div>
 
             {/* Stats cards */}
-            <div className="grid grid-cols-3 gap-2 md:gap-4 max-w-3xl mx-auto">
-              <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-3 md:py-6 px-1 border border-white/20">
-                <div className="text-2xl md:text-5xl font-bold text-white mb-1 tabular-nums">+{totalAreas}</div>
-                <div className="text-[11px] md:text-sm text-white/80 leading-tight">{t('home_stat_areas')}</div>
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 md:gap-4 max-w-3xl mx-auto">
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-2.5 md:py-6 px-1 border border-white/20">
+                <div className="text-xl sm:text-2xl md:text-5xl font-bold text-white mb-0.5 tabular-nums">+{totalAreas}</div>
+                <div className="text-[10px] sm:text-[11px] md:text-sm text-white/80 leading-tight hyphens-auto">{t('home_stat_areas')}</div>
               </div>
-              <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-3 md:py-6 px-1 border border-white/20">
-                <div className="text-2xl md:text-5xl font-bold text-white mb-1">100%</div>
-                <div className="text-[11px] md:text-sm text-white/80 leading-tight">{t('home_stat_free')}</div>
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-2.5 md:py-6 px-1 border border-white/20">
+                <div className="text-xl sm:text-2xl md:text-5xl font-bold text-white mb-0.5">100%</div>
+                <div className="text-[10px] sm:text-[11px] md:text-sm text-white/80 leading-tight hyphens-auto">{t('home_stat_free')}</div>
               </div>
-              <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-3 md:py-6 px-1 border border-white/20">
-                <div className="text-2xl md:text-5xl font-bold text-white mb-1">24/7</div>
-                <div className="text-[11px] md:text-sm text-white/80 leading-tight">{t('home_stat_updated')}</div>
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-2.5 md:py-6 px-1 border border-white/20">
+                <div className="text-xl sm:text-2xl md:text-5xl font-bold text-white mb-0.5">24/7</div>
+                <div className="text-[10px] sm:text-[11px] md:text-sm text-white/80 leading-tight hyphens-auto">{t('home_stat_updated')}</div>
               </div>
             </div>
           </div>

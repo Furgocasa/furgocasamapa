@@ -54,7 +54,7 @@ export function PaisLandingPage({ pais }: PaisLandingPageProps) {
 
       {/* HERO - Azul corporativo específico del país */}
       <section className="relative bg-gradient-to-br from-[#0b3c74] via-[#0d4a8f] to-[#0b3c74] text-white overflow-hidden">
-        <div className="container mx-auto px-4 py-8 md:py-24">
+        <div className="container mx-auto px-4 py-8 pb-16 md:py-24">
           <div className="max-w-4xl mx-auto text-center">
             {/* Badge superior con emoji del país */}
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-2 md:px-6 md:py-3 rounded-full mb-5 md:mb-8 border border-white/30 max-w-full">
