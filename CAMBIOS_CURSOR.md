@@ -271,6 +271,15 @@
 
 ---
 
+## BLOQUE EXTRA — Huecos Francia (ago 2026)
+
+- **Qué**: malla 25 km sobre metrópoli + Córcega. 1192 aires previas, todas públicas.
+- **Huecos**: Perche, Ardenas, Finistère, Béarn, Córcega, Lorena, Ariège, Poitou, Livradois, Gers, Bessin, Bugey, Beauce, Diois.
+- **Términos**: aire camping-car, aire de service, camping camping-car. Camping-Car Park = privada.
+- **Comandos**: `npm run import:francia:gaps` → `--from-report --import`.
+
+---
+
 ## BLOQUE EXTRA — Huecos Alemania (ago 2026)
 
 - **Qué**: misma malla 25 km. 395 áreas previas (todas públicas); ~47 % celdas vacías.

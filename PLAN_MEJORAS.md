@@ -204,6 +204,7 @@ porque pedían login demasiado pronto o porque no se veían.
   detección de huecos en península (radio 25 km) + import Places (~169);
   Baleares (0 previas → 20: Mallorca/Menorca/Ibiza);
   huecos Alemania (395 → 770 stellplätze/campings);
+  huecos Francia (1192 → 1572 aires/campings);
   caché `/api/areas` a 30 s (`s-maxage=30`, sin SWR) para que los lotes
   salgan en el mapa al hacer Ctrl+F5. Landing `/mapa-autocaravanas-reino-unido`.
 - **21 ago 2026 (Tío Viajero)**: admin tabla + quesito; primera evaluación
