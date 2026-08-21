@@ -21,6 +21,9 @@
  *   npm run import:belgica:gaps
  *   npm run import:luxemburgo:gaps
  *   npm run import:holanda:gaps
+ *   npm run import:dinamarca:gaps
+ *   npm run import:suecia:gaps
+ *   npm run import:noruega:gaps
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -66,6 +69,12 @@ let REPORT_NAME =
           ? "luxemburgo-gaps-dry-report.json"
         : REGION === "holanda"
           ? "holanda-gaps-dry-report.json"
+        : REGION === "dinamarca"
+          ? "dinamarca-gaps-dry-report.json"
+        : REGION === "suecia"
+          ? "suecia-gaps-dry-report.json"
+        : REGION === "noruega"
+          ? "noruega-gaps-dry-report.json"
         : "iberia-gaps-dry-report.json";
 if (SOLO_STOPOVER) {
   REPORT_NAME = REPORT_NAME.replace("-gaps-dry-report.json", "-stopover-dry-report.json");
@@ -256,6 +265,66 @@ const HUECOS_HOLANDA = [
   { id: 16, zona: "Frisia Occidental", lat: 52.65, lng: 5.05, pais: "Países Bajos" },
 ];
 
+/** Dinamarca: 53 áreas. Autocamperplads (y Stellplatz por turismo DE). */
+const HUECOS_DINAMARCA = [
+  { id: 1, zona: "Copenhague", lat: 55.68, lng: 12.57, pais: "Dinamarca" },
+  { id: 2, zona: "Nordsjælland", lat: 56.03, lng: 12.3, pais: "Dinamarca" },
+  { id: 3, zona: "Zealand oeste / Roskilde", lat: 55.64, lng: 12.08, pais: "Dinamarca" },
+  { id: 4, zona: "Lolland / Falster", lat: 54.77, lng: 11.87, pais: "Dinamarca" },
+  { id: 5, zona: "Fionia / Odense", lat: 55.4, lng: 10.39, pais: "Dinamarca" },
+  { id: 6, zona: "Jutlandia sur / Kolding", lat: 55.49, lng: 9.47, pais: "Dinamarca" },
+  { id: 7, zona: "Aarhus", lat: 56.16, lng: 10.2, pais: "Dinamarca" },
+  { id: 8, zona: "Viborg / Midtjylland", lat: 56.45, lng: 9.4, pais: "Dinamarca" },
+  { id: 9, zona: "Ringkøbing / oeste", lat: 56.09, lng: 8.24, pais: "Dinamarca" },
+  { id: 10, zona: "Thy / Noroeste", lat: 56.95, lng: 8.7, pais: "Dinamarca" },
+  { id: 11, zona: "Aalborg", lat: 57.05, lng: 9.92, pais: "Dinamarca" },
+  { id: 12, zona: "Skagen / Vendsyssel", lat: 57.5, lng: 10.2, pais: "Dinamarca" },
+  { id: 13, zona: "Sønderjylland / Tønder", lat: 55.05, lng: 8.87, pais: "Dinamarca" },
+  { id: 14, zona: "Bornholm", lat: 55.13, lng: 14.92, pais: "Dinamarca" },
+  { id: 15, zona: "Møn / Vordingborg", lat: 55.0, lng: 12.2, pais: "Dinamarca" },
+  { id: 16, zona: "Silkeborg", lat: 56.17, lng: 9.55, pais: "Dinamarca" },
+];
+
+/** Suecia: 51 áreas. El término es ställplats / husbil. */
+const HUECOS_SUECIA = [
+  { id: 1, zona: "Skåne / Malmö", lat: 55.6, lng: 13.0, pais: "Suecia" },
+  { id: 2, zona: "Skåne este / Kristianstad", lat: 56.03, lng: 14.15, pais: "Suecia" },
+  { id: 3, zona: "Halland / Halmstad", lat: 56.67, lng: 12.86, pais: "Suecia" },
+  { id: 4, zona: "Småland / Växjö", lat: 56.88, lng: 14.81, pais: "Suecia" },
+  { id: 5, zona: "Blekinge", lat: 56.16, lng: 15.59, pais: "Suecia" },
+  { id: 6, zona: "Gotemburgo / Bohuslän", lat: 57.71, lng: 11.97, pais: "Suecia" },
+  { id: 7, zona: "Västergötland", lat: 58.39, lng: 13.85, pais: "Suecia" },
+  { id: 8, zona: "Östergötland / Linköping", lat: 58.41, lng: 15.62, pais: "Suecia" },
+  { id: 9, zona: "Estocolmo / Mälaren", lat: 59.33, lng: 17.8, pais: "Suecia" },
+  { id: 10, zona: "Dalarna / Mora", lat: 61.0, lng: 14.54, pais: "Suecia" },
+  { id: 11, zona: "Värmland / Karlstad", lat: 59.38, lng: 13.5, pais: "Suecia" },
+  { id: 12, zona: "Gotland", lat: 57.5, lng: 18.47, pais: "Suecia" },
+  { id: 13, zona: "Sundsvall / Norrland", lat: 62.39, lng: 17.31, pais: "Suecia" },
+  { id: 14, zona: "Västerbotten / Umeå", lat: 63.83, lng: 20.26, pais: "Suecia" },
+  { id: 15, zona: "Norrbotten / Luleå", lat: 65.58, lng: 22.15, pais: "Suecia" },
+  { id: 16, zona: "Laponia / Kiruna", lat: 67.86, lng: 20.23, pais: "Suecia" },
+];
+
+/** Noruega: 113 áreas. El término es bobilplass. */
+const HUECOS_NORUEGA = [
+  { id: 1, zona: "Oslo / Østlandet", lat: 59.91, lng: 10.75, pais: "Noruega" },
+  { id: 2, zona: "Østfold / Fredrikstad", lat: 59.22, lng: 10.93, pais: "Noruega" },
+  { id: 3, zona: "Telemark", lat: 59.56, lng: 9.26, pais: "Noruega" },
+  { id: 4, zona: "Sørlandet / Kristiansand", lat: 58.15, lng: 8.0, pais: "Noruega" },
+  { id: 5, zona: "Rogaland / Stavanger", lat: 58.97, lng: 5.73, pais: "Noruega" },
+  { id: 6, zona: "Vestland / Bergen", lat: 60.39, lng: 5.32, pais: "Noruega" },
+  { id: 7, zona: "Sognefjord", lat: 61.23, lng: 7.1, pais: "Noruega" },
+  { id: 8, zona: "Ålesund / Geiranger", lat: 62.47, lng: 6.15, pais: "Noruega" },
+  { id: 9, zona: "Trondheim", lat: 63.43, lng: 10.4, pais: "Noruega" },
+  { id: 10, zona: "Møre / Kristiansund", lat: 63.11, lng: 7.73, pais: "Noruega" },
+  { id: 11, zona: "Nordland / Bodø", lat: 67.28, lng: 14.4, pais: "Noruega" },
+  { id: 12, zona: "Lofoten", lat: 68.23, lng: 14.56, pais: "Noruega" },
+  { id: 13, zona: "Tromsø", lat: 69.65, lng: 18.96, pais: "Noruega" },
+  { id: 14, zona: "Finnmark / Alta", lat: 69.97, lng: 23.27, pais: "Noruega" },
+  { id: 15, zona: "Innlandet / Lillehammer", lat: 61.12, lng: 10.47, pais: "Noruega" },
+  { id: 16, zona: "Hardanger", lat: 60.07, lng: 6.55, pais: "Noruega" },
+];
+
 const HUECOS =
   REGION === "baleares"
     ? HUECOS_BALEARES
@@ -275,7 +344,13 @@ const HUECOS =
                   ? HUECOS_LUXEMBURGO
                   : REGION === "holanda"
                     ? HUECOS_HOLANDA
-                    : HUECOS_PENINSULA;
+                    : REGION === "dinamarca"
+                      ? HUECOS_DINAMARCA
+                      : REGION === "suecia"
+                        ? HUECOS_SUECIA
+                        : REGION === "noruega"
+                          ? HUECOS_NORUEGA
+                          : HUECOS_PENINSULA;
 
 const TERMINOS_ES = [
   "área autocaravanas",
@@ -319,8 +394,23 @@ const TERMINOS_NL = ["camperplaats", "camperplaatsen", "camping camper"];
 const STOPOVER_NL = ["camperparking", "camper parkeerplaats"];
 const TERMINOS_LU = ["aire camping-car", "Wohnmobilstellplatz", "camping camping-car"];
 const STOPOVER_LU = ["parking camping-car", "camperplaats"];
+const TERMINOS_DK = ["autocamperplads", "campingplads autocamper", "stellplatz"];
+const STOPOVER_DK = ["autocamper parkering"];
+const TERMINOS_SE = ["ställplats", "husbil ställplats", "camping husbil"];
+const STOPOVER_SE = ["husbilsparkering"];
+const TERMINOS_NO = ["bobilplass", "bobilplasser", "camping bobil"];
+const STOPOVER_NO = ["bobilparkering"];
 
 function terminosDe(hueco: { pais?: string; lang?: string }) {
+  if (REGION === "dinamarca") {
+    return SOLO_STOPOVER ? STOPOVER_DK : [...TERMINOS_DK, ...STOPOVER_DK];
+  }
+  if (REGION === "suecia") {
+    return SOLO_STOPOVER ? STOPOVER_SE : [...TERMINOS_SE, ...STOPOVER_SE];
+  }
+  if (REGION === "noruega") {
+    return SOLO_STOPOVER ? STOPOVER_NO : [...TERMINOS_NO, ...STOPOVER_NO];
+  }
   if (REGION === "holanda") {
     return SOLO_STOPOVER ? STOPOVER_NL : [...TERMINOS_NL, ...STOPOVER_NL];
   }
@@ -376,9 +466,9 @@ function terminosDe(hueco: { pais?: string; lang?: string }) {
 }
 
 const RELEVANCE_RE =
-  /\b(autocaravana|autocaravanas|autocaravanes|camper|caravana|camping|c[aà]mping|campismo|campground|aire|area de servicio|área de servicio|sosta|stellplatz|motorhome|campervan|caravaning|weingut|stopover|camperplaats)\b|wohnmobil|reisemobil/i;
+  /\b(autocaravana|autocaravanas|autocaravanes|camper|caravana|camping|c[aà]mping|campismo|campground|aire|area de servicio|área de servicio|sosta|stellplatz|motorhome|campervan|caravaning|weingut|stopover|camperplaats|husbil|bobil|autocamper)\b|wohnmobil|reisemobil|stallplats|bobilplass|autocamperplads/i;
 const NOISE_RE =
-  /\b(hotel|motel|hostal|hostel|restaurante|restaurant|gasolinera|gas station|dealer|concesionario|venta|alquiler|hire|rental|rentals|rent\b|storage|trasteros?|rimessaggio|agencia|experience|indie campers|vermietung|verkauf|haendler|händler|autohaus|noleggio|overnachten niet toegestaan|no overnight|sin pernocta)\b/i;
+  /\b(hotel|motel|hostal|hostel|restaurante|restaurant|gasolinera|gas station|dealer|concesionario|venta|alquiler|hire|rental|rentals|rent\b|storage|trasteros?|rimessaggio|agencia|experience|indie campers|vermietung|verkauf|haendler|händler|autohaus|noleggio|overnachten niet toegestaan|no overnight|sin pernocta|vaerksted|teltplass|leieplattform)\b/i;
 
 function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -492,6 +582,34 @@ function isInNetherlands(lat: number, lng: number): boolean {
   return true;
 }
 
+function isInDenmark(lat: number, lng: number): boolean {
+  if (lat >= 54.98 && lat <= 55.32 && lng >= 14.67 && lng <= 15.16) return true;
+  if (lat < 54.56 || lat > 57.76 || lng < 8.07 || lng > 12.79) return false;
+  if (lat < 54.83 && lng < 9.6) return false;
+  if (lat < 54.7 && lng < 11.5) return false;
+  if (lng > 12.65 && lat < 56.0) return false;
+  return true;
+}
+
+function isInSweden(lat: number, lng: number): boolean {
+  if (lat >= 56.9 && lat <= 57.95 && lng >= 18.1 && lng <= 19.35) return true;
+  if (lat >= 56.19 && lat <= 57.37 && lng >= 16.38 && lng <= 17.16) return true;
+  if (lat < 55.34 || lat > 69.07 || lng < 11.11 || lng > 24.17) return false;
+  if (lat < 56.1 && lng < 12.7) return false;
+  if (lng < 11.8 && lat > 58.5) return false;
+  if (lng < 12.2 && lat > 59.0 && lat < 62.0) return false;
+  if (lng > 23.8 && lat > 65.7) return false;
+  return true;
+}
+
+function isInNorway(lat: number, lng: number): boolean {
+  if (lat < 57.97 || lat > 71.19 || lng < 4.5 || lng > 31.2) return false;
+  if (lng > 12.6 && lat < 60.2) return false;
+  if (lng > 15.2 && lat > 61.0 && lat < 64.0) return false;
+  if (lng > 24.5 && lat < 69.2) return false;
+  return true;
+}
+
 function isInBaleares(lat: number, lng: number): boolean {
   if (lat >= 39.25 && lat <= 39.97 && lng >= 2.3 && lng <= 3.48) return true; // Mallorca
   if (lat >= 39.78 && lat <= 40.1 && lng >= 3.78 && lng <= 4.33) return true; // Menorca
@@ -568,6 +686,17 @@ function isRelevant(name: string, types: string[], pais?: string): boolean {
   if (REGION === "holanda" || REGION === "belgica" || REGION === "luxemburgo") {
     if (
       !/camperplaats|camperparking|stellplatz|wohnmobil|camping-car|\bcamper\b|\baire\b|campingplatz/i.test(
+        name
+      ) &&
+      !types.includes("campground") &&
+      !types.includes("rv_park")
+    ) {
+      return false;
+    }
+  }
+  if (REGION === "dinamarca" || REGION === "suecia" || REGION === "noruega") {
+    if (
+      !/stallplats|bobilplass|autocamper|husbil|bobil|stellplatz|campingplads|campingplass|\bcamper\b|wohnmobil/i.test(
         name
       ) &&
       !types.includes("campground") &&
@@ -713,6 +842,15 @@ async function importUtiles(utiles: any[]) {
     } else if (REGION === "holanda") {
       if (cc && cc !== "NL") continue;
       if (!isInNetherlands(hit.lat, hit.lng)) continue;
+    } else if (REGION === "dinamarca") {
+      if (cc && cc !== "DK") continue;
+      if (!isInDenmark(hit.lat, hit.lng)) continue;
+    } else if (REGION === "suecia") {
+      if (cc && cc !== "SE") continue;
+      if (!isInSweden(hit.lat, hit.lng)) continue;
+    } else if (REGION === "noruega") {
+      if (cc && cc !== "NO") continue;
+      if (!isInNorway(hit.lat, hit.lng)) continue;
     } else if (cc && cc !== "ES" && cc !== "PT") {
       continue;
     }
@@ -735,6 +873,12 @@ async function importUtiles(utiles: any[]) {
               ? "Luxemburgo"
               : REGION === "holanda" || cc === "NL"
                 ? "Países Bajos"
+          : REGION === "dinamarca" || cc === "DK"
+            ? "Dinamarca"
+            : REGION === "suecia" || cc === "SE"
+              ? "Suecia"
+              : REGION === "noruega" || cc === "NO"
+                ? "Noruega"
           : cc === "PT"
             ? "Portugal"
             : "España";
@@ -755,6 +899,12 @@ async function importUtiles(utiles: any[]) {
                     ? "lu"
                     : pais === "Países Bajos"
                       ? "nl"
+                    : pais === "Dinamarca"
+                      ? "dk"
+                      : pais === "Suecia"
+                        ? "se"
+                        : pais === "Noruega"
+                          ? "no"
                 : pais === "Portugal"
                   ? "pt"
                   : "es";
@@ -845,6 +995,12 @@ async function main() {
           ? "\nLuxemburgo — 6 disparos (FR/DE, radio 40 km)"
         : REGION === "holanda"
           ? "\nPaíses Bajos — 16 disparos (camperplaats, radio 40 km)"
+        : REGION === "dinamarca"
+          ? "\nDinamarca — 16 disparos (autocamperplads, radio 40 km)"
+        : REGION === "suecia"
+          ? "\nSuecia — 16 disparos (ställplats, radio 40 km)"
+        : REGION === "noruega"
+          ? "\nNoruega — 16 disparos (bobilplass, radio 40 km)"
         : "\nPenínsula — búsqueda en 16 huecos (radio 40 km)"
   );
   if (SOLO_STOPOVER) {
@@ -875,6 +1031,12 @@ async function main() {
               ? "it"
               : REGION === "holanda"
                 ? "nl"
+                : REGION === "dinamarca"
+                  ? "da"
+                  : REGION === "suecia"
+                    ? "sv"
+                    : REGION === "noruega"
+                      ? "no"
                 : "es");
       const results = await nearby(termino, hueco.lat, hueco.lng, lang);
       let nuevos = 0;
@@ -892,6 +1054,9 @@ async function main() {
         if (REGION === "belgica" && !isInBelgium(r.lat, r.lng)) continue;
         if (REGION === "luxemburgo" && !isInLuxembourg(r.lat, r.lng)) continue;
         if (REGION === "holanda" && !isInNetherlands(r.lat, r.lng)) continue;
+        if (REGION === "dinamarca" && !isInDenmark(r.lat, r.lng)) continue;
+        if (REGION === "suecia" && !isInSweden(r.lat, r.lng)) continue;
+        if (REGION === "noruega" && !isInNorway(r.lat, r.lng)) continue;
         seen.add(r.place_id);
         const decision = decidirUbicacion(r.name, { types: r.types, pais: hueco.pais });
         const relevant = decision.admite;
