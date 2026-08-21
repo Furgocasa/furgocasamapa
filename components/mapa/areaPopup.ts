@@ -4,6 +4,28 @@ import { DEFAULT_LOCALE } from '@/lib/i18n/config'
 import { getServicioLabel, getTipoAreaLabel, SERVICIO_ICONS } from '@/lib/i18n/labels'
 import { t } from '@/lib/i18n/ui'
 
+const INVALID_COVER = /PhotoService\.GetPhoto|maps\.googleapis\.com\/maps\/api\/place\/js/i
+
+function isUsableCoverUrl(url: unknown): url is string {
+  return typeof url === 'string' && url.startsWith('http') && !INVALID_COVER.test(url)
+}
+
+/** Portada del área: foto_principal, o la primera de fotos_urls si hace falta. */
+export function getAreaCoverUrl(area: Pick<Area, 'foto_principal'> & { fotos_urls?: Area['fotos_urls'] | string | null }): string | null {
+  if (isUsableCoverUrl(area.foto_principal)) return area.foto_principal
+
+  const extras = area.fotos_urls
+  if (Array.isArray(extras)) {
+    const found = extras.find(isUsableCoverUrl)
+    if (found) return found
+  } else if (typeof extras === 'string') {
+    const found = extras.split(',').map((s) => s.trim()).find(isUsableCoverUrl)
+    if (found) return found
+  }
+
+  return null
+}
+
 /**
  * Contenido HTML compartido del popup/InfoWindow que aparece al hacer clic
  * sobre un área en el mapa. Es la ÚNICA fuente de verdad para los 3 proveedores
@@ -12,7 +34,7 @@ import { t } from '@/lib/i18n/ui'
 export function buildAreaPopupHTML(
   area: Area,
   getColor: (tipo: string) => string,
-  imageMargin: number = -15,
+  imageMargin: number = 0,
   locale: Locale = DEFAULT_LOCALE
 ): string {
   const esc = (value: unknown): string =>
@@ -65,16 +87,19 @@ export function buildAreaPopupHTML(
   if (area.acceso_24h) chips.push(chip(`🕒 24h`))
   if (area.barrera_altura) chips.push(chip(`📏 ${area.barrera_altura} m`))
 
-  const imageBlock = area.foto_principal
+  const coverUrl = getAreaCoverUrl(area)
+  const imageBlock = coverUrl
     ? `
-      <div style="position:relative;margin:${imageMargin}px ${imageMargin}px 0 ${imageMargin}px;height:172px;background:#e5e7eb;">
-        <img src="${esc(area.foto_principal)}" alt="${esc(area.nombre)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'"/>
+      <div style="position:relative;margin:${imageMargin}px ${imageMargin}px 0 ${imageMargin}px;height:168px;background:#e5e7eb;overflow:hidden;">
+        <img src="${esc(coverUrl)}" alt="${esc(area.nombre)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none';var f=this.parentElement.nextElementSibling;if(f)f.style.display='block';"/>
         <div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.12) 42%, rgba(0,0,0,0) 62%);"></div>
         <span style="position:absolute;bottom:38px;left:14px;background:${color};color:#fff;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.3px;box-shadow:0 2px 6px rgba(0,0,0,0.25);">${esc(tipo)}</span>
         <h3 style="position:absolute;left:14px;right:14px;bottom:10px;margin:0;color:#fff;font-size:18px;font-weight:800;line-height:1.25;text-shadow:0 1px 4px rgba(0,0,0,0.6);">${esc(area.nombre)}</h3>
       </div>`
-    : `
-      <div style="margin:2px 4px 4px 4px;">
+    : ''
+
+  const titleFallback = `
+      <div class="area-popup-title" style="padding:12px 14px 0 14px;${coverUrl ? 'display:none;' : ''}">
         <span style="display:inline-block;background:${color};color:#fff;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.3px;margin-bottom:6px;">${esc(tipo)}</span>
         <h3 style="margin:0;font-size:18px;font-weight:800;color:#111827;line-height:1.25;padding-right:24px;">${esc(area.nombre)}</h3>
       </div>`
@@ -82,7 +107,8 @@ export function buildAreaPopupHTML(
   return `
     <div style="width:318px;max-width:88vw;font-family:system-ui,-apple-system,sans-serif;color:#1f2937;">
       ${imageBlock}
-      <div style="padding:12px 4px 2px 4px;">
+      ${titleFallback}
+      <div style="padding:12px 14px 12px 14px;">
         ${
           ubicacion
             ? `<div style="display:flex;align-items:center;gap:5px;color:#6B7280;font-size:13px;margin-bottom:10px;">

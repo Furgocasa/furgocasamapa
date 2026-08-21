@@ -398,7 +398,7 @@ export function MapLibreMap({
 
   // Crear contenido HTML para popup - SINCRONIZADO con Google y Leaflet
   const createInfoWindowContent = (area: Area): string => {
-    return buildAreaPopupHTML(area, getTipoAreaColor, -15, locale)
+    return buildAreaPopupHTML(area, getTipoAreaColor, 0, locale)
   }
 
   // Función para activar/desactivar GPS
@@ -510,7 +510,7 @@ export function MapLibreMap({
       {/* Estilos para popup */}
       <style jsx global>{`
         .maplibregl-popup-content {
-          padding: 15px !important;
+          padding: 0 !important;
           border-radius: 16px !important;
           box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
           overflow: hidden !important;
