@@ -339,7 +339,7 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
             {t('type_filter')}
           </label>
           <div className="space-y-1 bg-gray-50 rounded-lg p-2">
-            {TIPO_AREA_IDS.filter((tipo) => tipo !== 'parking').map((tipo) => {
+            {TIPO_AREA_IDS.map((tipo) => {
               const hintKey =
                 tipo === 'publica'
                   ? 'type_public_hint'
