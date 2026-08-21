@@ -33,7 +33,7 @@ import { getCached, CACHE_TTL } from '@/lib/cache/redis'
 
 // Logger
 import { logger } from '@/lib/logger'
-import { validateOpenAIModel, buildTokensParam } from '@/lib/openai/model-validation'
+import { validateOpenAIModel, buildTokensParam, buildReasoningForTools } from '@/lib/openai/model-validation'
 
 // ============================================
 // CONFIGURACIÓN
@@ -715,7 +715,8 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         tools,
         tool_choice: toolChoice,
         temperature: config.temperature,
-        ...buildTokensParam(config.max_tokens)
+        ...buildTokensParam(config.max_tokens),
+        ...buildReasoningForTools(config.modelo)
       })
 
       const response = completion.choices[0].message
@@ -811,7 +812,8 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         model: config.modelo,
         messages: conversation,
         temperature: config.temperature,
-        ...buildTokensParam(config.max_tokens)
+        ...buildTokensParam(config.max_tokens),
+        ...buildReasoningForTools(config.modelo)
       })
       finalResponse = closing.choices[0].message.content || ''
       totalTokens += closing.usage?.total_tokens || 0

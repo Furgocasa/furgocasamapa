@@ -170,6 +170,10 @@
 - Búsqueda por nombre: alias (Massabielle → Lourdes, bolemdam → Volendam) + geocodificación Nominatim y radio (no ILIKE suelto tipo “Ajo” → Países Bajos).
 - Prompt de calidad: no heredar filtros si solo nombran ciudad; no buscar gasolineras; idioma del último mensaje.
 
+### 7.10 gpt-5.6-terra + tools (21 ago 2026)
+- **Error**: `Function tools with reasoning_effort are not supported for gpt-5.6-terra in /v1/chat/completions`.
+- **Fix**: `reasoning_effort: 'none'` en las llamadas del chatbot (`buildReasoningForTools`).
+
 ### 7.6 Conexión chatbot → mapa (tarjetas de área)
 - **Qué**: al clicar una tarjeta de área en el chat, ya NO se abre `/area/[slug]` en pestaña nueva; ahora lleva AL MAPA con esa área seleccionada (centrada y con popup abierto). El chat se minimiza para poder retomarlo. Desde el popup del mapa el usuario ya tiene "Ver detalles".
 - **Archivos**:
