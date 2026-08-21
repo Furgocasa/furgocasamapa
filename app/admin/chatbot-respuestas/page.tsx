@@ -54,6 +54,7 @@ export default function ChatbotRespuestasPage() {
   const [total, setTotal] = useState(0)
   const [expandido, setExpandido] = useState<string | null>(null)
   const [notas, setNotas] = useState<Record<string, string>>({})
+  const [errorCarga, setErrorCarga] = useState<string | null>(null)
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -71,27 +72,23 @@ export default function ChatbotRespuestasPage() {
   const cargar = useCallback(async () => {
     if (!authorized) return
     setLoading(true)
+    setErrorCarga(null)
     try {
-      const supabase = createClient()
-      let query = (supabase as any)
-        .from('chatbot_respuestas_log')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .range(pagina * PAGE_SIZE, (pagina + 1) * PAGE_SIZE - 1)
-
-      if (filtro === 'pendientes') query = query.eq('revisado', false)
-      if (filtro === 'revisadas') query = query.eq('revisado', true)
-
-      if (filtroIA === 'sin_evaluar') query = query.is('evaluado_at', null)
-      else if (filtroIA !== 'todas') query = query.eq('valoracion_ia', filtroIA)
-
-      const { data, error, count } = await query
-      if (error) throw error
-      setLogs(data || [])
-      setTotal(count || 0)
-    } catch (e) {
+      const params = new URLSearchParams({
+        filtro,
+        filtroIA,
+        pagina: String(pagina),
+      })
+      const res = await fetch(`/api/admin/chatbot-respuestas?${params}`, { cache: 'no-store' })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.details || json.error || 'Error cargando respuestas')
+      setLogs(json.data || [])
+      setTotal(json.total || 0)
+    } catch (e: any) {
       console.error('Error cargando respuestas:', e)
       setLogs([])
+      setTotal(0)
+      setErrorCarga(e?.message || 'Error cargando respuestas')
     } finally {
       setLoading(false)
     }
@@ -103,16 +100,21 @@ export default function ChatbotRespuestasPage() {
 
   const marcarRevisado = async (id: string, revisado: boolean) => {
     try {
-      const supabase = createClient()
-      const { error } = await (supabase as any)
-        .from('chatbot_respuestas_log')
-        .update({ revisado, nota_revision: notas[id]?.trim() || null })
-        .eq('id', id)
-      if (error) throw error
+      const res = await fetch('/api/admin/chatbot-respuestas', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          revisado,
+          nota_revision: notas[id]?.trim() || null,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.details || json.error || 'No se pudo actualizar')
       setLogs((prev) => prev.map((l) => (l.id === id ? { ...l, revisado, nota_revision: notas[id]?.trim() || null } : l)))
     } catch (e) {
       console.error('Error actualizando:', e)
-      alert('No se pudo actualizar. ¿Has ejecutado la migración chatbot_respuestas_log y tienes permisos de admin?')
+      alert('No se pudo actualizar la revisión. Inténtalo de nuevo.')
     }
   }
 
@@ -179,10 +181,14 @@ export default function ChatbotRespuestasPage() {
         <div className="flex justify-center py-16">
           <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-sky-200 border-t-sky-600"></div>
         </div>
+      ) : errorCarga ? (
+        <div className="bg-white rounded-2xl border border-red-200 p-12 text-center text-red-600">
+          No se pudieron cargar las respuestas.
+          <p className="text-xs mt-2 text-gray-500">{errorCarga}</p>
+        </div>
       ) : logs.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center text-gray-500">
           No hay respuestas {filtro === 'pendientes' ? 'pendientes de revisar' : filtro === 'revisadas' ? 'revisadas' : 'registradas'} todavía.
-          <p className="text-xs mt-2">Recuerda ejecutar la migración <code>20260728_chatbot_respuestas_log.sql</code> en Supabase.</p>
         </div>
       ) : (
         <div className="space-y-3">
