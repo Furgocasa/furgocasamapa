@@ -159,8 +159,8 @@ async function main() {
     console.log(`\n→ ${to} (${changes.filter((c) => c.to === to).length}):`);
     xs.forEach((c) => console.log(`  [${c.from}] ${c.nombre}`));
   };
-  show("camping");
-  show("privada", 25);
+  show("camping", 40);
+  show("privada", 40);
   show("publica", 15);
   const warn = changes.filter((c) => c.from === "privada" || c.from === "camping");
   if (warn.length) {

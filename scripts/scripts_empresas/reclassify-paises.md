@@ -25,7 +25,7 @@ Revisar `camping→publica` y `privada→publica` antes de aplicar.
 | B | Países Bajos | hecha | 16 camperpark → privada, 9 camping |
 | B | Bélgica | hecha | 5 camperpark → privada, 1 camping |
 | C | Francia | hecha | 2ª pasada vigilada: granja/Onlypark/Intermarché → privada; Yelloh/Huttopia/Slow Village → camping. Aires de pueblo siguen publica |
-| C | Italia | hecha | 65 camping, 46 camper stop/park → privada |
+| C | Italia | hecha | agriturismo/masseria/tenuta → privada; agricampeggio/villaggio → camping. Sosta de pueblo sigue publica |
 | D | Noruega | hecha | 55 camping (resto bobilplass sigue publica) |
 | D | Dinamarca | hecha | 11 camping, 1 camperstop |
 | D | Suecia | hecha | 20 camping |

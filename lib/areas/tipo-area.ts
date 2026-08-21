@@ -87,7 +87,7 @@ function esParkingAutocaravana(n: string): boolean {
 function esAnfitrionPrivado(n: string): boolean {
   return (
     esStopoverDeAnfitrion(n) ||
-    /\b(weingut|obsthof|bauernhof|buschenschank|heuriger|weinverkostung|chez l.habitant|brit.?stop)\b/.test(n) ||
+    /\b(weingut|obsthof|bauernhof|buschenschank|heuriger|weinverkostung|chez l.habitant|brit.?stop|agriturismos?|azienda agricola|fattoria|cascina|tenuta|masseria|cantina)\b/.test(n) ||
     /\b(a la ferme|bienvenue a la ferme|ferme de |ferme des |ferme du |ferme aux |ferme la |france ?passion|homecamper|home camper|gaec)\b/.test(
       n
     ) ||
@@ -97,9 +97,10 @@ function esAnfitrionPrivado(n: string): boolean {
 
 function esMarcaPrivada(n: string): boolean {
   return (
-    /\b(camper ?park(?!ing)|camperpark|camperparking|camper ?stop|camperstop|vanventure|low cost|bon bini|stop and go|onlypark|intermarche|edenparking|the stop|barcelona beach|granadaparking|portaventura|ciutat caravaning|parkingvan|mundo autocaravanas|valcaravan|webcaravan|sol calnegre|tortuga mora|los narejos|maravilla parking|el moreral|murcia rio|anibal)\b/.test(
+    /\b(camper ?park(?!ing)|camperpark|camperparking|vanventure|low cost|bon bini|stop and go|onlypark|intermarche|edenparking|the stop|barcelona beach|granadaparking|portaventura|ciutat caravaning|parkingvan|mundo autocaravanas|valcaravan|webcaravan|sol calnegre|tortuga mora|los narejos|maravilla parking|el moreral|murcia rio|anibal)\b/.test(
       n
     ) ||
+    (/\b(camper ?stop|camperstop)\b/.test(n) && !/\bcamper stop area\b/.test(n)) ||
     (/\bgranja\b/.test(n) && !/\bla granja(\s+d|\s*$)/.test(n) && !/\barea(s)? autocaravanas la granja\b/.test(n)) ||
     (/\bdomaine\b/.test(n) && !/\b(municipal|communale|mairie)\b/.test(n)) ||
     /\bfinca-?caravana\b/.test(n) ||
@@ -319,9 +320,9 @@ export function classifyTipoArea(
 
   const nameIsCamping =
     !isMotorhomeWording(n) &&
-    !esAreaEnNombre &&
+    !(esAreaEnNombre && !/\b(agricampeggio|agri ?campeggio|campeggio|villaggio)\b/.test(n)) &&
     !/\b(rimessaggio|soccorso|storage|invernaje)\b/.test(n) &&
-    /\b(camping|campeggio|campismo|campground|campsite|camp site|campamentos?|campament|acampada|caravan park|holiday park|touring park|trailer park|rv park|rv resort|parque de trailers?|parque de campismo|campingplads|campingplass|yelloh|huttopia|center parcs|slow village|caravaneige|sporting club)\b/.test(
+    /\b(camping|campeggio|campismo|campground|campsite|camp site|campamentos?|campament|acampada|agricampeggio|agri ?campeggio|villaggio|tourist village|caravan park|holiday park|touring park|trailer park|rv park|rv resort|parque de trailers?|parque de campismo|campingplads|campingplass|yelloh|huttopia|center parcs|slow village|caravaneige|sporting club)\b/.test(
       n
     )
 
