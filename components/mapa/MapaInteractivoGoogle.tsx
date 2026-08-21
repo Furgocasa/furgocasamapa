@@ -291,9 +291,9 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
         
         // Ô£à ALGORITMO OPTIMIZADO: Reduce solapamiento y mejora rendimiento
         algorithm: new SuperClusterAlgorithm({
-          radius: 100,    // Radio de 100px (antes: 60px default) - menos clusters
-          minPoints: 3,   // M├¡nimo 3 ├íreas por cluster (antes: 2) - clusters m├ís significativos
-          maxZoom: 13     // Agrupa hasta zoom 13 (antes: 15) - clustering m├ís agresivo
+          radius: 60,     // 100 agrupaba en exceso: obligaba a mucho zoom para ver puntos sueltos
+          minPoints: 3,   // Mínimo 3 áreas por cluster
+          maxZoom: 12     // Desde zoom 13 todo son puntos individuales
         }),
         
         renderer: {

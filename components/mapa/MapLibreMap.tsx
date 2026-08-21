@@ -186,8 +186,8 @@ export function MapLibreMap({
 
     // Crear índice de Supercluster
     const index = new Supercluster({
-      radius: 100,
-      maxZoom: 13,
+      radius: 60, // 100 agrupaba en exceso: obligaba a mucho zoom para ver puntos sueltos
+      maxZoom: 12, // desde zoom 13 todo son puntos individuales
       minPoints: 3
     })
 
