@@ -215,16 +215,16 @@ export default function ChatbotRespuestasPage() {
             <p className="text-sm text-gray-400 text-center py-10">Sin datos todavía</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] items-center gap-2 p-4">
-              <div className="h-[240px]">
+              <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+                  <PieChart margin={{ top: 8, right: 8, bottom: 28, left: 8 }}>
                     <Pie
                       data={pieData}
                       dataKey="value"
                       nameKey="name"
                       cx="50%"
-                      cy="50%"
-                      outerRadius={92}
+                      cy="44%"
+                      outerRadius={88}
                       paddingAngle={2}
                       stroke="#fff"
                       strokeWidth={2}
@@ -254,7 +254,7 @@ export default function ChatbotRespuestasPage() {
                     <Legend
                       verticalAlign="bottom"
                       iconType="circle"
-                      wrapperStyle={{ fontSize: 12 }}
+                      wrapperStyle={{ fontSize: 12, paddingTop: 16 }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
