@@ -87,16 +87,17 @@ function esParkingAutocaravana(n: string): boolean {
 function esAnfitrionPrivado(n: string): boolean {
   return (
     esStopoverDeAnfitrion(n) ||
-    /\b(weingut|obsthof|bauernhof|buschenschank|heuriger|chez l.habitant|brit.?stop)\b/.test(n) ||
-    /\b(a la ferme|bienvenue a la ferme|ferme de |ferme des |ferme du |france ?passion|homecamper)\b/.test(
+    /\b(weingut|obsthof|bauernhof|buschenschank|heuriger|weinverkostung|chez l.habitant|brit.?stop)\b/.test(n) ||
+    /\b(a la ferme|bienvenue a la ferme|ferme de |ferme des |ferme du |ferme aux |ferme la |france ?passion|homecamper|home camper|gaec)\b/.test(
       n
-    )
+    ) ||
+    /\bchez [a-z]/.test(n)
   )
 }
 
 function esMarcaPrivada(n: string): boolean {
   return (
-    /\b(camper ?park(?!ing)|camperpark|camperparking|camper ?stop|camperstop|vanventure|low cost|bon bini|stop and go|barcelona beach|granadaparking|portaventura|ciutat caravaning|parkingvan|mundo autocaravanas|valcaravan|webcaravan|sol calnegre|tortuga mora|los narejos|maravilla parking|el moreral|murcia rio|anibal)\b/.test(
+    /\b(camper ?park(?!ing)|camperpark|camperparking|camper ?stop|camperstop|vanventure|low cost|bon bini|stop and go|onlypark|intermarche|edenparking|the stop|barcelona beach|granadaparking|portaventura|ciutat caravaning|parkingvan|mundo autocaravanas|valcaravan|webcaravan|sol calnegre|tortuga mora|los narejos|maravilla parking|el moreral|murcia rio|anibal)\b/.test(
       n
     ) ||
     (/\bgranja\b/.test(n) && !/\bla granja(\s+d|\s*$)/.test(n) && !/\barea(s)? autocaravanas la granja\b/.test(n)) ||
@@ -187,11 +188,12 @@ export function esFueraDelMapa(name: string, types: string[] = []): boolean {
     return true
   }
   if (
-    /\b(hire|rentals?|alquiler(es)?|arriendo(s)?|vermietung|noleggio|location de )\b/.test(n) &&
-    /\b(camper|motorhome|van|autocaravana|wohnmobil|fourgon|casa.?rodante)\b/.test(n)
+    /\b(hire|rentals?|alquiler(es)?|arriendo(s)?|vermietung|noleggio|location de |louez votre)\b/.test(n) &&
+    /\b(camper|motorhome|van|autocaravana|wohnmobil|fourgon|casa.?rodante|camping[-\s]?car)\b/.test(n)
   ) {
     return true
   }
+  if (/\b(reparations?|discoteca)\b/.test(n)) return true
   if (
     /\b(showroom|fabrica|factory|equipamiento|kit motorhome|toldos motorhome)\b/.test(n) &&
     /\b(motorhome|casa.?rodante|camper)\b/.test(n)
@@ -319,7 +321,7 @@ export function classifyTipoArea(
     !isMotorhomeWording(n) &&
     !esAreaEnNombre &&
     !/\b(rimessaggio|soccorso|storage|invernaje)\b/.test(n) &&
-    /\b(camping|campeggio|campismo|campground|campsite|camp site|campamentos?|campament|acampada|caravan park|holiday park|touring park|trailer park|rv park|rv resort|parque de trailers?|parque de campismo|campingplads|campingplass)\b/.test(
+    /\b(camping|campeggio|campismo|campground|campsite|camp site|campamentos?|campament|acampada|caravan park|holiday park|touring park|trailer park|rv park|rv resort|parque de trailers?|parque de campismo|campingplads|campingplass|yelloh|huttopia|center parcs|slow village|caravaneige|sporting club)\b/.test(
       n
     )
 
@@ -346,10 +348,9 @@ export function classifyTipoArea(
     return 'publica'
   }
 
-  // Parking / Parkplatz / parcheggio de autocaravanas = área.
-  // «Camper parking» en Benelux/EN es el nombre del sitio, no el ayuntamiento.
+  // Parking de autocaravanas = área. En Italia «Camper Parking Area» es sosta (pública)
+  // salvo que el nombre sea un camper park de marca.
   if (esParkingAutocaravana(n)) {
-    if (/\bcamper parking\b/.test(n)) return 'privada'
     return 'publica'
   }
   const typeIsCamping =
