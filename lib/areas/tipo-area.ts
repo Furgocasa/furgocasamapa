@@ -326,7 +326,7 @@ export function classifyTipoArea(
       n
     )
 
-  if (nameIsCamping) {
+  if (nameIsCamping || /\b(alannia|kampaoh|taiga)\b/.test(n)) {
     return 'camping'
   }
 

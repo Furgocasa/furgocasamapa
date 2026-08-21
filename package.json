@@ -49,6 +49,8 @@
     "import:chile:gaps": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-iberia-gaps.ts --region=chile",
     "import:argentina:gaps": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-iberia-gaps.ts --region=argentina",
     "import:argentina:from-report": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-iberia-gaps.ts --region=argentina --from-report --import",
+    "import:levante:campings": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-iberia-gaps.ts --region=murcia-alicante",
+    "import:levante:campings:import": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-iberia-gaps.ts --region=murcia-alicante --from-report --import",
     "import:wales:pilot": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-wales-pilot.ts",
     "import:wales:from-report": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-wales-pilot.ts -- --from-report --import",
     "import:mexico:pilot": "ts-node --project tsconfig.scripts.json scripts/scripts_empresas/import-mexico-pilot.ts",

@@ -26,6 +26,7 @@
  *   npm run import:noruega:gaps
  *   npm run import:chile:gaps
  *   npm run import:argentina:gaps
+ *   npm run import:levante:campings
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -81,6 +82,8 @@ let REPORT_NAME =
           ? "chile-gaps-dry-report.json"
         : REGION === "argentina"
           ? "argentina-gaps-dry-report.json"
+        : REGION === "murcia-alicante"
+          ? "levante-campings-dry-report.json"
         : "iberia-gaps-dry-report.json";
 if (SOLO_STOPOVER) {
   REPORT_NAME = REPORT_NAME.replace("-gaps-dry-report.json", "-stopover-dry-report.json");
@@ -379,6 +382,26 @@ const HUECOS_ARGENTINA = [
   { id: 20, zona: "Ushuaia", lat: -54.8, lng: -68.3, pais: "Argentina" },
 ];
 
+/** Campings Murcia + Alicante: en el mapa casi no hay (1 y 2). Se busca «camping», no «área». */
+const HUECOS_MURCIA_ALICANTE = [
+  { id: 1, zona: "Murcia", lat: 37.99, lng: -1.13, pais: "España" },
+  { id: 2, zona: "Cartagena", lat: 37.6, lng: -0.98, pais: "España" },
+  { id: 3, zona: "Mazarrón", lat: 37.56, lng: -1.31, pais: "España" },
+  { id: 4, zona: "Águilas", lat: 37.41, lng: -1.58, pais: "España" },
+  { id: 5, zona: "Lorca", lat: 37.67, lng: -1.7, pais: "España" },
+  { id: 6, zona: "Mar Menor", lat: 37.8, lng: -0.84, pais: "España" },
+  { id: 7, zona: "Caravaca", lat: 38.11, lng: -1.86, pais: "España" },
+  { id: 8, zona: "Jumilla", lat: 38.48, lng: -1.33, pais: "España" },
+  { id: 9, zona: "Alicante", lat: 38.35, lng: -0.48, pais: "España" },
+  { id: 10, zona: "Elche / Santa Pola", lat: 38.2, lng: -0.62, pais: "España" },
+  { id: 11, zona: "Torrevieja", lat: 37.98, lng: -0.68, pais: "España" },
+  { id: 12, zona: "Benidorm", lat: 38.54, lng: -0.13, pais: "España" },
+  { id: 13, zona: "Calpe", lat: 38.64, lng: 0.04, pais: "España" },
+  { id: 14, zona: "Dénia", lat: 38.84, lng: 0.11, pais: "España" },
+  { id: 15, zona: "Alcoy", lat: 38.7, lng: -0.47, pais: "España" },
+  { id: 16, zona: "Villena", lat: 38.64, lng: -0.87, pais: "España" },
+];
+
 const HUECOS =
   REGION === "baleares"
     ? HUECOS_BALEARES
@@ -408,7 +431,9 @@ const HUECOS =
                             ? HUECOS_CHILE
                             : REGION === "argentina"
                               ? HUECOS_ARGENTINA
-                              : HUECOS_PENINSULA;
+                              : REGION === "murcia-alicante"
+                                ? HUECOS_MURCIA_ALICANTE
+                                : HUECOS_PENINSULA;
 
 const TERMINOS_ES = [
   "área autocaravanas",
@@ -461,7 +486,12 @@ const STOPOVER_NO = ["bobilparkering"];
 const TERMINOS_CL = ["casas rodantes", "motorhome", "camping motorhome"];
 const STOPOVER_CL = ["estacionamiento casas rodantes", "trailer park"];
 
+const TERMINOS_CAMPING_ES = ["camping", "càmping"];
+
 function terminosDe(hueco: { pais?: string; lang?: string }) {
+  if (REGION === "murcia-alicante") {
+    return TERMINOS_CAMPING_ES;
+  }
   if (REGION === "chile" || REGION === "argentina") {
     return SOLO_STOPOVER ? STOPOVER_CL : [...TERMINOS_CL, ...STOPOVER_CL];
   }
@@ -690,6 +720,17 @@ function isInChile(lat: number, lng: number): boolean {
   return true;
 }
 
+function isInMurciaAlicante(lat: number, lng: number): boolean {
+  const murcia = lat >= 37.36 && lat <= 38.77 && lng >= -2.36 && lng <= -0.64;
+  const alicante = lat >= 37.82 && lat <= 38.88 && lng >= -1.15 && lng <= 0.22;
+  return murcia || alicante;
+}
+
+function esProvinciaMurciaOAlicante(details: { provincia?: string | null; comunidad?: string | null } | null): boolean {
+  const p = `${details?.provincia || ""} ${details?.comunidad || ""}`.toLowerCase();
+  return /\bmurcia\b/.test(p) || /\b(alicante|alacant)\b/.test(p);
+}
+
 function isInBaleares(lat: number, lng: number): boolean {
   if (lat >= 39.25 && lat <= 39.97 && lng >= 2.3 && lng <= 3.48) return true; // Mallorca
   if (lat >= 39.78 && lat <= 40.1 && lng >= 3.78 && lng <= 4.33) return true; // Menorca
@@ -770,6 +811,25 @@ function isRelevant(name: string, types: string[], pais?: string): boolean {
       ) &&
       !types.includes("campground") &&
       !types.includes("rv_park")
+    ) {
+      return false;
+    }
+  }
+  if (REGION === "murcia-alicante") {
+    if (/\b(tienda|articulos|campingaz|camping gas|outlet|alquiler|hire|rental|bar at)\b/i.test(name)) {
+      return false;
+    }
+    if (/^\s*camping\s*$/i.test(name)) return false;
+    if (
+      !/\b(c[aà]mping|camper ?park|kampaoh|alannia|taiga)\b/i.test(name) &&
+      !types.includes("campground") &&
+      !types.includes("rv_park")
+    ) {
+      return false;
+    }
+    if (
+      !/\b(c[aà]mping|camper|kampaoh|alannia|taiga|nomading)\b/i.test(name) &&
+      !(/\bcamp\b/i.test(name) && types.includes("campground"))
     ) {
       return false;
     }
@@ -977,6 +1037,10 @@ async function importUtiles(utiles: any[]) {
     } else if (REGION === "argentina") {
       if (cc && cc !== "AR") continue;
       if (!isInArgentina(hit.lat, hit.lng)) continue;
+    } else if (REGION === "murcia-alicante") {
+      if (cc && cc !== "ES") continue;
+      if (!isInMurciaAlicante(hit.lat, hit.lng)) continue;
+      if (details && !esProvinciaMurciaOAlicante(details)) continue;
     } else if (cc && cc !== "ES" && cc !== "PT") {
       continue;
     }
@@ -1139,6 +1203,8 @@ async function main() {
           ? "\nChile — 20 disparos (casas rodantes / motorhome, radio 40 km)"
         : REGION === "argentina"
           ? "\nArgentina — 20 disparos (casas rodantes / motorhome, radio 40 km)"
+        : REGION === "murcia-alicante"
+          ? "\nMurcia + Alicante — 16 disparos (camping / càmping, radio 40 km)"
         : "\nPenínsula — búsqueda en 16 huecos (radio 40 km)"
   );
   if (SOLO_STOPOVER) {
@@ -1197,6 +1263,7 @@ async function main() {
         if (REGION === "noruega" && !isInNorway(r.lat, r.lng)) continue;
         if (REGION === "chile" && !isInChile(r.lat, r.lng)) continue;
         if (REGION === "argentina" && !isInArgentina(r.lat, r.lng)) continue;
+        if (REGION === "murcia-alicante" && !isInMurciaAlicante(r.lat, r.lng)) continue;
         seen.add(r.place_id);
         const decision = decidirUbicacion(r.name, { types: r.types, pais: hueco.pais });
         const relevant = decision.admite && isRelevant(r.name, r.types || [], hueco.pais);
