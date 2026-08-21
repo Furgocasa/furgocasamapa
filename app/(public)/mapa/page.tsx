@@ -34,28 +34,13 @@ export default function MapaPage() {
   const mapRef = useRef<any>(null) // Referencia al mapa para controlarlo
   const skipMapCenterRef = useRef(false) // Evitar centrado automático después de búsqueda geográfica
 
-  // El piloto de UK está en Gales (en BD el país es "Reino Unido")
-  const ETIQUETA_PAIS_FILTRO: Record<string, string> = {
-    'Reino Unido': 'Gales',
-  }
-  const PAISES_OCULTOS = new Set(['Desconocido', ''])
-
-  const paisesDisponiblesFallback = [
-    'Alemania', 'Andorra', 'Argentina', 'Austria', 'Bélgica', 'Chequia',
-    'Chile', 'Colombia', 'Costa Rica', 'Dinamarca', 'Ecuador', 'Eslovenia',
-    'España', 'Francia', 'Gales', 'Italia', 'Luxemburgo', 'México', 'Noruega', 'Países Bajos',
-    'Panamá', 'Paraguay', 'Perú', 'Portugal', 'Puerto Rico', 'Suecia',
-    'Suiza', 'Uruguay'
-  ]
-
+  // Países reales de las áreas cargadas (misma fuente que el mapa: la BD).
   const paisesDisponibles = useMemo(() => {
     const set = new Set<string>()
     for (const area of areas) {
       const raw = (area.pais || '').trim()
-      if (!raw || PAISES_OCULTOS.has(raw)) continue
-      set.add(ETIQUETA_PAIS_FILTRO[raw] || raw)
+      if (raw) set.add(raw)
     }
-    if (set.size === 0) return paisesDisponiblesFallback
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'es'))
   }, [areas])
 
@@ -111,8 +96,8 @@ export default function MapaPage() {
         try {
           const qs = new URLSearchParams()
           if (locale && locale !== 'es') qs.set('lang', locale)
-          // Subir esto tras un import masivo: invalida el CDN sin esperar 1 h
-          qs.set('v', '20260821-gales')
+          // Cubo de 30 s: alinea con s-maxage del API. No hace falta bump manual.
+          qs.set('t', String(Math.floor(Date.now() / 30_000)))
           const res = await fetch(`/api/areas?${qs.toString()}`, { cache: 'no-store' })
           if (res.ok) {
             const json = await res.json()

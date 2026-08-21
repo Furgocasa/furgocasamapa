@@ -10,6 +10,8 @@ import { createClient } from '@supabase/supabase-js'
 import { DEFAULT_LOCALE, isTranslationLocale, normalizeLocale } from '@/lib/i18n/config'
 
 export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+export const revalidate = 0
 
 const CAMPOS_MAPA =
   'id, nombre, slug, latitud, longitud, ciudad, provincia, pais, tipo_area, precio_noche, foto_principal, servicios, plazas_totales, plazas_camper, acceso_24h, barrera_altura, google_rating, google_maps_url, verificado, con_descuento_furgocasa'
@@ -55,7 +57,12 @@ export async function GET(request: NextRequest) {
 
     const langParam = request.nextUrl.searchParams.get('lang')
     const locale = normalizeLocale(langParam)
-    const supabase = createClient(supabaseUrl, anonKey)
+    const supabase = createClient(supabaseUrl, anonKey, {
+      global: {
+        fetch: (url, options) =>
+          fetch(url, { ...options, cache: 'no-store' }),
+      },
+    })
 
     const allAreas = await fetchAllPages(supabase, 'areas', CAMPOS_MAPA, (q) =>
       q.eq('activo', true).order('id')

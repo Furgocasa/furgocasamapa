@@ -270,6 +270,16 @@
 
 ---
 
+## BLOQUE EXTRA — Caché del listado de áreas (ago 2026)
+
+- **Qué**: `/api/areas` devolvía 6118 (sin Baleares) con `x-vercel-cache: MISS` porque Next 14 cacheaba el `fetch` interno a Supabase.
+- **Fix**: `fetchCache = 'force-no-store'` + `cache: 'no-store'` en el cliente Supabase del API. El mapa usa `?t=` cada 30 s (sin bump manual).
+- **PWA**: timeout NetworkFirst 5 s → 20 s (si no, servía el dataset viejo de 7 días).
+- **Latencia esperada**: un área nueva en BD aparece en el mapa en **≤ 30 s**. No hace falta pedir un deploy.
+- **Verificar**: `/api/areas` `total` ≥ 6138 y pines en Mallorca/Menorca/Ibiza.
+
+---
+
 ## BLOQUE EXTRA — Tipos de ubicación (ago 2026)
 
 - **Qué**: 4 tipos claros en mapa y filtro: **área pública** (municipal), **área privada**, **camping**, **stopover** (`parking` en BD).

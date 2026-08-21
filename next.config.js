@@ -24,10 +24,10 @@ const withPWA = require('next-pwa')({
       handler: 'NetworkFirst',
       options: {
         cacheName: 'areas-data',
-        networkTimeoutSeconds: 5,
+        networkTimeoutSeconds: 20,
         expiration: {
           maxEntries: 4,
-          maxAgeSeconds: 7 * 24 * 60 * 60 // 1 semana
+          maxAgeSeconds: 2 * 60 * 60
         }
       }
     },
