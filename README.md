@@ -312,22 +312,22 @@ Variables opcionales: `BULK_MODE` (`critical` | `all` | `everything`), `BULK_CON
 Campo `areas.tipo_area`: `publica` | `privada` | `camping` | `parking`.
 En el mapa, `parking` se muestra como **Stopover**. Código y colores: `lib/areas/tipo-area.ts`.
 
-Este mapa es de **sitios habilitados** para autocaravana. El “duermo donde me dé la gana” (zona de acampada, aire naturelle, wild camp, bivouac) no es un quinto tipo: **no entra**. Eso es Google Maps o apps sociales.
-
-Los cuatro tipos bastan. El nombre local (aire, sosta, Stellplatz, CL, RV park) es solo etiqueta, no un tipo extra.
+Solo entra lo que encaja en **una de estas cuatro**. El nombre local (aire, sosta, Stellplatz, CL, RV park) es etiqueta, no un tipo extra.
 
 | Código | Lo que ve el usuario | Qué es | Ejemplos locales |
 |--------|----------------------|--------|------------------|
-| `publica` | Área pública | Área habilitada de titularidad pública | Área municipal, aire communale, sosta comunale, Stellplatz kommunal, council aire |
-| `privada` | Área privada | Misma función, titular privado | Camper park, aire privée, CL británico, Stellplatz privat |
-| `camping` | Camping | Parque con parcela y servicios | Camping, campeggio, campingplatz, touring/holiday/caravan park, RV/trailer park |
-| `parking` | Stopover | Pernocta de paso (1 noche), pocos o ningún servicio de área | Aparcamiento de pernocta, parking de passage, stopover UK (pub/granja) |
+| `publica` | Área pública | Área de autocaravanas de un ayuntamiento u organismo | Área municipal, aire communale, sosta comunale, Stellplatz kommunal, council aire |
+| `privada` | Área privada | Área de autocaravanas de empresa o particular (casi siempre de cobro) | Camper park, aire privée, CL británico, Stellplatz privat |
+| `camping` | Camping | Recinto: valla, parcela, a menudo tiendas, bungalows, duchas | Camping, campeggio, campingplatz, touring/holiday/caravan park, RV/trailer park |
+| `parking` | Stopover | Pernocta de paso **ofrecida** (1 noche): pub, tienda, granja. Puede no tener vaciado ni agua | Stopover UK, parking de passage, Weingut / chez l’habitant |
 
-**Qué no entra** (se rechaza al importar con `esPernoctaSinServicio()` y se oculta con `activo = false`): zona de acampada, aire naturelle de campo, acampada libre, wild camp, boondock, bivouac. Excepción: si el nombre deja claro que es **área de autocaravanas** o **aire de camping-car / aire de service**, se admite.
+**Criterio:** ¿es un área municipal, un área empresarial privada, un camping o un stopover que se ofrece como tal? Si no, **no entra**. No hay quinto tipo.
 
-**Servicios en ficha ≠ tipo de sitio.** Casi todo el inventario tiene `servicios` vacío (dato pendiente de enriquecer), no “sitio sin servicio”. No se oculta ni se deja fuera un área porque no hayamos localizado aún agua, vaciado o luz. Ocultar por JSON vacío tumbaría Francia, Italia, Alemania, UK, etc. La exclusión es por **naturaleza del lugar** (campo para dormir), no por huecos en la ficha.
+**Qué no entra** (aunque alguien haya dormido ahí): parking del polideportivo, solar, arcén, “pernocta reportada” de apps sociales, zona de acampada, aire naturelle de campo, wild camp, bivouac. Un stopover **puede no tener servicios**; no se excluye por eso. Se excluye el sitio que **no es** una de las cuatro.
 
-Clasificar (`classifyTipoArea`) solo corre **después** de admitir el sitio. Recategorizar tipos: `scripts/scripts_empresas/reclassify-tipos.ts`. Ocultar pernocta sin servicio: el mismo script con `--ocultar-sin-servicio` (dry-run) y `--apply`.
+**No usar el JSON `servicios` para admitir o ocultar.** Casi todo el inventario lo tiene vacío (dato pendiente). No es el tema ahora. `esPernoctaSinServicio()` rechaza por nombre / naturaleza del lugar, no por ficha vacía.
+
+Clasificar (`classifyTipoArea`) solo corre **después** de admitir el sitio. Recategorizar tipos: `scripts/scripts_empresas/reclassify-tipos.ts`. Ocultar lo que no encaja (zona de acampada / wild camp): el mismo script con `--ocultar-sin-servicio`.
 
 Admin: al editar, el valor `parking` sigue saliendo como “Parking”; en el mapa público es Stopover.
 

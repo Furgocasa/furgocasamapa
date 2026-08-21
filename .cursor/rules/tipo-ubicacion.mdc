@@ -1,18 +1,25 @@
 ---
-description: Los cuatro tipos de ubicación y qué no entra en el mapa
+description: Qué entra en el mapa (4 tipos) y qué se descarta
 alwaysApply: true
 ---
 
 # Tipo de ubicación
 
-Enum `areas.tipo_area`: `publica` | `privada` | `camping` | `parking` (en UI pública = Stopover).
+Solo entran cuatro cosas. Si no es una de ellas, no está en el mapa.
 
-- **Pública / privada**: titularidad de un área habilitada (aire, sosta, Stellplatz, área municipal, camper park, CL).
-- **Camping**: parcela con servicios (camping, RV/trailer/touring park). No es “zona de acampada”.
-- **Stopover**: pernocta de paso, una noche.
+| Código | Significado |
+|--------|-------------|
+| `publica` | Área de autocaravanas municipal / organismo público |
+| `privada` | Área de autocaravanas de empresa o particular |
+| `camping` | Recinto de acampada (valla, parcela, a menudo tiendas/bungalows) |
+| `parking` | Stopover: pernocta de paso **ofrecida** (pub, tienda, granja). En UI = Stopover |
 
-No hay quinto tipo. Zona de acampada, aire naturelle de campo, wild camp, bivouac **no entran**: `esPernoctaSinServicio()` al importar; `activo = false` si ya estaban. El “duermo donde quiera” es Google Maps u otras apps.
+No hay quinto tipo. El nombre local (aire, sosta, Stellplatz, CL) es etiqueta.
 
-**No confundir** con `servicios` vacío. La mayoría de fichas no tienen servicios rellenados; eso es dato pendiente, no motivo para ocultar. No filtrar ni desactivar por JSON de servicios vacío.
+**No entra:** parking del polideportivo, solar, arcén, “alguien durmió aquí”, zona de acampada, wild camp, aire naturelle de campo. No es stopover: nadie lo ofrece como pernocta de autocaravana.
+
+**Un stopover puede no tener servicios.** No se admite ni se oculta por el JSON `servicios` (casi siempre vacío: dato pendiente, no el criterio). No filtrar por ficha vacía.
+
+Pregunta privada vs stopover: ¿el sitio existe para la furgo (área) o la furgo es invitada una noche (stopover)?
 
 Código: `lib/areas/tipo-area.ts`. Doc: README § Tipo de ubicación.
