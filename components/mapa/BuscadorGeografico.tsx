@@ -339,7 +339,7 @@ export function BuscadorGeografico({
         <button
           type="button"
           onClick={openMobileSearch}
-          className="md:hidden pointer-events-auto mx-auto flex items-center justify-center w-11 h-11 bg-white rounded-full shadow-lg border border-gray-200 text-gray-600 active:scale-95 transition-all"
+          className="md:hidden pointer-events-auto ml-auto flex items-center justify-center w-11 h-11 bg-white/90 backdrop-blur-md rounded-full shadow-lg ring-1 ring-gray-900/5 text-gray-600 active:scale-95 transition-all"
           aria-label="Buscar área, ciudad o región"
         >
           <MagnifyingGlassIcon className="h-5 w-5" />
