@@ -65,21 +65,21 @@ export function buildAreaPopupHTML(
 
   const chip = (html: string, accent = false): string =>
     `<span style="display:inline-flex;align-items:center;gap:4px;background:${
-      accent ? '#FFF7ED' : '#F3F4F6'
-    };color:${accent ? '#C2410C' : '#374151'};${
-      accent ? 'border:1px solid #FED7AA;' : ''
-    }padding:5px 10px;border-radius:8px;font-size:12px;font-weight:600;line-height:1;">${html}</span>`
+      accent ? '#FFF4EE' : '#F3F4F6'
+    };color:${accent ? '#C44317' : '#374151'};${
+      accent ? 'border:1px solid #FFC9AD;' : ''
+    }padding:5px 10px;border-radius:999px;font-size:12px;font-weight:600;line-height:1;">${html}</span>`
 
   const chips: string[] = []
   if (area.google_rating) {
     chips.push(
-      `<span style="display:inline-flex;align-items:center;gap:4px;background:#FEF9C3;color:#854D0E;border:1px solid #FDE68A;padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;line-height:1;">⭐ ${area.google_rating}</span>`
+      `<span style="display:inline-flex;align-items:center;gap:4px;background:#FEF9C3;color:#854D0E;border:1px solid #FDE68A;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:700;line-height:1;">⭐ ${area.google_rating}</span>`
     )
   }
   if (area.precio_noche !== null && area.precio_noche !== undefined) {
     chips.push(
       area.precio_noche === 0
-        ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;line-height:1;">${esc(t(locale, 'free'))}</span>`
+        ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:700;line-height:1;">${esc(t(locale, 'free'))}</span>`
         : chip(`${area.precio_noche}€<span style="font-weight:500;opacity:0.85;">${esc(t(locale, 'per_night'))}</span>`, true)
     )
   }
@@ -105,7 +105,7 @@ export function buildAreaPopupHTML(
       </div>`
 
   return `
-    <div style="width:318px;max-width:88vw;font-family:system-ui,-apple-system,sans-serif;color:#1f2937;">
+    <div style="width:318px;max-width:88vw;font-family:inherit;color:#1f2937;">
       ${imageBlock}
       ${titleFallback}
       <div style="padding:12px 14px 12px 14px;">
@@ -124,7 +124,7 @@ export function buildAreaPopupHTML(
         }
         ${
           area.con_descuento_furgocasa
-            ? `<div style="display:flex;align-items:center;gap:6px;background:#FFF1EC;border:1px solid #FFD9CC;color:#C2410C;padding:8px 10px;border-radius:9px;font-size:12px;font-weight:700;margin-bottom:10px;">🎁 ${esc(t(locale, 'discount_exclusive'))}</div>`
+            ? `<div style="display:flex;align-items:center;gap:6px;background:#FFF4EE;border:1px solid #FFC9AD;color:#C44317;padding:8px 10px;border-radius:12px;font-size:12px;font-weight:700;margin-bottom:10px;">🎁 ${esc(t(locale, 'discount_exclusive'))}</div>`
             : ''
         }
         ${
@@ -135,12 +135,12 @@ export function buildAreaPopupHTML(
                   ${mostrarServicios
                     .map(
                       (s) =>
-                        `<span style="display:inline-flex;align-items:center;gap:4px;background:#F1F5F9;border:1px solid #E2E8F0;color:#334155;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:600;line-height:1;">${s.icon} ${esc(s.label)}</span>`
+                        `<span style="display:inline-flex;align-items:center;gap:4px;background:#F1F5F9;border:1px solid #E2E8F0;color:#334155;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:600;line-height:1;">${s.icon} ${esc(s.label)}</span>`
                     )
                     .join('')}
                   ${
                     serviciosRestantes > 0
-                      ? `<span style="display:inline-flex;align-items:center;background:#EFF6FF;color:#0284c7;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;line-height:1;">+${serviciosRestantes}</span>`
+                      ? `<span style="display:inline-flex;align-items:center;background:#EEF4FB;color:#0b3c74;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:700;line-height:1;">+${serviciosRestantes}</span>`
                       : ''
                   }
                 </div>
@@ -148,11 +148,11 @@ export function buildAreaPopupHTML(
             : `<p style="margin:0 0 12px 0;font-size:12px;color:#9CA3AF;font-style:italic;">${esc(t(locale, 'services_none'))}</p>`
         }
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
-          <a href="/area/${esc(area.slug)}" style="display:flex;align-items:center;justify-content:center;gap:6px;background:#0284c7;color:#fff;padding:11px;border-radius:10px;text-decoration:none;font-weight:700;font-size:13.5px;box-shadow:0 2px 6px rgba(2,132,199,0.35);">
+          <a href="/area/${esc(area.slug)}" style="display:flex;align-items:center;justify-content:center;gap:6px;background:#0b3c74;color:#fff;padding:11px;border-radius:12px;text-decoration:none;font-weight:700;font-size:13.5px;box-shadow:0 2px 6px rgba(11,60,116,0.35);">
             <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
             ${esc(t(locale, 'view_details'))}
           </a>
-          <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:6px;background:#16a34a;color:#fff;padding:11px;border-radius:10px;text-decoration:none;font-weight:700;font-size:13.5px;box-shadow:0 2px 6px rgba(22,163,74,0.35);">
+          <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:6px;background:#16a34a;color:#fff;padding:11px;border-radius:12px;text-decoration:none;font-weight:700;font-size:13.5px;box-shadow:0 2px 6px rgba(22,163,74,0.35);">
             <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
             ${esc(t(locale, 'how_to_get'))}
           </a>

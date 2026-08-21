@@ -577,10 +577,10 @@ export default function MapaPage() {
               {/* Icono de mapa animado */}
               <div className="flex justify-center mb-6">
                 <div className="relative">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/30">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-500/30">
                     <MapIcon className="w-11 h-11 text-white" />
                   </div>
-                  <div className="absolute inset-0 rounded-2xl animate-ping opacity-10 bg-sky-500"></div>
+                  <div className="absolute inset-0 rounded-2xl animate-ping opacity-10 bg-primary-500"></div>
                 </div>
               </div>
 
@@ -600,7 +600,7 @@ export default function MapaPage() {
               {loadingProgress.loaded > 0 && areas.length === 0 && (
                 <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
                   <div
-                    className="bg-gradient-to-r from-sky-500 to-blue-600 h-full transition-all duration-300 ease-out rounded-full"
+                    className="bg-gradient-to-r from-primary-500 to-primary-700 h-full transition-all duration-300 ease-out rounded-full"
                     style={{
                       width: `${Math.min((loadingProgress.loaded / 5000) * 100, 100)}%`
                     }}
@@ -610,7 +610,7 @@ export default function MapaPage() {
 
               {/* Spinner */}
               <div className="flex justify-center mt-6">
-                <div className="animate-spin rounded-full h-8 w-8 border-[3px] border-sky-100 border-t-sky-600"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-[3px] border-primary-100 border-t-primary-600"></div>
               </div>
             </div>
           </div>
@@ -657,14 +657,14 @@ export default function MapaPage() {
           {/* Contador de resultados con indicador de carga */}
           <div className="absolute top-3 left-3 max-w-[min(11rem,calc(100%-9rem))] bg-white/90 backdrop-blur-md rounded-full shadow-lg ring-1 ring-gray-900/5 px-3 py-1.5 z-10">
             <p className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
-              <span className="text-sky-600 font-bold tabular-nums">{areasParaMapa.length}</span>
+              <span className="text-primary-600 font-bold tabular-nums">{areasParaMapa.length}</span>
               {areasParaMapa.length === 1 ? 'área' : 'áreas'}
               {filtros.pais && !filtros.pais.startsWith('REGION_') && (
                 <span className="text-xs text-gray-500 font-normal">· {filtros.pais}</span>
               )}
               {loading && (
                 <span className="inline-flex items-center gap-1">
-                  <span className="animate-spin rounded-full h-3 w-3 border-2 border-sky-200 border-t-sky-600"></span>
+                  <span className="animate-spin rounded-full h-3 w-3 border-2 border-primary-200 border-t-primary-600"></span>
                 </span>
               )}
             </p>
@@ -736,11 +736,11 @@ export default function MapaPage() {
               setMostrarLista(false)
             }}
             className={`flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-200 active:scale-95 ${
-              !mostrarFiltros && !mostrarLista ? 'text-sky-600' : 'text-gray-500'
+              !mostrarFiltros && !mostrarLista ? 'text-accent-600' : 'text-gray-500'
             }`}
           >
             <span className={`px-4 py-1 rounded-full transition-colors duration-200 ${
-              !mostrarFiltros && !mostrarLista ? 'bg-sky-50' : 'bg-transparent'
+              !mostrarFiltros && !mostrarLista ? 'bg-accent-50' : 'bg-transparent'
             }`}>
               <MapIcon className="w-6 h-6" />
             </span>
@@ -751,11 +751,11 @@ export default function MapaPage() {
           <button
             onClick={() => setMostrarFiltros(true)}
             className={`flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-200 active:scale-95 relative ${
-              mostrarFiltros ? 'text-sky-600' : 'text-gray-500'
+              mostrarFiltros ? 'text-accent-600' : 'text-gray-500'
             }`}
           >
             <span className={`px-4 py-1 rounded-full transition-colors duration-200 relative ${
-              mostrarFiltros ? 'bg-sky-50' : 'bg-transparent'
+              mostrarFiltros ? 'bg-accent-50' : 'bg-transparent'
             }`}>
               <FunnelIcon className="w-6 h-6" />
               {contarFiltrosActivos() > 0 && (
@@ -771,15 +771,15 @@ export default function MapaPage() {
           <button
             onClick={() => setMostrarLista(true)}
             className={`flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-200 active:scale-95 relative ${
-              mostrarLista ? 'text-sky-600' : 'text-gray-500'
+              mostrarLista ? 'text-accent-600' : 'text-gray-500'
             }`}
           >
             <span className={`px-4 py-1 rounded-full transition-colors duration-200 relative ${
-              mostrarLista ? 'bg-sky-50' : 'bg-transparent'
+              mostrarLista ? 'bg-accent-50' : 'bg-transparent'
             }`}>
               <ListBulletIcon className="w-6 h-6" />
               {areasParaLista.length > 0 && (
-                <span className="absolute -top-1.5 -right-3 bg-sky-600 text-white text-[10px] rounded-full px-1.5 py-px font-bold min-w-[20px] text-center shadow-sm">
+                <span className="absolute -top-1.5 -right-3 bg-accent-500 text-white text-[10px] rounded-full px-1.5 py-px font-bold min-w-[20px] text-center shadow-sm">
                   {areasParaLista.length > 99 ? '99+' : areasParaLista.length}
                 </span>
               )}

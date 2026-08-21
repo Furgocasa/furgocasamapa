@@ -166,7 +166,7 @@ export function ValoracionesCompleto({ areaId, areaNombre, valoraciones: initial
           onClose={hideToast}
         />
       )}
-      <section className="bg-white rounded-lg shadow-mobile p-6 border-t-4 border-[#0b3c74]">
+      <section className="bg-white rounded-2xl shadow-card p-6">
         <h2 className="text-xl font-bold text-[#0b3c74] mb-4">Valoraciones</h2>
 
         {/* Resumen de valoraciones */}

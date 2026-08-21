@@ -1,11 +1,24 @@
 import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
+import { Inter, Outfit } from 'next/font/google'
 import './globals.css'
 import WelcomeModal from '@/components/ui/WelcomeModal'
 import ChatbotWidget from '@/components/chatbot/ChatbotWidget'
 import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
 import FavoritosSync from '@/components/ui/FavoritosSync'
 import { LanguageProvider } from '@/lib/i18n/LanguageProvider'
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.mapafurgocasa.com'),
@@ -91,7 +104,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es">
+    <html lang="es" className={`${inter.variable} ${outfit.variable}`}>
       <head>
         {/* Favicons adicionales para máxima compatibilidad */}
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
@@ -102,7 +115,7 @@ export default function RootLayout({
         {/* Meta tag moderno para reemplazar el deprecado apple-mobile-web-app-capable */}
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className="antialiased">
+      <body className="font-sans antialiased">
         {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-8E3JE5ZVET"

@@ -19,7 +19,7 @@ interface AreasRelacionadasProps {
 
 export function AreasRelacionadas({ areas }: AreasRelacionadasProps) {
   return (
-    <section className="bg-white rounded-lg shadow-mobile p-6 border-t-4 border-[#0b3c74]">
+    <section className="bg-white rounded-2xl shadow-card p-6">
       <h2 className="text-2xl font-bold text-[#0b3c74] mb-6">
         Áreas Relacionadas
       </h2>

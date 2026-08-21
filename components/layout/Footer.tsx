@@ -40,7 +40,7 @@ export function Footer() {
           <div>
             <Link href="/" className="inline-block mb-4">
               <Image
-                src="/logo-furgocasa.png"
+                src="/logo-blanco-500.png"
                 alt="Furgocasa"
                 width={180}
                 height={40}

@@ -25,7 +25,7 @@ export function Valoraciones({ areaId, valoraciones }: Props) {
   )
 
   return (
-    <section className="bg-white rounded-lg shadow-mobile p-6">
+    <section className="bg-white rounded-2xl shadow-card p-6">
       <h2 className="text-xl font-bold text-gray-900 mb-4">Valoraciones</h2>
 
       {/* Resumen de valoraciones */}

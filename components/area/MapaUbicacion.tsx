@@ -92,7 +92,7 @@ export function MapaUbicacion({ latitud, longitud, nombre }: Props) {
   // DESPUÉS de todos los hooks, hacer el render condicional
   if (!coordenadasValidas) {
     return (
-      <section className="bg-white rounded-lg shadow-mobile p-6">
+      <section className="bg-white rounded-2xl shadow-card p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-900">Ubicación</h2>
         </div>

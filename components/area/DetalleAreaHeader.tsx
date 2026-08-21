@@ -6,6 +6,7 @@ import { ArrowLeftIcon, HeartIcon, ShareIcon, MapPinIcon } from '@heroicons/reac
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { Toast } from '@/components/ui/Toast'
 import { useToast } from '@/hooks/useToast'
@@ -222,22 +223,31 @@ export function DetalleAreaHeader({ area }: Props) {
             >
               <ShareIcon className="w-5 h-5" />
             </button>
-            <button
+            <motion.button
               onClick={handleFavorite}
-              className="relative w-11 h-11 bg-white/90 backdrop-blur-md flex items-center justify-center rounded-full shadow-sm hover:bg-white transition-all border border-white/20"
+              whileTap={{ scale: 0.85 }}
+              className="relative w-11 h-11 bg-white/90 backdrop-blur-md flex items-center justify-center rounded-full shadow-sm hover:bg-white transition-colors border border-white/20"
               aria-label={isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
             >
-              {isFavorite ? (
-                <HeartIconSolid className="w-6 h-6 text-red-500" />
-              ) : (
-                <HeartIcon className="w-6 h-6 text-slate-700" />
-              )}
+              <motion.span
+                key={isFavorite ? 'fav' : 'nofav'}
+                initial={{ scale: 0.5 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 520, damping: 16 }}
+                className="flex items-center justify-center"
+              >
+                {isFavorite ? (
+                  <HeartIconSolid className="w-6 h-6 text-red-500" />
+                ) : (
+                  <HeartIcon className="w-6 h-6 text-slate-700" />
+                )}
+              </motion.span>
               {!user && localFavCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-red-500 text-white text-[11px] font-bold rounded-full flex items-center justify-center shadow">
                   {localFavCount}
                 </span>
               )}
-            </button>
+            </motion.button>
           </div>
         </div>
 
@@ -310,7 +320,7 @@ export function DetalleAreaHeader({ area }: Props) {
         <div className="w-full max-w-[1600px] mx-auto">
           <button
             onClick={() => setShowAuthModal(true)}
-            className="w-full flex flex-wrap items-center justify-center gap-x-2 gap-y-1 bg-sky-50 hover:bg-sky-100 border-b border-sky-200 text-sky-900 text-sm font-medium py-2.5 px-4 transition-colors text-center"
+            className="w-full flex flex-wrap items-center justify-center gap-x-2 gap-y-1 bg-primary-50 hover:bg-primary-100 border-b border-primary-200 text-primary-900 text-sm font-medium py-2.5 px-4 transition-colors text-center"
           >
             <span>
               ❤️ {localFavCount === 1

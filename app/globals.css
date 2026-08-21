@@ -24,6 +24,11 @@
     padding-right: env(safe-area-inset-right);
   }
 
+  /* Titulares con la fuente display (Outfit) */
+  h1, h2, h3, h4 {
+    @apply font-heading;
+  }
+
   /* Mejoras para móvil */
   html {
     -webkit-tap-highlight-color: transparent;
@@ -89,7 +94,7 @@
 
   /* Cards móvil */
   .card-mobile {
-    @apply bg-white rounded-lg shadow-mobile p-4;
+    @apply bg-white rounded-2xl shadow-card p-4;
   }
 
   /* Ocultar scrollbar pero mantener scroll */
@@ -174,7 +179,7 @@
 /* Loading spinner */
 .spinner {
   border: 3px solid rgba(0, 0, 0, 0.1);
-  border-top-color: #0284c7;
+  border-top-color: #0b3c74;
   border-radius: 50%;
   width: 40px;
   height: 40px;
