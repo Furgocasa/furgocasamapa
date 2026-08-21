@@ -477,7 +477,6 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
                   onChange={(e) => setPaisSearch(e.target.value)}
                   placeholder="Buscar país o región..."
                   className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  autoFocus
                 />
               </div>
             </div>

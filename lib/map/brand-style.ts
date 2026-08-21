@@ -13,7 +13,7 @@ const BRAND = {
   landAlt: '#efe7d6',     // usos urbanos / industriales
   green: '#e2e9d4',       // bosques, parques, vegetación
   sand: '#f3e6c9',        // playas y arenales
-  water: '#12467e',       // agua (azul corporativo, un punto más luminoso)
+  water: '#4d749e',       // agua: azul corporativo aclarado con ~25% de blanco
   building: '#e9dfca',
   buildingOutline: '#dcd0b6',
   roadCasing: '#e6dcc5',
@@ -23,8 +23,8 @@ const BRAND = {
   boundary: '#bfb197',
   text: '#4d4636',        // etiquetas sobre terreno claro
   textHalo: 'rgba(245, 239, 228, 0.92)',
-  waterText: '#cfe0f4',   // etiquetas sobre agua
-  waterTextHalo: 'rgba(11, 60, 116, 0.55)',
+  waterText: '#f2f7fd',   // etiquetas sobre agua
+  waterTextHalo: 'rgba(45, 84, 128, 0.55)',
 }
 
 type AnyMap = {
