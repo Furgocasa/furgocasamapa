@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { StarIcon } from '@heroicons/react/24/solid'
 import { StarIcon as StarOutlineIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
 import { Toast } from '@/components/ui/Toast'
 import { useToast } from '@/hooks/useToast'
+import AuthModal from '@/components/ui/AuthModal'
+import { consumePendingAction, setPendingAction, syncLocalFavoritesToAccount } from '@/lib/favoritos/local'
+import { track } from '@/lib/analytics/track'
 import type { Valoracion } from '@/types/database.types'
 
 interface Props {
@@ -15,25 +17,26 @@ interface Props {
   valoraciones: Valoracion[]
 }
 
+/**
+ * Un solo gesto: "Estuve aquí" = registrar visita + valorar con estrellas
+ * en el mismo modal. El comentario y la fecha son opcionales/secundarios.
+ * Si el usuario no tiene cuenta, se le pide en el momento (modal inline),
+ * y al autenticarse se retoma la acción.
+ */
 export function ValoracionesCompleto({ areaId, areaNombre, valoraciones: initialValoraciones }: Props) {
-  const router = useRouter()
   const [user, setUser] = useState<any>(null)
-  const [showForm, setShowForm] = useState(false)
-  const [showVisitModal, setShowVisitModal] = useState(false)
-  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [showEstuveModal, setShowEstuveModal] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [valoraciones, setValoraciones] = useState(initialValoraciones)
   const { toast, showToast, hideToast } = useToast()
-  
+
   const [formData, setFormData] = useState({
     rating: 0,
-    comentario: ''
-  })
-
-  const [visitData, setVisitData] = useState({
+    comentario: '',
     fecha_visita: new Date().toISOString().split('T')[0],
-    notas: ''
   })
+  const [mostrarDetalles, setMostrarDetalles] = useState(false)
 
   useEffect(() => {
     checkUser()
@@ -43,104 +46,102 @@ export function ValoracionesCompleto({ areaId, areaNombre, valoraciones: initial
     const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
     setUser(session?.user || null)
+
+    // Si venía de un login para valorar esta área, retomar la acción
+    if (session?.user) {
+      const pending = consumePendingAction()
+      if (pending?.type === 'estuve_aqui' && pending.areaId === areaId) {
+        setShowEstuveModal(true)
+      }
+    }
   }
 
-  const handleRegistrarVisita = async () => {
+  const handleEstuveClick = () => {
     if (!user) {
-      showToast('Debes iniciar sesión para registrar visitas', 'info')
-      setTimeout(() => router.push('/auth/login'), 1500)
+      // Guardar la intención para retomarla si vuelve vía OAuth/confirmación
+      setPendingAction({ type: 'estuve_aqui', areaId })
+      setShowAuthModal(true)
+      return
+    }
+    setShowEstuveModal(true)
+  }
+
+  const handleAuthSuccess = async (loggedUser: any) => {
+    setShowAuthModal(false)
+    setUser(loggedUser)
+    try {
+      const supabase = createClient()
+      await syncLocalFavoritesToAccount(supabase, loggedUser.id)
+    } catch { /* la sincronización global lo reintentará */ }
+    consumePendingAction()
+    setShowEstuveModal(true)
+  }
+
+  const handleSubmitEstuve = async () => {
+    if (!user) return
+    if (formData.rating === 0) {
+      showToast('Toca las estrellas para puntuar tu experiencia', 'error')
       return
     }
 
     setLoading(true)
     try {
       const supabase = createClient()
-      
-      const { error } = await (supabase as any)
-          .from('visitas')
+
+      // 1. Registrar la visita (si ya existía en esa fecha, no pasa nada)
+      const { error: errorVisita } = await (supabase as any)
+        .from('visitas')
         .insert({
           user_id: user.id,
           area_id: areaId,
-          fecha_visita: visitData.fecha_visita,
-          notas: visitData.notas || null
+          fecha_visita: formData.fecha_visita,
+          notas: null,
         })
-
-      if (error) throw error
-
-      setShowVisitModal(false)
-      setShowSuccessModal(true)
-      setVisitData({
-        fecha_visita: new Date().toISOString().split('T')[0],
-        notas: ''
-      })
-
-      // Cerrar modal de éxito después de 2 segundos y mostrar formulario de valoración
-      setTimeout(() => {
-        setShowSuccessModal(false)
-        setShowForm(true)
-      }, 2000)
-    } catch (error: any) {
-      console.error('Error registrando visita:', error)
-      if (error.code === '23505') {
-        showToast('Ya has registrado una visita en esta fecha', 'error')
-      } else {
-        showToast(`Error al registrar visita: ${error.message}`, 'error')
+      if (errorVisita && errorVisita.code !== '23505') throw errorVisita
+      if (!errorVisita) {
+        track('area_visit_register', { area_id: areaId })
       }
-    } finally {
-      setLoading(false)
-    }
-  }
 
-  const handleSubmitValoracion = async () => {
-    if (!user) {
-      showToast('Debes iniciar sesión para valorar', 'info')
-      setTimeout(() => router.push('/auth/login'), 1500)
-      return
-    }
-
-    if (formData.rating === 0) {
-      showToast('Por favor selecciona una puntuación', 'error')
-      return
-    }
-
-    setLoading(true)
-    try {
-      const supabase = createClient()
-      
-      const { data, error } = await (supabase as any)
-          .from('valoraciones')
+      // 2. Registrar la valoración
+      const { error: errorVal } = await (supabase as any)
+        .from('valoraciones')
         .insert({
           user_id: user.id,
           area_id: areaId,
           rating: formData.rating,
-          comentario: formData.comentario.trim() || null
+          comentario: formData.comentario.trim() || null,
         })
-        .select()
 
-      if (error) throw error
+      if (errorVal) {
+        if (errorVal.code === '23505') {
+          showToast('Ya habías valorado esta área. Tu visita ha quedado registrada.', 'info')
+          setShowEstuveModal(false)
+          return
+        }
+        throw errorVal
+      }
+      track('area_rate', { area_id: areaId, event_data: { rating: formData.rating } })
 
       // Recargar valoraciones
       const { data: newValoraciones } = await (supabase as any)
-          .from('valoraciones')
+        .from('valoraciones')
         .select('*')
         .eq('area_id', areaId)
         .order('created_at', { ascending: false })
 
-      if (newValoraciones) {
-        setValoraciones(newValoraciones)
-      }
+      if (newValoraciones) setValoraciones(newValoraciones)
 
-      showToast('✅ ¡Valoración publicada con éxito!', 'success')
-      setShowForm(false)
-      setFormData({ rating: 0, comentario: '' })
-      router.refresh()
+      showToast('✅ ¡Gracias! Visita y valoración registradas', 'success')
+      setShowEstuveModal(false)
+      setFormData({
+        rating: 0,
+        comentario: '',
+        fecha_visita: new Date().toISOString().split('T')[0],
+      })
+      setMostrarDetalles(false)
     } catch (error: any) {
-      console.error('Error creando valoración:', error)
-      if (error.code === '23505') {
-        showToast('Ya has valorado esta área. Solo puedes dejar una valoración por área.', 'error')
-      } else {
-        showToast(`Error al publicar valoración: ${error.message}`, 'error')
-      }
+      console.error('Error registrando visita/valoración:', error)
+      showToast(`Error: ${error.message}`, 'error')
     } finally {
       setLoading(false)
     }
@@ -152,7 +153,7 @@ export function ValoracionesCompleto({ areaId, areaNombre, valoraciones: initial
     ? (valoraciones.reduce((sum: any, v: any) => sum + v.rating, 0) / totalValoraciones).toFixed(1)
     : '0.0'
 
-  const ratingCounts = [5, 4, 3, 2, 1].map((stars: any) => 
+  const ratingCounts = [5, 4, 3, 2, 1].map((stars: any) =>
     valoraciones.filter((v: any) => v.rating === stars).length
   )
 
@@ -211,95 +212,14 @@ export function ValoracionesCompleto({ areaId, areaNombre, valoraciones: initial
           </div>
         </div>
 
-        {/* Botones de acción */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <button
-            onClick={() => setShowVisitModal(true)}
-            className="py-3 bg-[#0b3c74] text-white rounded-lg font-semibold hover:bg-[#0d4a8f] hover:shadow-lg transition-all flex items-center justify-center gap-2"
-          >
-            <CheckCircleIcon className="w-5 h-5" />
-            Registrar Visita
-          </button>
-          <button
-            onClick={() => {
-              if (!user) {
-                router.push('/auth/login')
-              } else {
-                setShowForm(!showForm)
-              }
-            }}
-            className="py-3 bg-sky-500 text-white rounded-lg font-semibold hover:bg-sky-600 hover:shadow-lg transition-all"
-          >
-            ✍️ Escribir valoración
-          </button>
-        </div>
-
-        {/* Formulario de valoración */}
-        {showForm && user && (
-          <div className="mb-6 p-4 bg-sky-50 rounded-lg border-2 border-[#0b3c74]">
-            <h3 className="font-semibold text-[#0b3c74] mb-4">Tu valoración</h3>
-            
-            {/* Selector de estrellas */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Puntuación *
-              </label>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, rating: star })}
-                    className="transition-transform hover:scale-110"
-                  >
-                    {star <= formData.rating ? (
-                      <StarIcon className="w-10 h-10 text-yellow-400" />
-                    ) : (
-                      <StarOutlineIcon className="w-10 h-10 text-gray-300" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Comentario */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Comentario (opcional)
-              </label>
-              <textarea
-                value={formData.comentario}
-                onChange={(e) => setFormData({ ...formData, comentario: e.target.value })}
-                placeholder="Comparte tu experiencia..."
-                rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0b3c74] focus:border-transparent resize-none"
-                maxLength={1000}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                {formData.comentario.length}/1000 caracteres
-              </p>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={handleSubmitValoracion}
-                disabled={loading || formData.rating === 0}
-                className="flex-1 py-2 bg-[#0b3c74] text-white rounded-lg font-semibold hover:bg-[#0d4a8f] hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Publicando...' : 'Publicar Valoración'}
-              </button>
-              <button 
-                onClick={() => {
-                  setShowForm(false)
-                  setFormData({ rating: 0, comentario: '' })
-                }}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Un solo CTA: Estuve aquí (visita + valoración en un paso) */}
+        <button
+          onClick={handleEstuveClick}
+          className="w-full mb-6 py-3.5 bg-[#0b3c74] text-white rounded-lg font-semibold hover:bg-[#0d4a8f] hover:shadow-lg transition-all flex items-center justify-center gap-2 text-base"
+        >
+          <CheckCircleIcon className="w-6 h-6" />
+          Estuve aquí — Valorar
+        </button>
 
         {/* Lista de valoraciones */}
         {totalValoraciones > 0 ? (
@@ -356,82 +276,96 @@ export function ValoracionesCompleto({ areaId, areaNombre, valoraciones: initial
         )}
       </section>
 
-      {/* Modal Registrar Visita */}
-      {showVisitModal && (
+      {/* Modal único: Estuve aquí (estrellas + opcionales) */}
+      {showEstuveModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">
-              Registrar Visita a {areaNombre}
+            <h3 className="text-xl font-bold text-gray-900 mb-1">
+              ¿Qué tal en {areaNombre}?
             </h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fecha de visita *
-                </label>
-                <input
-                  type="date"
-                  value={visitData.fecha_visita}
-                  onChange={(e) => setVisitData({ ...visitData, fecha_visita: e.target.value })}
-                  max={new Date().toISOString().split('T')[0]}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0b3c74] focus:border-transparent"
-                />
-              </div>
+            <p className="text-sm text-gray-500 mb-5">
+              Registramos tu visita y tu valoración de una vez.
+            </p>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notas (opcional)
-                </label>
+            {/* Estrellas: el único paso obligatorio */}
+            <div className="flex justify-center gap-2 mb-5">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, rating: star })}
+                  className="transition-transform hover:scale-110"
+                  aria-label={`${star} estrellas`}
+                >
+                  {star <= formData.rating ? (
+                    <StarIcon className="w-11 h-11 text-yellow-400" />
+                  ) : (
+                    <StarOutlineIcon className="w-11 h-11 text-gray-300" />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Detalles opcionales, colapsados por defecto */}
+            {!mostrarDetalles ? (
+              <button
+                onClick={() => setMostrarDetalles(true)}
+                className="w-full text-sm text-sky-600 hover:text-sky-700 font-medium mb-5"
+              >
+                + Añadir comentario o cambiar fecha (opcional)
+              </button>
+            ) : (
+              <div className="space-y-3 mb-5">
                 <textarea
-                  value={visitData.notas}
-                  onChange={(e) => setVisitData({ ...visitData, notas: e.target.value })}
-                  placeholder="¿Cómo fue tu experiencia? ¿Algún consejo?"
+                  value={formData.comentario}
+                  onChange={(e) => setFormData({ ...formData, comentario: e.target.value })}
+                  placeholder="Comparte tu experiencia (opcional)..."
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0b3c74] focus:border-transparent resize-none"
-                  maxLength={500}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0b3c74] focus:border-transparent resize-none text-sm"
+                  maxLength={1000}
                 />
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">
+                    Fecha de la visita
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.fecha_visita}
+                    onChange={(e) => setFormData({ ...formData, fecha_visita: e.target.value })}
+                    max={new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0b3c74] focus:border-transparent text-sm"
+                  />
+                </div>
               </div>
+            )}
 
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={handleRegistrarVisita}
-                  disabled={loading}
-                  className="flex-1 px-4 py-2.5 bg-[#0b3c74] text-white rounded-lg font-semibold hover:bg-[#0d4a8f] hover:shadow-lg transition-all disabled:opacity-50"
-                >
-                  {loading ? 'Registrando...' : 'Registrar Visita'}
-                </button>
-                <button
-                  onClick={() => setShowVisitModal(false)}
-                  className="px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
-                >
-                  Cancelar
-                </button>
-              </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleSubmitEstuve}
+                disabled={loading || formData.rating === 0}
+                className="flex-1 px-4 py-2.5 bg-[#0b3c74] text-white rounded-lg font-semibold hover:bg-[#0d4a8f] hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Guardando...' : 'Publicar'}
+              </button>
+              <button
+                onClick={() => setShowEstuveModal(false)}
+                className="px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Cancelar
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal de éxito */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-8 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircleIcon className="w-10 h-10 text-green-600" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              ¡Visita registrada!
-            </h3>
-            <p className="text-gray-600 mb-4">
-              ¿Quieres valorar tu experiencia en {areaNombre}?
-            </p>
-            <p className="text-sm text-gray-500">
-              Se abrirá el formulario de valoración...
-            </p>
-          </div>
-        </div>
+      {showAuthModal && (
+        <AuthModal
+          title="Cuéntanos cómo fue tu visita"
+          subtitle="Crea una cuenta gratis para valorar áreas y ayudar a otros viajeros."
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={handleAuthSuccess}
+        />
       )}
     </>
   )
 }
-

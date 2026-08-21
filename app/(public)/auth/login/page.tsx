@@ -17,6 +17,15 @@ export default function LoginPage() {
   const router = useRouter()
   const { t } = useLanguage()
 
+  // Destino tras el login: respeta ?next= (p. ej. volver a la ficha de área
+  // donde el usuario intentó guardar o valorar). Leemos window.location para
+  // no necesitar Suspense de useSearchParams.
+  const getNext = () => {
+    if (typeof window === 'undefined') return '/mapa'
+    const next = new URLSearchParams(window.location.search).get('next')
+    return next && next.startsWith('/') ? next : '/mapa'
+  }
+
   // Login con email y contraseña
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -72,7 +81,7 @@ export default function LoginPage() {
       if (error) throw error
 
       // Redirigir después del login exitoso
-      router.push('/mapa')
+      router.push(getNext())
       router.refresh()
     } catch (error: any) {
       console.error('Error login email:', error)
@@ -108,7 +117,7 @@ export default function LoginPage() {
       const supabase = createClient()
       
       // SIEMPRE redirigir a producción (consistente con register)
-      const redirectTo = 'https://www.mapafurgocasa.com/auth/callback?next=/mapa'
+      const redirectTo = `https://www.mapafurgocasa.com/auth/callback?next=${encodeURIComponent(getNext())}`
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

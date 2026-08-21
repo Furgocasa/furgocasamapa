@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useLanguage } from '@/lib/i18n'
 
@@ -9,9 +9,16 @@ export default function WelcomeModal() {
   const [isOpen, setIsOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
+  const pathname = usePathname()
   const { t } = useLanguage()
 
+  // Solo en la home: nunca interrumpir a quien llega desde Google a una
+  // ficha de área o al mapa. La conversión se pide en el momento de la
+  // acción (favorito, valoración, guardar ruta), no al aterrizar.
+  const esHome = pathname === '/'
+
   useEffect(() => {
+    if (!esHome) return
     const checkUserAndModal = async () => {
       // Crear cliente solo cuando se necesita
       const supabase = createClient()
@@ -35,7 +42,7 @@ export default function WelcomeModal() {
     }
 
     checkUserAndModal()
-  }, [])
+  }, [esHome])
 
   const handleClose = () => {
     setIsOpen(false)
@@ -58,7 +65,7 @@ export default function WelcomeModal() {
     handleClose()
   }
 
-  if (!isOpen || user) return null
+  if (!esHome || !isOpen || user) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">

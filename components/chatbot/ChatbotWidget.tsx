@@ -7,6 +7,12 @@ import Link from 'next/link'
 import { formatErrorForUser } from '@/lib/chatbot/errors'
 import { track } from '@/lib/analytics/track'
 import { useLanguage } from '@/lib/i18n'
+import {
+  getLocalFavorites,
+  hasLocalFavorite,
+  addLocalFavorite,
+  removeLocalFavorite,
+} from '@/lib/favoritos/local'
 
 interface Message {
   rol: 'user' | 'assistant'
@@ -310,6 +316,98 @@ export default function ChatbotWidget() {
     track('chatbot_nueva_conversacion', {})
   }
 
+  // -------------------------------------------------------------------
+  // Favoritos desde el chat: el Tío Viajero también llena la mochila.
+  // Con cuenta van a la tabla `favoritos`; sin cuenta, a localStorage
+  // (se sincronizan al crear cuenta).
+  // -------------------------------------------------------------------
+  const [favIds, setFavIds] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    if (!isOpen) return
+    const cargarFavoritos = async () => {
+      if (user) {
+        try {
+          const supabase = createClient()
+          const { data } = await (supabase as any)
+            .from('favoritos')
+            .select('area_id')
+            .eq('user_id', user.id)
+          setFavIds(new Set((data || []).map((f: any) => f.area_id)))
+        } catch { /* noop */ }
+      } else {
+        setFavIds(new Set(getLocalFavorites()))
+      }
+    }
+    cargarFavoritos()
+  }, [isOpen, user])
+
+  const toggleFavorito = async (area: any) => {
+    const esFav = favIds.has(area.id)
+    // Optimista
+    setFavIds((prev) => {
+      const next = new Set(prev)
+      if (esFav) next.delete(area.id)
+      else next.add(area.id)
+      return next
+    })
+
+    if (!user) {
+      if (esFav) removeLocalFavorite(area.id)
+      else addLocalFavorite(area.id)
+      track(esFav ? 'area_unfavorite' : 'area_favorite', {
+        area_id: area.id,
+        event_data: { origen: 'chatbot', modo: 'local' },
+      })
+      return
+    }
+
+    try {
+      const supabase = createClient()
+      if (esFav) {
+        await (supabase as any)
+          .from('favoritos')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('area_id', area.id)
+      } else {
+        await (supabase as any)
+          .from('favoritos')
+          .insert({ user_id: user.id, area_id: area.id })
+      }
+      track(esFav ? 'area_unfavorite' : 'area_favorite', {
+        area_id: area.id,
+        event_data: { origen: 'chatbot' },
+      })
+    } catch { /* noop: el estado optimista ya refleja la intención */ }
+  }
+
+  const guardarTodas = async (areas: any[]) => {
+    const pendientes = areas.filter((a) => !favIds.has(a.id))
+    if (pendientes.length === 0) return
+    setFavIds((prev) => {
+      const next = new Set(prev)
+      pendientes.forEach((a) => next.add(a.id))
+      return next
+    })
+    for (const area of pendientes) {
+      if (!user) {
+        addLocalFavorite(area.id)
+      } else {
+        try {
+          const supabase = createClient()
+          await (supabase as any)
+            .from('favoritos')
+            .insert({ user_id: user.id, area_id: area.id })
+        } catch { /* noop */ }
+      }
+      track('area_favorite', {
+        area_id: area.id,
+        event_data: { origen: 'chatbot_todas', modo: user ? 'cuenta' : 'local' },
+      })
+    }
+  }
+
   // Ir al MAPA con el área seleccionada (el chat se minimiza, no se pierde).
   // Si ya estamos en /mapa, avisamos a la página con un evento; si no, navegamos
   // en la MISMA pestaña con ?area=slug (la página del mapa lo lee al cargar).
@@ -564,11 +662,13 @@ export default function ChatbotWidget() {
                           ? fotoCandidata
                           : null
                         return (
-                          <button
+                          <div
                             key={area.id}
-                            type="button"
+                            role="button"
+                            tabIndex={0}
                             onClick={() => irAlMapa(area.slug)}
-                            className="w-full text-left flex gap-2.5 bg-white hover:bg-sky-50 border border-gray-200 hover:border-sky-300 rounded-xl overflow-hidden transition-all group shadow-sm"
+                            onKeyDown={(e) => { if (e.key === 'Enter') irAlMapa(area.slug) }}
+                            className="w-full text-left flex gap-2.5 bg-white hover:bg-sky-50 border border-gray-200 hover:border-sky-300 rounded-xl overflow-hidden transition-all group shadow-sm cursor-pointer"
                             title="Ver en el mapa"
                           >
                             {/* Foto */}
@@ -582,7 +682,21 @@ export default function ChatbotWidget() {
                             </div>
                             {/* Datos */}
                             <div className="py-2 pr-2.5 min-w-0 flex-1">
-                              <p className="font-semibold text-gray-900 text-xs leading-tight truncate group-hover:text-sky-700">{area.nombre}</p>
+                              <div className="flex items-start gap-1">
+                                <p className="font-semibold text-gray-900 text-xs leading-tight truncate group-hover:text-sky-700 flex-1">{area.nombre}</p>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    toggleFavorito(area)
+                                  }}
+                                  className="flex-shrink-0 text-base leading-none hover:scale-110 transition-transform -mt-0.5"
+                                  aria-label={favIds.has(area.id) ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+                                  title={favIds.has(area.id) ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+                                >
+                                  {favIds.has(area.id) ? '❤️' : '🤍'}
+                                </button>
+                              </div>
                               <p className="text-[11px] text-gray-500 truncate">📍 {area.ciudad}, {area.pais}</p>
                               <div className="flex items-center gap-2 mt-1 text-[11px]">
                                 <span className={`font-bold ${(!area.precio_noche || area.precio_noche === 0) ? 'text-green-600' : 'text-gray-800'}`}>
@@ -605,9 +719,20 @@ export default function ChatbotWidget() {
                                 <span className="ml-auto text-sky-600 font-medium">🗺️</span>
                               </div>
                             </div>
-                          </button>
+                          </div>
                         )
                       })}
+
+                      {/* Guardar todas las áreas sugeridas de una vez */}
+                      {msg.areas.slice(0, 6).some((a: any) => !favIds.has(a.id)) && (
+                        <button
+                          type="button"
+                          onClick={() => guardarTodas(msg.areas!.slice(0, 6))}
+                          className="w-full text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded-lg py-2 transition-colors"
+                        >
+                          ❤️ Guardar {msg.areas.slice(0, 6).length === 1 ? 'esta área' : `estas ${msg.areas.slice(0, 6).length} áreas`} en favoritos
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

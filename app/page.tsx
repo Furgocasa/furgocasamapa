@@ -28,6 +28,12 @@ export default function HomePage() {
   /** Fallback alineado con metadatos (+3600) hasta cargar el conteo real desde Supabase */
   const [totalAreas, setTotalAreas] = useState(3600)
 
+  // Home logada: mis sitios guardados + última ruta
+  const [user, setUser] = useState<any>(null)
+  const [misSitios, setMisSitios] = useState<any[]>([])
+  const [ultimaRuta, setUltimaRuta] = useState<any>(null)
+  const [personalLoaded, setPersonalLoaded] = useState(false)
+
   useEffect(() => {
     // Cargar contador dinámico de áreas
     const loadTotalAreas = async () => {
@@ -49,9 +55,137 @@ export default function HomePage() {
     loadTotalAreas()
   }, [])
 
+  useEffect(() => {
+    // Si hay sesión, cargar el contenido personal (favoritos + última ruta)
+    const loadPersonal = async () => {
+      try {
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.user) {
+          setPersonalLoaded(true)
+          return
+        }
+        setUser(session.user)
+
+        const [{ data: favs }, { data: rutas }] = await Promise.all([
+          (supabase as any)
+            .from('favoritos')
+            .select('id, created_at, areas ( id, nombre, slug, ciudad, pais, foto_principal, precio_noche, google_rating )')
+            .eq('user_id', session.user.id)
+            .order('created_at', { ascending: false })
+            .limit(6),
+          (supabase as any)
+            .from('rutas')
+            .select('id, nombre, distancia_km, duracion_minutos, created_at')
+            .eq('user_id', session.user.id)
+            .order('created_at', { ascending: false })
+            .limit(1),
+        ])
+
+        setMisSitios((favs || []).filter((f: any) => f.areas))
+        setUltimaRuta(rutas && rutas.length > 0 ? rutas[0] : null)
+      } catch (err) {
+        console.error('Error loading personal home:', err)
+      } finally {
+        setPersonalLoaded(true)
+      }
+    }
+
+    loadPersonal()
+  }, [])
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
+
+      {/* HOME LOGADA: tus sitios + tu última ruta (tu viaje primero, la landing después) */}
+      {user && personalLoaded && (
+        <section className="bg-gradient-to-b from-sky-50 to-white border-b border-sky-100">
+          <div className="container mx-auto px-4 py-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl md:text-2xl font-bold text-[#0b3c74]">
+                ❤️ Tus sitios guardados
+              </h2>
+              {misSitios.length > 0 && (
+                <Link href="/perfil" className="text-sm text-sky-600 hover:text-sky-700 font-semibold">
+                  Ver todos →
+                </Link>
+              )}
+            </div>
+
+            {misSitios.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+                {misSitios.map((fav: any) => (
+                  <Link
+                    key={fav.id}
+                    href={`/area/${fav.areas.slug}`}
+                    className="group bg-white rounded-xl border border-gray-200 hover:border-sky-300 hover:shadow-md transition-all overflow-hidden"
+                  >
+                    <div className="h-24 bg-slate-100 overflow-hidden">
+                      {fav.areas.foto_principal ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={fav.areas.foto_principal}
+                          alt={fav.areas.nombre}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-2xl">🚐</div>
+                      )}
+                    </div>
+                    <div className="p-2.5">
+                      <p className="text-xs font-semibold text-gray-900 truncate group-hover:text-sky-700">
+                        {fav.areas.nombre}
+                      </p>
+                      <p className="text-[11px] text-gray-500 truncate">
+                        {fav.areas.ciudad}, {fav.areas.pais}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl border-2 border-dashed border-sky-200 p-6 text-center mb-6">
+                <p className="text-gray-700 font-medium mb-1">
+                  Aún no has guardado ningún sitio
+                </p>
+                <p className="text-sm text-gray-500 mb-4">
+                  Abre el mapa y toca el corazón ❤️ en 3 áreas que te gusten: las tendrás siempre a mano para tu próximo viaje.
+                </p>
+                <Link
+                  href="/mapa"
+                  className="inline-flex items-center gap-2 bg-[#0b3c74] hover:bg-[#0d4a8f] text-white font-semibold px-6 py-2.5 rounded-lg transition-all"
+                >
+                  <MapIcon className="w-5 h-5" />
+                  Explorar el mapa
+                </Link>
+              </div>
+            )}
+
+            {ultimaRuta && (
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <ArrowPathIcon className="w-6 h-6 text-sky-600 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{ultimaRuta.nombre}</p>
+                    <p className="text-xs text-gray-500">
+                      {ultimaRuta.distancia_km ? `${Math.round(ultimaRuta.distancia_km)} km` : ''}
+                      {ultimaRuta.duracion_minutos ? ` · ${Math.floor(ultimaRuta.duracion_minutos / 60)}h ${ultimaRuta.duracion_minutos % 60}min` : ''}
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href={`/ruta?ruta=${ultimaRuta.id}`}
+                  className="text-sm bg-sky-50 hover:bg-sky-100 text-sky-700 font-semibold px-4 py-2 rounded-lg border border-sky-200 transition-colors flex-shrink-0"
+                >
+                  Reabrir tu última ruta →
+                </Link>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* HERO - Azul corporativo con stats */}
       <section className="relative bg-gradient-to-br from-[#0b3c74] via-[#0d4a8f] to-[#0b3c74] text-white overflow-hidden">

@@ -4,6 +4,7 @@ import './globals.css'
 import WelcomeModal from '@/components/ui/WelcomeModal'
 import ChatbotWidget from '@/components/chatbot/ChatbotWidget'
 import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
+import FavoritosSync from '@/components/ui/FavoritosSync'
 import { LanguageProvider } from '@/lib/i18n/LanguageProvider'
 
 export const metadata: Metadata = {
@@ -122,6 +123,7 @@ export default function RootLayout({
 
         <LanguageProvider>
           <AnalyticsTracker />
+          <FavoritosSync />
           <WelcomeModal />
           <ChatbotWidget />
           {children}

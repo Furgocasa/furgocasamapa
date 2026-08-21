@@ -12,6 +12,15 @@ import { useToast } from '@/hooks/useToast'
 import type { Area } from '@/types/database.types'
 import { useLanguage, getTipoAreaLabel } from '@/lib/i18n'
 import { isImagenIA } from '@/lib/areas/image-copyright'
+import AuthModal from '@/components/ui/AuthModal'
+import {
+  hasLocalFavorite,
+  addLocalFavorite,
+  removeLocalFavorite,
+  getLocalFavorites,
+  syncLocalFavoritesToAccount,
+} from '@/lib/favoritos/local'
+import { track } from '@/lib/analytics/track'
 
 interface Props {
   area: Area
@@ -20,6 +29,8 @@ interface Props {
 export function DetalleAreaHeader({ area }: Props) {
   const [isFavorite, setIsFavorite] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [localFavCount, setLocalFavCount] = useState(0)
+  const [showAuthModal, setShowAuthModal] = useState(false)
   const router = useRouter()
   const { toast, showToast, hideToast } = useToast()
   const { locale, t } = useLanguage()
@@ -32,8 +43,13 @@ export function DetalleAreaHeader({ area }: Props) {
     try {
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
-      
-      if (!session?.user) return
+
+      if (!session?.user) {
+        // Usuario anónimo: los favoritos viven en este dispositivo
+        setIsFavorite(hasLocalFavorite(area.id))
+        setLocalFavCount(getLocalFavorites().length)
+        return
+      }
       setUser(session.user)
 
       const { data } = await (supabase as any)
@@ -50,9 +66,21 @@ export function DetalleAreaHeader({ area }: Props) {
   }
 
   const handleFavorite = async () => {
+    // Sin cuenta: el corazón funciona igualmente (favorito local)
     if (!user) {
-      showToast('Debes iniciar sesión para añadir favoritos', 'info')
-      setTimeout(() => router.push('/auth/login'), 1500)
+      if (isFavorite) {
+        const n = removeLocalFavorite(area.id)
+        setIsFavorite(false)
+        setLocalFavCount(n)
+        track('area_unfavorite', { area_id: area.id, event_data: { modo: 'local' } })
+        showToast('Quitada de tus sitios', 'info')
+      } else {
+        const n = addLocalFavorite(area.id)
+        setIsFavorite(true)
+        setLocalFavCount(n)
+        track('area_favorite', { area_id: area.id, event_data: { modo: 'local' } })
+        showToast('❤️ Guardada en tus sitios', 'success')
+      }
       return
     }
 
@@ -68,19 +96,41 @@ export function DetalleAreaHeader({ area }: Props) {
 
         if (error) throw error
         setIsFavorite(false)
+        track('area_unfavorite', { area_id: area.id })
         showToast('❌ Quitado de favoritos', 'info')
       } else {
         const { error } = await (supabase as any)
           .from('favoritos')
           .insert({ user_id: user.id, area_id: area.id })
 
-        if (error) throw error
+        if (error && error.code !== '23505') throw error
         setIsFavorite(true)
+        track('area_favorite', { area_id: area.id })
         showToast('❤️ Añadido a favoritos', 'success')
       }
     } catch (error: any) {
       console.error('Error toggling favorite:', error)
       showToast(error.message || 'Error al actualizar favorito', 'error')
+    }
+  }
+
+  const handleAuthSuccess = async (loggedUser: any) => {
+    setShowAuthModal(false)
+    setUser(loggedUser)
+    try {
+      const supabase = createClient()
+      const n = await syncLocalFavoritesToAccount(supabase, loggedUser.id)
+      setLocalFavCount(0)
+      if (n > 0) {
+        showToast(
+          n === 1
+            ? '❤️ Tu área guardada ya está en tu cuenta'
+            : `❤️ Tus ${n} áreas guardadas ya están en tu cuenta`,
+          'success'
+        )
+      }
+    } catch {
+      /* la sincronización global lo reintentará */
     }
   }
 
@@ -181,7 +231,7 @@ export function DetalleAreaHeader({ area }: Props) {
             </button>
             <button
               onClick={handleFavorite}
-              className="w-11 h-11 bg-white/90 backdrop-blur-md flex items-center justify-center rounded-full shadow-sm hover:bg-white transition-all border border-white/20"
+              className="relative w-11 h-11 bg-white/90 backdrop-blur-md flex items-center justify-center rounded-full shadow-sm hover:bg-white transition-all border border-white/20"
               aria-label={isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
             >
               {isFavorite ? (
@@ -189,9 +239,15 @@ export function DetalleAreaHeader({ area }: Props) {
               ) : (
                 <HeartIcon className="w-6 h-6 text-slate-700" />
               )}
+              {!user && localFavCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-red-500 text-white text-[11px] font-bold rounded-full flex items-center justify-center shadow">
+                  {localFavCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
+
 
         {/* Información superpuesta (Glassmorphism) */}
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 max-w-[1200px] mx-auto z-10">
@@ -255,6 +311,32 @@ export function DetalleAreaHeader({ area }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Banner suave: favoritos guardados sin cuenta */}
+      {!user && localFavCount > 0 && (
+        <div className="w-full max-w-[1600px] mx-auto">
+          <button
+            onClick={() => setShowAuthModal(true)}
+            className="w-full flex flex-wrap items-center justify-center gap-x-2 gap-y-1 bg-sky-50 hover:bg-sky-100 border-b border-sky-200 text-sky-900 text-sm font-medium py-2.5 px-4 transition-colors text-center"
+          >
+            <span>
+              ❤️ {localFavCount === 1
+                ? 'Tienes 1 área guardada en este dispositivo.'
+                : `Tienes ${localFavCount} áreas guardadas en este dispositivo.`}
+            </span>
+            <span className="underline font-semibold">Crea una cuenta gratis para no perderlas</span>
+          </button>
+        </div>
+      )}
+
+      {showAuthModal && (
+        <AuthModal
+          title="No pierdas tus sitios guardados"
+          subtitle="Crea una cuenta gratis y tus favoritos se sincronizan en todos tus dispositivos."
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={handleAuthSuccess}
+        />
+      )}
     </>
   )
 }
