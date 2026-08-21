@@ -271,6 +271,15 @@
 
 ---
 
+## BLOQUE EXTRA — Huecos Italia (ago 2026)
+
+- **Qué**: malla 25 km sobre península + Sicilia + Cerdeña. 914 soste previas, todas públicas.
+- **Huecos**: Sicilia (sur/SE/Madonie), Cerdeña (Barbagia/Sarrabus/Nurra), Marche, Emilia, Valtellina, Verbano, Sannio, Apenino, Ossola, Tavoliere, Gargano, Basilicata.
+- **Términos**: area sosta camper, sosta camper, campeggio camper. Sosta = área pública.
+- **Comandos**: `npm run import:italia:gaps` → `--from-report --import`.
+
+---
+
 ## BLOQUE EXTRA — Huecos Francia (ago 2026)
 
 - **Qué**: malla 25 km sobre metrópoli + Córcega. 1192 aires previas, todas públicas.

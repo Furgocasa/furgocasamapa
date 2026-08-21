@@ -10,6 +10,8 @@
  *   npm run import:alemania:gaps -- --from-report --import
  *   npm run import:francia:gaps
  *   npm run import:francia:gaps -- --from-report --import
+ *   npm run import:italia:gaps
+ *   npm run import:italia:gaps -- --from-report --import
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -42,6 +44,8 @@ const REPORT_NAME =
       ? "alemania-gaps-dry-report.json"
       : REGION === "francia"
         ? "francia-gaps-dry-report.json"
+        : REGION === "italia"
+          ? "italia-gaps-dry-report.json"
         : "iberia-gaps-dry-report.json";
 const REPORT_PATH = path.join(process.cwd(), "scripts", REPORT_NAME);
 
@@ -120,6 +124,25 @@ const HUECOS_FRANCIA = [
   { id: 16, zona: "Diois / Drôme", lat: 44.53, lng: 5.63, pais: "Francia" },
 ];
 
+const HUECOS_ITALIA = [
+  { id: 1, zona: "Sicilia sur / Agrigento", lat: 37.25, lng: 13.6, pais: "Italia" },
+  { id: 2, zona: "Sicilia SE / Ragusa", lat: 36.95, lng: 14.6, pais: "Italia" },
+  { id: 3, zona: "Sicilia / Madonie", lat: 37.9, lng: 14.1, pais: "Italia" },
+  { id: 4, zona: "Marche / Urbino", lat: 43.58, lng: 12.94, pais: "Italia" },
+  { id: 5, zona: "Cerdeña / Barbagia", lat: 40.24, lng: 9.16, pais: "Italia" },
+  { id: 6, zona: "Cerdeña sur / Sarrabus", lat: 39.35, lng: 9.35, pais: "Italia" },
+  { id: 7, zona: "Cerdeña NO / Nurra", lat: 40.7, lng: 8.45, pais: "Italia" },
+  { id: 8, zona: "Emilia / Cremona", lat: 45.17, lng: 9.83, pais: "Italia" },
+  { id: 9, zona: "Valtellina", lat: 46.35, lng: 10.15, pais: "Italia" },
+  { id: 10, zona: "Novara / Verbano", lat: 45.63, lng: 8.47, pais: "Italia" },
+  { id: 11, zona: "Sannio / Irpinia", lat: 41.15, lng: 14.8, pais: "Italia" },
+  { id: 12, zona: "Apenino tosco-emiliano", lat: 44.4, lng: 10.05, pais: "Italia" },
+  { id: 13, zona: "Val d'Ossola", lat: 46.15, lng: 8.35, pais: "Italia" },
+  { id: 14, zona: "Tavoliere / Foggia", lat: 41.4, lng: 15.55, pais: "Italia" },
+  { id: 15, zona: "Gargano", lat: 41.8, lng: 15.9, pais: "Italia" },
+  { id: 16, zona: "Basilicata", lat: 40.55, lng: 15.8, pais: "Italia" },
+];
+
 const HUECOS =
   REGION === "baleares"
     ? HUECOS_BALEARES
@@ -127,6 +150,8 @@ const HUECOS =
       ? HUECOS_ALEMANIA
       : REGION === "francia"
         ? HUECOS_FRANCIA
+        : REGION === "italia"
+          ? HUECOS_ITALIA
         : HUECOS_PENINSULA;
 
 const TERMINOS_ES = [
@@ -154,11 +179,16 @@ const TERMINOS_FR = [
   "aire de service camping-car",
   "camping camping-car",
 ];
+const TERMINOS_IT = [
+  "area sosta camper",
+  "sosta camper",
+  "campeggio camper",
+];
 
 const RELEVANCE_RE =
   /\b(autocaravana|autocaravanas|autocaravanes|camper|caravana|camping|c[aà]mping|campismo|campground|aire|area de servicio|área de servicio|sosta|stellplatz|motorhome|campervan|caravaning)\b/i;
 const NOISE_RE =
-  /\b(hotel|motel|hostal|hostel|restaurante|restaurant|gasolinera|gas station|dealer|concesionario|venta|alquiler|hire|rental|rentals|rent\b|storage|agencia|experience|indie campers|vermietung|verkauf|haendler|händler|autohaus)\b/i;
+  /\b(hotel|motel|hostal|hostel|restaurante|restaurant|gasolinera|gas station|dealer|concesionario|venta|alquiler|hire|rental|rentals|rent\b|storage|agencia|experience|indie campers|vermietung|verkauf|haendler|händler|autohaus|noleggio)\b/i;
 
 function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -172,6 +202,19 @@ function normalizeText(text: string): string {
     .replace(/[^a-z0-9\s]/g, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function isInItaly(lat: number, lng: number): boolean {
+  if (lat >= 36.65 && lat <= 38.32 && lng >= 12.4 && lng <= 15.65) return true; // Sicilia
+  if (lat >= 38.85 && lat <= 41.32 && lng >= 8.13 && lng <= 9.84) return true; // Cerdeña
+  if (lat < 36.6 || lat > 47.15 || lng < 6.6 || lng > 18.55) return false;
+  if (lat > 45.95 && lng < 7.55) return false;
+  if (lat > 46.75 && lng < 10.15) return false;
+  if (lat > 46.9 && lng > 12.55) return false;
+  if (lat > 46.25 && lng > 13.75) return false;
+  if (lat > 42.5 && lat < 44.5 && lng < 8.0) return false;
+  if (lat > 43.8 && lat < 45.4 && lng > 13.55) return false;
+  return true;
 }
 
 function isInFrance(lat: number, lng: number): boolean {
@@ -251,6 +294,15 @@ function isRelevant(name: string, types: string[]): boolean {
       return false;
     }
   }
+  if (REGION === "italia") {
+    if (
+      !/\b(camper|sosta|campeggio|autocaravan|roulotte|motorhome)\b/i.test(name) &&
+      !types.includes("campground") &&
+      !types.includes("rv_park")
+    ) {
+      return false;
+    }
+  }
   if (RELEVANCE_RE.test(name)) return true;
   if (types.includes("campground") || types.includes("rv_park")) return true;
   return false;
@@ -266,7 +318,7 @@ async function nearby(query: string, lat: number, lng: number) {
   url.searchParams.set("key", googleApiKey);
   url.searchParams.set(
     "language",
-    REGION === "alemania" ? "de" : REGION === "francia" ? "fr" : "es"
+    REGION === "alemania" ? "de" : REGION === "francia" ? "fr" : REGION === "italia" ? "it" : "es"
   );
 
   const res = await fetch(url.toString());
@@ -373,6 +425,9 @@ async function importUtiles(utiles: any[]) {
     } else if (REGION === "francia") {
       if (cc && cc !== "FR") continue;
       if (!isInFrance(hit.lat, hit.lng)) continue;
+    } else if (REGION === "italia") {
+      if (cc && cc !== "IT") continue;
+      if (!isInItaly(hit.lat, hit.lng)) continue;
     } else if (cc && cc !== "ES" && cc !== "PT") {
       continue;
     }
@@ -383,11 +438,13 @@ async function importUtiles(utiles: any[]) {
         ? "Alemania"
         : REGION === "francia" || cc === "FR"
           ? "Francia"
+          : REGION === "italia" || cc === "IT"
+            ? "Italia"
           : cc === "PT"
             ? "Portugal"
             : "España";
     const slugSuffix =
-      pais === "Alemania" ? "de" : pais === "Francia" ? "fr" : pais === "Portugal" ? "pt" : "es";
+      pais === "Alemania" ? "de" : pais === "Francia" ? "fr" : pais === "Italia" ? "it" : pais === "Portugal" ? "pt" : "es";
     const slug = `${normalizeText(hit.name).replace(/\s+/g, "-").slice(0, 80)}-${slugSuffix}-${hit.place_id.slice(-8)}`;
     const { error } = await supabase.from("areas").insert([
       {
@@ -458,6 +515,8 @@ async function main() {
         ? "\nAlemania — 16 huecos (radio 40 km)"
         : REGION === "francia"
           ? "\nFrancia — 16 huecos (radio 40 km)"
+        : REGION === "italia"
+          ? "\nItalia — 16 huecos (radio 40 km)"
         : "\nPenínsula — búsqueda en 16 huecos (radio 40 km)"
   );
   console.log(doImport ? "MODO IMPORT\n" : "DRY RUN\n");
@@ -477,6 +536,8 @@ async function main() {
           ? TERMINOS_DE
           : REGION === "francia"
             ? TERMINOS_FR
+          : REGION === "italia"
+            ? TERMINOS_IT
           : hueco.pais === "Portugal"
             ? TERMINOS_PT
             : TERMINOS_ES;
@@ -494,6 +555,7 @@ async function main() {
         if (REGION === "baleares" && !isInBaleares(r.lat, r.lng)) continue;
         if (REGION === "alemania" && !isInGermany(r.lat, r.lng)) continue;
         if (REGION === "francia" && !isInFrance(r.lat, r.lng)) continue;
+        if (REGION === "italia" && !isInItaly(r.lat, r.lng)) continue;
         seen.add(r.place_id);
         const relevant = isRelevant(r.name, r.types);
         const inDb = placeIds.has(r.place_id);

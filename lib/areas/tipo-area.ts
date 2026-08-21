@@ -73,7 +73,7 @@ function esStopoverHint(n: string): boolean {
 function esAreaHabilitadaEnNombre(n: string): boolean {
   return (
     isMotorhomeWording(n) ||
-    /\b(area de (autocaravanas?|autocaravanes|servicio|servicios)|area autocaravanas?|aire de services?|aire d'accueil)\b/.test(
+    /\b(area de (autocaravanas?|autocaravanes|servicio|servicios)|area autocaravanas?|aire de services?|aire d'accueil|area sosta|sosta camper)\b/.test(
       n
     )
   )
@@ -140,7 +140,7 @@ export function classifyTipoArea(
     /\barea autocaravanas?\b/.test(n) ||
     (/\baires?\b/.test(n) && !/\b(airport|aire acondicionado)\b/.test(n))
 
-  if (/\bprivad[oa]\b/.test(n) && (esAire || /\barea\b/.test(n))) {
+  if (/\b(privad[oa]|privata)\b/.test(n) && (esAire || /\barea\b/.test(n))) {
     return 'privada'
   }
 
@@ -150,7 +150,7 @@ export function classifyTipoArea(
 
   const nameIsCamping =
     !isMotorhomeWording(n) &&
-    /\b(camping|campismo|campground|campamentos?|campament|caravan park|holiday park|touring park|trailer park|rv park|rv resort|parque de trailers?|parque de campismo)\b/.test(
+    /\b(camping|campeggio|campismo|campground|campamentos?|campament|caravan park|holiday park|touring park|trailer park|rv park|rv resort|parque de trailers?|parque de campismo)\b/.test(
       n
     )
   const typeIsCamping =

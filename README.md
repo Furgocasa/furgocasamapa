@@ -347,6 +347,7 @@ Cada país se trata como mercado propio (terminología + tipo de sitio), no como
 | Islas Baleares | 0 áreas previas; 13 disparos (Mallorca, Menorca, Ibiza, Formentera) | mismo script `--region=baleares` | `npm run import:baleares:gaps` → `--from-report --import` |
 | Huecos Alemania | malla 25 km; 16 huecos (Brandeburgo, Baviera este, Emsland, Rügen…) | mismo script `--region=alemania` | `npm run import:alemania:gaps` → `--from-report --import` |
 | Huecos Francia | malla 25 km; 16 huecos (Perche, Ardenas, Finistère, Pirineos, Córcega…) | mismo script `--region=francia` | `npm run import:francia:gaps` → `--from-report --import` |
+| Huecos Italia | malla 25 km; 16 huecos (Sicilia, Cerdeña, Marche, Valtellina, Gargano…) | mismo script `--region=italia` | `npm run import:italia:gaps` → `--from-report --import` |
 
 **Huecos (península):** rejilla ~22 km; celda vacía = ninguna área a 25 km; celdas vecinas = un hueco; el centroide es el disparo. No incluye islas. **Baleares:** 0 áreas previas → 13 disparos; Formentera no devolvió ficha útil. En Windows, si falla TLS: `$env:NODE_TLS_REJECT_UNAUTHORIZED="0"`.
 
