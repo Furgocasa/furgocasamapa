@@ -9,6 +9,7 @@ import { BuscadorGeografico } from './BuscadorGeografico'
 import { buildAreaPopupHTML } from './areaPopup'
 import { getMapStyle } from '@/lib/mapStyles'
 import { useLanguage } from '@/lib/i18n'
+import { getTipoAreaColor } from '@/lib/areas/tipo-area'
 
 // Tipos simplificados para Google Maps (se cargan din├ímicamente)
 type GoogleMap = any
@@ -431,16 +432,6 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
     }
   }, [])
 
-  const getTipoAreaColor = (tipo: string): string => {
-    const colors: Record<string, string> = {
-      publica: '#0284c7', // Azul
-      privada: '#FF6B35', // Naranja
-      camping: '#52B788', // Verde
-      parking: '#F4A261', // Arena
-    }
-    return colors[tipo] || '#0284c7'
-  }
-
   // Obtener icono para cada servicio (coincide exactamente con los filtros)
   const getServicioIcon = (servicio: string): string => {
     const iconos: Record<string, string> = {
@@ -590,7 +581,9 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
       'México': { center: { lat: 23.6, lng: -102.5 }, zoom: 5 },
       'Costa Rica': { center: { lat: 10, lng: -84 }, zoom: 7 },
       'Panamá': { center: { lat: 9, lng: -80 }, zoom: 7 },
-      'Puerto Rico': { center: { lat: 18, lng: -66 }, zoom: 8 }
+      'Puerto Rico': { center: { lat: 18, lng: -66 }, zoom: 8 },
+      'Gales': { center: { lat: 52.2928, lng: -3.7389 }, zoom: 7 },
+      'Reino Unido': { center: { lat: 54.5, lng: -3.4 }, zoom: 5 }
     }
 
     const vista = vistas[paisFiltro] || vistas['']

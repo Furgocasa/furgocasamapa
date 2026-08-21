@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { MagnifyingGlassIcon, XMarkIcon, ChevronRightIcon, CheckIcon, GlobeAltIcon } from '@heroicons/react/24/outline'
-import { useLanguage, getServicioLabel, SERVICIO_ICONS } from '@/lib/i18n'
+import { useLanguage, getServicioLabel, getTipoAreaLabel, SERVICIO_ICONS } from '@/lib/i18n'
+import { TIPO_AREA_IDS, getTipoAreaColor, type TipoArea } from '@/lib/areas/tipo-area'
 
 export interface Filtros {
   busqueda: string
   pais: string
   servicios: string[]
+  tipos: string[]
   precio: string
   caracteristicas: string[]
 }
@@ -48,7 +50,7 @@ export const REGIONES = {
     emoji: '🇪🇺',
     paises: [
       'España', 'Portugal', 'Francia', 'Italia', 'Alemania', 'Austria', 'Suiza',
-      'Bélgica', 'Países Bajos', 'Holanda', 'Reino Unido', 'Irlanda', 'Dinamarca',
+      'Bélgica', 'Países Bajos', 'Holanda', 'Reino Unido', 'Gales', 'Irlanda', 'Dinamarca',
       'Noruega', 'Suecia', 'Finlandia', 'Polonia', 'Chequia', 'República Checa',
       'Eslovaquia', 'Hungría', 'Croacia', 'Eslovenia', 'Grecia', 'Rumanía',
       'Bulgaria', 'Serbia', 'Montenegro', 'Albania', 'Macedonia', 'Bosnia',
@@ -144,7 +146,8 @@ export function paisPerteneceAFiltro(pais: string, filtro: string): boolean {
   if (filtro === REGIONES.EUROPA.id) return REGIONES.EUROPA.paises.includes(paisNormalizado)
   if (filtro === REGIONES.SUDAMERICA.id) return REGIONES.SUDAMERICA.paises.includes(paisNormalizado)
   if (filtro === REGIONES.CENTROAMERICA.id) return REGIONES.CENTROAMERICA.paises.includes(paisNormalizado)
-  return paisNormalizado === filtro // País específico
+  // El filtro puede ser "Gales" y el área "Reino Unido" (o al revés)
+  return paisNormalizado === filtro || paisNormalizado === normalizarPais(filtro)
 }
 
 export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, totalResultados, paisesDisponibles, conteoPaisesRegion }: FiltrosMapaProps) {
@@ -234,6 +237,14 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
     onFiltrosChange({ ...filtros, servicios: nuevos })
   }
 
+  const handleTipoToggle = (tipo: TipoArea) => {
+    const actuales = filtros.tipos || []
+    const nuevos = actuales.includes(tipo)
+      ? actuales.filter((t) => t !== tipo)
+      : [...actuales, tipo]
+    onFiltrosChange({ ...filtros, tipos: nuevos })
+  }
+
   const handleCaracteristicaToggle = (caracteristica: string) => {
     const nuevas = filtros.caracteristicas.includes(caracteristica)
       ? filtros.caracteristicas.filter((c: string) => c !== caracteristica)
@@ -246,6 +257,7 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
       busqueda: '',
       pais: '',
       servicios: [],
+      tipos: [],
       precio: '',
       caracteristicas: []
     })
@@ -319,6 +331,51 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
             </div>
             <ChevronRightIcon className="w-4 h-4 text-gray-400" />
           </button>
+        </div>
+
+        {/* Tipo de ubicación */}
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            {t('type_filter')}
+          </label>
+          <div className="space-y-1 bg-gray-50 rounded-lg p-2">
+            {TIPO_AREA_IDS.map((tipo) => {
+              const hintKey =
+                tipo === 'publica'
+                  ? 'type_public_hint'
+                  : tipo === 'privada'
+                    ? 'type_private_hint'
+                    : tipo === 'camping'
+                      ? 'type_camping_hint'
+                      : 'type_stopover_hint'
+              return (
+                <label
+                  key={tipo}
+                  className="flex items-start cursor-pointer hover:bg-white py-1.5 px-2 rounded transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={(filtros.tipos || []).includes(tipo)}
+                    onChange={() => handleTipoToggle(tipo)}
+                    className="w-4 h-4 mt-0.5 text-primary-600 rounded focus:ring-primary-500"
+                  />
+                  <span
+                    className="ml-2 mt-1 w-2.5 h-2.5 rounded-full shrink-0"
+                    style={{ backgroundColor: getTipoAreaColor(tipo) }}
+                    aria-hidden
+                  />
+                  <span className="ml-2">
+                    <span className="block text-sm text-gray-800 font-medium">
+                      {getTipoAreaLabel(tipo, locale)}
+                    </span>
+                    <span className="block text-[11px] text-gray-500 leading-tight">
+                      {t(hintKey)}
+                    </span>
+                  </span>
+                </label>
+              )
+            })}
+          </div>
         </div>
 
         {/* Servicios */}

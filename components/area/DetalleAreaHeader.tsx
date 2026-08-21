@@ -11,6 +11,7 @@ import { Toast } from '@/components/ui/Toast'
 import { useToast } from '@/hooks/useToast'
 import type { Area } from '@/types/database.types'
 import { useLanguage, getTipoAreaLabel } from '@/lib/i18n'
+import { getTipoAreaBadgeClass } from '@/lib/areas/tipo-area'
 import { isImagenIA } from '@/lib/areas/image-copyright'
 import AuthModal from '@/components/ui/AuthModal'
 import {
@@ -151,15 +152,7 @@ export function DetalleAreaHeader({ area }: Props) {
     }
   }
 
-  const getTipoAreaColor = (tipo: string) => {
-    const colors: Record<string, string> = {
-      publica: 'bg-sky-500/90 text-white backdrop-blur-md border border-sky-400/30',
-      privada: 'bg-orange-500/90 text-white backdrop-blur-md border border-orange-400/30',
-      camping: 'bg-emerald-500/90 text-white backdrop-blur-md border border-emerald-400/30',
-      parking: 'bg-slate-700/90 text-white backdrop-blur-md border border-slate-500/30',
-    }
-    return colors[tipo] || 'bg-slate-700/90 text-white backdrop-blur-md border border-slate-500/30'
-  }
+  const getTipoAreaColor = (tipo: string) => getTipoAreaBadgeClass(tipo)
 
   return (
     <>

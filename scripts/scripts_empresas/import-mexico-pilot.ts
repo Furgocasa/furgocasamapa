@@ -12,6 +12,7 @@ import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
+import { classifyTipoArea } from "../../lib/areas/tipo-area";
 
 dotenv.config({ path: ".env.local" });
 
@@ -506,7 +507,7 @@ async function importArea(hit: PlaceHit): Promise<boolean> {
     nombre: hit.name,
     slug,
     descripcion: null,
-    tipo_area: "publica",
+    tipo_area: classifyTipoArea(hit.name, { pais: "México", types: hit.types || [] }),
     pais: "México",
     provincia: hit.region,
     ciudad: null,

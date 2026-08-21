@@ -1,0 +1,160 @@
+/** Tipos de ubicación en el mapa. El valor `parking` en BD se muestra como Stopover. */
+export type TipoArea = 'publica' | 'privada' | 'camping' | 'parking'
+
+export const TIPO_AREA_IDS: TipoArea[] = ['publica', 'privada', 'camping', 'parking']
+
+export const TIPO_AREA_COLORS: Record<TipoArea, string> = {
+  publica: '#0284c7',
+  privada: '#FF6B35',
+  camping: '#52B788',
+  parking: '#7C3AED',
+}
+
+export const TIPO_AREA_BADGE_CLASSES: Record<TipoArea, string> = {
+  publica: 'bg-sky-500/90 text-white backdrop-blur-md border border-sky-400/30',
+  privada: 'bg-orange-500/90 text-white backdrop-blur-md border border-orange-400/30',
+  camping: 'bg-emerald-500/90 text-white backdrop-blur-md border border-emerald-400/30',
+  parking: 'bg-violet-600/90 text-white backdrop-blur-md border border-violet-400/30',
+}
+
+const LATAM = new Set([
+  'México',
+  'Mexico',
+  'Guatemala',
+  'Belice',
+  'Honduras',
+  'El Salvador',
+  'Nicaragua',
+  'Costa Rica',
+  'Panamá',
+  'Panama',
+  'Cuba',
+  'República Dominicana',
+  'Puerto Rico',
+  'Jamaica',
+  'Haití',
+  'Argentina',
+  'Chile',
+  'Uruguay',
+  'Paraguay',
+  'Brasil',
+  'Brazil',
+  'Bolivia',
+  'Perú',
+  'Peru',
+  'Ecuador',
+  'Colombia',
+  'Venezuela',
+  'Guyana',
+  'Surinam',
+])
+
+function norm(text: string): string {
+  return (text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
+/** Evita tratar "camping-car" (autocaravana) como camping. */
+function isMotorhomeWording(n: string): boolean {
+  return /\bcamping[-\s]?cars?\b|\bcampingcar\b/.test(n)
+}
+
+function esStopoverHint(n: string): boolean {
+  return (
+    /\b(stopover|stop over|brit.?stop|overnight parking|stellplatz)\b/.test(n) ||
+    (/\b(parking|aparcamiento|estacionamiento|estacionamento)\b/.test(n) &&
+      !/\barea de (servicio|servicios|autocaravanas|aparcamiento)\b/.test(n))
+  )
+}
+
+export function getTipoAreaColor(tipo?: string | null): string {
+  if (tipo && tipo in TIPO_AREA_COLORS) {
+    return TIPO_AREA_COLORS[tipo as TipoArea]
+  }
+  return TIPO_AREA_COLORS.publica
+}
+
+export function getTipoAreaBadgeClass(tipo?: string | null): string {
+  if (tipo && tipo in TIPO_AREA_BADGE_CLASSES) {
+    return TIPO_AREA_BADGE_CLASSES[tipo as TipoArea]
+  }
+  return TIPO_AREA_BADGE_CLASSES.publica
+}
+
+/**
+ * Pública = municipal / organismo público.
+ * Privada = empresa o particular.
+ * Camping = camping, CL de acampada, trailer/RV park.
+ * Parking (Stopover) = aparcamiento de paso / pernocta.
+ */
+export function classifyTipoArea(
+  name: string,
+  opts: { pais?: string | null; types?: string[] } = {}
+): TipoArea {
+  const n = norm(name)
+  const types = opts.types || []
+  const pais = (opts.pais || '').trim()
+
+  const municipal =
+    /\b(municipal|municipio|ayuntamiento|concejo|consell|consorcio|diputacion|alcaldia|publico|publica|gratuit[oa]? municipal)\b/.test(
+      n
+    )
+
+  const esAire =
+    /\b(aire d'accueil|aire de services?|aires? de |area de servicio|area de servicos?|area de servico|estacion de servicio|sosta)\b/.test(
+      n
+    ) ||
+    /\barea (de )?(autocaravanas?|autocaravanes|servicio|servicios|aparcamiento)\b/.test(n) ||
+    /\barea autocaravanas?\b/.test(n) ||
+    (/\baires?\b/.test(n) && !/\b(airport|aire acondicionado)\b/.test(n))
+
+  if (/\bprivad[oa]\b/.test(n) && (esAire || /\barea\b/.test(n))) {
+    return 'privada'
+  }
+
+  if (/\bcamping[-\s]?car park\b/.test(n)) {
+    return 'privada'
+  }
+
+  const nameIsCamping =
+    !isMotorhomeWording(n) &&
+    /\b(camping|campismo|campground|campamentos?|campament|acampada|caravan park|holiday park|touring park|trailer park|rv park|rv resort|parque de trailers?|parque de campismo)\b/.test(
+      n
+    )
+  const typeIsCamping =
+    LATAM.has(pais) && (types.includes('campground') || types.includes('rv_park'))
+  const esCampingReal = nameIsCamping || typeIsCamping
+
+  if (esCampingReal) {
+    return 'camping'
+  }
+
+  if (esAire || (municipal && !esStopoverHint(n))) {
+    return 'publica'
+  }
+
+  if (/\b(certified location|certificated (site|location)|camc\b.*\bcl\b|\bcl\b.*camc)\b/.test(n)) {
+    return 'privada'
+  }
+
+  if (esStopoverHint(n)) {
+    return 'parking'
+  }
+
+  if (/\b(particular|finca|camper ?park|autocaravaning)\b/.test(n)) {
+    return 'privada'
+  }
+
+  if (LATAM.has(pais)) {
+    if (types.includes('rv_park') || types.includes('campground')) return 'camping'
+    return 'privada'
+  }
+
+  if (pais === 'Reino Unido' || pais === 'United Kingdom') {
+    return 'camping'
+  }
+
+  return 'publica'
+}

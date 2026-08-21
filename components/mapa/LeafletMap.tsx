@@ -6,6 +6,7 @@ import { BuscadorGeografico } from './BuscadorGeografico'
 import { buildAreaPopupHTML } from './areaPopup'
 import Supercluster from 'supercluster'
 import { useLanguage } from '@/lib/i18n'
+import { getTipoAreaColor } from '@/lib/areas/tipo-area'
 
 // Importar Leaflet solo en cliente
 let L: any = null
@@ -372,16 +373,6 @@ export function LeafletMap({
     }
   }, [])
 
-  const getTipoAreaColor = (tipo: string): string => {
-    const colors: Record<string, string> = {
-      publica: '#0284c7',
-      privada: '#FF6B35',
-      camping: '#52B788',
-      parking: '#F4A261',
-    }
-    return colors[tipo] || '#0284c7'
-  }
-
   // Crear contenido HTML para popup - SINCRONIZADO con Google y MapLibre
   const createInfoWindowContent = (area: Area): string => {
     return buildAreaPopupHTML(area, getTipoAreaColor, 0, locale)
@@ -468,7 +459,9 @@ export function LeafletMap({
       'México': { center: [23.6, -102.5], zoom: 5 },
       'Costa Rica': { center: [10, -84], zoom: 7 },
       'Panamá': { center: [9, -80], zoom: 7 },
-      'Puerto Rico': { center: [18, -66], zoom: 8 }
+      'Puerto Rico': { center: [18, -66], zoom: 8 },
+      'Gales': { center: [52.2928, -3.7389], zoom: 7 },
+      'Reino Unido': { center: [54.5, -3.4], zoom: 5 }
     }
 
     const vista = vistas[paisFiltro] || vistas['']

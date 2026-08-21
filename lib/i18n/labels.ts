@@ -4,18 +4,18 @@ type Dict = Record<Locale, string>
 
 export const TIPO_AREA_LABELS: Record<string, Dict> = {
   publica: {
-    es: 'Pública',
-    en: 'Public',
-    fr: 'Publique',
-    de: 'Öffentlich',
-    it: 'Pubblica',
+    es: 'Área pública',
+    en: 'Public area',
+    fr: 'Aire publique',
+    de: 'Öffentlicher Platz',
+    it: 'Area pubblica',
   },
   privada: {
-    es: 'Privada',
-    en: 'Private',
-    fr: 'Privée',
-    de: 'Privat',
-    it: 'Privata',
+    es: 'Área privada',
+    en: 'Private area',
+    fr: 'Aire privée',
+    de: 'Privater Platz',
+    it: 'Area privata',
   },
   camping: {
     es: 'Camping',
@@ -25,11 +25,11 @@ export const TIPO_AREA_LABELS: Record<string, Dict> = {
     it: 'Campeggio',
   },
   parking: {
-    es: 'Parking',
-    en: 'Parking',
-    fr: 'Parking',
-    de: 'Parkplatz',
-    it: 'Parcheggio',
+    es: 'Stopover',
+    en: 'Stopover',
+    fr: 'Stopover',
+    de: 'Stopover',
+    it: 'Stopover',
   },
 }
 

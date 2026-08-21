@@ -270,6 +270,17 @@
 
 ---
 
+## BLOQUE EXTRA — Tipos de ubicación (ago 2026)
+
+- **Qué**: 4 tipos claros en mapa y filtro: **área pública** (municipal), **área privada**, **camping**, **stopover** (`parking` en BD).
+- **Colores**: azul / naranja / verde / violeta.
+- **Datos**: recategorización por nombre en ES, PT y LatAm (~1620). UK se dejó (Gales ya venía clasificado). FR/IT/DE no se tocan.
+- **UI**: filtro «Tipo de ubicación» en el panel izquierdo.
+- **Archivos**: `lib/areas/tipo-area.ts`, `components/mapa/FiltrosMapa.tsx`, `hooks/usePersistentFilters.ts`.
+- **Verificar**: `/mapa?v=20260821-tipos` + Ctrl+F5; España ya no es todo azul.
+
+---
+
 ## BLOQUE EXTRA — Islas Baleares (ago 2026)
 
 - **Qué**: misma fórmula de huecos. En BD había **0** áreas en Mallorca, Menorca, Ibiza y Formentera.

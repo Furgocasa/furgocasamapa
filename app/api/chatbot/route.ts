@@ -160,7 +160,7 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
         tipo_area: {
           type: 'string',
           enum: ['publica', 'privada', 'camping', 'parking'],
-          description: 'Tipo específico de área'
+          description: 'Tipo: publica (municipal), privada (empresa/particular), camping, parking (stopover / aparcamiento de paso)'
         },
         pais: {
           type: 'string',

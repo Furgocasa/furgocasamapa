@@ -12,6 +12,7 @@ import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
+import { classifyTipoArea } from "../../lib/areas/tipo-area";
 
 if (process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0") {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -35,8 +36,6 @@ const REPORT_PATH = path.join(
   "scripts",
   REGION === "baleares" ? "baleares-gaps-dry-report.json" : "iberia-gaps-dry-report.json"
 );
-
-type TipoArea = "publica" | "privada" | "camping" | "parking";
 
 const HUECOS_PENINSULA = [
   { id: 1, zona: "Alentejo interior", lat: 38.991, lng: -7.817, pais: "Portugal" },
@@ -130,26 +129,8 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
-function classifyTipo(name: string, types: string[]): TipoArea {
-  const n = name.toLowerCase();
-  if (
-    /\b(aire|área de servicio|area de servicio|area de servico|área de serviço|aire de service|esta[cç][aã]o de servi[cç]o|sosta|servizio)\b/.test(
-      n
-    )
-  ) {
-    return "publica";
-  }
-  if (/\b(parking|aparcamiento|estacionamiento)\b/.test(n) && RELEVANCE_RE.test(n)) {
-    return "parking";
-  }
-  if (
-    types.includes("campground") ||
-    /\b(camping|campismo|campground|caravan park)\b/.test(n)
-  ) {
-    return "camping";
-  }
-  if (/\b(área|area|autocaravana)\b/.test(n)) return "publica";
-  return "camping";
+function classifyTipo(name: string, types: string[]) {
+  return classifyTipoArea(name, { types });
 }
 
 function isRelevant(name: string, types: string[]): boolean {

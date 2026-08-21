@@ -18,6 +18,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { useToast } from '@/hooks/useToast'
 import { generateGPX, downloadGPX, generateGPXFilename } from '@/lib/gpx/generate-gpx'
+import { getTipoAreaColor } from '@/lib/areas/tipo-area'
 import {
   DndContext,
   closestCenter,
@@ -796,16 +797,6 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
     } catch (error) {
       console.error('Error buscando áreas:', error)
     }
-  }
-
-  const getTipoAreaColor = (tipo: string): string => {
-    const colors: Record<string, string> = {
-      publica: '#0284c7', // Azul
-      privada: '#FF6B35', // Naranja
-      camping: '#52B788', // Verde
-      parking: '#F4A261', // Arena
-    }
-    return colors[tipo] || '#0284c7'
   }
 
   const getServicioIcon = (servicio: string): string => {

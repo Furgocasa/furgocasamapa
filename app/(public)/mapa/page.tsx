@@ -1,7 +1,7 @@
 'use client'
 
 import { MapaInteractivo } from '@/components/mapa/MapaInteractivo'
-import { FiltrosMapa, Filtros, paisPerteneceAFiltro } from '@/components/mapa/FiltrosMapa'
+import { FiltrosMapa, Filtros, paisPerteneceAFiltro, normalizarPais, REGIONES } from '@/components/mapa/FiltrosMapa'
 import { ListaResultados } from '@/components/mapa/ListaResultados'
 import { Navbar } from '@/components/layout/Navbar'
 import BottomSheet from '@/components/mobile/BottomSheet'
@@ -34,17 +34,42 @@ export default function MapaPage() {
   const mapRef = useRef<any>(null) // Referencia al mapa para controlarlo
   const skipMapCenterRef = useRef(false) // Evitar centrado automático después de búsqueda geográfica
 
-  // Lista de países con áreas en la base de datos (27 países)
-  const paisesDisponibles = [
+  // El piloto de UK está en Gales (en BD el país es "Reino Unido")
+  const ETIQUETA_PAIS_FILTRO: Record<string, string> = {
+    'Reino Unido': 'Gales',
+  }
+  const PAISES_OCULTOS = new Set(['Desconocido', ''])
+
+  const paisesDisponiblesFallback = [
     'Alemania', 'Andorra', 'Argentina', 'Austria', 'Bélgica', 'Chequia',
     'Chile', 'Colombia', 'Costa Rica', 'Dinamarca', 'Ecuador', 'Eslovenia',
-    'España', 'Francia', 'Italia', 'Luxemburgo', 'México', 'Noruega', 'Países Bajos',
+    'España', 'Francia', 'Gales', 'Italia', 'Luxemburgo', 'México', 'Noruega', 'Países Bajos',
     'Panamá', 'Paraguay', 'Perú', 'Portugal', 'Puerto Rico', 'Suecia',
     'Suiza', 'Uruguay'
   ]
 
-  // Conteo de países por región (hardcodeado - actualizar si se añaden países)
-  const conteoPaisesRegion = { europa: 16, sudamerica: 7, centroamerica: 4 }
+  const paisesDisponibles = useMemo(() => {
+    const set = new Set<string>()
+    for (const area of areas) {
+      const raw = (area.pais || '').trim()
+      if (!raw || PAISES_OCULTOS.has(raw)) continue
+      set.add(ETIQUETA_PAIS_FILTRO[raw] || raw)
+    }
+    if (set.size === 0) return paisesDisponiblesFallback
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'es'))
+  }, [areas])
+
+  const conteoPaisesRegion = useMemo(() => {
+    const enRegion = (regionPaises: string[]) =>
+      paisesDisponibles.filter(
+        (p) => regionPaises.includes(p) || regionPaises.includes(normalizarPais(p))
+      ).length
+    return {
+      europa: enRegion(REGIONES.EUROPA.paises),
+      sudamerica: enRegion(REGIONES.SUDAMERICA.paises),
+      centroamerica: enRegion(REGIONES.CENTROAMERICA.paises),
+    }
+  }, [paisesDisponibles])
 
   // Hook de filtros persistentes (reemplaza el useState anterior)
   const { filtros, setFiltros, metadata, setMetadata, limpiarFiltros, contarFiltrosActivos } = usePersistentFilters()
@@ -87,7 +112,7 @@ export default function MapaPage() {
           const qs = new URLSearchParams()
           if (locale && locale !== 'es') qs.set('lang', locale)
           // Subir esto tras un import masivo: invalida el CDN sin esperar 1 h
-          qs.set('v', '20260821-baleares')
+          qs.set('v', '20260821-gales')
           const res = await fetch(`/api/areas?${qs.toString()}`, { cache: 'no-store' })
           if (res.ok) {
             const json = await res.json()
@@ -254,6 +279,7 @@ export default function MapaPage() {
       'Suiza': { lat: 46.8182, lng: 8.2275 },
       'Austria': { lat: 47.5162, lng: 14.5501 },
       'Reino Unido': { lat: 55.3781, lng: -3.4360 },
+      'Gales': { lat: 52.2928, lng: -3.7389 },
       'Irlanda': { lat: 53.1424, lng: -7.6921 },
       'Andorra': { lat: 42.5063, lng: 1.5218 },
       'Mónaco': { lat: 43.7384, lng: 7.4246 },
@@ -379,6 +405,10 @@ export default function MapaPage() {
         } else {
           // console.log(`✅ ${paisArea} SÍ pertenece a ${paisFiltroLista}`)
         }
+      }
+
+      if (filtros.tipos?.length > 0) {
+        if (!filtros.tipos.includes(area.tipo_area)) return false
       }
 
       // Filtro de precio

@@ -4,6 +4,7 @@ export interface Filtros {
   busqueda: string
   pais: string
   servicios: string[]
+  tipos: string[]
   precio: string
   caracteristicas: string[]
 }
@@ -26,6 +27,7 @@ export const usePersistentFilters = () => {
     busqueda: '',
     pais: '',
     servicios: [],
+    tipos: [],
     precio: '',
     caracteristicas: []
   })
@@ -57,6 +59,7 @@ export const usePersistentFilters = () => {
             busqueda: parsed.busqueda || '',
             pais: paisRestaurado,
             servicios: parsed.servicios || [],
+            tipos: parsed.tipos || [],
             precio: parsed.precio || '',
             caracteristicas: parsed.caracteristicas || []
           })
@@ -106,6 +109,7 @@ export const usePersistentFilters = () => {
       busqueda: '',
       pais: '',
       servicios: [],
+      tipos: [],
       precio: '',
       caracteristicas: []
     })
@@ -124,6 +128,7 @@ export const usePersistentFilters = () => {
     if (filtros.busqueda) count++
     if (filtros.pais) count++
     if (filtros.servicios.length > 0) count += filtros.servicios.length
+    if (filtros.tipos?.length > 0) count += filtros.tipos.length
     if (filtros.precio) count++
     if (filtros.caracteristicas.length > 0) count += filtros.caracteristicas.length
     return count

@@ -8,6 +8,7 @@ import type { Area } from '@/types/database.types'
 import { BuscadorGeografico } from './BuscadorGeografico'
 import { buildAreaPopupHTML } from './areaPopup'
 import { useLanguage } from '@/lib/i18n'
+import { getTipoAreaColor } from '@/lib/areas/tipo-area'
 
 interface MapLibreMapProps {
   areas: Area[]
@@ -386,16 +387,6 @@ export function MapLibreMap({
     }
   }, [])
 
-  const getTipoAreaColor = (tipo: string): string => {
-    const colors: Record<string, string> = {
-      publica: '#0284c7',
-      privada: '#FF6B35',
-      camping: '#52B788',
-      parking: '#F4A261',
-    }
-    return colors[tipo] || '#0284c7'
-  }
-
   // Crear contenido HTML para popup - SINCRONIZADO con Google y Leaflet
   const createInfoWindowContent = (area: Area): string => {
     return buildAreaPopupHTML(area, getTipoAreaColor, 0, locale)
@@ -485,7 +476,9 @@ export function MapLibreMap({
       'México': { center: [-102.5, 23.6], zoom: 5 },
       'Costa Rica': { center: [-84, 10], zoom: 7 },
       'Panamá': { center: [-80, 9], zoom: 7 },
-      'Puerto Rico': { center: [-66, 18], zoom: 8 }
+      'Puerto Rico': { center: [-66, 18], zoom: 8 },
+      'Gales': { center: [-3.7389, 52.2928], zoom: 7 },
+      'Reino Unido': { center: [-3.4, 54.5], zoom: 5 }
     }
 
     const vista = vistas[paisFiltro] || vistas['']
