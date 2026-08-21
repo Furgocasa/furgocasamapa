@@ -46,6 +46,7 @@ const paisArg = process.argv.find((a) => a.startsWith('--pais='))
 const PAIS_FILTER = process.env.DATOS_PAIS || (paisArg ? paisArg.split('=').slice(1).join('=') : '')
 const provinciaArg = process.argv.find((a) => a.startsWith('--provincia='))
 const PROVINCIA_FILTER = process.env.DATOS_PROVINCIA || (provinciaArg ? provinciaArg.split('=').slice(1).join('=') : '')
+const IDS = new Set((process.env.DATOS_IDS || '').split(/[,\s]+/).map((id) => id.trim()).filter(Boolean))
 const CSV_PATH = path.join(__dirname, 'enrich-datos-propuestas.csv')
 
 // Claves de servicios EXACTAS de la base de datos (ver FiltrosMapa.tsx)
@@ -182,7 +183,10 @@ async function main() {
   console.log('📦 Cargando áreas...')
   const areas = await fetchAllAreas(supa)
 
-  let targets = areas.filter((a) => !checkpoint.has(a.id) && needsWork(a))
+  let targets = areas.filter((a) => {
+    if (IDS.size && !IDS.has(a.id)) return false
+    return !checkpoint.has(a.id) && needsWork(a)
+  })
   if (LIMIT > 0) targets = targets.slice(0, LIMIT)
   console.log(`🎯 Áreas con datos incompletos a investigar: ${targets.length} (de ${areas.length} activas)`)
   if (targets.length === 0) { console.log('✅ Nada que hacer.'); return }

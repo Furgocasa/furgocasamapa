@@ -24,8 +24,13 @@ yarn-error.log*
 scripts/*.log
 scripts/*-dry-report.json
 scripts/audit-copyright-*.csv
-scripts/imagenes-ia-checkpoint.txt
 scripts/imagenes-ia-vacias.txt
+
+# Estado local de scripts reanudables (checkpoints, listas de ids) y previews IA
+scripts/*-checkpoint.txt
+scripts/*checkpoint.txt
+scripts/*-ids.txt
+scripts/ai-pilot-previews/
 
 # local env files
 .env

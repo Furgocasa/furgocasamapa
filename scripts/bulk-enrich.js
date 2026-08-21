@@ -34,6 +34,7 @@ const LIMIT = parseInt(process.env.BULK_LIMIT || '0', 10)
 const MODE = (process.env.BULK_MODE || 'critical').toLowerCase()
 const PAIS = (process.env.BULK_PAIS || '').trim()
 const PROVINCIA = (process.env.BULK_PROVINCIA || '').trim()
+const IDS = new Set((process.env.BULK_IDS || '').split(/[,\s]+/).map((id) => id.trim()).filter(Boolean))
 const MODEL = process.env.BULK_MODEL || 'gpt-5.6-terra'
 // 'medium' por defecto: con 'low' el modelo a veces se salta la búsqueda web
 // y genera textos genéricos/incompletos. Con 'medium' investiga de verdad.
@@ -243,6 +244,7 @@ async function main() {
   console.log(`   Total activas: ${areas.length}`)
 
   let targets = areas.filter((a) => {
+    if (IDS.size && !IDS.has(a.id)) return false
     if (PAIS && a.pais !== PAIS) return false
     if (PROVINCIA && a.provincia !== PROVINCIA) return false
     return !checkpoint.has(a.id) && needsWork(a.descripcion)
