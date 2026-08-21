@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
       },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=3600',
+          'Cache-Control': 'public, s-maxage=180, stale-while-revalidate=180',
           Vary: 'Accept-Encoding',
         },
       }

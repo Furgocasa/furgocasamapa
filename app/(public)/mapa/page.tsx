@@ -84,8 +84,11 @@ export default function MapaPage() {
 
         // 1º intento: endpoint cacheado (rápido y barato en egress)
         try {
-          const qs = locale && locale !== 'es' ? `?lang=${locale}` : ''
-          const res = await fetch(`/api/areas${qs}`)
+          const qs = new URLSearchParams()
+          if (locale && locale !== 'es') qs.set('lang', locale)
+          // Subir esto tras un import masivo: invalida el CDN sin esperar 1 h
+          qs.set('v', '20260821-wales')
+          const res = await fetch(`/api/areas?${qs.toString()}`)
           if (res.ok) {
             const json = await res.json()
             if (Array.isArray(json.areas) && json.areas.length > 0) {
