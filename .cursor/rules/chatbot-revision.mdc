@@ -1,0 +1,21 @@
+---
+description: Al revisar el Tío Viajero, cerrar el círculo evaluación → corrección → no quedarse en el informe
+alwaysApply: true
+---
+
+# Revisión del chatbot = corrección
+
+Si el usuario pide revisar, evaluar o mirar las respuestas del Tío Viajero / chatbot / `/admin/chatbot-respuestas`, **no basta con el informe**. Es un círculo: revisión → corrección → (siguiente revisión).
+
+## Ciclo obligatorio
+
+1. Evaluar pendientes: `EVAL_RUN=1 node scripts/evaluar-respuestas-chatbot.js` (tabla `chatbot_respuestas_log`).
+2. Agrupar **incorrectas** y **mejorables** por causa raíz (precio, geo, GPS, filtros, idioma, prompt, datos).
+3. **Corregir de verdad** en código o prompt (`lib/chatbot/functions.ts`, `app/api/chatbot/route.ts`, `chatbot_config`) hasta que esa causa no se repita. Un canvas o un listado de fallos no cierra el ciclo.
+4. Commit + push a `main` de los arreglos. Decir qué se ha cambiado y que las filas viejas del admin no se reescriben: lo nuevo ya debe salir bien.
+
+## No hacer
+
+- Parar en “53% incorrectas” o en sugerencias sin parche.
+- Pedir permiso para corregir si el usuario ya pidió revisar: la corrección va incluida.
+- Inventar “Gratis” si `precio_noche` es null; no buscar con GPS 0,0; no heredar filtros de un turno anterior si solo nombran una ciudad.
