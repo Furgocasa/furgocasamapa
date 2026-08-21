@@ -632,27 +632,29 @@ export function MapLibreMap({
       {/* Botón GPS */}
       <button
         onClick={toggleGPS}
-        className={`absolute left-3 bottom-[calc(8.25rem+env(safe-area-inset-bottom,0px))] md:left-1/2 md:-translate-x-1/2 md:bottom-20 px-3 md:px-4 py-2 rounded-full shadow-lg font-semibold transition-all z-30 flex items-center gap-2 ${
+        className={`absolute left-3 bottom-[calc(8.25rem+env(safe-area-inset-bottom,0px))] md:left-1/2 md:-translate-x-1/2 md:bottom-20 p-3 md:px-4 md:py-2 rounded-full shadow-lg font-semibold transition-all z-30 flex items-center md:gap-2 ${
           gpsActive ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-white text-gray-700 hover:bg-gray-50'
         }`}
+        aria-label={gpsActive ? 'GPS activo' : 'Ver ubicación'}
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
-        <span className="text-sm">{gpsActive ? 'GPS Activo' : 'Ver ubicación'}</span>
+        <span className="hidden md:inline text-sm">{gpsActive ? 'GPS Activo' : 'Ver ubicación'}</span>
       </button>
 
       {/* Botón Restablecer Zoom */}
       <button
         onClick={resetZoom}
-        className="absolute left-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:left-1/2 md:-translate-x-1/2 md:bottom-6 bg-white px-3 md:px-4 py-2 rounded-full shadow-lg hover:bg-gray-50 active:scale-95 transition-all z-30 flex items-center gap-2 font-semibold text-gray-700"
+        className="absolute left-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:left-1/2 md:-translate-x-1/2 md:bottom-6 bg-white p-3 md:px-4 md:py-2 rounded-full shadow-lg hover:bg-gray-50 active:scale-95 transition-all z-30 flex items-center md:gap-2 font-semibold text-gray-700"
+        aria-label="Restablecer zoom"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
         </svg>
-        <span className="text-sm">Restablecer Zoom</span>
+        <span className="hidden md:inline text-sm">Restablecer Zoom</span>
       </button>
     </div>
   )

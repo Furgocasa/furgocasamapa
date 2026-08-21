@@ -802,7 +802,7 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
       {/* Bot├│n GPS - Encima de Restablecer Zoom */}
       <button
         onClick={() => toggleGPS()}
-        className={`absolute left-3 bottom-[calc(8.25rem+env(safe-area-inset-bottom,0px))] md:left-1/2 md:-translate-x-1/2 md:bottom-20 px-3 md:px-4 py-2 rounded-full shadow-lg font-semibold transition-all z-30 flex items-center gap-2 ${
+        className={`absolute left-3 bottom-[calc(8.25rem+env(safe-area-inset-bottom,0px))] md:left-1/2 md:-translate-x-1/2 md:bottom-20 p-3 md:px-4 md:py-2 rounded-full shadow-lg font-semibold transition-all z-30 flex items-center md:gap-2 ${
           gpsActive 
             ? 'bg-orange-500 text-white hover:bg-orange-600' 
             : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -828,13 +828,13 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
             d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
           />
         </svg>
-        <span className="text-sm" suppressHydrationWarning>{gpsActive ? 'GPS Activo' : 'Ver ubicaci├│n'}</span>
+        <span className="hidden md:inline text-sm" suppressHydrationWarning>{gpsActive ? 'GPS Activo' : 'Ver ubicaci├│n'}</span>
       </button>
 
       {/* Bot├│n Restablecer Zoom - Abajo Centro (m├ís arriba en m├│vil para evitar bottom bar) */}
       <button
         onClick={resetZoom}
-        className="absolute left-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:left-1/2 md:-translate-x-1/2 md:bottom-6 bg-white px-3 md:px-4 py-2 rounded-full shadow-lg hover:bg-gray-50 active:scale-95 transition-all z-30 flex items-center gap-2 font-semibold text-gray-700"
+        className="absolute left-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:left-1/2 md:-translate-x-1/2 md:bottom-6 bg-white p-3 md:px-4 md:py-2 rounded-full shadow-lg hover:bg-gray-50 active:scale-95 transition-all z-30 flex items-center md:gap-2 font-semibold text-gray-700"
         aria-label="Restablecer zoom"
       >
         <svg
@@ -856,7 +856,7 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
             d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"
           />
         </svg>
-        <span className="text-sm">Restablecer Zoom</span>
+        <span className="hidden md:inline text-sm">Restablecer Zoom</span>
       </button>
     </div>
   )
