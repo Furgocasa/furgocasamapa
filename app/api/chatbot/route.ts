@@ -746,7 +746,8 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 
         // Inyectar GPS del usuario si busca sin ubicación explícita
         if (
-          esGpsValido(ubicacionUsuario?.lat, ubicacionUsuario?.lng) &&
+          ubicacionUsuario &&
+          esGpsValido(ubicacionUsuario.lat, ubicacionUsuario.lng) &&
           fnName === 'search_areas' &&
           !fnArgs.ubicacion?.lat &&
           !fnArgs.ubicacion?.nombre

@@ -159,7 +159,6 @@ function esNombrePais(nombre: string): boolean {
 function esPrecioGratis(precio: number | null | undefined): boolean {
   return precio === 0
 }
-}
 
 /**
  * Ordena áreas para respuestas "mejores / top":
@@ -317,15 +316,16 @@ export async function searchAreas(params: BusquedaAreasParams): Promise<AreaResu
     }
 
     // CASO 1: Búsqueda por coordenadas GPS (geolocalización)
-    if (esGpsValido(params.ubicacion?.lat, params.ubicacion?.lng)) {
+    const ubiGps = params.ubicacion
+    if (esGpsValido(ubiGps?.lat, ubiGps?.lng) && ubiGps) {
       console.log('📍 Búsqueda por coordenadas GPS')
       
-      const radio = params.ubicacion.radio_km || 50
+      const radio = ubiGps.radio_km || 50
       
       // Llamar a la función PostgreSQL areas_cerca
       const { data: areasGeo, error: errorGeo } = await (supabase as any).rpc('areas_cerca', {
-          lat_usuario: params.ubicacion.lat,
-          lng_usuario: params.ubicacion.lng,
+          lat_usuario: ubiGps.lat,
+          lng_usuario: ubiGps.lng,
           radio_km: radio
         })
       
