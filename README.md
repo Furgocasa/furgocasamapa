@@ -105,7 +105,7 @@ Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMEN
 ├── GUIA_ENGAGEMENT.md     # Embudo: favoritos, auth, furgo, digest
 ├── PLAN_MEJORAS.md        # Seguimiento de producto
 ├── CAMBIOS_CURSOR.md      # Registro de cambios verificables
-└── .cursor/rules/         # Reglas del proyecto
+└── .cursor/rules/         # Reglas (tipos, activo, Supabase vía .env.local)
 ```
 
 ---
@@ -307,6 +307,32 @@ Variables opcionales: `BULK_MODE` (`critical` | `all` | `everything`), `BULK_CON
 
 ---
 
+## 🏷️ Tipo de ubicación
+
+Campo `areas.tipo_area`: `publica` | `privada` | `camping` | `parking`.
+En el mapa, `parking` se muestra como **Stopover**. Código y colores: `lib/areas/tipo-area.ts`.
+
+Este mapa es de **sitios habilitados** para autocaravana. El “duermo donde me dé la gana” (zona de acampada, aire naturelle, wild camp, bivouac) no es un quinto tipo: **no entra**. Eso es Google Maps o apps sociales.
+
+Los cuatro tipos bastan. El nombre local (aire, sosta, Stellplatz, CL, RV park) es solo etiqueta, no un tipo extra.
+
+| Código | Lo que ve el usuario | Qué es | Ejemplos locales |
+|--------|----------------------|--------|------------------|
+| `publica` | Área pública | Área habilitada de titularidad pública | Área municipal, aire communale, sosta comunale, Stellplatz kommunal, council aire |
+| `privada` | Área privada | Misma función, titular privado | Camper park, aire privée, CL británico, Stellplatz privat |
+| `camping` | Camping | Parque con parcela y servicios | Camping, campeggio, campingplatz, touring/holiday/caravan park, RV/trailer park |
+| `parking` | Stopover | Pernocta de paso (1 noche), pocos o ningún servicio de área | Aparcamiento de pernocta, parking de passage, stopover UK (pub/granja) |
+
+**Qué no entra** (se rechaza al importar con `esPernoctaSinServicio()` y se oculta con `activo = false`): zona de acampada, aire naturelle de campo, acampada libre, wild camp, boondock, bivouac. Excepción: si el nombre deja claro que es **área de autocaravanas** o **aire de camping-car / aire de service**, se admite.
+
+**Servicios en ficha ≠ tipo de sitio.** Casi todo el inventario tiene `servicios` vacío (dato pendiente de enriquecer), no “sitio sin servicio”. No se oculta ni se deja fuera un área porque no hayamos localizado aún agua, vaciado o luz. Ocultar por JSON vacío tumbaría Francia, Italia, Alemania, UK, etc. La exclusión es por **naturaleza del lugar** (campo para dormir), no por huecos en la ficha.
+
+Clasificar (`classifyTipoArea`) solo corre **después** de admitir el sitio. Recategorizar tipos: `scripts/scripts_empresas/reclassify-tipos.ts`. Ocultar pernocta sin servicio: el mismo script con `--ocultar-sin-servicio` (dry-run) y `--apply`.
+
+Admin: al editar, el valor `parking` sigue saliendo como “Parking”; en el mapa público es Stopover.
+
+---
+
 ## 🌍 Cobertura e imports geográficos
 
 El mapa carga **todas** las áreas activas desde `GET /api/areas` (CDN Vercel **30 s**, sin `stale-while-revalidate`). El cliente usa `cache: 'no-store'` y `?v=` para invalidar el CDN tras un import masivo. Tras un lote grande: push a `main`, esperar deploy, **Ctrl+F5**.
@@ -320,6 +346,7 @@ Cada país se trata como mercado propio (terminología + tipo de sitio), no como
 | Huecos península | malla 25 km + Places 40 km en centroides vacíos | `scripts/scripts_empresas/import-iberia-gaps.ts` | `npm run import:iberia:gaps` → `--from-report --import` |
 | Islas Baleares | 0 áreas previas; 13 disparos (Mallorca, Menorca, Ibiza, Formentera) | mismo script `--region=baleares` | `npm run import:baleares:gaps` → `--from-report --import` |
 | Huecos Alemania | malla 25 km; 16 huecos (Brandeburgo, Baviera este, Emsland, Rügen…) | mismo script `--region=alemania` | `npm run import:alemania:gaps` → `--from-report --import` |
+| Huecos Francia | malla 25 km; 16 huecos (Perche, Ardenas, Finistère, Pirineos, Córcega…) | mismo script `--region=francia` | `npm run import:francia:gaps` → `--from-report --import` |
 
 **Huecos (península):** rejilla ~22 km; celda vacía = ninguna área a 25 km; celdas vecinas = un hueco; el centroide es el disparo. No incluye islas. **Baleares:** 0 áreas previas → 13 disparos; Formentera no devolvió ficha útil. En Windows, si falla TLS: `$env:NODE_TLS_REJECT_UNAUTHORIZED="0"`.
 
@@ -333,6 +360,7 @@ Cada país se trata como mercado propio (terminología + tipo de sitio), no como
 
 | Versión | Fecha | Cambios principales |
 |---------|-------|---------------------|
+| v4.6 | 21 ago 2026 | Tipo de ubicación: 4 categorías; zona de acampada / wild camp fuera; servicios vacíos ≠ ocultar |
 | v4.5 | 21 ago 2026 | Embudo de engagement: favoritos locales, AuthModal, Estuve aquí, furgo visible en ficha/home, digest semanal |
 | v4.4 | 21 ago 2026 | Admin Tío Viajero (tabla + quesito), ciclo revisión-corrección, null ≠ gratis, geo Nominatim |
 | v4.3 | Agosto 2026 | Piloto Gales (~480), huecos península (~169), caché `/api/areas` a 30 s |
