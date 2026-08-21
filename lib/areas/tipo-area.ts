@@ -1,20 +1,18 @@
-/** Tipos de ubicación en el mapa. El valor `parking` en BD se muestra como Stopover. */
-export type TipoArea = 'publica' | 'privada' | 'camping' | 'parking'
+/** Tipos de ubicación en el mapa. Solo tres. */
+export type TipoArea = 'publica' | 'privada' | 'camping'
 
-export const TIPO_AREA_IDS: TipoArea[] = ['publica', 'privada', 'camping', 'parking']
+export const TIPO_AREA_IDS: TipoArea[] = ['publica', 'privada', 'camping']
 
 export const TIPO_AREA_COLORS: Record<TipoArea, string> = {
   publica: '#0284c7',
   privada: '#FF6B35',
   camping: '#52B788',
-  parking: '#7C3AED',
 }
 
 export const TIPO_AREA_BADGE_CLASSES: Record<TipoArea, string> = {
   publica: 'bg-sky-500/90 text-white backdrop-blur-md border border-sky-400/30',
   privada: 'bg-orange-500/90 text-white backdrop-blur-md border border-orange-400/30',
   camping: 'bg-emerald-500/90 text-white backdrop-blur-md border border-emerald-400/30',
-  parking: 'bg-violet-600/90 text-white backdrop-blur-md border border-violet-400/30',
 }
 
 const LATAM = new Set([
@@ -68,33 +66,17 @@ function esStopoverDeAnfitrion(n: string): boolean {
 
 function esParkingAutocaravana(n: string): boolean {
   return (
-    /\b(parking|aparcamiento|estacionamiento|estacionamento)\b/.test(n) &&
+    /\b(parking|aparcamiento|estacionamiento|estacionamento|parkplatz|parcheggio)\b/.test(n) &&
     /\b(autocaravana|autocaravanes|caravana|camper|wohnmobil|reisemobil|camping[-\s]?car|motorhome)\b/.test(
       n
     )
-  )
+  ) || /wohnmobil[-\s]?parkplatz|parkplatz[-\s]?wohnmobil/.test(n)
 }
 
-/**
- * En España/Portugal «Parking autocaravanas» es un área (municipal o privada),
- * no un stopover. El stopover es pub/tienda/granja que invita una noche.
- */
-function esStopoverHint(n: string, pais?: string): boolean {
-  if (esStopoverDeAnfitrion(n)) return true
-  if (pais === 'España' || pais === 'Portugal') return false
-
-  const motorhome =
-    /\b(autocaravana|autocaravanes|caravana|camper|wohnmobil|reisemobil|camping[-\s]?car|motorhome)\b/.test(
-      n
-    ) || /wohnmobil|reisemobil/.test(n)
-  if (!motorhome && !/\b(overnight parking)\b/.test(n)) {
-    return false
-  }
+function esAnfitrionPrivado(n: string): boolean {
   return (
-    /\b(overnight parking)\b/.test(n) ||
-    (/\b(parking|aparcamiento|estacionamiento|estacionamento|parkplatz|parcheggio)\b/.test(n) &&
-      !/\barea de (servicio|servicios|autocaravanas|aparcamiento)\b/.test(n) &&
-      !/\b(stellplatz|area sosta|sosta camper)\b/.test(n))
+    esStopoverDeAnfitrion(n) ||
+    /\b(weingut|obsthof|bauernhof|buschenschank|heuriger|chez l.habitant|brit.?stop)\b/.test(n)
   )
 }
 
@@ -141,7 +123,7 @@ function tieneSenalDeLasCuatro(n: string, types: string[]): boolean {
   if (types.includes('campground') || types.includes('rv_park')) return true
   if (esAreaHabilitadaEnNombre(n)) return true
   if (esParkingAutocaravana(n)) return true
-  if (esMarcaPrivada(n) || esStopoverDeAnfitrion(n)) return true
+  if (esMarcaPrivada(n) || esAnfitrionPrivado(n)) return true
   return (
     /\b(stellplatz|wohnmobilstellplatz|reisemobilstellplatz|area sosta|sosta camper|arosfan|camperplaats)\b/.test(
       n
@@ -159,7 +141,7 @@ function tieneSenalDeLasCuatro(n: string, types: string[]): boolean {
   )
 }
 
-/** Taller, hire, solar, wild camp, parking de día: no es ninguna de las cuatro. */
+/** Taller, hire, solar, wild camp, parking de día: no es ninguna de las tres. */
 export function esFueraDelMapa(name: string, types: string[] = []): boolean {
   if (esPernoctaSinServicio(name)) return true
   const n = norm(name)
@@ -210,7 +192,7 @@ export type DecisionUbicacion = {
 
 /**
  * Puerta de las búsquedas nuevas: clasifica al encontrar.
- * Si no encaja en una de las cuatro, no se inserta (tipo = null).
+ * Si no encaja en una de las tres, no se inserta (tipo = null).
  */
 export function decidirUbicacion(
   name: string,
@@ -223,7 +205,7 @@ export function decidirUbicacion(
     return { admite: false, tipo: null, motivo: 'fuera-del-mapa' }
   }
   if (!tieneSenalDeLasCuatro(n, types)) {
-    return { admite: false, tipo: null, motivo: 'sin-senal-de-las-cuatro' }
+    return { admite: false, tipo: null, motivo: 'sin-senal-de-las-tres' }
   }
   return {
     admite: true,
@@ -249,6 +231,7 @@ export function anotarLugarEncontrado<T extends { name: string; types?: string[]
 }
 
 export function getTipoAreaColor(tipo?: string | null): string {
+  if (tipo === 'parking') return TIPO_AREA_COLORS.privada
   if (tipo && tipo in TIPO_AREA_COLORS) {
     return TIPO_AREA_COLORS[tipo as TipoArea]
   }
@@ -256,6 +239,7 @@ export function getTipoAreaColor(tipo?: string | null): string {
 }
 
 export function getTipoAreaBadgeClass(tipo?: string | null): string {
+  if (tipo === 'parking') return TIPO_AREA_BADGE_CLASSES.privada
   if (tipo && tipo in TIPO_AREA_BADGE_CLASSES) {
     return TIPO_AREA_BADGE_CLASSES[tipo as TipoArea]
   }
@@ -264,10 +248,8 @@ export function getTipoAreaBadgeClass(tipo?: string | null): string {
 
 /**
  * Pública = municipal / organismo público.
- * Privada = empresa o particular.
- * Camping = camping comercial / CL / trailer/RV park.
- * Parking (Stopover) = anfitrión que invita una noche (pub, tienda, granja).
- * En España «Parking autocaravanas» es un área, no un stopover.
+ * Privada = empresa o particular (camper park, Weingut, granja, CL).
+ * Camping = recinto comercial / touring park.
  * Zona de acampada y similar no se clasifican: usar esPernoctaSinServicio().
  */
 export function classifyTipoArea(
@@ -277,7 +259,6 @@ export function classifyTipoArea(
   const n = norm(name)
   const types = opts.types || []
   const pais = (opts.pais || '').trim()
-  const iberia = pais === 'España' || pais === 'Portugal'
 
   const municipal =
     /\b(municipal|municipio|ayuntamiento|concejo|consell|consorcio|diputacion|alcaldia|publico|publica|gratuit[oa]? municipal)\b/.test(
@@ -296,36 +277,26 @@ export function classifyTipoArea(
 
   const esUk = pais === 'Reino Unido' || pais === 'United Kingdom'
 
-  // En UK «stopover» en el nombre suele ser un sitio pequeño para la furgo
-  // (privada), no un pub. Brit Stop / pub stopover sí es stopover.
-  if (esStopoverDeAnfitrion(n)) {
-    const stopoverUkEsAnfitrion = /\b(brit.?stop|pub|inn|tavern)\b/.test(n)
-    if (!esUk || stopoverUkEsAnfitrion) {
-      return 'parking'
-    }
+  if (esAnfitrionPrivado(n) || esMarcaPrivada(n) || /\bcamping[-\s]?car park\b/.test(n)) {
+    return 'privada'
   }
 
   if (/\b(privad[oa]|privata)\b/.test(n) && (esAire || /\barea\b/.test(n))) {
     return 'privada'
   }
 
-  if (/\bcamping[-\s]?car park\b/.test(n) || esMarcaPrivada(n)) {
-    return 'privada'
-  }
-
   // En España «área camping» / «área camper» es un área, no un recinto.
-  // «Área camper + pueblo» suele ser municipal (Guitiriz). Marca comercial → privada.
   const esAreaEnNombre =
     /\barea(s)? (de )?(camping|camper|autocaravanas?|autocaravanes)\b/.test(n)
   if (esAreaEnNombre) {
-    if (esMarcaPrivada(n) || /\barea(s)? (de )?camping\b/.test(n)) {
+    if (/\barea(s)? (de )?camping\b/.test(n)) {
       return 'privada'
     }
     return 'publica'
   }
 
-  // Parking/aparcamiento de autocaravanas en Iberia = área (titularidad por marca).
-  if (iberia && esParkingAutocaravana(n)) {
+  // Parking / Parkplatz / parcheggio de autocaravanas = área.
+  if (esParkingAutocaravana(n)) {
     return 'publica'
   }
 
@@ -337,39 +308,27 @@ export function classifyTipoArea(
     )
   const typeIsCamping =
     LATAM.has(pais) && (types.includes('campground') || types.includes('rv_park'))
-  const esCampingReal = nameIsCamping || typeIsCamping
 
-  if (esCampingReal) {
+  if (nameIsCamping || typeIsCamping) {
     return 'camping'
   }
 
-  // Weingut / chez l'habitant = stopover (pernocta de paso), aunque digan Stellplatz
-  if (/\b(weingut|chez l.habitant|parking de passage)\b/.test(n)) {
-    return 'parking'
-  }
-
-  // En DACH el Stellplatz es el área (municipal o privada), no un stopover UK
   if (/\b(wohnmobilstellplatz|reisemobilstellplatz|stellplatz)\b/.test(n)) {
     if (/\bprivat/.test(n)) return 'privada'
     return 'publica'
   }
 
-  // NL/Flandes: camperplaats = área, no un parking de paso
   if (/\bcamperplaats(en)?\b/.test(n)) {
     if (/\b(prive|privee|privat|particulier)\b/.test(n)) return 'privada'
     return 'publica'
   }
 
-  if (esAire || (municipal && !esStopoverHint(n, pais))) {
+  if (esAire || municipal) {
     return 'publica'
   }
 
   if (/\b(certified location|certificated (site|location)|camc\b.*\bcl\b|\bcl\b.*camc)\b/.test(n)) {
     return 'privada'
-  }
-
-  if (esStopoverHint(n, pais)) {
-    return 'parking'
   }
 
   if (/\b(particular|finca|camper ?park|camper ?stop|autocaravaning)\b/.test(n)) {
@@ -382,7 +341,6 @@ export function classifyTipoArea(
   }
 
   if (esUk) {
-    // Arosfan / aire del consejo (Gwynedd). El resto de «aire» UK es CAMpRA o anfitrión.
     if (/\b(arosfan|y glyn)\b/.test(n) || (/\baire\b/.test(n) && /\b(pwllheli|cricieth|llanberis|caernarfon)\b/.test(n))) {
       return 'publica'
     }

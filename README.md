@@ -309,29 +309,21 @@ Variables opcionales: `BULK_MODE` (`critical` | `all` | `everything`), `BULK_CON
 
 ## 🏷️ Tipo de ubicación
 
-Campo `areas.tipo_area`: `publica` | `privada` | `camping` | `parking`.
-En el mapa, `parking` se muestra como **Stopover**. Código y colores: `lib/areas/tipo-area.ts`.
+Campo `areas.tipo_area`: `publica` | `privada` | `camping`. Código y colores: `lib/areas/tipo-area.ts`.
 
-Solo entra lo que encaja en **una de estas cuatro**. El nombre local (aire, sosta, Stellplatz, CL, RV park) es etiqueta, no un tipo extra.
+Solo entra lo que encaja en **una de estas tres**. El nombre local (aire, sosta, Stellplatz, CL, parking autocaravanas) es etiqueta, no un tipo extra.
 
 | Código | Lo que ve el usuario | Qué es | Ejemplos locales |
 |--------|----------------------|--------|------------------|
 | `publica` | Área pública | Área de autocaravanas de un ayuntamiento u organismo | Área municipal, aire communale, sosta comunale, Stellplatz kommunal, council aire |
 | `privada` | Área privada | Área de autocaravanas de empresa o particular (casi siempre de cobro) | Camper park, aire privée, CL británico, Stellplatz privat |
-| `camping` | Camping | Recinto: valla, parcela, a menudo tiendas, bungalows, duchas | Camping, campeggio, campingplatz, touring/holiday/caravan park, RV/trailer park. En España «área camping» **no** es esto: es un área |
-| `parking` | Stopover | Pernocta de paso **ofrecida** por un anfitrión (1 noche): pub, tienda, granja. Puede no tener vaciado ni agua | Stopover UK, parking de passage, Weingut / chez l’habitant |
+| `camping` | Camping | Recinto: valla, parcela, a menudo tiendas, bungalows, duchas | Camping, campeggio, campingplatz, touring/holiday/caravan park. En España «área camping» **no** es esto: es un área |
 
-**Área vs stopover:** el área existe para la furgo (municipal o privada). El stopover existe para otra cosa y invita una noche. En España «Parking / aparcamiento de autocaravanas» es un **área**, no un stopover.
+**Criterio:** ¿es un área municipal, un área empresarial/particular o un camping? Si no, **no entra**. Weingut, Brit Stop y «parking autocaravanas» no son un cuarto tipo: privada o pública.
 
-**Criterio:** ¿es un área municipal, un área empresarial privada, un camping o un stopover que se ofrece como tal? Si no, **no entra**. No hay quinto tipo.
+**Qué no entra:** parking del polideportivo, solar, arcén, zona de acampada, wild camp, taller, hire.
 
-**Qué no entra** (aunque alguien haya dormido ahí): parking del polideportivo, solar, arcén, “pernocta reportada” de apps sociales, zona de acampada, aire naturelle de campo, wild camp, bivouac. Un stopover **puede no tener servicios**; no se excluye por eso. Se excluye el sitio que **no es** una de las cuatro.
-
-**No usar el JSON `servicios` para admitir o ocultar.** Casi todo el inventario lo tiene vacío (dato pendiente). No es el tema ahora. `esPernoctaSinServicio()` rechaza por nombre / naturaleza del lugar, no por ficha vacía.
-
-En cada búsqueda nueva, `decidirUbicacion()` corre **al encontrar** el sitio: o entra con uno de los cuatro tipos, o no se inserta. No hay default a `publica`. Recategorizar inventario ya guardado: `scripts/scripts_empresas/reclassify-tipos.ts`. Ocultar lo que no encaja (zona de acampada / wild camp): el mismo script con `--ocultar-sin-servicio`.
-
-Admin: al editar, el valor `parking` sigue saliendo como “Parking”; en el mapa público es Stopover.
+En cada búsqueda nueva, `decidirUbicacion()` corre **al encontrar** el sitio: o entra con uno de los tres tipos, o no se inserta. Recategorizar: `scripts/scripts_empresas/reclassify-tipos.ts`.
 
 ---
 
@@ -352,6 +344,9 @@ Cada país se trata como mercado propio (terminología + tipo de sitio), no como
 | Huecos Italia | sosta + campeggio + **parcheggio camper** | mismo script `--region=italia` | `npm run import:italia:gaps` → `--from-report --import` |
 | Huecos Suiza | Stellplatz / aire / sosta + stopover local (16 disparos; 41 previas) | mismo script `--region=suiza` | `npm run import:suiza:gaps` → `--from-report --import` |
 | Huecos Austria | Stellplatz + Campingplatz + **Wohnmobilparkplatz / Weingut** | mismo script `--region=austria` | `npm run import:austria:gaps` → `--from-report --import` |
+| Huecos Bélgica | camperplaats (Flandes) / aire (Valonia) / Stellplatz (Eupen) | mismo script `--region=belgica` | `npm run import:belgica:gaps` → `--from-report --import` |
+| Huecos Luxemburgo | aire + Stellplatz (6 disparos; 5 previas) | mismo script `--region=luxemburgo` | `npm run import:luxemburgo:gaps` → `--from-report --import` |
+| Huecos Países Bajos | **camperplaats** + camping + camperparking | mismo script `--region=holanda` | `npm run import:holanda:gaps` → `--from-report --import` |
 
 **Huecos (península):** rejilla ~22 km; celda vacía = ninguna área a 25 km; celdas vecinas = un hueco; el centroide es el disparo. No incluye islas. **Baleares:** 0 áreas previas → 13 disparos; Formentera no devolvió ficha útil. En Windows, si falla TLS: `$env:NODE_TLS_REJECT_UNAUTHORIZED="0"`.
 

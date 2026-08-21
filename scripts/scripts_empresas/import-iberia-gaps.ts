@@ -18,6 +18,9 @@
  *   npm run import:iberia:gaps -- --solo-stopover
  *   npm run import:suiza:gaps
  *   npm run import:austria:gaps
+ *   npm run import:belgica:gaps
+ *   npm run import:luxemburgo:gaps
+ *   npm run import:holanda:gaps
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -57,6 +60,12 @@ let REPORT_NAME =
           ? "suiza-gaps-dry-report.json"
         : REGION === "austria"
           ? "austria-gaps-dry-report.json"
+        : REGION === "belgica"
+          ? "belgica-gaps-dry-report.json"
+        : REGION === "luxemburgo"
+          ? "luxemburgo-gaps-dry-report.json"
+        : REGION === "holanda"
+          ? "holanda-gaps-dry-report.json"
         : "iberia-gaps-dry-report.json";
 if (SOLO_STOPOVER) {
   REPORT_NAME = REPORT_NAME.replace("-gaps-dry-report.json", "-stopover-dry-report.json");
@@ -197,6 +206,56 @@ const HUECOS_AUSTRIA = [
   { id: 16, zona: "Waldviertel", lat: 48.65, lng: 15.2, pais: "Austria" },
 ];
 
+/** Bélgica: 54 áreas. Flandes en neerlandés, Valonia en francés, Eupen en alemán. */
+const HUECOS_BELGICA = [
+  { id: 1, zona: "Costa / Ostende", lat: 51.22, lng: 2.92, pais: "Bélgica", lang: "nl" },
+  { id: 2, zona: "Brujas", lat: 51.21, lng: 3.22, pais: "Bélgica", lang: "nl" },
+  { id: 3, zona: "Gante", lat: 51.05, lng: 3.73, pais: "Bélgica", lang: "nl" },
+  { id: 4, zona: "Amberes", lat: 51.22, lng: 4.4, pais: "Bélgica", lang: "nl" },
+  { id: 5, zona: "Kempen / Turnhout", lat: 51.32, lng: 4.94, pais: "Bélgica", lang: "nl" },
+  { id: 6, zona: "Limburgo / Hasselt", lat: 50.93, lng: 5.34, pais: "Bélgica", lang: "nl" },
+  { id: 7, zona: "Lovaina", lat: 50.88, lng: 4.7, pais: "Bélgica", lang: "nl" },
+  { id: 8, zona: "Bruselas sur / Nivelles", lat: 50.7, lng: 4.33, pais: "Bélgica", lang: "fr" },
+  { id: 9, zona: "Mons / Hainaut", lat: 50.45, lng: 3.95, pais: "Bélgica", lang: "fr" },
+  { id: 10, zona: "Charleroi", lat: 50.41, lng: 4.44, pais: "Bélgica", lang: "fr" },
+  { id: 11, zona: "Namur", lat: 50.47, lng: 4.87, pais: "Bélgica", lang: "fr" },
+  { id: 12, zona: "Lieja", lat: 50.63, lng: 5.57, pais: "Bélgica", lang: "fr" },
+  { id: 13, zona: "Ardenas / Bastogne", lat: 50.0, lng: 5.72, pais: "Bélgica", lang: "fr" },
+  { id: 14, zona: "Gaume / Arlon", lat: 49.68, lng: 5.82, pais: "Bélgica", lang: "fr" },
+  { id: 15, zona: "Chimay / Botte", lat: 50.05, lng: 4.32, pais: "Bélgica", lang: "fr" },
+  { id: 16, zona: "Eupen / Cantón del Este", lat: 50.63, lng: 6.03, pais: "Bélgica", lang: "de" },
+];
+
+/** Luxemburgo: 5 áreas. País pequeño; 6 disparos FR/DE. */
+const HUECOS_LUXEMBURGO = [
+  { id: 1, zona: "Ciudad de Luxemburgo", lat: 49.61, lng: 6.13, pais: "Luxemburgo", lang: "fr" },
+  { id: 2, zona: "Éislek / Clervaux", lat: 50.0, lng: 6.0, pais: "Luxemburgo", lang: "de" },
+  { id: 3, zona: "Mosela / Grevenmacher", lat: 49.63, lng: 6.44, pais: "Luxemburgo", lang: "de" },
+  { id: 4, zona: "Redange / oeste", lat: 49.76, lng: 5.89, pais: "Luxemburgo", lang: "fr" },
+  { id: 5, zona: "Mullerthal / Echternach", lat: 49.81, lng: 6.42, pais: "Luxemburgo", lang: "de" },
+  { id: 6, zona: "Esch / sur", lat: 49.5, lng: 5.98, pais: "Luxemburgo", lang: "fr" },
+];
+
+/** Países Bajos: 155 áreas. El término es camperplaats, no “área”. */
+const HUECOS_HOLANDA = [
+  { id: 1, zona: "Kop van Noord-Holland", lat: 52.8, lng: 4.75, pais: "Países Bajos" },
+  { id: 2, zona: "Frisia / Leeuwarden", lat: 53.2, lng: 5.8, pais: "Países Bajos" },
+  { id: 3, zona: "Groninga", lat: 53.22, lng: 6.57, pais: "Países Bajos" },
+  { id: 4, zona: "Drente / Assen", lat: 52.99, lng: 6.56, pais: "Países Bajos" },
+  { id: 5, zona: "Overijssel / Zwolle", lat: 52.52, lng: 6.08, pais: "Países Bajos" },
+  { id: 6, zona: "Twente / Enschede", lat: 52.22, lng: 6.89, pais: "Países Bajos" },
+  { id: 7, zona: "Achterhoek", lat: 52.0, lng: 6.35, pais: "Países Bajos" },
+  { id: 8, zona: "Veluwe", lat: 52.2, lng: 5.8, pais: "Países Bajos" },
+  { id: 9, zona: "Utrecht / Groene Hart", lat: 52.09, lng: 5.12, pais: "Países Bajos" },
+  { id: 10, zona: "Holanda Meridional", lat: 51.85, lng: 4.5, pais: "Países Bajos" },
+  { id: 11, zona: "Zelanda", lat: 51.5, lng: 3.85, pais: "Países Bajos" },
+  { id: 12, zona: "Brabante / Eindhoven", lat: 51.44, lng: 5.48, pais: "Países Bajos" },
+  { id: 13, zona: "Limburgo norte / Venlo", lat: 51.37, lng: 6.17, pais: "Países Bajos" },
+  { id: 14, zona: "Limburgo sur / Maastricht", lat: 50.9, lng: 5.8, pais: "Países Bajos" },
+  { id: 15, zona: "Flevoland", lat: 52.52, lng: 5.47, pais: "Países Bajos" },
+  { id: 16, zona: "Frisia Occidental", lat: 52.65, lng: 5.05, pais: "Países Bajos" },
+];
+
 const HUECOS =
   REGION === "baleares"
     ? HUECOS_BALEARES
@@ -210,7 +269,13 @@ const HUECOS =
             ? HUECOS_SUIZA
             : REGION === "austria"
               ? HUECOS_AUSTRIA
-              : HUECOS_PENINSULA;
+              : REGION === "belgica"
+                ? HUECOS_BELGICA
+                : REGION === "luxemburgo"
+                  ? HUECOS_LUXEMBURGO
+                  : REGION === "holanda"
+                    ? HUECOS_HOLANDA
+                    : HUECOS_PENINSULA;
 
 const TERMINOS_ES = [
   "área autocaravanas",
@@ -250,8 +315,27 @@ const STOPOVER_PT = ["estacionamento autocaravanas"];
 const STOPOVER_DE = ["Wohnmobilparkplatz", "Weingut Wohnmobil"];
 const STOPOVER_FR = ["parking camping-car", "chez l'habitant camping-car"];
 const STOPOVER_IT = ["parcheggio camper"];
+const TERMINOS_NL = ["camperplaats", "camperplaatsen", "camping camper"];
+const STOPOVER_NL = ["camperparking", "camper parkeerplaats"];
+const TERMINOS_LU = ["aire camping-car", "Wohnmobilstellplatz", "camping camping-car"];
+const STOPOVER_LU = ["parking camping-car", "camperplaats"];
 
 function terminosDe(hueco: { pais?: string; lang?: string }) {
+  if (REGION === "holanda") {
+    return SOLO_STOPOVER ? STOPOVER_NL : [...TERMINOS_NL, ...STOPOVER_NL];
+  }
+  if (REGION === "luxemburgo") {
+    return SOLO_STOPOVER ? STOPOVER_LU : [...TERMINOS_LU, ...STOPOVER_LU];
+  }
+  if (REGION === "belgica") {
+    if (hueco.lang === "fr") {
+      return SOLO_STOPOVER ? STOPOVER_FR : [...TERMINOS_FR, ...STOPOVER_FR];
+    }
+    if (hueco.lang === "de") {
+      return SOLO_STOPOVER ? STOPOVER_DE : [...TERMINOS_DE, ...STOPOVER_DE];
+    }
+    return SOLO_STOPOVER ? STOPOVER_NL : [...TERMINOS_NL, ...STOPOVER_NL];
+  }
   if (REGION === "suiza") {
     if (hueco.lang === "fr") {
       return SOLO_STOPOVER ? STOPOVER_FR : [...TERMINOS_FR, ...STOPOVER_FR];
@@ -292,9 +376,9 @@ function terminosDe(hueco: { pais?: string; lang?: string }) {
 }
 
 const RELEVANCE_RE =
-  /\b(autocaravana|autocaravanas|autocaravanes|camper|caravana|camping|c[aà]mping|campismo|campground|aire|area de servicio|área de servicio|sosta|stellplatz|motorhome|campervan|caravaning|weingut|stopover)\b|wohnmobil|reisemobil/i;
+  /\b(autocaravana|autocaravanas|autocaravanes|camper|caravana|camping|c[aà]mping|campismo|campground|aire|area de servicio|área de servicio|sosta|stellplatz|motorhome|campervan|caravaning|weingut|stopover|camperplaats)\b|wohnmobil|reisemobil/i;
 const NOISE_RE =
-  /\b(hotel|motel|hostal|hostel|restaurante|restaurant|gasolinera|gas station|dealer|concesionario|venta|alquiler|hire|rental|rentals|rent\b|storage|trasteros?|rimessaggio|agencia|experience|indie campers|vermietung|verkauf|haendler|händler|autohaus|noleggio)\b/i;
+  /\b(hotel|motel|hostal|hostel|restaurante|restaurant|gasolinera|gas station|dealer|concesionario|venta|alquiler|hire|rental|rentals|rent\b|storage|trasteros?|rimessaggio|agencia|experience|indie campers|vermietung|verkauf|haendler|händler|autohaus|noleggio|overnachten niet toegestaan|no overnight|sin pernocta)\b/i;
 
 function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -378,6 +462,36 @@ function isInAustria(lat: number, lng: number): boolean {
   return true;
 }
 
+function isInBelgium(lat: number, lng: number): boolean {
+  if (lat < 49.5 || lat > 51.51 || lng < 2.54 || lng > 6.4) return false;
+  if (lat > 51.27 && lng > 3.45 && lng < 4.25) return false;
+  if (lat > 51.42 && lng > 4.3 && lng < 5.6) return false;
+  if (lat > 51.35 && lng > 5.5) return false;
+  if (lat < 50.12 && lng < 4.15) return false;
+  if (lat < 49.85 && lng < 4.85) return false;
+  if (lng > 6.15 && lat < 50.28) return false;
+  if (lng > 6.28 && lat > 50.55) return false;
+  if (lat < 50.16 && lng > 5.82 && lng < 6.2) return false;
+  return true;
+}
+
+function isInLuxembourg(lat: number, lng: number): boolean {
+  if (lat < 49.44 || lat > 50.19 || lng < 5.73 || lng > 6.53) return false;
+  if (lat > 50.0 && lng < 5.9) return false;
+  if (lat < 49.5 && lng < 6.05) return false;
+  return true;
+}
+
+function isInNetherlands(lat: number, lng: number): boolean {
+  if (lat < 50.75 || lat > 53.56 || lng < 3.36 || lng > 7.23) return false;
+  if (lat < 51.22 && lng < 4.25) return false;
+  if (lat < 51.3 && lng > 4.3 && lng < 5.45) return false;
+  if (lat < 50.8) return false;
+  if (lat < 50.95 && lng < 5.45) return false;
+  if (lng > 7.08 && lat < 52.15) return false;
+  return true;
+}
+
 function isInBaleares(lat: number, lng: number): boolean {
   if (lat >= 39.25 && lat <= 39.97 && lng >= 2.3 && lng <= 3.48) return true; // Mallorca
   if (lat >= 39.78 && lat <= 40.1 && lng >= 3.78 && lng <= 4.33) return true; // Menorca
@@ -443,6 +557,17 @@ function isRelevant(name: string, types: string[], pais?: string): boolean {
   if (REGION === "alemania" || REGION === "austria" || REGION === "suiza") {
     if (
       !/wohnmobil|reisemobil|stellplatz|weingut|campingplatz|\bcamper\b|camping-car|sosta|\baire\b/i.test(
+        name
+      ) &&
+      !types.includes("campground") &&
+      !types.includes("rv_park")
+    ) {
+      return false;
+    }
+  }
+  if (REGION === "holanda" || REGION === "belgica" || REGION === "luxemburgo") {
+    if (
+      !/camperplaats|camperparking|stellplatz|wohnmobil|camping-car|\bcamper\b|\baire\b|campingplatz/i.test(
         name
       ) &&
       !types.includes("campground") &&
@@ -579,6 +704,15 @@ async function importUtiles(utiles: any[]) {
     } else if (REGION === "austria") {
       if (cc && cc !== "AT") continue;
       if (!isInAustria(hit.lat, hit.lng)) continue;
+    } else if (REGION === "belgica") {
+      if (cc && cc !== "BE") continue;
+      if (!isInBelgium(hit.lat, hit.lng)) continue;
+    } else if (REGION === "luxemburgo") {
+      if (cc && cc !== "LU") continue;
+      if (!isInLuxembourg(hit.lat, hit.lng)) continue;
+    } else if (REGION === "holanda") {
+      if (cc && cc !== "NL") continue;
+      if (!isInNetherlands(hit.lat, hit.lng)) continue;
     } else if (cc && cc !== "ES" && cc !== "PT") {
       continue;
     }
@@ -595,6 +729,12 @@ async function importUtiles(utiles: any[]) {
             ? "Suiza"
             : REGION === "austria" || cc === "AT"
               ? "Austria"
+          : REGION === "belgica" || cc === "BE"
+            ? "Bélgica"
+            : REGION === "luxemburgo" || cc === "LU"
+              ? "Luxemburgo"
+              : REGION === "holanda" || cc === "NL"
+                ? "Países Bajos"
           : cc === "PT"
             ? "Portugal"
             : "España";
@@ -609,6 +749,12 @@ async function importUtiles(utiles: any[]) {
               ? "ch"
               : pais === "Austria"
                 ? "at"
+                : pais === "Bélgica"
+                  ? "be"
+                  : pais === "Luxemburgo"
+                    ? "lu"
+                    : pais === "Países Bajos"
+                      ? "nl"
                 : pais === "Portugal"
                   ? "pt"
                   : "es";
@@ -693,6 +839,12 @@ async function main() {
           ? "\nSuiza — 16 disparos (radio 40 km, DE/FR/IT)"
         : REGION === "austria"
           ? "\nAustria — 16 huecos (radio 40 km)"
+        : REGION === "belgica"
+          ? "\nBélgica — 16 disparos (NL/FR/DE, radio 40 km)"
+        : REGION === "luxemburgo"
+          ? "\nLuxemburgo — 6 disparos (FR/DE, radio 40 km)"
+        : REGION === "holanda"
+          ? "\nPaíses Bajos — 16 disparos (camperplaats, radio 40 km)"
         : "\nPenínsula — búsqueda en 16 huecos (radio 40 km)"
   );
   if (SOLO_STOPOVER) {
@@ -721,7 +873,9 @@ async function main() {
             ? "fr"
             : REGION === "italia"
               ? "it"
-              : "es");
+              : REGION === "holanda"
+                ? "nl"
+                : "es");
       const results = await nearby(termino, hueco.lat, hueco.lng, lang);
       let nuevos = 0;
       for (const r of results) {
@@ -735,6 +889,9 @@ async function main() {
         if (REGION === "italia" && !isInItaly(r.lat, r.lng)) continue;
         if (REGION === "suiza" && !isInSwitzerland(r.lat, r.lng)) continue;
         if (REGION === "austria" && !isInAustria(r.lat, r.lng)) continue;
+        if (REGION === "belgica" && !isInBelgium(r.lat, r.lng)) continue;
+        if (REGION === "luxemburgo" && !isInLuxembourg(r.lat, r.lng)) continue;
+        if (REGION === "holanda" && !isInNetherlands(r.lat, r.lng)) continue;
         seen.add(r.place_id);
         const decision = decidirUbicacion(r.name, { types: r.types, pais: hueco.pais });
         const relevant = decision.admite;
