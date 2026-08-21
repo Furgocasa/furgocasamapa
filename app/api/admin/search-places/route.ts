@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { anotarLugarEncontrado } from '@/lib/areas/tipo-area'
 
 // Método GET para verificar que la ruta funciona
 export async function GET() {
@@ -277,12 +278,17 @@ export async function POST(request: NextRequest) {
     const withWebsite = resultsWithDetails.filter((r: any) => r.website).length
     console.log(`🌐 ${withWebsite} lugares tienen website`)
 
-    const results = resultsWithDetails
+    const results = resultsWithDetails.map((place: any) => anotarLugarEncontrado(place))
+    const admitidos = results.filter((r: any) => r.admite)
+    const descartados = results.length - admitidos.length
+    console.log(`🏷️ Tipología: ${admitidos.length} encajan en las 4, ${descartados} descartados`)
 
     return NextResponse.json({
       results,
       status: 'OK',
-      total: results.length
+      total: results.length,
+      admitidos: admitidos.length,
+      descartados
     })
   } catch (error: any) {
     console.error('❌ Error en búsqueda de lugares:', error)

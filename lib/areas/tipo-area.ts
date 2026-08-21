@@ -112,7 +112,7 @@ function esMarcaPrivada(n: string): boolean {
 function esAreaHabilitadaEnNombre(n: string): boolean {
   return (
     isMotorhomeWording(n) ||
-    /\b(area de (autocaravanas?|autocaravanes|servicio|servicios)|area autocaravanas?|aire de services?|aire d'accueil|area sosta|sosta camper)\b/.test(
+    /\b(area de (autocaravanas?|autocaravanes|servicio|servicios)|area autocaravanas?|aire de services?|aire d'accueil|area sosta|sosta camper|camperplaats)\b/.test(
       n
     )
   )
@@ -135,6 +135,117 @@ export function esPernoctaSinServicio(name: string): boolean {
     /\baires? naturelles?\b/.test(n) ||
     /\b(wild ?camp(ing)?|wildcamping|boondock(ing)?|dispersed camping|bivouac)\b/.test(n)
   )
+}
+
+function tieneSenalDeLasCuatro(n: string, types: string[]): boolean {
+  if (types.includes('campground') || types.includes('rv_park')) return true
+  if (esAreaHabilitadaEnNombre(n)) return true
+  if (esParkingAutocaravana(n)) return true
+  if (esMarcaPrivada(n) || esStopoverDeAnfitrion(n)) return true
+  return (
+    /\b(stellplatz|wohnmobilstellplatz|reisemobilstellplatz|area sosta|sosta camper|arosfan|camperplaats)\b/.test(
+      n
+    ) ||
+    (/\baires?\b/.test(n) && !/\b(airport|aire acondicionado)\b/.test(n)) ||
+    /\b(camping|campeggio|campismo|campsite|camp site|campground|caravan park|holiday park|touring park|trailer park|rv park|campingplatz|parque de campismo)\b/.test(
+      n
+    ) ||
+    /\b(certified location|certificated (site|location)|certified site|cl site|c&cc|club cs)\b/.test(
+      n
+    ) ||
+    /\b cl(\s+site)?\b/.test(n) ||
+    /\b(camper ?park|camperstop|area camper|area camping)\b/.test(n) ||
+    /\b(weingut|chez l.habitant|parking de passage|brit.?stop)\b/.test(n)
+  )
+}
+
+/** Taller, hire, solar, wild camp, parking de día: no es ninguna de las cuatro. */
+export function esFueraDelMapa(name: string, types: string[] = []): boolean {
+  if (esPernoctaSinServicio(name)) return true
+  const n = norm(name)
+  if (!n) return true
+  if (/\b(now closed|permanently closed|closed down|cerrado definitivamente)\b/.test(n)) {
+    return true
+  }
+  if (/^\d+\s*,/.test(name.trim())) return true
+  if (types.includes('car_dealer')) return true
+  if (
+    types.includes('car_repair') &&
+    !types.includes('campground') &&
+    !/\b(stellplatz|aire|area|sosta|camping)\b/.test(n)
+  ) {
+    return true
+  }
+  if (
+    /\b(hire|rental|alquiler|vermietung|noleggio|location de )\b/.test(n) &&
+    /\b(camper|motorhome|van|autocaravana|wohnmobil|fourgon)\b/.test(n)
+  ) {
+    return true
+  }
+  if (/\b(residential|park home|mobile home sales)\b/.test(n) && !/\b(touring|campsite|aire)\b/.test(n)) {
+    return true
+  }
+  if (/\b(storage|marina seca|invernaje|caravan sales)\b/.test(n)) return true
+  if (
+    /\b(services ltd|taller|workshop|depot|escapes)\b/.test(n) &&
+    !/\b(aire|stellplatz|campsite|camping|cl site|area)\b/.test(n)
+  ) {
+    return true
+  }
+  if (
+    /\bofficial motorhome parking\b/.test(n) &&
+    !/\b(stopover|aire|arosfan|overnight stay)\b/.test(n)
+  ) {
+    return true
+  }
+  if (types.includes('store') && /\b(depot|sales|parts)\b/.test(n)) return true
+  return false
+}
+
+export type DecisionUbicacion = {
+  admite: boolean
+  tipo: TipoArea | null
+  motivo: string
+}
+
+/**
+ * Puerta de las búsquedas nuevas: clasifica al encontrar.
+ * Si no encaja en una de las cuatro, no se inserta (tipo = null).
+ */
+export function decidirUbicacion(
+  name: string,
+  opts: { pais?: string | null; types?: string[] } = {}
+): DecisionUbicacion {
+  const types = opts.types || []
+  const n = norm(name)
+  if (!n) return { admite: false, tipo: null, motivo: 'sin-nombre' }
+  if (esFueraDelMapa(name, types)) {
+    return { admite: false, tipo: null, motivo: 'fuera-del-mapa' }
+  }
+  if (!tieneSenalDeLasCuatro(n, types)) {
+    return { admite: false, tipo: null, motivo: 'sin-senal-de-las-cuatro' }
+  }
+  return {
+    admite: true,
+    tipo: classifyTipoArea(name, opts),
+    motivo: 'ok',
+  }
+}
+
+export function admiteEnMapa(
+  name: string,
+  opts: { pais?: string | null; types?: string[] } = {}
+): boolean {
+  return decidirUbicacion(name, opts).admite
+}
+
+/** Anota un resultado de Google Places al encontrarlo. */
+export function anotarLugarEncontrado<T extends { name: string; types?: string[] }>(
+  place: T,
+  pais?: string | null
+): T & { admite: boolean; tipo_area: TipoArea | null; motivo_tipo: string } {
+  const d = decidirUbicacion(place.name, { types: place.types || [], pais })
+  return { ...place, admite: d.admite, tipo_area: d.tipo, motivo_tipo: d.motivo }
 }
 
 export function getTipoAreaColor(tipo?: string | null): string {
@@ -240,6 +351,12 @@ export function classifyTipoArea(
   // En DACH el Stellplatz es el área (municipal o privada), no un stopover UK
   if (/\b(wohnmobilstellplatz|reisemobilstellplatz|stellplatz)\b/.test(n)) {
     if (/\bprivat/.test(n)) return 'privada'
+    return 'publica'
+  }
+
+  // NL/Flandes: camperplaats = área, no un parking de paso
+  if (/\bcamperplaats(en)?\b/.test(n)) {
+    if (/\b(prive|privee|privat|particulier)\b/.test(n)) return 'privada'
     return 'publica'
   }
 

@@ -329,7 +329,7 @@ Solo entra lo que encaja en **una de estas cuatro**. El nombre local (aire, sost
 
 **No usar el JSON `servicios` para admitir o ocultar.** Casi todo el inventario lo tiene vacío (dato pendiente). No es el tema ahora. `esPernoctaSinServicio()` rechaza por nombre / naturaleza del lugar, no por ficha vacía.
 
-Clasificar (`classifyTipoArea`) solo corre **después** de admitir el sitio. Recategorizar tipos: `scripts/scripts_empresas/reclassify-tipos.ts`. Ocultar lo que no encaja (zona de acampada / wild camp): el mismo script con `--ocultar-sin-servicio`.
+En cada búsqueda nueva, `decidirUbicacion()` corre **al encontrar** el sitio: o entra con uno de los cuatro tipos, o no se inserta. No hay default a `publica`. Recategorizar inventario ya guardado: `scripts/scripts_empresas/reclassify-tipos.ts`. Ocultar lo que no encaja (zona de acampada / wild camp): el mismo script con `--ocultar-sin-servicio`.
 
 Admin: al editar, el valor `parking` sigue saliendo como “Parking”; en el mapa público es Stopover.
 

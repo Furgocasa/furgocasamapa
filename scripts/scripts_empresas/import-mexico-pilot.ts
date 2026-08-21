@@ -12,7 +12,7 @@ import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
-import { classifyTipoArea, esPernoctaSinServicio } from "../../lib/areas/tipo-area";
+import { decidirUbicacion } from "../../lib/areas/tipo-area";
 
 dotenv.config({ path: ".env.local" });
 
@@ -372,7 +372,7 @@ function createGrid(
 }
 
 function isRelevant(name: string, types: string[]): boolean {
-  if (esPernoctaSinServicio(name)) return false;
+  if (!decidirUbicacion(name, { pais: "México", types }).admite) return false;
   if (US_NAME_RE.test(name)) return false;
   // En MX Google etiqueta parkings como rv_park: priorizar nombre
   if (NOISE_NAME_RE.test(name) && !RELEVANCE_RE.test(name)) return false;
@@ -503,12 +503,18 @@ function generateSlug(name: string, placeId: string): string {
 async function importArea(hit: PlaceHit): Promise<boolean> {
   if (!supabase) return false;
 
+  const decision = decidirUbicacion(hit.name, { pais: "México", types: hit.types || [] });
+  if (!decision.admite || !decision.tipo) {
+    console.log(`   ↷ fuera de las 4: ${hit.name} (${decision.motivo})`);
+    return false;
+  }
+
   const slug = generateSlug(hit.name, hit.place_id);
   const newArea = {
     nombre: hit.name,
     slug,
     descripcion: null,
-    tipo_area: classifyTipoArea(hit.name, { pais: "México", types: hit.types || [] }),
+    tipo_area: decision.tipo,
     pais: "México",
     provincia: hit.region,
     ciudad: null,

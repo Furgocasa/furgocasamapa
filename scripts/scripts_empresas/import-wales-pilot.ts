@@ -18,7 +18,7 @@ import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
-import { classifyTipoArea, esPernoctaSinServicio } from "../../lib/areas/tipo-area";
+import { decidirUbicacion } from "../../lib/areas/tipo-area";
 
 // Windows / antivirus: interceptan TLS y rompen fetch a Google y Supabase
 if (process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0") {
@@ -75,7 +75,7 @@ interface PlaceHit {
   user_ratings_total?: number;
   business_status?: string;
   relevant: boolean;
-  tipo_area: TipoArea;
+  tipo_area: TipoArea | null;
   region: string;
   query: string;
 }
@@ -193,35 +193,12 @@ function isInWales(lat: number, lng: number, address?: string): boolean {
   return true;
 }
 
-function classifyTipo(name: string, types: string[]): TipoArea {
-  return classifyTipoArea(name, { pais: "Reino Unido", types });
+function classifyTipo(name: string, types: string[]): TipoArea | null {
+  return decidirUbicacion(name, { pais: "Reino Unido", types }).tipo;
 }
 
 function isRelevant(name: string, types: string[]): boolean {
-  if (esPernoctaSinServicio(name)) return false;
-  const n = name.toLowerCase();
-  if (/\b(now\s+closed|permanently\s+closed|closed\s+down)\b/.test(n)) {
-    return false;
-  }
-  if (/^\d+\s*,/.test(name)) return false;
-  if (types.includes("car_dealer")) return false;
-  if (DEALER_RE.test(name)) return false;
-  if (/\b(residential|park\s+home)\b/.test(n) && !/\b(touring|motorhome|camper)\b/.test(n)) {
-    return false;
-  }
-  if (LODGE_ONLY_RE.test(name) && !RELEVANCE_RE.test(name)) return false;
-  if (NOISE_RE.test(name) && !RELEVANCE_RE.test(name)) return false;
-
-  if (RELEVANCE_RE.test(name)) return true;
-  if (types.includes("campground")) return true;
-  if (
-    types.includes("rv_park") &&
-    !NOISE_RE.test(name) &&
-    !DEALER_RE.test(name)
-  ) {
-    return true;
-  }
-  return false;
+  return decidirUbicacion(name, { pais: "Reino Unido", types }).admite;
 }
 
 async function nearbySearch(
@@ -438,12 +415,21 @@ async function importArea(hit: PlaceHit): Promise<boolean> {
     // administrative_area_level_1 a veces viene como el condado; no bloquear
   }
 
+  const decision = decidirUbicacion(hit.name, {
+    pais: "Reino Unido",
+    types: details?.google_types || hit.types || [],
+  });
+  if (!decision.admite || !decision.tipo) {
+    console.log(`   ↷ fuera de las 4: ${hit.name} (${decision.motivo})`);
+    return false;
+  }
+
   const slug = generateSlug(hit.name, hit.place_id);
   const newArea = {
     nombre: hit.name,
     slug,
     descripcion: null,
-    tipo_area: hit.tipo_area,
+    tipo_area: decision.tipo,
     pais: "Reino Unido",
     comunidad: "Gales",
     comunidad_autonoma: "Gales",

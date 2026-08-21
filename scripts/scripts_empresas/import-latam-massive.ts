@@ -32,6 +32,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
+import { decidirUbicacion } from "../../lib/areas/tipo-area";
 
 // Cargar variables de entorno
 dotenv.config({ path: ".env.local" });
@@ -714,11 +715,20 @@ async function importArea(place: PlaceResult, pais: string): Promise<boolean> {
       return false; // Ya existe
     }
 
+    const decision = decidirUbicacion(place.name, {
+      pais: paisReal,
+      types: place.types || [],
+    });
+    if (!decision.admite || !decision.tipo) {
+      console.log(`  ↷ fuera de las 4: ${place.name} (${decision.motivo})`);
+      return false;
+    }
+
     const newArea = {
       nombre: place.name,
       slug: slug,
       descripcion: null,
-      tipo_area: "publica",
+      tipo_area: decision.tipo,
       pais: paisReal,
       provincia: provincia,
       ciudad: ciudad,

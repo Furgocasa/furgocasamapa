@@ -15,6 +15,7 @@ import {
   XCircleIcon
 } from '@heroicons/react/24/outline'
 import { MapaInteractivoAdmin } from '@/components/admin/MapaInteractivoAdmin'
+import { decidirUbicacion, type TipoArea } from '@/lib/areas/tipo-area'
 
 interface PlaceResult {
   place_id: string
@@ -34,6 +35,21 @@ interface PlaceResult {
   website?: string | null
   phone?: string | null
   exists_in_db?: boolean
+  admite?: boolean
+  tipo_area?: TipoArea | null
+  motivo_tipo?: string
+}
+
+const TIPO_LABEL: Record<TipoArea, string> = {
+  publica: 'Área pública',
+  privada: 'Área privada',
+  camping: 'Camping',
+  parking: 'Stopover',
+}
+
+function placeAdmite(place: PlaceResult): boolean {
+  if (typeof place.admite === 'boolean') return place.admite
+  return decidirUbicacion(place.name, { types: place.types || [] }).admite
 }
 
 type SupabaseAreaRow = {
@@ -415,10 +431,16 @@ export default function BusquedaMasivaPage() {
       console.log(`📊 Resultados recibidos: ${data.results.length}`)
 
       // Marcar qué lugares ya existen en la base de datos usando verificación inteligente
-      const resultsWithStatus = data.results.map((place: PlaceResult) => ({
-        ...place,
-        exists_in_db: checkIfPlaceExists(place)
-      }))
+      const resultsWithStatus = data.results.map((place: PlaceResult) => {
+        const d = decidirUbicacion(place.name, { types: place.types || [] })
+        return {
+          ...place,
+          exists_in_db: checkIfPlaceExists(place),
+          admite: d.admite,
+          tipo_area: d.tipo,
+          motivo_tipo: d.motivo,
+        }
+      })
 
       setResults(resultsWithStatus)
 
@@ -488,10 +510,16 @@ export default function BusquedaMasivaPage() {
       console.log(`📊 Resultados en mapa recibidos: ${data.results.length}`)
 
       // Marcar qué lugares ya existen en la base de datos
-      const resultsWithStatus = data.results.map((place: PlaceResult) => ({
-        ...place,
-        exists_in_db: checkIfPlaceExists(place)
-      }))
+      const resultsWithStatus = data.results.map((place: PlaceResult) => {
+        const d = decidirUbicacion(place.name, { types: place.types || [] })
+        return {
+          ...place,
+          exists_in_db: checkIfPlaceExists(place),
+          admite: d.admite,
+          tipo_area: d.tipo,
+          motivo_tipo: d.motivo,
+        }
+      })
 
       setMapResults(resultsWithStatus)
 
@@ -511,6 +539,8 @@ export default function BusquedaMasivaPage() {
   }
 
   const toggleSelection = (placeId: string) => {
+    const place = results.find((p: any) => p.place_id === placeId)
+    if (place && !placeAdmite(place)) return
     const newSelection = new Set(selectedPlaces)
     if (newSelection.has(placeId)) {
       newSelection.delete(placeId)
@@ -523,7 +553,7 @@ export default function BusquedaMasivaPage() {
   const selectAll = () => {
     const newSelection = new Set<string>()
     results.forEach((place: any) => {
-      if (!place.exists_in_db) {
+      if (!place.exists_in_db && placeAdmite(place)) {
         newSelection.add(place.place_id)
       }
     })
@@ -536,6 +566,8 @@ export default function BusquedaMasivaPage() {
 
   // Funciones para búsqueda en mapa
   const toggleMapSelection = (placeId: string) => {
+    const place = mapResults.find((p: any) => p.place_id === placeId)
+    if (place && !placeAdmite(place)) return
     const newSelection = new Set(mapSelectedPlaces)
     if (newSelection.has(placeId)) {
       newSelection.delete(placeId)
@@ -548,7 +580,7 @@ export default function BusquedaMasivaPage() {
   const selectAllMap = () => {
     const newSelection = new Set<string>()
     mapResults.forEach((place: any) => {
-      if (!place.exists_in_db) {
+      if (!place.exists_in_db && placeAdmite(place)) {
         newSelection.add(place.place_id)
       }
     })
@@ -721,11 +753,21 @@ export default function BusquedaMasivaPage() {
             }
           }
 
+          const decision = decidirUbicacion(place.name, {
+            pais,
+            types: place.types || [],
+          })
+          if (!decision.admite || !decision.tipo) {
+            errorCount++
+            errors.push(`${place.name}: no encaja en las 4 tipologías`)
+            continue
+          }
+
           const newArea = {
             nombre: finalName,
             slug: slug,
             descripcion: null, // Se dejará NULL para ser enriquecido posteriormente con IA
-            tipo_area: 'publica',
+            tipo_area: decision.tipo,
             pais: pais,
             provincia: provincia,
             ciudad: ciudad,
@@ -952,11 +994,21 @@ export default function BusquedaMasivaPage() {
             }
           }
 
+          const decision = decidirUbicacion(place.name, {
+            pais,
+            types: place.types || [],
+          })
+          if (!decision.admite || !decision.tipo) {
+            errorCount++
+            errors.push(`${place.name}: no encaja en las 4 tipologías`)
+            continue
+          }
+
           const newArea = {
             nombre: finalName,
             slug: slug,
             descripcion: null,
-            tipo_area: 'publica',
+            tipo_area: decision.tipo,
             pais: pais,
             provincia: provincia,
             ciudad: ciudad,
@@ -1026,9 +1078,9 @@ export default function BusquedaMasivaPage() {
   }
 
   const selectedCount = selectedPlaces.size
-  const newPlacesCount = results.filter((p: any) => !p.exists_in_db).length
+  const newPlacesCount = results.filter((p: any) => !p.exists_in_db && placeAdmite(p)).length
   const mapSelectedCount = mapSelectedPlaces.size
-  const mapNewPlacesCount = mapResults.filter((p: any) => !p.exists_in_db).length
+  const mapNewPlacesCount = mapResults.filter((p: any) => !p.exists_in_db && placeAdmite(p)).length
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -1300,6 +1352,8 @@ export default function BusquedaMasivaPage() {
                         <td className="px-4 py-3 text-center">
                           {place.exists_in_db ? (
                             <CheckCircleIcon className="w-5 h-5 text-gray-400 mx-auto" />
+                          ) : !placeAdmite(place) ? (
+                            <XCircleIcon className="w-5 h-5 text-red-400 mx-auto" />
                           ) : (
                             <input
                               type="checkbox"
@@ -1340,10 +1394,18 @@ export default function BusquedaMasivaPage() {
                               <CheckCircleIcon className="w-4 h-4" />
                               Ya existe
                             </span>
+                          ) : !placeAdmite(place) ? (
+                            <span
+                              className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800"
+                              title={place.motivo_tipo || 'No encaja en las 4 tipologías'}
+                            >
+                              <XCircleIcon className="w-4 h-4" />
+                              No entra
+                            </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                               <PlusIcon className="w-4 h-4" />
-                              Nueva
+                              {place.tipo_area ? TIPO_LABEL[place.tipo_area] : 'Nueva'}
                             </span>
                           )}
                         </td>
@@ -1435,6 +1497,8 @@ export default function BusquedaMasivaPage() {
                         <td className="px-4 py-3 text-center">
                           {place.exists_in_db ? (
                             <CheckCircleIcon className="w-5 h-5 text-gray-400 mx-auto" />
+                          ) : !placeAdmite(place) ? (
+                            <XCircleIcon className="w-5 h-5 text-red-400 mx-auto" />
                           ) : (
                             <input
                               type="checkbox"
@@ -1475,10 +1539,18 @@ export default function BusquedaMasivaPage() {
                               <CheckCircleIcon className="w-4 h-4" />
                               Ya existe
                             </span>
+                          ) : !placeAdmite(place) ? (
+                            <span
+                              className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800"
+                              title={place.motivo_tipo || 'No encaja en las 4 tipologías'}
+                            >
+                              <XCircleIcon className="w-4 h-4" />
+                              No entra
+                            </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                               <PlusIcon className="w-4 h-4" />
-                              Nueva
+                              {place.tipo_area ? TIPO_LABEL[place.tipo_area] : 'Nueva'}
                             </span>
                           )}
                         </td>

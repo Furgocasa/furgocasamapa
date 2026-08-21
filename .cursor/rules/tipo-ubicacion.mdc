@@ -60,7 +60,9 @@ No es España. El inventario es touring park, CL y alguna aire del consejo.
 
 **No entra:** parking pay-and-display del consejo si prohíbe pernocta (Conwy Morfa Bach), taller, hire, tienda de autocaravanas.
 
-El piloto de Gales (`import-wales-pilot.ts`) usa `classifyTipoArea` con país Reino Unido. Default UK = camping.
+El piloto de Gales (`import-wales-pilot.ts`) usa `decidirUbicacion` / `classifyTipoArea` con país Reino Unido.
+
+**Búsquedas nuevas:** clasificar al encontrar. Si no encaja en una de las cuatro, no insertar. No default a `publica`. Lo usan admin `/areas/busqueda-masiva` y los imports (Iberia, Gales, México, LatAm).
 
 Código: `lib/areas/tipo-area.ts`. Doc: README § Tipo de ubicación.
 Revisar tipos en España: no usar `reclassify-tipos.ts` a ciegas sobre Europa; el sesgo histórico era «área + nombre = pública» y «parking = stopover».

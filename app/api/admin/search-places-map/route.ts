@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { anotarLugarEncontrado } from '@/lib/areas/tipo-area'
 
 // API específica para búsqueda en mapa con bounds
 export async function POST(request: NextRequest) {
@@ -249,10 +250,15 @@ export async function POST(request: NextRequest) {
     const withWebsite = resultsWithDetails.filter((r: any) => r.website).length
     console.log(`🌐 ${withWebsite} lugares tienen website`)
 
+    const results = resultsWithDetails.map((place: any) => anotarLugarEncontrado(place))
+    const admitidos = results.filter((r: any) => r.admite)
+
     return NextResponse.json({
-      results: resultsWithDetails,
+      results,
       status: 'OK',
-      total: resultsWithDetails.length,
+      total: results.length,
+      admitidos: admitidos.length,
+      descartados: results.length - admitidos.length,
       bounds: bounds
     })
   } catch (error: any) {
