@@ -12,6 +12,10 @@
  *   npm run import:francia:gaps -- --from-report --import
  *   npm run import:italia:gaps
  *   npm run import:italia:gaps -- --from-report --import
+ *   npm run import:alemania:gaps -- --solo-stopover
+ *   npm run import:francia:gaps -- --solo-stopover
+ *   npm run import:italia:gaps -- --solo-stopover
+ *   npm run import:iberia:gaps -- --solo-stopover
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -36,8 +40,9 @@ const googleApiKey =
   process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!;
 
 const REGION = process.argv.find((a) => a.startsWith("--region="))?.split("=")[1] || "peninsula";
+const SOLO_STOPOVER = process.argv.includes("--solo-stopover");
 
-const REPORT_NAME =
+let REPORT_NAME =
   REGION === "baleares"
     ? "baleares-gaps-dry-report.json"
     : REGION === "alemania"
@@ -47,6 +52,9 @@ const REPORT_NAME =
         : REGION === "italia"
           ? "italia-gaps-dry-report.json"
         : "iberia-gaps-dry-report.json";
+if (SOLO_STOPOVER) {
+  REPORT_NAME = REPORT_NAME.replace("-gaps-dry-report.json", "-stopover-dry-report.json");
+}
 const REPORT_PATH = path.join(process.cwd(), "scripts", REPORT_NAME);
 
 const HUECOS_PENINSULA = [
@@ -185,10 +193,46 @@ const TERMINOS_IT = [
   "campeggio camper",
 ];
 
+/** Stopover: aparcamiento de paso en la lengua del país, no el calco de “área”. */
+const STOPOVER_ES = ["aparcamiento autocaravanas"];
+const STOPOVER_BALEARES = ["aparcamiento autocaravanas", "parking autocaravanes"];
+const STOPOVER_PT = ["estacionamento autocaravanas"];
+const STOPOVER_DE = ["Wohnmobilparkplatz", "Weingut Wohnmobil"];
+const STOPOVER_FR = ["parking camping-car", "chez l'habitant camping-car"];
+const STOPOVER_IT = ["parcheggio camper"];
+
+function terminosDe(hueco: { pais?: string }) {
+  const areaCamping =
+    REGION === "baleares"
+      ? TERMINOS_BALEARES
+      : REGION === "alemania"
+        ? TERMINOS_DE
+        : REGION === "francia"
+          ? TERMINOS_FR
+          : REGION === "italia"
+            ? TERMINOS_IT
+            : hueco.pais === "Portugal"
+              ? TERMINOS_PT
+              : TERMINOS_ES;
+  const stopover =
+    REGION === "baleares"
+      ? STOPOVER_BALEARES
+      : REGION === "alemania"
+        ? STOPOVER_DE
+        : REGION === "francia"
+          ? STOPOVER_FR
+          : REGION === "italia"
+            ? STOPOVER_IT
+            : hueco.pais === "Portugal"
+              ? STOPOVER_PT
+              : STOPOVER_ES;
+  return SOLO_STOPOVER ? stopover : [...areaCamping, ...stopover];
+}
+
 const RELEVANCE_RE =
-  /\b(autocaravana|autocaravanas|autocaravanes|camper|caravana|camping|c[aà]mping|campismo|campground|aire|area de servicio|área de servicio|sosta|stellplatz|motorhome|campervan|caravaning)\b/i;
+  /\b(autocaravana|autocaravanas|autocaravanes|camper|caravana|camping|c[aà]mping|campismo|campground|aire|area de servicio|área de servicio|sosta|stellplatz|motorhome|campervan|caravaning|weingut|stopover)\b|wohnmobil|reisemobil/i;
 const NOISE_RE =
-  /\b(hotel|motel|hostal|hostel|restaurante|restaurant|gasolinera|gas station|dealer|concesionario|venta|alquiler|hire|rental|rentals|rent\b|storage|agencia|experience|indie campers|vermietung|verkauf|haendler|händler|autohaus|noleggio)\b/i;
+  /\b(hotel|motel|hostal|hostel|restaurante|restaurant|gasolinera|gas station|dealer|concesionario|venta|alquiler|hire|rental|rentals|rent\b|storage|trasteros?|rimessaggio|agencia|experience|indie campers|vermietung|verkauf|haendler|händler|autohaus|noleggio)\b/i;
 
 function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -285,7 +329,7 @@ function isRelevant(name: string, types: string[]): boolean {
   }
   if (REGION === "francia") {
     if (
-      !/\b(camping-car|camping car|campingcar|fourgon|camper|autocaravane|stellplatz)\b/i.test(
+      !/\b(camping-car|camping car|campingcar|fourgon|camper|autocaravane|stellplatz|chez l.habitant|parking de passage)\b/i.test(
         name
       ) &&
       !types.includes("campground") &&
@@ -297,6 +341,15 @@ function isRelevant(name: string, types: string[]): boolean {
   if (REGION === "italia") {
     if (
       !/\b(camper|sosta|campeggio|autocaravan|roulotte|motorhome)\b/i.test(name) &&
+      !types.includes("campground") &&
+      !types.includes("rv_park")
+    ) {
+      return false;
+    }
+  }
+  if (REGION === "alemania") {
+    if (
+      !/wohnmobil|reisemobil|stellplatz|weingut|campingplatz|\bcamper\b/i.test(name) &&
       !types.includes("campground") &&
       !types.includes("rv_park")
     ) {
@@ -519,6 +572,9 @@ async function main() {
           ? "\nItalia — 16 huecos (radio 40 km)"
         : "\nPenínsula — búsqueda en 16 huecos (radio 40 km)"
   );
+  if (SOLO_STOPOVER) {
+    console.log("Solo términos locales de stopover (aparcamiento / Parkplatz / parking / parcheggio)\n");
+  }
   console.log(doImport ? "MODO IMPORT\n" : "DRY RUN\n");
 
   const { placeIds, coords } = await loadExisting();
@@ -529,18 +585,7 @@ async function main() {
   let busquedas = 0;
 
   for (const hueco of HUECOS) {
-    const terminos =
-      REGION === "baleares"
-        ? TERMINOS_BALEARES
-        : REGION === "alemania"
-          ? TERMINOS_DE
-          : REGION === "francia"
-            ? TERMINOS_FR
-          : REGION === "italia"
-            ? TERMINOS_IT
-          : hueco.pais === "Portugal"
-            ? TERMINOS_PT
-            : TERMINOS_ES;
+    const terminos = terminosDe(hueco);
     console.log(`#${hueco.id} ${hueco.zona} [${hueco.lat}, ${hueco.lng}]`);
     for (const termino of terminos) {
       busquedas++;

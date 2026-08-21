@@ -22,6 +22,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 scripts/*.log
+scripts/*-dry-report.json
 scripts/audit-copyright-*.csv
 scripts/imagenes-ia-checkpoint.txt
 scripts/imagenes-ia-vacias.txt

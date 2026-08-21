@@ -66,7 +66,7 @@ function esStopoverHint(n: string): boolean {
     return true
   }
   const motorhome =
-    /\b(autocaravana|autocaravanes|camper|wohnmobil|reisemobil|camping[-\s]?car|motorhome)\b/.test(n) ||
+    /\b(autocaravana|autocaravanes|caravana|camper|wohnmobil|reisemobil|camping[-\s]?car|motorhome)\b/.test(n) ||
     /wohnmobil|reisemobil/.test(n)
   if (!motorhome && !/\b(stopover|stop over|overnight parking)\b/.test(n)) {
     return false
