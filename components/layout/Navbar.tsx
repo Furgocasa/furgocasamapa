@@ -10,13 +10,63 @@ import {
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
   TruckIcon,
+  ChevronDownIcon,
+  CheckIcon,
 } from "@heroicons/react/24/outline";
-import { LOCALES, LOCALE_LABELS, type Locale, useLanguage } from "@/lib/i18n";
+import { LOCALES, LOCALE_LABELS, LOCALE_NAMES, type Locale, useLanguage } from "@/lib/i18n";
+
+function LocaleFlag({ locale }: { locale: Locale }) {
+  const flags: Record<Locale, JSX.Element> = {
+    es: (
+      <svg viewBox="0 0 640 480" className="h-full w-full" aria-hidden>
+        <path fill="#c60b1e" d="M0 0h640v480H0z" />
+        <path fill="#ffc400" d="M0 120h640v240H0z" />
+      </svg>
+    ),
+    en: (
+      <svg viewBox="0 0 60 30" className="h-full w-full" aria-hidden>
+        <path fill="#012169" d="M0 0h60v30H0z" />
+        <path stroke="#fff" strokeWidth="6" d="m0 0 60 30M60 0 0 30" />
+        <path stroke="#C8102E" strokeWidth="2.4" d="m0 0 60 30M60 0 0 30" />
+        <path stroke="#fff" strokeWidth="10" d="M30 0v30M0 15h60" />
+        <path stroke="#C8102E" strokeWidth="6" d="M30 0v30M0 15h60" />
+      </svg>
+    ),
+    fr: (
+      <svg viewBox="0 0 640 480" className="h-full w-full" aria-hidden>
+        <path fill="#002395" d="M0 0h213.3v480H0z" />
+        <path fill="#fff" d="M213.3 0h213.4v480H213.3z" />
+        <path fill="#ed2939" d="M426.7 0H640v480H426.7z" />
+      </svg>
+    ),
+    de: (
+      <svg viewBox="0 0 640 480" className="h-full w-full" aria-hidden>
+        <path fill="#000" d="M0 0h640v160H0z" />
+        <path fill="#d00" d="M0 160h640v160H0z" />
+        <path fill="#ffce00" d="M0 320h640v160H0z" />
+      </svg>
+    ),
+    it: (
+      <svg viewBox="0 0 640 480" className="h-full w-full" aria-hidden>
+        <path fill="#009246" d="M0 0h213.3v480H0z" />
+        <path fill="#fff" d="M213.3 0h213.4v480H213.3z" />
+        <path fill="#ce2b37" d="M426.7 0H640v480H426.7z" />
+      </svg>
+    ),
+  };
+
+  return (
+    <span className="inline-flex h-3.5 w-5 shrink-0 overflow-hidden rounded-[3px] shadow-sm ring-1 ring-black/10">
+      {flags[locale]}
+    </span>
+  );
+}
 
 export function Navbar() {
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showLangMenu, setShowLangMenu] = useState(false);
   const [unreadReports, setUnreadReports] = useState(0);
   const router = useRouter();
   const pathname = usePathname();
@@ -211,27 +261,75 @@ export function Navbar() {
 
           {/* Usuario / Login */}
           <div className="flex items-center gap-2">
-            <label className="sr-only" htmlFor="lang-select">Language</label>
-            <select
-              id="lang-select"
-              value={locale}
-              onChange={(e) => {
-                setLocale(e.target.value as Locale)
-                router.refresh()
-              }}
-              className="bg-white/15 text-white border border-white/30 rounded-lg px-2 py-1.5 text-xs font-bold tracking-wide hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-white/40 cursor-pointer"
-              aria-label="Language"
-            >
-              {LOCALES.map((code) => (
-                <option key={code} value={code} className="text-gray-900">
-                  {LOCALE_LABELS[code]}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLangMenu((open) => !open);
+                  setShowUserMenu(false);
+                }}
+                className="flex items-center gap-1.5 h-10 px-2.5 bg-white/15 text-white border border-white/25 rounded-lg hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-white/40 transition-colors"
+                aria-label="Idioma"
+                aria-haspopup="listbox"
+                aria-expanded={showLangMenu}
+              >
+                <LocaleFlag locale={locale} />
+                <span className="text-xs font-bold tracking-wide">{LOCALE_LABELS[locale]}</span>
+                <ChevronDownIcon
+                  className={`w-3.5 h-3.5 opacity-80 transition-transform ${showLangMenu ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {showLangMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowLangMenu(false)}
+                  />
+                  <div
+                    role="listbox"
+                    aria-label="Idioma"
+                    className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden py-1"
+                  >
+                    {LOCALES.map((code) => {
+                      const selected = code === locale;
+                      return (
+                        <button
+                          key={code}
+                          type="button"
+                          role="option"
+                          aria-selected={selected}
+                          onClick={() => {
+                            setLocale(code);
+                            setShowLangMenu(false);
+                            router.refresh();
+                          }}
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${
+                            selected
+                              ? "bg-primary-50 text-primary-700"
+                              : "text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          <LocaleFlag locale={code} />
+                          <span className="text-xs font-bold tracking-wide w-6">
+                            {LOCALE_LABELS[code]}
+                          </span>
+                          <span className="text-sm flex-1">{LOCALE_NAMES[code]}</span>
+                          {selected && <CheckIcon className="w-4 h-4 text-primary-600" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
             {user ? (
               <div className="relative">
                 <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  onClick={() => {
+                    setShowUserMenu(!showUserMenu);
+                    setShowLangMenu(false);
+                  }}
                   className="flex items-center gap-2 px-3 py-2 bg-white text-primary-600 rounded-lg font-semibold hover:bg-primary-50 transition-colors relative"
                 >
                   {user.user_metadata?.profile_photo &&
