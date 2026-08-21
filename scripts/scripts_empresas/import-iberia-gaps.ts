@@ -6,6 +6,8 @@
  *   npm run import:iberia:gaps -- --from-report --import
  *   npm run import:baleares:gaps
  *   npm run import:baleares:gaps -- --from-report --import
+ *   npm run import:alemania:gaps
+ *   npm run import:alemania:gaps -- --from-report --import
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -31,11 +33,13 @@ const googleApiKey =
 
 const REGION = process.argv.find((a) => a.startsWith("--region="))?.split("=")[1] || "peninsula";
 
-const REPORT_PATH = path.join(
-  process.cwd(),
-  "scripts",
-  REGION === "baleares" ? "baleares-gaps-dry-report.json" : "iberia-gaps-dry-report.json"
-);
+const REPORT_NAME =
+  REGION === "baleares"
+    ? "baleares-gaps-dry-report.json"
+    : REGION === "alemania"
+      ? "alemania-gaps-dry-report.json"
+      : "iberia-gaps-dry-report.json";
+const REPORT_PATH = path.join(process.cwd(), "scripts", REPORT_NAME);
 
 const HUECOS_PENINSULA = [
   { id: 1, zona: "Alentejo interior", lat: 38.991, lng: -7.817, pais: "Portugal" },
@@ -73,7 +77,32 @@ const HUECOS_BALEARES = [
   { id: 13, zona: "Formentera", lat: 38.7, lng: 1.43, pais: "España" },
 ];
 
-const HUECOS = REGION === "baleares" ? HUECOS_BALEARES : HUECOS_PENINSULA;
+/** Huecos tierra DE (malla 25 km, sin mar del Norte ni Bohemia/Alsacia). */
+const HUECOS_ALEMANIA = [
+  { id: 1, zona: "Brandeburgo oeste / Havelland", lat: 52.59, lng: 12.32, pais: "Alemania" },
+  { id: 2, zona: "Prignitz", lat: 53.05, lng: 12.15, pais: "Alemania" },
+  { id: 3, zona: "Fläming", lat: 52.15, lng: 12.75, pais: "Alemania" },
+  { id: 4, zona: "Alto Palatinado / Cham", lat: 49.2, lng: 12.65, pais: "Alemania" },
+  { id: 5, zona: "Bosque Bávaro / Passau", lat: 48.75, lng: 13.1, pais: "Alemania" },
+  { id: 6, zona: "Sarre", lat: 49.32, lng: 7.05, pais: "Alemania" },
+  { id: 7, zona: "Emsland", lat: 52.75, lng: 7.25, pais: "Alemania" },
+  { id: 8, zona: "Selva Negra / Baar", lat: 48.1, lng: 8.77, pais: "Alemania" },
+  { id: 9, zona: "Turingia / Rhön", lat: 50.58, lng: 10.23, pais: "Alemania" },
+  { id: 10, zona: "Rügen", lat: 54.42, lng: 13.4, pais: "Alemania" },
+  { id: 11, zona: "Fehmarn / Holstein este", lat: 54.45, lng: 11.05, pais: "Alemania" },
+  { id: 12, zona: "Frisia Norte", lat: 54.48, lng: 8.95, pais: "Alemania" },
+  { id: 13, zona: "Sauerland", lat: 51.15, lng: 8.05, pais: "Alemania" },
+  { id: 14, zona: "Teutoburgo", lat: 51.9, lng: 8.76, pais: "Alemania" },
+  { id: 15, zona: "Holstein / Plön", lat: 54.1, lng: 10.3, pais: "Alemania" },
+  { id: 16, zona: "Eifel", lat: 50.25, lng: 6.7, pais: "Alemania" },
+];
+
+const HUECOS =
+  REGION === "baleares"
+    ? HUECOS_BALEARES
+    : REGION === "alemania"
+      ? HUECOS_ALEMANIA
+      : HUECOS_PENINSULA;
 
 const TERMINOS_ES = [
   "área autocaravanas",
@@ -90,11 +119,16 @@ const TERMINOS_PT = [
   "parque de campismo",
   "aire camping-car",
 ];
+const TERMINOS_DE = [
+  "Wohnmobilstellplatz",
+  "Stellplatz Wohnmobil",
+  "Campingplatz Wohnmobil",
+];
 
 const RELEVANCE_RE =
   /\b(autocaravana|autocaravanas|autocaravanes|camper|caravana|camping|c[aà]mping|campismo|campground|aire|area de servicio|área de servicio|sosta|stellplatz|motorhome|campervan|caravaning)\b/i;
 const NOISE_RE =
-  /\b(hotel|motel|hostal|hostel|restaurante|restaurant|gasolinera|gas station|dealer|concesionario|venta|alquiler|hire|rental|rentals|rent\b|storage|agencia|experience|indie campers)\b/i;
+  /\b(hotel|motel|hostal|hostel|restaurante|restaurant|gasolinera|gas station|dealer|concesionario|venta|alquiler|hire|rental|rentals|rent\b|storage|agencia|experience|indie campers|vermietung|verkauf|haendler|händler|autohaus)\b/i;
 
 function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -108,6 +142,17 @@ function normalizeText(text: string): string {
     .replace(/[^a-z0-9\s]/g, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function isInGermany(lat: number, lng: number): boolean {
+  if (lat < 47.27 || lat > 55.06 || lng < 5.87 || lng > 15.04) return false;
+  if (lat > 53.75 && lng < 8.1) return false;
+  if (lat < 48.05 && lng < 7.5) return false;
+  if (lat > 50.0 && lat < 50.95 && lng > 14.45) return false;
+  if (lat > 49.25 && lat < 50.25 && lng > 13.9) return false;
+  if (lat < 47.85 && lng > 13.1) return false;
+  if (lat > 53.65 && lng > 14.35) return false;
+  return true;
 }
 
 function isInBaleares(lat: number, lng: number): boolean {
@@ -129,8 +174,8 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
-function classifyTipo(name: string, types: string[]) {
-  return classifyTipoArea(name, { types });
+function classifyTipo(name: string, types: string[], pais?: string) {
+  return classifyTipoArea(name, { types, pais });
 }
 
 function isRelevant(name: string, types: string[]): boolean {
@@ -138,6 +183,9 @@ function isRelevant(name: string, types: string[]): boolean {
     return false;
   }
   if (NOISE_RE.test(name)) return false;
+  if (/\b(ferienhof|ferienhaus|wassersportzentrum)\b/i.test(name) && !/\bstellplatz\b/i.test(name)) {
+    return false;
+  }
   if (/\bno es un parking\b/i.test(name)) return false;
   if (/\ben autocaravana\b/i.test(name)) return false;
   if (
@@ -160,7 +208,7 @@ async function nearby(query: string, lat: number, lng: number) {
   url.searchParams.set("radius", "40000");
   url.searchParams.set("keyword", query);
   url.searchParams.set("key", googleApiKey);
-  url.searchParams.set("language", "es");
+  url.searchParams.set("language", REGION === "alemania" ? "de" : "es");
 
   const res = await fetch(url.toString());
   const data: any = await res.json();
@@ -260,16 +308,27 @@ async function importUtiles(utiles: any[]) {
     await delay(120);
     if (details?.business_status === "CLOSED_PERMANENTLY") continue;
     const cc = details?.country_code;
-    if (cc && cc !== "ES" && cc !== "PT") continue;
+    if (REGION === "alemania") {
+      if (cc && cc !== "DE") continue;
+      if (!isInGermany(hit.lat, hit.lng)) continue;
+    } else if (cc && cc !== "ES" && cc !== "PT") {
+      continue;
+    }
     const onBalears = isInBaleares(hit.lat, hit.lng);
     if (REGION === "baleares" && !onBalears) continue;
-    const pais = cc === "PT" ? "Portugal" : "España";
-    const slug = `${normalizeText(hit.name).replace(/\s+/g, "-").slice(0, 80)}-${pais === "Portugal" ? "pt" : "es"}-${hit.place_id.slice(-8)}`;
+    const pais =
+      REGION === "alemania" || cc === "DE"
+        ? "Alemania"
+        : cc === "PT"
+          ? "Portugal"
+          : "España";
+    const slugSuffix = pais === "Alemania" ? "de" : pais === "Portugal" ? "pt" : "es";
+    const slug = `${normalizeText(hit.name).replace(/\s+/g, "-").slice(0, 80)}-${slugSuffix}-${hit.place_id.slice(-8)}`;
     const { error } = await supabase.from("areas").insert([
       {
         nombre: hit.name,
         slug,
-        tipo_area: classifyTipo(hit.name, hit.types || []),
+        tipo_area: classifyTipo(hit.name, hit.types || [], pais),
         pais,
         comunidad: onBalears ? "Illes Balears" : details?.comunidad || null,
         comunidad_autonoma: onBalears ? "Illes Balears" : details?.comunidad || null,
@@ -330,7 +389,9 @@ async function main() {
   console.log(
     REGION === "baleares"
       ? "\nBaleares — archipiélago sin cobertura (13 disparos, radio 40 km)"
-      : "\nPenínsula — búsqueda en 16 huecos (radio 40 km)"
+      : REGION === "alemania"
+        ? "\nAlemania — 16 huecos (radio 40 km)"
+        : "\nPenínsula — búsqueda en 16 huecos (radio 40 km)"
   );
   console.log(doImport ? "MODO IMPORT\n" : "DRY RUN\n");
 
@@ -345,9 +406,11 @@ async function main() {
     const terminos =
       REGION === "baleares"
         ? TERMINOS_BALEARES
-        : hueco.pais === "Portugal"
-          ? TERMINOS_PT
-          : TERMINOS_ES;
+        : REGION === "alemania"
+          ? TERMINOS_DE
+          : hueco.pais === "Portugal"
+            ? TERMINOS_PT
+            : TERMINOS_ES;
     console.log(`#${hueco.id} ${hueco.zona} [${hueco.lat}, ${hueco.lng}]`);
     for (const termino of terminos) {
       busquedas++;
@@ -360,6 +423,7 @@ async function main() {
         const distCentro = haversine(hueco.lat, hueco.lng, r.lat, r.lng);
         if (distCentro > 42) continue;
         if (REGION === "baleares" && !isInBaleares(r.lat, r.lng)) continue;
+        if (REGION === "alemania" && !isInGermany(r.lat, r.lng)) continue;
         seen.add(r.place_id);
         const relevant = isRelevant(r.name, r.types);
         const inDb = placeIds.has(r.place_id);
@@ -369,7 +433,7 @@ async function main() {
           relevant,
           inDb,
           cercaExistente,
-          tipo_area: classifyTipo(r.name, r.types),
+          tipo_area: classifyTipo(r.name, r.types, hueco.pais),
           hueco: hueco.zona,
           huecoId: hueco.id,
           paisHint: hueco.pais,

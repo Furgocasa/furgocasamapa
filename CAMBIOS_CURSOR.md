@@ -271,6 +271,15 @@
 
 ---
 
+## BLOQUE EXTRA — Huecos Alemania (ago 2026)
+
+- **Qué**: misma malla 25 km. 395 áreas previas (todas públicas); ~47 % celdas vacías.
+- **Huecos**: Brandeburgo/Prignitz/Fläming, Alto Palatinado, Bosque Bávaro, Sarre, Emsland, Selva Negra, Turingia, Rügen, Fehmarn, Frisia Norte, Sauerland, Teutoburgo, Holstein, Eifel.
+- **Términos**: Wohnmobilstellplatz, Stellplatz Wohnmobil, Campingplatz Wohnmobil. Stellplatz = área (no stopover UK).
+- **Comandos**: `npm run import:alemania:gaps` → `--from-report --import`.
+
+---
+
 ## BLOQUE EXTRA — Caché del listado de áreas (ago 2026)
 
 - **Qué**: `/api/areas` devolvía 6118 (sin Baleares) con `x-vercel-cache: MISS` porque Next 14 cacheaba el `fetch` interno a Supabase.

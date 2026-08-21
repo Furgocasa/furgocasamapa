@@ -63,9 +63,10 @@ function isMotorhomeWording(n: string): boolean {
 
 function esStopoverHint(n: string): boolean {
   return (
-    /\b(stopover|stop over|brit.?stop|overnight parking|stellplatz)\b/.test(n) ||
+    /\b(stopover|stop over|brit.?stop|overnight parking)\b/.test(n) ||
     (/\b(parking|aparcamiento|estacionamiento|estacionamento)\b/.test(n) &&
-      !/\barea de (servicio|servicios|autocaravanas|aparcamiento)\b/.test(n))
+      !/\barea de (servicio|servicios|autocaravanas|aparcamiento)\b/.test(n) &&
+      !/\bstellplatz\b/.test(n))
   )
 }
 
@@ -129,6 +130,12 @@ export function classifyTipoArea(
 
   if (esCampingReal) {
     return 'camping'
+  }
+
+  // En DACH el Stellplatz es el área (municipal o privada), no un stopover UK
+  if (/\b(wohnmobilstellplatz|reisemobilstellplatz|stellplatz)\b/.test(n)) {
+    if (/\bprivat/.test(n)) return 'privada'
+    return 'publica'
   }
 
   if (esAire || (municipal && !esStopoverHint(n))) {

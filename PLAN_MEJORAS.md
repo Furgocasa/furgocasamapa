@@ -203,6 +203,7 @@ porque pedían login demasiado pronto o porque no se veían.
 - **21 ago 2026 (cobertura)**: piloto Gales (~480 aires/stopovers/CL/touring);
   detección de huecos en península (radio 25 km) + import Places (~169);
   Baleares (0 previas → 20: Mallorca/Menorca/Ibiza);
+  huecos Alemania (395 → 770 stellplätze/campings);
   caché `/api/areas` a 30 s (`s-maxage=30`, sin SWR) para que los lotes
   salgan en el mapa al hacer Ctrl+F5. Landing `/mapa-autocaravanas-reino-unido`.
 - **21 ago 2026 (Tío Viajero)**: admin tabla + quesito; primera evaluación
