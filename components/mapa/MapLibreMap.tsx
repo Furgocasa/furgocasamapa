@@ -10,6 +10,7 @@ import { buildAreaPopupHTML } from './areaPopup'
 import { useLanguage } from '@/lib/i18n'
 import { getTipoAreaColor } from '@/lib/areas/tipo-area'
 import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
+import { applyBrandTheme } from '@/lib/map/brand-style'
 
 interface MapLibreMapProps {
   areas: Area[]
@@ -51,6 +52,7 @@ export function MapLibreMap({
   const watchIdRef = useRef<number | null>(null)
   const [showInfoTooltip, setShowInfoTooltip] = useState(false)
   const [mapLoaded, setMapLoaded] = useState(false)
+  const hasFlownRef = useRef(false) // el vuelo de entrada solo ocurre una vez
 
   // Handler para búsqueda geográfica
   const handleLocationFound = (location: { lat: number; lng: number; address: string; country: string; countryCode: string }) => {
@@ -87,11 +89,14 @@ export function MapLibreMap({
     console.log('🗺️ Inicializando MapLibre GL...')
 
     try {
+      // Entrada cinematográfica: arrancamos viendo Europa entera y volamos
+      // hasta la vista habitual (España) cuando el estilo termina de cargar.
+      const introFlight = !hasFlownRef.current
       const mapInstance = new maplibregl.Map({
         container: mapContainerRef.current,
         style: getStyleUrl(),
-        center: [-3.7038, 40.4168], // Madrid
-        zoom: 6,
+        center: introFlight ? [4.5, 47] : [-3.7038, 40.4168],
+        zoom: introFlight ? 3.1 : 6,
         attributionControl: false
       })
 
@@ -119,6 +124,24 @@ export function MapLibreMap({
 
       mapInstance.on('load', () => {
         console.log('✅ MapLibre cargado')
+
+        // Tema de marca Furgocasa solo sobre el estilo estándar
+        if (estilo === 'default') {
+          applyBrandTheme(mapInstance)
+        }
+
+        // Vuelo de entrada Europa → España (MapLibre lo convierte en salto
+        // instantáneo si el usuario tiene "reducir movimiento" activado)
+        if (introFlight) {
+          hasFlownRef.current = true
+          mapInstance.flyTo({
+            center: [-3.7038, 40.4168], // Madrid
+            zoom: 6,
+            duration: 2600,
+            curve: 1.42,
+          })
+        }
+
         setMapLoaded(true)
       })
 
@@ -206,6 +229,9 @@ export function MapLibreMap({
       // Obtener clusters para el viewport actual
       const clusters = clusterIndexRef.current.getClusters(bbox, zoom)
 
+      // Contador para la caída escalonada de los marcadores nuevos
+      let dropIndex = 0
+
       // IDs de markers que necesitamos
       const neededIds = new Set<string>()
       clusters.forEach(c => {
@@ -236,10 +262,16 @@ export function MapLibreMap({
           const count = cluster.properties.point_count
           const scale = count < 10 ? 22 : count < 50 ? 30 : count < 100 ? 38 : 45
 
+          // MapLibre posiciona el elemento raíz con transform, así que la
+          // animación de caída vive en un hijo interno para no interferir
           const el = document.createElement('div')
-          el.style.cssText = `
-            width: ${scale}px;
-            height: ${scale}px;
+          el.style.cssText = `width:${scale}px;height:${scale}px;cursor:pointer;`
+
+          const inner = document.createElement('div')
+          inner.className = 'fc-marker-drop'
+          inner.style.cssText = `
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
             background-color: rgba(11, 60, 116, 0.9);
             color: white;
@@ -248,11 +280,12 @@ export function MapLibreMap({
             justify-content: center;
             font-weight: 700;
             font-size: ${count < 100 ? '14px' : '16px'};
-            cursor: pointer;
             border: 3px solid white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            animation-delay: ${Math.min(dropIndex++ * 35, 700)}ms;
           `
-          el.textContent = String(count)
+          inner.textContent = String(count)
+          el.appendChild(inner)
 
           // Click en cluster: hacer zoom
           el.addEventListener('click', () => {
@@ -280,15 +313,20 @@ export function MapLibreMap({
           if (!area) return
 
           const el = document.createElement('div')
-          el.style.cssText = `
-            width: 20px;
-            height: 20px;
+          el.style.cssText = `width:20px;height:20px;cursor:pointer;`
+
+          const inner = document.createElement('div')
+          inner.className = 'fc-marker-drop'
+          inner.style.cssText = `
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
             background-color: ${getTipoAreaColor(area.tipo_area)};
             border: 2px solid white;
-            cursor: pointer;
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            animation-delay: ${Math.min(dropIndex++ * 35, 700)}ms;
           `
+          el.appendChild(inner)
 
           el.addEventListener('mouseenter', () => showHoverTooltip(lng, lat, area.nombre))
           el.addEventListener('mouseleave', hideHoverTooltip)
@@ -530,6 +568,17 @@ export function MapLibreMap({
     <div className="relative w-full h-full">
       {/* Estilos para popup */}
       <style jsx global>{`
+        @keyframes fc-marker-drop {
+          0% { opacity: 0; transform: translateY(-16px) scale(0.5); }
+          65% { opacity: 1; transform: translateY(2px) scale(1.06); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .fc-marker-drop {
+          animation: fc-marker-drop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .fc-marker-drop { animation: none; }
+        }
         .maplibregl-popup-content {
           padding: 0 !important;
           border-radius: 16px !important;

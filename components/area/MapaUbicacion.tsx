@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import { applyBrandTheme } from '@/lib/map/brand-style'
 
 interface Props {
   latitud: number
@@ -32,6 +33,8 @@ export function MapaUbicacion({ latitud, longitud, nombre }: Props) {
       })
 
       map.addControl(new maplibregl.NavigationControl(), 'top-right')
+
+      map.on('load', () => applyBrandTheme(map))
 
       // Crear marcador
       const el = document.createElement('div')
