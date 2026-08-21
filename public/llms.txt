@@ -21,7 +21,7 @@ Mapa Furgocasa (https://www.mapafurgocasa.com) es la plataforma más completa pa
 - Fichas de área en `/area/{id}` con información actualizada
 - Planificación de rutas con sugerencias de paradas
 - Gestión del vehículo: mantenimientos, gastos, histórico de valor y galería
-- Valoración automática de vehículos con IA (GPT-4)
+- Valoración automática de vehículos con IA (GPT-5.6 Terra)
 - Chatbot experto 24/7 sobre caravaning y áreas
 - Sistema QR para reportar daños o accidentes (antirrobo / asistencia)
 - 100% gratis, sin anuncios intrusivos

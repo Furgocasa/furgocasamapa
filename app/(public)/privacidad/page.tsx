@@ -73,7 +73,7 @@ export default function PrivacidadPage() {
             </p>
             <ul className="list-disc pl-6 space-y-2 text-gray-600">
               <li>Proporcionar y mantener nuestro servicio</li>
-              <li>Procesar valoraciones de vehículos con IA (GPT-4)</li>
+              <li>Procesar valoraciones de vehículos con IA (GPT-5.6 Terra)</li>
               <li>Gestionar el sistema QR de protección</li>
               <li>Enviar notificaciones sobre reportes y actualizaciones</li>
               <li>Mejorar la experiencia del usuario</li>
@@ -100,7 +100,7 @@ export default function PrivacidadPage() {
             </p>
             <ul className="list-disc pl-6 space-y-2 text-gray-600">
               <li><strong>Supabase:</strong> Almacenamiento y gestión de base de datos</li>
-              <li><strong>OpenAI (GPT-4):</strong> Procesamiento de valoraciones con IA</li>
+              <li><strong>OpenAI (GPT-5.6 Terra):</strong> Procesamiento de valoraciones, chatbot y enriquecimiento con IA</li>
               <li><strong>Google Maps:</strong> Servicios de mapas y geolocalización</li>
               <li><strong>Vercel/AWS:</strong> Hosting y entrega de contenido</li>
             </ul>

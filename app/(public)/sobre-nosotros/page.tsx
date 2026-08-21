@@ -54,7 +54,7 @@ export default function SobreNosotrosPage() {
               </p>
 
               <p>
-                En 2024 dimos un paso revolucionario: <strong>integramos Inteligencia Artificial GPT-4</strong> para ofrecer valoraciones automáticas de vehículos, asesoramiento personalizado y un sistema de protección mediante códigos QR. Somos pioneros en aplicar IA al mundo del caravaning.
+                En 2024 dimos un paso revolucionario: <strong>integramos Inteligencia Artificial de OpenAI</strong> para ofrecer valoraciones automáticas de vehículos, asesoramiento personalizado y un sistema de protección mediante códigos QR. Hoy usamos <strong>GPT-5.6 Terra</strong>. Somos pioneros en aplicar IA al mundo del caravaning.
               </p>
 
               <p>
@@ -101,7 +101,7 @@ export default function SobreNosotrosPage() {
                   Inteligencia Artificial
                 </h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Valoraciones automáticas con GPT-4, comparación de precios de mercado y chatbot experto disponible 24/7.
+                  Valoraciones automáticas con GPT-5.6 Terra, comparación de precios de mercado y chatbot experto disponible 24/7.
                 </p>
               </div>
 

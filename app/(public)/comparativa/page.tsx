@@ -176,7 +176,7 @@ export default function ComparativaPage() {
 
               <div className="bg-white rounded-xl p-6 shadow-lg border-l-4 border-yellow-500">
                 <SparklesIcon className="w-10 h-10 text-yellow-600 mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Valoración con IA (GPT-4)</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Valoración con IA (GPT-5.6 Terra)</h3>
                 <p className="text-gray-600">Sabe cuánto vale tu autocaravana en el mercado real</p>
               </div>
 
@@ -392,10 +392,10 @@ export default function ComparativaPage() {
                     {/* Features ÚNICOS EN EL MUNDO */}
                     <tr className="bg-green-50">
                       <td className="px-6 py-4 font-bold">
-                        🤖 Valoración con IA (GPT-4)
+                        🤖 Valoración con IA (GPT-5.6 Terra)
                         <span className="ml-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-2 py-1 rounded-full text-xs font-bold animate-pulse">ÚNICO EN EL MUNDO</span>
                       </td>
-                      <td className="px-6 py-4 text-center text-green-600 font-bold">✓ SerpAPI + GPT-4</td>
+                      <td className="px-6 py-4 text-center text-green-600 font-bold">✓ SerpAPI + GPT-5.6 Terra</td>
                       <td className="px-6 py-4 text-center text-red-600 font-bold">✗</td>
                       <td className="px-6 py-4 text-center text-red-600 font-bold">✗</td>
                     </tr>
@@ -486,7 +486,7 @@ export default function ComparativaPage() {
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-blue-600 font-bold mt-1">✓</span>
-                      <span className="text-gray-700"><strong>Valor estimado actualizado</strong> gracias a un modelo de IA (GPT-4 + SerpAPI)</span>
+                      <span className="text-gray-700"><strong>Valor estimado actualizado</strong> gracias a un modelo de IA (GPT-5.6 Terra + SerpAPI)</span>
                     </li>
                   </ul>
                   <div className="mt-6 bg-white rounded-lg p-4 border border-blue-200">
@@ -678,7 +678,7 @@ export default function ComparativaPage() {
                 },
                 {
                   question: '¿Cómo funciona la valoración con IA de mi autocaravana?',
-                  answer: 'Utilizamos GPT-4 combinado con SerpAPI para buscar en tiempo real vehículos similares al tuyo en el mercado actual. El sistema analiza marca, modelo, año, kilometraje, estado y características para darte una valoración precisa y actualizada de cuánto vale tu autocaravana en este momento. Es como tener un tasador profesional disponible 24/7.'
+                  answer: 'Utilizamos GPT-5.6 Terra combinado con SerpAPI para buscar en tiempo real vehículos similares al tuyo en el mercado actual. El sistema analiza marca, modelo, año, kilometraje, estado y características para darte una valoración precisa y actualizada de cuánto vale tu autocaravana en este momento. Es como tener un tasador profesional disponible 24/7.'
                 },
                 {
                   question: '¿Puedo exportar mis rutas al GPS de mi vehículo?',
@@ -752,7 +752,7 @@ export default function ComparativaPage() {
                 Mapa Furgocasa - La alternativa española a Park4Night
               </h3>
               <p className="text-gray-700 leading-relaxed text-base">
-                Si buscas <strong>alternativas a Park4Night en español</strong>, has encontrado la mejor opción. Mapa Furgocasa nace de la experiencia real de <strong>Furgocasa</strong>, empresa especializada en el sector del caravaning desde hace años. Con miles de kilómetros recorridos y el feedback constante de viajeros reales, hemos creado una plataforma que va mucho más allá de un simple mapa de áreas. Somos la <strong>primera plataforma integral</strong> que combina: mapa interactivo con más de 4,900 áreas verificadas en Europa y Latinoamérica, planificador de rutas con exportación a GPS (Garmin, TomTom), gestión completa de tu vehículo (mantenimientos, averías, mejoras, kilometraje), valoración automática con inteligencia artificial (GPT-4 + búsqueda de mercado real), sistema único de alertas de accidentes mediante código QR, control financiero total (gastos, coste por kilómetro, rentabilidad), y chatbot inteligente 24/7. Todo esto <strong>completamente gratis</strong>, sin suscripciones premium ni funciones bloqueadas. Mientras Park4Night cobra 4.99€/mes por funciones avanzadas, nosotros ofrecemos TODO sin coste. Únete a miles de caravanistas que ya disfrutan de la experiencia completa.
+                Si buscas <strong>alternativas a Park4Night en español</strong>, has encontrado la mejor opción. Mapa Furgocasa nace de la experiencia real de <strong>Furgocasa</strong>, empresa especializada en el sector del caravaning desde hace años. Con miles de kilómetros recorridos y el feedback constante de viajeros reales, hemos creado una plataforma que va mucho más allá de un simple mapa de áreas. Somos la <strong>primera plataforma integral</strong> que combina: mapa interactivo con más de 4,900 áreas verificadas en Europa y Latinoamérica, planificador de rutas con exportación a GPS (Garmin, TomTom), gestión completa de tu vehículo (mantenimientos, averías, mejoras, kilometraje), valoración automática con inteligencia artificial (GPT-5.6 Terra + búsqueda de mercado real), sistema único de alertas de accidentes mediante código QR, control financiero total (gastos, coste por kilómetro, rentabilidad), y chatbot inteligente 24/7. Todo esto <strong>completamente gratis</strong>, sin suscripciones premium ni funciones bloqueadas. Mientras Park4Night cobra 4.99€/mes por funciones avanzadas, nosotros ofrecemos TODO sin coste. Únete a miles de caravanistas que ya disfrutan de la experiencia completa.
               </p>
             </div>
           </div>
@@ -775,7 +775,7 @@ export default function ComparativaPage() {
                 "name": "¿Qué diferencia hay entre Mapa Furgocasa y Park4Night?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Park4Night es solo un mapa de áreas. Mapa Furgocasa es una plataforma completa que incluye: mapa de 4,900+ áreas, gestión completa del vehículo, valoración automática con IA (GPT-4), sistema de alertas de accidentes con QR, control financiero total, exportación de rutas a GPS, y mucho más. Todo 100% gratis."
+                  "text": "Park4Night es solo un mapa de áreas. Mapa Furgocasa es una plataforma completa que incluye: mapa de 4,900+ áreas, gestión completa del vehículo, valoración automática con IA (GPT-5.6 Terra), sistema de alertas de accidentes con QR, control financiero total, exportación de rutas a GPS, y mucho más. Todo 100% gratis."
                 }
               },
               {

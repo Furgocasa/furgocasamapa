@@ -26,7 +26,7 @@ Imagina poder preguntarle:
 Y recibir respuestas instantáneas, personalizadas, como si hablaras con un amigo experto en autocaravanas.
 
 **¿Cómo funciona?**
-- Powered by OpenAI GPT-4o-mini
+- Powered by OpenAI GPT-5.6 Terra
 - Geolocalización automática (sabe dónde estás)
 - Memoria de conversación (recuerda lo que hablasteis)
 - Function Calling inteligente (la IA decide qué buscar)
@@ -166,7 +166,7 @@ Nosotros hemos construido Mapa Furgocasa con las tecnologías más modernas de 2
 ### Stack Tecnológico:
 - **Frontend:** Next.js 14 + React + TypeScript + Tailwind CSS
 - **Backend:** Supabase (PostgreSQL) + Next.js API Routes
-- **IA:** OpenAI GPT-4o-mini + Function Calling
+- **IA:** OpenAI GPT-5.6 Terra + Function Calling
 - **Mapas:** Google Maps API completa (Maps + Directions + Places)
 - **Hosting:** AWS Amplify con CI/CD automático
 - **Búsqueda:** SerpAPI + Google Places API

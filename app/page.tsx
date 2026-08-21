@@ -366,7 +366,7 @@ export default function HomePage() {
             <div className="flex justify-center mb-8">
               <div className="inline-flex items-center gap-2 bg-[#0b3c74] text-white px-6 py-3 rounded-full font-bold shadow-lg">
                 <SparklesIcon className="w-5 h-5" />
-                POWERED BY GPT-4
+                POWERED BY GPT-5.6 TERRA
               </div>
             </div>
 
@@ -683,7 +683,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Razón 2 - OpenAI GPT-4 */}
+              {/* Razón 2 - OpenAI GPT-5.6 Terra */}
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -767,7 +767,7 @@ export default function HomePage() {
                   <div className="text-sm text-white/70">API Oficial</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-yellow-400 mb-1">OpenAI GPT-4</div>
+                  <div className="text-3xl font-bold text-yellow-400 mb-1">GPT-5.6 Terra</div>
                   <div className="text-sm text-white/70">IA Avanzada</div>
                 </div>
                 <div className="text-center">

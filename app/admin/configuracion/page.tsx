@@ -1458,7 +1458,7 @@ export default function ConfiguracionPage() {
               <li><strong>🔍 Actualizar Servicios:</strong> Usa OpenAI para analizar texto web y detectar servicios (agua, electricidad, etc.)</li>
               <li><strong>✨ Enriquecer Textos:</strong> Usa OpenAI para generar descripciones detalladas de áreas</li>
               <li><strong>🧳 Tío Viajero IA (Chatbot):</strong> Asistente conversacional con IA que ayuda a usuarios a encontrar áreas usando Function Calling</li>
-              <li><strong>🚐 Valoración de Vehículos IA:</strong> Usa GPT-4 + SearchAPI (opcional) para generar informes profesionales de valoración con 3 precios estratégicos</li>
+              <li><strong>🚐 Valoración de Vehículos IA:</strong> Usa GPT-5.6 Terra + SearchAPI (opcional) para generar informes profesionales de valoración con 3 precios estratégicos</li>
             </ul>
           </div>
 

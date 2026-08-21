@@ -56,7 +56,7 @@ export default function CondicionesPage() {
               <li>Mapa interactivo con áreas de estacionamiento para autocaravanas</li>
               <li>Planificador de rutas</li>
               <li>Sistema de gestión de vehículos</li>
-              <li>Valoraciones automáticas con Inteligencia Artificial (GPT-4)</li>
+              <li>Valoraciones automáticas con Inteligencia Artificial (GPT-5.6 Terra)</li>
               <li>Sistema QR de protección para vehículos</li>
               <li>Comunidad de autocaravanistas</li>
             </ul>
@@ -97,7 +97,7 @@ export default function CondicionesPage() {
             <ul className="list-disc pl-6 space-y-2 text-gray-600">
               <li>Datos proporcionados por el usuario</li>
               <li>Información de mercado disponible públicamente</li>
-              <li>Algoritmos de Inteligencia Artificial (GPT-4)</li>
+              <li>Algoritmos de Inteligencia Artificial (GPT-5.6 Terra)</li>
             </ul>
             <p className="text-gray-600 leading-relaxed mt-4">
               <strong>Importante:</strong> Las valoraciones son estimaciones orientativas y no constituyen una oferta de compra o venta. El valor real puede variar según múltiples factores.

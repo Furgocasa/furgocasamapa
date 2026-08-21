@@ -203,7 +203,7 @@ const faqs: FAQ[] = [
   {
     categoria: 'vehiculos',
     pregunta: '¿La valoración con IA es precisa?',
-    respuesta: 'La valoración con IA utiliza GPT-4 y datos reales del mercado para generar precios precisos. Analiza comparables de portales especializados, estado del vehículo, kilometraje y características para darte tres precios: salida rápida, objetivo y mínimo aceptable.'
+    respuesta: 'La valoración con IA utiliza GPT-5.6 Terra y datos reales del mercado para generar precios precisos. Analiza comparables de portales especializados, estado del vehículo, kilometraje y características para darte tres precios: salida rápida, objetivo y mínimo aceptable.'
   },
   {
     categoria: 'vehiculos',
