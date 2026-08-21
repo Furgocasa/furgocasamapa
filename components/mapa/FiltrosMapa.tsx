@@ -159,7 +159,8 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
     () =>
       SERVICIO_IDS.map((id) => ({
         id,
-        label: `${SERVICIO_ICONS[id] || '✓'} ${getServicioLabel(id, locale)}`,
+        icon: SERVICIO_ICONS[id] || '✓',
+        label: getServicioLabel(id, locale),
       })),
     [locale]
   )
@@ -270,19 +271,23 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
     return paisesDisponibles.filter((pais) => pais.toLowerCase().includes(term))
   }, [paisesDisponibles, paisSearch])
 
+  const filtrosActivos =
+    (filtros.busqueda ? 1 : 0) +
+    (filtros.pais ? 1 : 0) +
+    (filtros.tipos?.length || 0) +
+    filtros.servicios.length +
+    (filtros.precio ? 1 : 0) +
+    filtros.caracteristicas.length
+
   return (
     <div className="h-full flex flex-col bg-white">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary-50 to-blue-50 border-b border-primary-200">
+      {/* Header: solo en desktop/tablet. En móvil el BottomSheet ya trae título y cierre. */}
+      <div className="hidden md:flex items-center justify-between p-4 bg-gradient-to-r from-primary-50 to-blue-50 border-b border-primary-200">
         <h2 className="text-lg font-bold text-primary-900">{t('filters')}</h2>
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="lg:hidden p-2 hover:bg-primary-100 rounded-full transition-colors"
-            aria-label="Cerrar filtros"
-          >
-            <XMarkIcon className="w-6 h-6 text-primary-700" />
-          </button>
+        {filtrosActivos > 0 && (
+          <span className="text-xs font-bold bg-accent-500 text-white rounded-full px-2 py-0.5">
+            {filtrosActivos}
+          </span>
         )}
       </div>
 
@@ -338,7 +343,7 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
           <label className="block text-xs font-medium text-gray-600 mb-1">
             {t('type_filter')}
           </label>
-          <div className="space-y-1 bg-gray-50 rounded-lg p-2">
+          <div className="space-y-2">
             {TIPO_AREA_IDS.map((tipo) => {
               const hintKey =
                 tipo === 'publica'
@@ -346,31 +351,34 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
                   : tipo === 'privada'
                     ? 'type_private_hint'
                     : 'type_camping_hint'
+              const activo = (filtros.tipos || []).includes(tipo)
+              const color = getTipoAreaColor(tipo)
               return (
-                <label
+                <button
                   key={tipo}
-                  className="flex items-start cursor-pointer hover:bg-white py-1.5 px-2 rounded transition-colors"
+                  type="button"
+                  onClick={() => handleTipoToggle(tipo)}
+                  aria-pressed={activo}
+                  className={`w-full flex items-center gap-3 rounded-xl border-2 px-3 py-2.5 text-left transition-all active:scale-[0.99] ${
+                    activo ? 'shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                  style={activo ? { borderColor: color, backgroundColor: `${color}14` } : undefined}
                 >
-                  <input
-                    type="checkbox"
-                    checked={(filtros.tipos || []).includes(tipo)}
-                    onChange={() => handleTipoToggle(tipo)}
-                    className="w-4 h-4 mt-0.5 text-primary-600 rounded focus:ring-primary-500"
-                  />
                   <span
-                    className="ml-2 mt-1 w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{ backgroundColor: getTipoAreaColor(tipo) }}
+                    className="w-3 h-3 rounded-full shrink-0"
+                    style={{ backgroundColor: color }}
                     aria-hidden
                   />
-                  <span className="ml-2">
-                    <span className="block text-sm text-gray-800 font-medium">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold text-gray-900">
                       {getTipoAreaLabel(tipo, locale)}
                     </span>
                     <span className="block text-[11px] text-gray-500 leading-tight">
                       {t(hintKey)}
                     </span>
                   </span>
-                </label>
+                  {activo && <CheckIcon className="w-5 h-5 shrink-0" style={{ color }} />}
+                </button>
               )
             })}
           </div>
@@ -381,18 +389,26 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
           <label className="block text-xs font-medium text-gray-600 mb-1">
             {t('services')}
           </label>
-          <div className="space-y-1 bg-gray-50 rounded-lg p-2">
-            {serviciosOpts.map((servicio) => (
-              <label key={servicio.id} className="flex items-center cursor-pointer hover:bg-white py-1.5 px-2 rounded transition-colors">
-                <input
-                  type="checkbox"
-                  checked={filtros.servicios.includes(servicio.id)}
-                  onChange={() => handleServicioToggle(servicio.id)}
-                  className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
-                />
-                <span className="ml-2 text-sm text-gray-700">{servicio.label}</span>
-              </label>
-            ))}
+          <div className="grid grid-cols-2 gap-1.5">
+            {serviciosOpts.map((servicio) => {
+              const activo = filtros.servicios.includes(servicio.id)
+              return (
+                <button
+                  key={servicio.id}
+                  type="button"
+                  onClick={() => handleServicioToggle(servicio.id)}
+                  aria-pressed={activo}
+                  className={`flex items-center gap-1.5 rounded-xl border px-2.5 py-2 text-left text-[13px] transition-all active:scale-[0.98] ${
+                    activo
+                      ? 'border-primary-600 bg-primary-50 text-primary-900 font-semibold'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <span aria-hidden>{servicio.icon}</span>
+                  <span className="truncate">{servicio.label}</span>
+                </button>
+              )
+            })}
           </div>
         </div>
 
@@ -401,20 +417,25 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
           <label className="block text-xs font-medium text-gray-600 mb-1">
             {t('price')}
           </label>
-          <div className="space-y-1 bg-gray-50 rounded-lg p-2">
-            {preciosOpts.map((precio) => (
-              <label key={precio.value} className="flex items-center cursor-pointer hover:bg-white py-1.5 px-2 rounded transition-colors">
-                <input
-                  type="radio"
-                  name="precio"
-                  value={precio.value}
-                  checked={filtros.precio === precio.value}
-                  onChange={(e) => handlePrecioChange(e.target.value)}
-                  className="w-4 h-4 text-primary-600 focus:ring-primary-500"
-                />
-                <span className="ml-2 text-sm text-gray-700">{precio.label}</span>
-              </label>
-            ))}
+          <div className="grid grid-cols-2 gap-1.5">
+            {preciosOpts.map((precio) => {
+              const activo = filtros.precio === precio.value
+              return (
+                <button
+                  key={precio.value}
+                  type="button"
+                  onClick={() => handlePrecioChange(precio.value)}
+                  aria-pressed={activo}
+                  className={`rounded-xl border px-2.5 py-2 text-center text-[13px] transition-all active:scale-[0.98] ${
+                    activo
+                      ? 'border-primary-600 bg-primary-600 text-white font-semibold shadow-sm'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {precio.label}
+                </button>
+              )
+            })}
           </div>
         </div>
 
@@ -423,32 +444,51 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
           <label className="block text-xs font-medium text-gray-600 mb-1">
             {t('characteristics')}
           </label>
-          <div className="space-y-1 bg-gray-50 rounded-lg p-2">
-            {caracteristicasOpts.map((caracteristica) => (
-              <label key={caracteristica.id} className="flex items-center cursor-pointer hover:bg-white py-1.5 px-2 rounded transition-colors">
-                <input
-                  type="checkbox"
-                  checked={filtros.caracteristicas.includes(caracteristica.id)}
-                  onChange={() => handleCaracteristicaToggle(caracteristica.id)}
-                  className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
-                />
-                <span className="ml-2 text-sm text-gray-700">{caracteristica.label}</span>
-              </label>
-            ))}
+          <div className="space-y-1.5">
+            {caracteristicasOpts.map((caracteristica) => {
+              const activo = filtros.caracteristicas.includes(caracteristica.id)
+              return (
+                <button
+                  key={caracteristica.id}
+                  type="button"
+                  onClick={() => handleCaracteristicaToggle(caracteristica.id)}
+                  aria-pressed={activo}
+                  className={`w-full flex items-center justify-between rounded-xl border px-3 py-2 text-left text-[13px] transition-all active:scale-[0.99] ${
+                    activo
+                      ? 'border-accent-500 bg-accent-50 text-accent-700 font-semibold'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <span>{caracteristica.label}</span>
+                  {activo && <CheckIcon className="w-4 h-4 shrink-0 text-accent-600" />}
+                </button>
+              )
+            })}
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="border-t px-3 py-3 space-y-2 bg-gray-50">
-        <div className="text-sm text-gray-600 text-center">
-          <span className="font-bold text-gray-900">{totalResultados}</span> {t('results')}
+      <div className="border-t px-3 py-3 space-y-2 bg-white">
+        <div className="hidden md:block text-sm text-gray-600 text-center">
+          <span className="font-bold text-gray-900">{totalResultados.toLocaleString('es')}</span>{' '}
+          {t('results')}
         </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="md:hidden w-full py-3 px-3 bg-primary-600 text-white rounded-xl text-sm font-bold shadow-sm hover:bg-primary-700 active:scale-[0.99] transition-all"
+          >
+            {t('show_results')} ({totalResultados.toLocaleString('es')})
+          </button>
+        )}
         <button
           onClick={limpiarFiltros}
-          className="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-100 transition-colors font-medium"
+          disabled={filtrosActivos === 0}
+          className="w-full py-2 px-3 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-100 transition-colors font-medium disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {t('clear_filters')}
+          {filtrosActivos > 0 ? ` (${filtrosActivos})` : ''}
         </button>
       </div>
 
