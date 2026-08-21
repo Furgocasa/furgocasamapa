@@ -27,6 +27,11 @@
  *   npm run import:chile:gaps
  *   npm run import:argentina:gaps
  *   npm run import:levante:campings
+ *   npm run import:campings:valencia
+ *   npm run import:campings:castellon
+ *   npm run import:campings:tarragona
+ *   npm run import:campings:barcelona
+ *   npm run import:campings:gerona
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -84,6 +89,16 @@ let REPORT_NAME =
           ? "argentina-gaps-dry-report.json"
         : REGION === "murcia-alicante"
           ? "levante-campings-dry-report.json"
+        : REGION === "valencia"
+          ? "valencia-campings-dry-report.json"
+        : REGION === "castellon"
+          ? "castellon-campings-dry-report.json"
+        : REGION === "tarragona"
+          ? "tarragona-campings-dry-report.json"
+        : REGION === "barcelona"
+          ? "barcelona-campings-dry-report.json"
+        : REGION === "gerona"
+          ? "gerona-campings-dry-report.json"
         : "iberia-gaps-dry-report.json";
 if (SOLO_STOPOVER) {
   REPORT_NAME = REPORT_NAME.replace("-gaps-dry-report.json", "-stopover-dry-report.json");
@@ -402,6 +417,122 @@ const HUECOS_MURCIA_ALICANTE = [
   { id: 16, zona: "Villena", lat: 38.64, lng: -0.87, pais: "España" },
 ];
 
+const HUECOS_VALENCIA = [
+  { id: 1, zona: "Valencia", lat: 39.47, lng: -0.38, pais: "España" },
+  { id: 2, zona: "Sagunto", lat: 39.68, lng: -0.28, pais: "España" },
+  { id: 3, zona: "Gandía", lat: 38.97, lng: -0.18, pais: "España" },
+  { id: 4, zona: "Cullera", lat: 39.16, lng: -0.25, pais: "España" },
+  { id: 5, zona: "Oliva", lat: 38.92, lng: -0.12, pais: "España" },
+  { id: 6, zona: "Xàtiva", lat: 38.99, lng: -0.52, pais: "España" },
+  { id: 7, zona: "Alzira", lat: 39.15, lng: -0.44, pais: "España" },
+  { id: 8, zona: "Requena", lat: 39.49, lng: -1.1, pais: "España" },
+  { id: 9, zona: "Llíria", lat: 39.63, lng: -0.6, pais: "España" },
+  { id: 10, zona: "Ayora", lat: 39.06, lng: -1.06, pais: "España" },
+];
+
+const HUECOS_CASTELLON = [
+  { id: 1, zona: "Castellón", lat: 39.99, lng: -0.04, pais: "España" },
+  { id: 2, zona: "Benicàssim", lat: 40.05, lng: 0.06, pais: "España" },
+  { id: 3, zona: "Peñíscola", lat: 40.36, lng: 0.41, pais: "España" },
+  { id: 4, zona: "Vinaròs", lat: 40.47, lng: 0.47, pais: "España" },
+  { id: 5, zona: "Morella", lat: 40.62, lng: -0.1, pais: "España" },
+  { id: 6, zona: "Segorbe", lat: 39.85, lng: -0.49, pais: "España" },
+  { id: 7, zona: "Onda", lat: 39.96, lng: -0.26, pais: "España" },
+  { id: 8, zona: "Alcalà de Xivert", lat: 40.3, lng: 0.23, pais: "España" },
+];
+
+const HUECOS_TARRAGONA = [
+  { id: 1, zona: "Tarragona", lat: 41.12, lng: 1.25, pais: "España" },
+  { id: 2, zona: "Salou", lat: 41.08, lng: 1.14, pais: "España" },
+  { id: 3, zona: "Cambrils", lat: 41.07, lng: 1.05, pais: "España" },
+  { id: 4, zona: "L'Hospitalet de l'Infant", lat: 40.99, lng: 0.92, pais: "España" },
+  { id: 5, zona: "Tortosa", lat: 40.81, lng: 0.52, pais: "España" },
+  { id: 6, zona: "Sant Carles de la Ràpita", lat: 40.62, lng: 0.59, pais: "España" },
+  { id: 7, zona: "Montblanc", lat: 41.38, lng: 1.16, pais: "España" },
+  { id: 8, zona: "Falset", lat: 41.15, lng: 0.82, pais: "España" },
+  { id: 9, zona: "L'Ametlla de Mar", lat: 40.88, lng: 0.8, pais: "España" },
+  { id: 10, zona: "Calafell", lat: 41.2, lng: 1.57, pais: "España" },
+];
+
+const HUECOS_BARCELONA = [
+  { id: 1, zona: "Barcelona", lat: 41.39, lng: 2.17, pais: "España" },
+  { id: 2, zona: "Sitges", lat: 41.24, lng: 1.81, pais: "España" },
+  { id: 3, zona: "Vilanova", lat: 41.22, lng: 1.73, pais: "España" },
+  { id: 4, zona: "Mataró", lat: 41.54, lng: 2.44, pais: "España" },
+  { id: 5, zona: "Calella", lat: 41.61, lng: 2.65, pais: "España" },
+  { id: 6, zona: "Vic", lat: 41.93, lng: 2.25, pais: "España" },
+  { id: 7, zona: "Manresa", lat: 41.73, lng: 1.83, pais: "España" },
+  { id: 8, zona: "Berga", lat: 42.1, lng: 1.85, pais: "España" },
+  { id: 9, zona: "Igualada", lat: 41.58, lng: 1.62, pais: "España" },
+  { id: 10, zona: "Granollers", lat: 41.61, lng: 2.29, pais: "España" },
+];
+
+const HUECOS_GERONA = [
+  { id: 1, zona: "Girona", lat: 41.98, lng: 2.82, pais: "España" },
+  { id: 2, zona: "Figueres", lat: 42.27, lng: 2.96, pais: "España" },
+  { id: 3, zona: "Roses", lat: 42.26, lng: 3.18, pais: "España" },
+  { id: 4, zona: "L'Estartit", lat: 42.05, lng: 3.2, pais: "España" },
+  { id: 5, zona: "Palamós", lat: 41.85, lng: 3.13, pais: "España" },
+  { id: 6, zona: "Lloret", lat: 41.7, lng: 2.85, pais: "España" },
+  { id: 7, zona: "Blanes", lat: 41.68, lng: 2.79, pais: "España" },
+  { id: 8, zona: "Olot", lat: 42.18, lng: 2.49, pais: "España" },
+  { id: 9, zona: "Ripoll", lat: 42.2, lng: 2.19, pais: "España" },
+  { id: 10, zona: "Puigcerdà", lat: 42.43, lng: 1.93, pais: "España" },
+  { id: 11, zona: "Banyoles", lat: 42.12, lng: 2.77, pais: "España" },
+  { id: 12, zona: "Platja d'Aro", lat: 41.82, lng: 3.07, pais: "España" },
+];
+
+const CAMPING_ZONAS: Record<
+  string,
+  {
+    label: string;
+    provinciaRe: RegExp;
+    isIn: (lat: number, lng: number) => boolean;
+    huecos: Array<{ id: number; zona: string; lat: number; lng: number; pais: string }>;
+  }
+> = {
+  "murcia-alicante": {
+    label: "Murcia + Alicante",
+    provinciaRe: /\b(murcia|alicante|alacant)\b/i,
+    isIn: (lat, lng) =>
+      (lat >= 37.36 && lat <= 38.77 && lng >= -2.36 && lng <= -0.64) ||
+      (lat >= 37.82 && lat <= 38.88 && lng >= -1.15 && lng <= 0.22),
+    huecos: HUECOS_MURCIA_ALICANTE,
+  },
+  valencia: {
+    label: "Valencia",
+    provinciaRe: /\b(valencia|val[eè]ncia)\b/i,
+    isIn: (lat, lng) => lat >= 38.7 && lat <= 39.9 && lng >= -1.53 && lng <= -0.05,
+    huecos: HUECOS_VALENCIA,
+  },
+  castellon: {
+    label: "Castellón",
+    provinciaRe: /\b(castell[oóò]n|castell[oó])\b/i,
+    isIn: (lat, lng) => lat >= 39.72 && lat <= 40.8 && lng >= -0.55 && lng <= 0.52,
+    huecos: HUECOS_CASTELLON,
+  },
+  tarragona: {
+    label: "Tarragona",
+    provinciaRe: /\btarragona\b/i,
+    isIn: (lat, lng) => lat >= 40.52 && lat <= 41.45 && lng >= 0.22 && lng <= 1.67,
+    huecos: HUECOS_TARRAGONA,
+  },
+  barcelona: {
+    label: "Barcelona",
+    provinciaRe: /\bbarcelona\b/i,
+    isIn: (lat, lng) => lat >= 41.2 && lat <= 42.32 && lng >= 1.45 && lng <= 2.83,
+    huecos: HUECOS_BARCELONA,
+  },
+  gerona: {
+    label: "Gerona",
+    provinciaRe: /\b(gerona|girona)\b/i,
+    isIn: (lat, lng) => lat >= 41.62 && lat <= 42.5 && lng >= 1.72 && lng <= 3.33,
+    huecos: HUECOS_GERONA,
+  },
+};
+
+const CAMPING = CAMPING_ZONAS[REGION];
+
 const HUECOS =
   REGION === "baleares"
     ? HUECOS_BALEARES
@@ -431,8 +562,8 @@ const HUECOS =
                             ? HUECOS_CHILE
                             : REGION === "argentina"
                               ? HUECOS_ARGENTINA
-                              : REGION === "murcia-alicante"
-                                ? HUECOS_MURCIA_ALICANTE
+                              : CAMPING
+                                ? CAMPING.huecos
                                 : HUECOS_PENINSULA;
 
 const TERMINOS_ES = [
@@ -489,7 +620,7 @@ const STOPOVER_CL = ["estacionamiento casas rodantes", "trailer park"];
 const TERMINOS_CAMPING_ES = ["camping", "càmping"];
 
 function terminosDe(hueco: { pais?: string; lang?: string }) {
-  if (REGION === "murcia-alicante") {
+  if (CAMPING) {
     return TERMINOS_CAMPING_ES;
   }
   if (REGION === "chile" || REGION === "argentina") {
@@ -720,15 +851,9 @@ function isInChile(lat: number, lng: number): boolean {
   return true;
 }
 
-function isInMurciaAlicante(lat: number, lng: number): boolean {
-  const murcia = lat >= 37.36 && lat <= 38.77 && lng >= -2.36 && lng <= -0.64;
-  const alicante = lat >= 37.82 && lat <= 38.88 && lng >= -1.15 && lng <= 0.22;
-  return murcia || alicante;
-}
-
-function esProvinciaMurciaOAlicante(details: { provincia?: string | null; comunidad?: string | null } | null): boolean {
-  const p = `${details?.provincia || ""} ${details?.comunidad || ""}`.toLowerCase();
-  return /\bmurcia\b/.test(p) || /\b(alicante|alacant)\b/.test(p);
+function esProvinciaCamping(details: { provincia?: string | null } | null): boolean {
+  if (!CAMPING) return false;
+  return CAMPING.provinciaRe.test(details?.provincia || "");
 }
 
 function isInBaleares(lat: number, lng: number): boolean {
@@ -815,20 +940,20 @@ function isRelevant(name: string, types: string[], pais?: string): boolean {
       return false;
     }
   }
-  if (REGION === "murcia-alicante") {
+  if (CAMPING) {
     if (/\b(tienda|articulos|campingaz|camping gas|outlet|alquiler|hire|rental|bar at)\b/i.test(name)) {
       return false;
     }
     if (/^\s*camping\s*$/i.test(name)) return false;
     if (
-      !/\b(c[aà]mping|camper ?park|kampaoh|alannia|taiga)\b/i.test(name) &&
+      !/\b(c[aà]mping|camper ?park|kampaoh|alannia|taiga|yelloh|huttopia)\b/i.test(name) &&
       !types.includes("campground") &&
       !types.includes("rv_park")
     ) {
       return false;
     }
     if (
-      !/\b(c[aà]mping|camper|kampaoh|alannia|taiga|nomading)\b/i.test(name) &&
+      !/\b(c[aà]mping|camper|kampaoh|alannia|taiga|nomading|yelloh|huttopia)\b/i.test(name) &&
       !(/\bcamp\b/i.test(name) && types.includes("campground"))
     ) {
       return false;
@@ -1037,10 +1162,10 @@ async function importUtiles(utiles: any[]) {
     } else if (REGION === "argentina") {
       if (cc && cc !== "AR") continue;
       if (!isInArgentina(hit.lat, hit.lng)) continue;
-    } else if (REGION === "murcia-alicante") {
+    } else if (CAMPING) {
       if (cc && cc !== "ES") continue;
-      if (!isInMurciaAlicante(hit.lat, hit.lng)) continue;
-      if (details && !esProvinciaMurciaOAlicante(details)) continue;
+      if (!CAMPING.isIn(hit.lat, hit.lng)) continue;
+      if (details && !esProvinciaCamping(details)) continue;
     } else if (cc && cc !== "ES" && cc !== "PT") {
       continue;
     }
@@ -1203,8 +1328,8 @@ async function main() {
           ? "\nChile — 20 disparos (casas rodantes / motorhome, radio 40 km)"
         : REGION === "argentina"
           ? "\nArgentina — 20 disparos (casas rodantes / motorhome, radio 40 km)"
-        : REGION === "murcia-alicante"
-          ? "\nMurcia + Alicante — 16 disparos (camping / càmping, radio 40 km)"
+        : CAMPING
+          ? `\n${CAMPING.label} — ${CAMPING.huecos.length} disparos (camping / càmping, radio 40 km)`
         : "\nPenínsula — búsqueda en 16 huecos (radio 40 km)"
   );
   if (SOLO_STOPOVER) {
@@ -1263,7 +1388,7 @@ async function main() {
         if (REGION === "noruega" && !isInNorway(r.lat, r.lng)) continue;
         if (REGION === "chile" && !isInChile(r.lat, r.lng)) continue;
         if (REGION === "argentina" && !isInArgentina(r.lat, r.lng)) continue;
-        if (REGION === "murcia-alicante" && !isInMurciaAlicante(r.lat, r.lng)) continue;
+        if (CAMPING && !CAMPING.isIn(r.lat, r.lng)) continue;
         seen.add(r.place_id);
         const decision = decidirUbicacion(r.name, { types: r.types, pais: hueco.pais });
         const relevant = decision.admite && isRelevant(r.name, r.types || [], hueco.pais);
