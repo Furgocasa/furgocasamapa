@@ -2,10 +2,11 @@
  * PILOTO GALES — motorhome aires, stopovers y touring sites
  *
  * No busca "áreas de autocaravanas" (jerga ES/FR). Busca el mix UK:
- *   - motorhome aire / service point  → publica
- *   - stopover / overnight parking    → parking
+ *   - Arosfan / aire del consejo      → publica
+ *   - aire CAMpRA / stopover de parcelas → privada
  *   - CL / certified location         → privada
  *   - touring park / campsite         → camping
+ *   - Brit Stop / pub                 → parking
  *
  * USO:
  *   npm run import:wales:pilot
@@ -17,7 +18,7 @@ import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
-import { esPernoctaSinServicio } from "../../lib/areas/tipo-area";
+import { classifyTipoArea, esPernoctaSinServicio } from "../../lib/areas/tipo-area";
 
 // Windows / antivirus: interceptan TLS y rompen fetch a Google y Supabase
 if (process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0") {
@@ -193,34 +194,7 @@ function isInWales(lat: number, lng: number, address?: string): boolean {
 }
 
 function classifyTipo(name: string, types: string[]): TipoArea {
-  const n = name.toLowerCase();
-
-  // Solo aires reales. En UK Google etiqueta holiday parks como rv_park.
-  if (/\b(aire|aires|service\s*point)\b/.test(n)) {
-    return "publica";
-  }
-  if (
-    /\b(certified\s+location|certificated\s+(site|location)|certified\s+site|\bcl\s+site\b|club\s+cl\b|\bcamc\b.*\bcl\b|\bcl\b.*\bcamc\b)\b/.test(
-      n
-    )
-  ) {
-    return "privada";
-  }
-  if (
-    /\b(stopover|stop\s*over|brit.?stop|overnight\s+parking|official\s+motorhome\s+parking|motorhome\s+parking\s+spaces|campervan\s+&\s+motorhome\s+stopover)\b/.test(
-      n
-    )
-  ) {
-    return "parking";
-  }
-  if (
-    types.includes("parking") &&
-    /\b(motorhome|campervan|camper|overnight)\b/.test(n) &&
-    !/\b(camp(ing|site)|caravan\s+park|holiday\s+park|touring)\b/.test(n)
-  ) {
-    return "parking";
-  }
-  return "camping";
+  return classifyTipoArea(name, { pais: "Reino Unido", types });
 }
 
 function isRelevant(name: string, types: string[]): boolean {

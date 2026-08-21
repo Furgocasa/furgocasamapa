@@ -183,8 +183,15 @@ export function classifyTipoArea(
     /\barea autocaravanas?\b/.test(n) ||
     (/\baires?\b/.test(n) && !/\b(airport|aire acondicionado)\b/.test(n))
 
+  const esUk = pais === 'Reino Unido' || pais === 'United Kingdom'
+
+  // En UK «stopover» en el nombre suele ser un sitio pequeño para la furgo
+  // (privada), no un pub. Brit Stop / pub stopover sí es stopover.
   if (esStopoverDeAnfitrion(n)) {
-    return 'parking'
+    const stopoverUkEsAnfitrion = /\b(brit.?stop|pub|inn|tavern)\b/.test(n)
+    if (!esUk || stopoverUkEsAnfitrion) {
+      return 'parking'
+    }
   }
 
   if (/\b(privad[oa]|privata)\b/.test(n) && (esAire || /\barea\b/.test(n))) {
@@ -257,7 +264,21 @@ export function classifyTipoArea(
     return 'privada'
   }
 
-  if (pais === 'Reino Unido' || pais === 'United Kingdom') {
+  if (esUk) {
+    // Arosfan / aire del consejo (Gwynedd). El resto de «aire» UK es CAMpRA o anfitrión.
+    if (/\b(arosfan|y glyn)\b/.test(n) || (/\baire\b/.test(n) && /\b(pwllheli|cricieth|llanberis|caernarfon)\b/.test(n))) {
+      return 'publica'
+    }
+    if (/\baire\b/.test(n)) return 'privada'
+    if (
+      /\b(certified location|certificated (site|location)|certified site|cl site|camc\b.*\bcl\b|\bcl\b.*camc|c&cc)\b/.test(
+        n
+      ) ||
+      /\b cl(\s+site)?\b/.test(n) ||
+      /\bclub cs\b/.test(n)
+    ) {
+      return 'privada'
+    }
     return 'camping'
   }
 

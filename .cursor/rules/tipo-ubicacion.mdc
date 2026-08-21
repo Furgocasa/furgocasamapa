@@ -45,5 +45,22 @@ Parking del polideportivo, solar, arcén, «alguien durmió aquí», zona de aca
 
 **Un stopover puede no tener servicios.** No se admite ni se oculta por el JSON `servicios` (casi siempre vacío). No filtrar por ficha vacía.
 
+## Reino Unido / Gales
+
+No es España. El inventario es touring park, CL y alguna aire del consejo.
+
+| Señal en el nombre | Tipo |
+|---|---|
+| Arosfan, Y Glyn, aire de Gwynedd (Pwllheli, Llanberis) | `publica` (consejo) |
+| «Aire» CAMpRA / anfitrión (Cross Hands, Carreg Y Fran) | `privada` |
+| CL / CS / Certified Location (máx. ~5 furgos, granja) | `privada` |
+| Club Campsite, touring/holiday/caravan park | `camping` |
+| Brit Stop, pub que invita una noche | `parking` (stopover) |
+| «Motorhome stopover» de 3 parcelas con enganche | `privada` (existe para la furgo) |
+
+**No entra:** parking pay-and-display del consejo si prohíbe pernocta (Conwy Morfa Bach), taller, hire, tienda de autocaravanas.
+
+El piloto de Gales (`import-wales-pilot.ts`) usa `classifyTipoArea` con país Reino Unido. Default UK = camping.
+
 Código: `lib/areas/tipo-area.ts`. Doc: README § Tipo de ubicación.
 Revisar tipos en España: no usar `reclassify-tipos.ts` a ciegas sobre Europa; el sesgo histórico era «área + nombre = pública» y «parking = stopover».
