@@ -87,7 +87,7 @@ export default function MapaPage() {
           const qs = new URLSearchParams()
           if (locale && locale !== 'es') qs.set('lang', locale)
           // Subir esto tras un import masivo: invalida el CDN sin esperar 1 h
-          qs.set('v', '20260821-wales2')
+          qs.set('v', '20260821-baleares')
           const res = await fetch(`/api/areas?${qs.toString()}`, { cache: 'no-store' })
           if (res.ok) {
             const json = await res.json()

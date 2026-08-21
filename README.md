@@ -303,8 +303,9 @@ Cada país se trata como mercado propio (terminología + tipo de sitio), no como
 | México | trailer / RV park | `scripts/scripts_empresas/import-mexico-pilot.ts` | `npm run import:mexico:pilot` (dry-run) → `--from-report --import` |
 | Reino Unido / Gales | motorhome aire, stopover, CL, touring park | `scripts/scripts_empresas/import-wales-pilot.ts` | `npm run import:wales:pilot` → `npm run import:wales:from-report` |
 | Huecos península | malla 25 km + Places 40 km en centroides vacíos | `scripts/scripts_empresas/import-iberia-gaps.ts` | `npm run import:iberia:gaps` → `--from-report --import` |
+| Islas Baleares | 0 áreas previas; 13 disparos (Mallorca, Menorca, Ibiza, Formentera) | mismo script `--region=baleares` | `npm run import:baleares:gaps` → `--from-report --import` |
 
-**Huecos (península):** rejilla ~22 km; celda vacía = ninguna área a 25 km; celdas vecinas = un hueco; el centroide es el disparo. No incluye islas. En Windows, si falla TLS: `$env:NODE_TLS_REJECT_UNAUTHORIZED="0"`.
+**Huecos (península):** rejilla ~22 km; celda vacía = ninguna área a 25 km; celdas vecinas = un hueco; el centroide es el disparo. No incluye islas. **Baleares:** 0 áreas previas → 13 disparos; Formentera no devolvió ficha útil. En Windows, si falla TLS: `$env:NODE_TLS_REJECT_UNAUTHORIZED="0"`.
 
 ---
 

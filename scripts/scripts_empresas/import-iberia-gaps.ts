@@ -1,9 +1,11 @@
 /**
- * Búsqueda en huecos de cobertura de la península (radio 25–40 km).
+ * Búsqueda en huecos de cobertura (península o Baleares).
  *
  * USO:
  *   npm run import:iberia:gaps
- *   npm run import:iberia:gaps -- --import
+ *   npm run import:iberia:gaps -- --from-report --import
+ *   npm run import:baleares:gaps
+ *   npm run import:baleares:gaps -- --from-report --import
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -26,15 +28,17 @@ const googleApiKey =
   process.env.GOOGLE_MAPS_API_KEY ||
   process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!;
 
+const REGION = process.argv.find((a) => a.startsWith("--region="))?.split("=")[1] || "peninsula";
+
 const REPORT_PATH = path.join(
   process.cwd(),
   "scripts",
-  "iberia-gaps-dry-report.json"
+  REGION === "baleares" ? "baleares-gaps-dry-report.json" : "iberia-gaps-dry-report.json"
 );
 
 type TipoArea = "publica" | "privada" | "camping" | "parking";
 
-const HUECOS = [
+const HUECOS_PENINSULA = [
   { id: 1, zona: "Alentejo interior", lat: 38.991, lng: -7.817, pais: "Portugal" },
   { id: 2, zona: "Arribes / Trás-os-Montes", lat: 41.355, lng: -7.094, pais: "España" },
   { id: 3, zona: "Sierra Morena / Los Pedroches", lat: 38.72, lng: -4.85, pais: "España" },
@@ -53,9 +57,33 @@ const HUECOS = [
   { id: 16, zona: "Monchique / SW Alentejo", lat: 37.6, lng: -8.7, pais: "Portugal" },
 ];
 
+/** Archipiélago vacío (0 áreas en BD). Un disparo cada ~25 km de tierra. */
+const HUECOS_BALEARES = [
+  { id: 1, zona: "Mallorca — Palma / SW", lat: 39.57, lng: 2.65, pais: "España" },
+  { id: 2, zona: "Mallorca — Tramuntana / Sóller", lat: 39.77, lng: 2.72, pais: "España" },
+  { id: 3, zona: "Mallorca — Alcúdia / Pollença", lat: 39.85, lng: 3.05, pais: "España" },
+  { id: 4, zona: "Mallorca — Llevant / Manacor", lat: 39.55, lng: 3.25, pais: "España" },
+  { id: 5, zona: "Mallorca — Migjorn / Santanyí", lat: 39.4, lng: 3.15, pais: "España" },
+  { id: 6, zona: "Mallorca — Inca / centro", lat: 39.72, lng: 2.91, pais: "España" },
+  { id: 7, zona: "Menorca — Ciutadella", lat: 40.0, lng: 3.84, pais: "España" },
+  { id: 8, zona: "Menorca — Maó", lat: 39.89, lng: 4.26, pais: "España" },
+  { id: 9, zona: "Menorca — Es Mercadal", lat: 39.99, lng: 4.05, pais: "España" },
+  { id: 10, zona: "Ibiza — Vila / sur", lat: 38.91, lng: 1.43, pais: "España" },
+  { id: 11, zona: "Ibiza — Sant Antoni", lat: 38.98, lng: 1.3, pais: "España" },
+  { id: 12, zona: "Ibiza — nord", lat: 39.1, lng: 1.51, pais: "España" },
+  { id: 13, zona: "Formentera", lat: 38.7, lng: 1.43, pais: "España" },
+];
+
+const HUECOS = REGION === "baleares" ? HUECOS_BALEARES : HUECOS_PENINSULA;
+
 const TERMINOS_ES = [
   "área autocaravanas",
   "área de servicio autocaravanas",
+  "camping autocaravanas",
+];
+const TERMINOS_BALEARES = [
+  "área autocaravanas",
+  "àrea autocaravanes",
   "camping autocaravanas",
 ];
 const TERMINOS_PT = [
@@ -65,9 +93,9 @@ const TERMINOS_PT = [
 ];
 
 const RELEVANCE_RE =
-  /\b(autocaravana|autocaravanas|camper|caravana|camping|campismo|campground|aire|area de servicio|área de servicio|sosta|stellplatz|motorhome|campervan|caravaning)\b/i;
+  /\b(autocaravana|autocaravanas|autocaravanes|camper|caravana|camping|c[aà]mping|campismo|campground|aire|area de servicio|área de servicio|sosta|stellplatz|motorhome|campervan|caravaning)\b/i;
 const NOISE_RE =
-  /\b(hotel|motel|hostal|hostel|restaurante|restaurant|gasolinera|gas station|dealer|concesionario|venta|alquiler|hire|rental|storage)\b/i;
+  /\b(hotel|motel|hostal|hostel|restaurante|restaurant|gasolinera|gas station|dealer|concesionario|venta|alquiler|hire|rental|rentals|rent\b|storage|agencia|experience|indie campers)\b/i;
 
 function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -81,6 +109,14 @@ function normalizeText(text: string): string {
     .replace(/[^a-z0-9\s]/g, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function isInBaleares(lat: number, lng: number): boolean {
+  if (lat >= 39.25 && lat <= 39.97 && lng >= 2.3 && lng <= 3.48) return true; // Mallorca
+  if (lat >= 39.78 && lat <= 40.1 && lng >= 3.78 && lng <= 4.33) return true; // Menorca
+  if (lat >= 38.84 && lat <= 39.12 && lng >= 1.18 && lng <= 1.62) return true; // Ibiza
+  if (lat >= 38.64 && lat <= 38.8 && lng >= 1.38 && lng <= 1.65) return true; // Formentera
+  return false;
 }
 
 function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -120,7 +156,16 @@ function isRelevant(name: string, types: string[]): boolean {
   if (/\b(glamping|b[ií]blico|biblico)\b/i.test(name) && !/\b(autocaravana|camper|aire)\b/i.test(name)) {
     return false;
   }
-  if (NOISE_RE.test(name) && !RELEVANCE_RE.test(name)) return false;
+  if (NOISE_RE.test(name)) return false;
+  if (/\bno es un parking\b/i.test(name)) return false;
+  if (/\ben autocaravana\b/i.test(name)) return false;
+  if (
+    /\b(gumara|campervan ibiza|camper van days|camper menorca|autocaravanas mallorca|autocaravana mallorca|europeas)\b/i.test(
+      name
+    )
+  ) {
+    return false;
+  }
   if (RELEVANCE_RE.test(name)) return true;
   if (types.includes("campground") || types.includes("rv_park")) return true;
   return false;
@@ -235,6 +280,8 @@ async function importUtiles(utiles: any[]) {
     if (details?.business_status === "CLOSED_PERMANENTLY") continue;
     const cc = details?.country_code;
     if (cc && cc !== "ES" && cc !== "PT") continue;
+    const onBalears = isInBaleares(hit.lat, hit.lng);
+    if (REGION === "baleares" && !onBalears) continue;
     const pais = cc === "PT" ? "Portugal" : "España";
     const slug = `${normalizeText(hit.name).replace(/\s+/g, "-").slice(0, 80)}-${pais === "Portugal" ? "pt" : "es"}-${hit.place_id.slice(-8)}`;
     const { error } = await supabase.from("areas").insert([
@@ -243,9 +290,11 @@ async function importUtiles(utiles: any[]) {
         slug,
         tipo_area: classifyTipo(hit.name, hit.types || []),
         pais,
-        comunidad: details?.comunidad || null,
-        comunidad_autonoma: details?.comunidad || null,
-        provincia: details?.provincia || hit.hueco,
+        comunidad: onBalears ? "Illes Balears" : details?.comunidad || null,
+        comunidad_autonoma: onBalears ? "Illes Balears" : details?.comunidad || null,
+        provincia: onBalears
+          ? details?.provincia || "Illes Balears"
+          : details?.provincia || hit.hueco,
         ciudad: details?.ciudad || null,
         direccion:
           details?.formatted_address || hit.formatted_address || null,
@@ -297,7 +346,11 @@ async function main() {
     return;
   }
 
-  console.log("\nPenínsula — búsqueda en 16 huecos (radio 40 km)");
+  console.log(
+    REGION === "baleares"
+      ? "\nBaleares — archipiélago sin cobertura (13 disparos, radio 40 km)"
+      : "\nPenínsula — búsqueda en 16 huecos (radio 40 km)"
+  );
   console.log(doImport ? "MODO IMPORT\n" : "DRY RUN\n");
 
   const { placeIds, coords } = await loadExisting();
@@ -308,7 +361,12 @@ async function main() {
   let busquedas = 0;
 
   for (const hueco of HUECOS) {
-    const terminos = hueco.pais === "Portugal" ? TERMINOS_PT : TERMINOS_ES;
+    const terminos =
+      REGION === "baleares"
+        ? TERMINOS_BALEARES
+        : hueco.pais === "Portugal"
+          ? TERMINOS_PT
+          : TERMINOS_ES;
     console.log(`#${hueco.id} ${hueco.zona} [${hueco.lat}, ${hueco.lng}]`);
     for (const termino of terminos) {
       busquedas++;
@@ -320,6 +378,7 @@ async function main() {
         if (!Number.isFinite(r.lat) || !Number.isFinite(r.lng)) continue;
         const distCentro = haversine(hueco.lat, hueco.lng, r.lat, r.lng);
         if (distCentro > 42) continue;
+        if (REGION === "baleares" && !isInBaleares(r.lat, r.lng)) continue;
         seen.add(r.place_id);
         const relevant = isRelevant(r.name, r.types);
         const inDb = placeIds.has(r.place_id);

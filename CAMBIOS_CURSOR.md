@@ -270,6 +270,17 @@
 
 ---
 
+## BLOQUE EXTRA — Islas Baleares (ago 2026)
+
+- **Qué**: misma fórmula de huecos. En BD había **0** áreas en Mallorca, Menorca, Ibiza y Formentera.
+- **Método**: 13 disparos Places (~25 km de tierra, radio 40 km) + filtro islas. Se excluyen alquileres/agencias.
+- **Import**: 20 fichas (Mallorca 9, Menorca 8, Ibiza 3). Formentera: Google no devolvió área/camping útil.
+- **Archivos**: `scripts/scripts_empresas/import-iberia-gaps.ts` (`--region=baleares`).
+- **Comandos**: `npm run import:baleares:gaps` → `--from-report --import`.
+- **Verificar**: `/mapa` centrado en Baleares; `?v=20260821-baleares` + Ctrl+F5.
+
+---
+
 ## BLOQUE EXTRA — México (trailer / RV parks)
 
 - **Qué**: apertura de México en BD (~395 áreas) + agente `import-mexico-pilot.ts` + UI/SEO.
