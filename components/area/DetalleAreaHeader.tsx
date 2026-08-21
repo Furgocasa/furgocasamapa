@@ -141,9 +141,22 @@ export function DetalleAreaHeader({ area }: Props) {
           {/* Overlay gradient más sutil y elegante */}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-slate-900/10 mix-blend-multiply" />
           {isImagenIA(area.foto_principal) && (
-            <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 bg-[#0b3c74]/85 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow">
-              <span aria-hidden>💧</span>
-              AI Generated Image
+            <div className="absolute bottom-4 left-4 z-20 group">
+              <button
+                type="button"
+                className="flex items-center gap-2 bg-[#0b3c74]/85 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow hover:bg-[#0b3c74] transition-colors"
+                aria-describedby="ai-image-help"
+              >
+                <span aria-hidden>💧</span>
+                AI Generated Image
+              </button>
+              <div
+                id="ai-image-help"
+                role="tooltip"
+                className="pointer-events-none absolute bottom-full left-0 mb-2 w-72 max-w-[calc(100vw-2rem)] rounded-lg bg-white text-slate-700 text-xs leading-relaxed p-3 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-opacity"
+              >
+                Esta imagen es una imagen generada con inteligencia virtual, que la hemos generado al no disponer de imágenes originales del centro. Si eres el propietario del centro o un usuario, estaremos encantados de recibir una foto real y sustituirla.
+              </div>
             </div>
           )}
         </div>

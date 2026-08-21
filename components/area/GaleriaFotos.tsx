@@ -3,7 +3,6 @@
 import Image from 'next/image'
 import { useState } from 'react'
 import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon, PhotoIcon } from '@heroicons/react/24/outline'
-import { isImagenIA } from '@/lib/areas/image-copyright'
 
 interface Props {
   fotos: string[]
@@ -69,11 +68,6 @@ export function GaleriaFotos({ fotos, nombre }: Props) {
                 className="object-cover"
                 sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
               />
-              {isImagenIA(foto) && (
-                <span className="absolute bottom-1 left-1 text-[10px] font-semibold bg-[#0b3c74]/85 text-white px-1.5 py-0.5 rounded-full">
-                  💧 AI
-                </span>
-              )}
             </button>
           ))}
         </div>
@@ -118,12 +112,6 @@ export function GaleriaFotos({ fotos, nombre }: Props) {
                 sizes="100vw"
                 priority
               />
-              {isImagenIA(fotos[selectedIndex]) && (
-                <div className="absolute bottom-6 left-6 flex items-center gap-2 bg-[#0b3c74]/85 text-white text-sm font-semibold px-3 py-1.5 rounded-full">
-                  <span aria-hidden>💧</span>
-                  AI Generated Image
-                </div>
-              )}
             </div>
           </div>
 
