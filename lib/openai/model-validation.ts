@@ -53,10 +53,13 @@ export function buildTokensParam(maxTokens: number): { max_completion_tokens: nu
  * gpt-5.6-terra rechaza function tools en /v1/chat/completions si reasoning
  * no es 'none'. Sin esto el Tío Viajero responde 400 y el widget muestra error genérico.
  */
-export function buildReasoningForTools(model: string): { reasoning_effort?: 'none' } {
+type ReasoningEffortParam = OpenAI.Chat.ChatCompletionCreateParams['reasoning_effort']
+
+export function buildReasoningForTools(model: string): { reasoning_effort?: ReasoningEffortParam } {
   const id = (model || '').toLowerCase()
   if (id.includes('terra') || id.includes('gpt-5.6') || id.includes('gpt-5.5')) {
-    return { reasoning_effort: 'none' }
+    // La API acepta 'none' en gpt-5.5/5.6 aunque los tipos del SDK aún no lo incluyan
+    return { reasoning_effort: 'none' as unknown as ReasoningEffortParam }
   }
   return {}
 }
