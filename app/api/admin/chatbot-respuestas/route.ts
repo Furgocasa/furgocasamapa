@@ -53,7 +53,37 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ data: data || [], total: count || 0 })
+    const rows = data || []
+    const userIds = [...new Set(rows.map((r: any) => r.user_id).filter(Boolean))] as string[]
+    const usuarios: Record<string, { nombre: string | null; email: string | null }> = {}
+
+    await Promise.all(
+      userIds.map(async (id) => {
+        try {
+          const { data: authData } = await admin.auth.admin.getUserById(id)
+          const u = authData?.user
+          if (!u) return
+          const meta = u.user_metadata || {}
+          usuarios[id] = {
+            email: u.email || null,
+            nombre:
+              meta.full_name ||
+              meta.username ||
+              [meta.first_name, meta.last_name].filter(Boolean).join(' ') ||
+              null,
+          }
+        } catch (e) {
+          console.error('[admin/chatbot-respuestas] usuario', id, e)
+        }
+      })
+    )
+
+    const enriched = rows.map((r: any) => ({
+      ...r,
+      usuario: r.user_id ? usuarios[r.user_id] || null : null,
+    }))
+
+    return NextResponse.json({ data: enriched, total: count || 0 })
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || 'Error cargando respuestas' },
