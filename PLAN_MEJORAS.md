@@ -115,7 +115,7 @@ de BD falla, mejor caer en el gratuito.
 
 ## Mejora 7 — Tío Viajero IA renovado (28 jul 2026)
 
-**Modelo** (21 ago 2026): `gpt-5.6-terra` en `chatbot_config` (antes `gpt-4o-mini`). Editable en `/admin/configuracion`. Vigilar coste.
+**Modelo** (21 ago 2026): `gpt-4o-mini` en `chatbot_config`. Se eligió para el chatbot por coste, latencia y compatibilidad directa con function calling; los agentes de enriquecimiento mantienen `gpt-5.6-terra`. Editable en `/admin/configuracion`.
 
 **Motor** (`app/api/chatbot/route.ts` + `lib/chatbot/functions.ts`):
 - [x] Migrado de la API obsoleta `functions` a la moderna `tools` con **bucle de hasta 4 rondas**: puede encadenar y combinar varias búsquedas en un mensaje ("compara áreas gratis en Granada y Sevilla")

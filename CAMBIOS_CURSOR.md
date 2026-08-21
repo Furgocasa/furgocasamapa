@@ -173,6 +173,7 @@
 ### 7.10 gpt-5.6-terra + tools (21 ago 2026)
 - **Error**: `Function tools with reasoning_effort are not supported for gpt-5.6-terra in /v1/chat/completions`.
 - **Fix**: `reasoning_effort: 'none'` en las llamadas del chatbot (`buildReasoningForTools`).
+- **Decisión posterior**: el chatbot activo vuelve a `gpt-4o-mini` por coste, latencia y compatibilidad directa con tools. La protección se conserva si Terra vuelve a seleccionarse desde administración.
 
 ### 7.6 Conexión chatbot → mapa (tarjetas de área)
 - **Qué**: al clicar una tarjeta de área en el chat, ya NO se abre `/area/[slug]` en pestaña nueva; ahora lleva AL MAPA con esa área seleccionada (centrada y con popup abierto). El chat se minimiza para poder retomarlo. Desde el popup del mapa el usuario ya tiene "Ver detalles".
@@ -381,15 +382,15 @@
 
 - **Qué**: todos los agentes de texto pasan a `gpt-5.6-terra` (equilibrio inteligencia/coste). Las imágenes de áreas siguen en `gpt-image-2`.
 - **Producción (Supabase, efecto inmediato)**:
-  - `chatbot_config` (Tío Viajero): `gpt-4o-mini` → `gpt-5.6-terra`
+  - `chatbot_config` (Tío Viajero): `gpt-4o-mini` → `gpt-5.6-terra` (cambio histórico; el modelo activo volvió a `gpt-4o-mini` el 21 ago 2026)
   - `ia_config.valoracion_vehiculos`: `gpt-5.4-mini` → `gpt-5.6-terra`
   - `ia_config.enrich_description`: `gpt-5.5` → `gpt-5.6-terra`
   - `ia_config.scrape_services`: `gpt-5.5` → `gpt-5.6-terra`
 - **Código**: constante `DEFAULT_OPENAI_MODEL` en `lib/openai/model-validation.ts`. Defaults de admin, extract de anuncios y scripts (`bulk-enrich`, `enrich-datos-estructurados`, `translate-descriptions`, `evaluar-respuestas-chatbot`, etc.) alineados.
 - **Coste**: scrape/enrich deberían bajar (salían de `gpt-5.5`). El Tío Viajero sube de precio (alto volumen; vigilar factura). Si hace falta, bajar solo el chatbot desde `/admin/configuracion`.
 - **Verificar**:
-  1. `/admin/configuracion`: modelo `gpt-5.6-terra` en valoración, enrich, scrape y chatbot.
-  2. Una pregunta al Tío Viajero → `chatbot_respuestas_log.modelo` = `gpt-5.6-terra`.
+  1. `/admin/configuracion`: modelo `gpt-4o-mini` en chatbot; `gpt-5.6-terra` en valoración, enrich y scrape.
+  2. Una pregunta al Tío Viajero → `chatbot_respuestas_log.modelo` = `gpt-4o-mini`.
   3. Una valoración IA o un enrich de área usa Terra (campo `modelo` en la respuesta/log).
 
 ---
