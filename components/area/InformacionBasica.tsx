@@ -11,11 +11,59 @@ interface Props {
 export function InformacionBasica({ area }: Props) {
   const { t } = useLanguage()
 
+  const precioEsGratis = area.precio_noche === 0
+  const precioConImporte =
+    area.precio_noche !== null && area.precio_noche !== undefined && area.precio_noche > 0
+
+  const precioCard = precioEsGratis
+    ? {
+        bg: 'bg-green-50/70 border-green-100',
+        icon: 'text-green-600',
+        label: 'text-green-600/80',
+        value: 'text-green-900',
+        watermark: 'text-green-600',
+        text: t('free'),
+      }
+    : precioConImporte
+      ? {
+          bg: 'bg-blue-50/60 border-blue-100',
+          icon: 'text-blue-600',
+          label: 'text-blue-600/80',
+          value: 'text-blue-900',
+          watermark: 'text-blue-600',
+          text: `${area.precio_noche}€${area.precio_24h ? '/24h' : t('per_night')}`,
+        }
+      : {
+          bg: 'bg-amber-50/70 border-amber-100',
+          icon: 'text-amber-600',
+          label: 'text-amber-600/80',
+          value: 'text-amber-900',
+          watermark: 'text-amber-600',
+          text: t('price_unknown'),
+        }
+
   return (
     <section className="bg-white rounded-3xl shadow-[0_2px_24px_-8px_rgba(0,0,0,0.08)] border border-gray-100 p-6 md:p-8">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('info_title')}</h2>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="flex flex-col p-4 bg-slate-50 rounded-2xl border border-slate-100">
+          <ClockIcon className="w-6 h-6 text-slate-500 mb-2" />
+          <span className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">{t('access')}</span>
+          <span className="text-base font-semibold text-slate-900">{area.acceso_24h ? t('access_24h') : t('access_limited')}</span>
+        </div>
+
+        <div className={`flex flex-col p-4 rounded-2xl border relative overflow-hidden ${precioCard.bg}`}>
+          <div className="absolute -right-4 -bottom-4 opacity-10">
+            <CurrencyEuroIcon className={`w-24 h-24 ${precioCard.watermark}`} />
+          </div>
+          <CurrencyEuroIcon className={`w-6 h-6 mb-2 relative z-10 ${precioCard.icon}`} />
+          <span className={`text-xs font-bold uppercase tracking-wider mb-1 relative z-10 ${precioCard.label}`}>{t('price')}</span>
+          <span className={`text-base sm:text-lg font-bold relative z-10 leading-tight ${precioCard.value}`}>
+            {precioCard.text}
+          </span>
+        </div>
+
         {area.plazas_totales && (
           <div className="flex flex-col p-4 bg-slate-50 rounded-2xl border border-slate-100">
             <TruckIcon className="w-6 h-6 text-slate-500 mb-2" />
@@ -24,30 +72,11 @@ export function InformacionBasica({ area }: Props) {
           </div>
         )}
 
-        <div className="flex flex-col p-4 bg-slate-50 rounded-2xl border border-slate-100">
-          <ClockIcon className="w-6 h-6 text-slate-500 mb-2" />
-          <span className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">{t('access')}</span>
-          <span className="text-base font-semibold text-slate-900">{area.acceso_24h ? t('access_24h') : t('access_limited')}</span>
-        </div>
-
         {area.barrera_altura && (
           <div className="flex flex-col p-4 bg-slate-50 rounded-2xl border border-slate-100">
             <ArrowsUpDownIcon className="w-6 h-6 text-slate-500 mb-2" />
             <span className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">{t('max_height')}</span>
             <span className="text-base font-semibold text-slate-900">{area.barrera_altura}m</span>
-          </div>
-        )}
-
-        {area.precio_noche !== null && (
-          <div className="flex flex-col p-4 bg-blue-50/60 rounded-2xl border border-blue-100 relative overflow-hidden">
-            <div className="absolute -right-4 -bottom-4 opacity-10">
-              <CurrencyEuroIcon className="w-24 h-24 text-blue-600" />
-            </div>
-            <CurrencyEuroIcon className="w-6 h-6 text-blue-600 mb-2 relative z-10" />
-            <span className="text-xs text-blue-600/80 font-bold uppercase tracking-wider mb-1 relative z-10">{t('price')}</span>
-            <span className="text-lg font-bold text-blue-900 relative z-10">
-              {area.precio_noche === 0 ? t('free') : `${area.precio_noche}€`}
-            </span>
           </div>
         )}
       </div>
