@@ -17,6 +17,7 @@ import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
+import { esPernoctaSinServicio } from "../../lib/areas/tipo-area";
 
 // Windows / antivirus: interceptan TLS y rompen fetch a Google y Supabase
 if (process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0") {
@@ -223,6 +224,7 @@ function classifyTipo(name: string, types: string[]): TipoArea {
 }
 
 function isRelevant(name: string, types: string[]): boolean {
+  if (esPernoctaSinServicio(name)) return false;
   const n = name.toLowerCase();
   if (/\b(now\s+closed|permanently\s+closed|closed\s+down)\b/.test(n)) {
     return false;

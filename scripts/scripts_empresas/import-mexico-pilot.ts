@@ -12,7 +12,7 @@ import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
-import { classifyTipoArea } from "../../lib/areas/tipo-area";
+import { classifyTipoArea, esPernoctaSinServicio } from "../../lib/areas/tipo-area";
 
 dotenv.config({ path: ".env.local" });
 
@@ -372,6 +372,7 @@ function createGrid(
 }
 
 function isRelevant(name: string, types: string[]): boolean {
+  if (esPernoctaSinServicio(name)) return false;
   if (US_NAME_RE.test(name)) return false;
   // En MX Google etiqueta parkings como rv_park: priorizar nombre
   if (NOISE_NAME_RE.test(name) && !RELEVANCE_RE.test(name)) return false;

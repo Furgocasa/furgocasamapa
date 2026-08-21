@@ -1,0 +1,12 @@
+---
+description: Este proyecto no usa el MCP de Supabase; la base se consulta con .env.local
+alwaysApply: true
+---
+
+# Supabase de Mapa Furgocasa
+
+El MCP de Supabase está ligado a **otra cuenta**. La base de este proyecto **no está ahí**.
+
+- **Nunca** uses `plugin-supabase-supabase` (list_projects, execute_sql, apply_migration, etc.) para este mapa.
+- **Siempre** lee o escribe datos con las credenciales de `.env.local`: `NEXT_PUBLIC_SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` (scripts Node/`@supabase/supabase-js`, como el resto de `scripts/`).
+- Si `fetch failed` por TLS en Windows, `NODE_TLS_REJECT_UNAUTHORIZED=0` solo para ese script. No inventes otro project_id ni intentes “el MCP por si acaso”.

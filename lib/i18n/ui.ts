@@ -69,7 +69,7 @@ const UI: Record<Locale, UiDict> = {
     type_filter: 'Tipo de ubicación',
     type_public_hint: 'Municipal u organismo público',
     type_private_hint: 'Empresa o particular',
-    type_camping_hint: 'Camping o parque de acampada',
+    type_camping_hint: 'Camping o parque con parcela y servicios',
     type_stopover_hint: 'Aparcamiento de paso / pernocta',
   },
   en: {

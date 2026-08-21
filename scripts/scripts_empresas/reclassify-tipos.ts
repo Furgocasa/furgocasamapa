@@ -4,10 +4,16 @@
  *
  *   npx ts-node --project tsconfig.scripts.json scripts/scripts_empresas/reclassify-tipos.ts
  *   npx ts-node --project tsconfig.scripts.json scripts/scripts_empresas/reclassify-tipos.ts --apply
+ *   npx ts-node --project tsconfig.scripts.json scripts/scripts_empresas/reclassify-tipos.ts --ocultar-sin-servicio
+ *   npx ts-node --project tsconfig.scripts.json scripts/scripts_empresas/reclassify-tipos.ts --ocultar-sin-servicio --apply
  */
 import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
-import { classifyTipoArea, type TipoArea } from "../../lib/areas/tipo-area";
+import {
+  classifyTipoArea,
+  esPernoctaSinServicio,
+  type TipoArea,
+} from "../../lib/areas/tipo-area";
 
 if (process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0") {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -15,6 +21,7 @@ if (process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0") {
 dotenv.config({ path: ".env.local" });
 
 const APPLY = process.argv.includes("--apply");
+const OCULTAR_SIN_SERVICIO = process.argv.includes("--ocultar-sin-servicio");
 const LATAM = new Set([
   "México",
   "Mexico",
@@ -76,8 +83,48 @@ async function loadAreas() {
   return all;
 }
 
+async function ocultarSinServicio(
+  areas: Array<{ id: string; nombre: string; tipo_area: string; pais: string }>
+) {
+  const hits = areas.filter((a) => esPernoctaSinServicio(a.nombre));
+  console.log(APPLY ? "\nOCULTAR SIN SERVICIO\n" : "\nDRY RUN OCULTAR SIN SERVICIO\n");
+  console.log(`Candidatas: ${hits.length}\n`);
+  hits.forEach((a) =>
+    console.log(`  [${a.tipo_area}] ${a.pais} — ${a.nombre}`)
+  );
+
+  if (!APPLY) {
+    console.log("\nPara ocultar: --ocultar-sin-servicio --apply\n");
+    return;
+  }
+
+  let ok = 0;
+  const chunk = 40;
+  for (let i = 0; i < hits.length; i += chunk) {
+    const slice = hits.slice(i, i + chunk);
+    const results = await Promise.all(
+      slice.map((a) =>
+        supabase.from("areas").update({ activo: false }).eq("id", a.id)
+      )
+    );
+    for (let j = 0; j < results.length; j++) {
+      if (results[j].error) {
+        console.error(`  ❌ ${slice[j].nombre}: ${results[j].error?.message}`);
+      } else {
+        ok++;
+      }
+    }
+  }
+  console.log(`\nOcultadas: ${ok}\n`);
+}
+
 async function main() {
   const areas = await loadAreas();
+  if (OCULTAR_SIN_SERVICIO) {
+    await ocultarSinServicio(areas);
+    return;
+  }
+
   const changes: Array<{
     id: string;
     nombre: string;

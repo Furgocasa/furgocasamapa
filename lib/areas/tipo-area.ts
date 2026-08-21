@@ -70,6 +70,34 @@ function esStopoverHint(n: string): boolean {
   )
 }
 
+function esAreaHabilitadaEnNombre(n: string): boolean {
+  return (
+    isMotorhomeWording(n) ||
+    /\b(area de (autocaravanas?|autocaravanes|servicio|servicios)|area autocaravanas?|aire de services?|aire d'accueil)\b/.test(
+      n
+    )
+  )
+}
+
+/**
+ * Pernocta sin servicio de área (zona de acampada, aire naturelle, wild camp).
+ * No es un tipo: no entra en el mapa. Si el nombre deja claro que es área
+ * o aire de camping-car, no se descarta.
+ */
+export function esPernoctaSinServicio(name: string): boolean {
+  const n = norm(name)
+  if (!n || esAreaHabilitadaEnNombre(n)) return false
+
+  return (
+    /\bzona(s)? de acampada\b/.test(n) ||
+    /\bzona acampada\b/.test(n) ||
+    /\bzona camping\b/.test(n) ||
+    /\bacampada (libre|rural)\b/.test(n) ||
+    /\baires? naturelles?\b/.test(n) ||
+    /\b(wild ?camp(ing)?|wildcamping|boondock(ing)?|dispersed camping|bivouac)\b/.test(n)
+  )
+}
+
 export function getTipoAreaColor(tipo?: string | null): string {
   if (tipo && tipo in TIPO_AREA_COLORS) {
     return TIPO_AREA_COLORS[tipo as TipoArea]
@@ -87,8 +115,9 @@ export function getTipoAreaBadgeClass(tipo?: string | null): string {
 /**
  * Pública = municipal / organismo público.
  * Privada = empresa o particular.
- * Camping = camping, CL de acampada, trailer/RV park.
+ * Camping = camping comercial / CL / trailer/RV park.
  * Parking (Stopover) = aparcamiento de paso / pernocta.
+ * Zona de acampada y similar no se clasifican: usar esPernoctaSinServicio().
  */
 export function classifyTipoArea(
   name: string,
@@ -121,7 +150,7 @@ export function classifyTipoArea(
 
   const nameIsCamping =
     !isMotorhomeWording(n) &&
-    /\b(camping|campismo|campground|campamentos?|campament|acampada|caravan park|holiday park|touring park|trailer park|rv park|rv resort|parque de trailers?|parque de campismo)\b/.test(
+    /\b(camping|campismo|campground|campamentos?|campament|caravan park|holiday park|touring park|trailer park|rv park|rv resort|parque de trailers?|parque de campismo)\b/.test(
       n
     )
   const typeIsCamping =

@@ -8,13 +8,15 @@
  *   npm run import:baleares:gaps -- --from-report --import
  *   npm run import:alemania:gaps
  *   npm run import:alemania:gaps -- --from-report --import
+ *   npm run import:francia:gaps
+ *   npm run import:francia:gaps -- --from-report --import
  */
 
 import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
-import { classifyTipoArea } from "../../lib/areas/tipo-area";
+import { classifyTipoArea, esPernoctaSinServicio } from "../../lib/areas/tipo-area";
 
 if (process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0") {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -38,7 +40,9 @@ const REPORT_NAME =
     ? "baleares-gaps-dry-report.json"
     : REGION === "alemania"
       ? "alemania-gaps-dry-report.json"
-      : "iberia-gaps-dry-report.json";
+      : REGION === "francia"
+        ? "francia-gaps-dry-report.json"
+        : "iberia-gaps-dry-report.json";
 const REPORT_PATH = path.join(process.cwd(), "scripts", REPORT_NAME);
 
 const HUECOS_PENINSULA = [
@@ -97,12 +101,33 @@ const HUECOS_ALEMANIA = [
   { id: 16, zona: "Eifel", lat: 50.25, lng: 6.7, pais: "Alemania" },
 ];
 
+const HUECOS_FRANCIA = [
+  { id: 1, zona: "Perche / Sarthe", lat: 47.92, lng: 0.05, pais: "Francia" },
+  { id: 2, zona: "Ardenas / Thiérache", lat: 49.74, lng: 4.1, pais: "Francia" },
+  { id: 3, zona: "Finistère oeste", lat: 48.07, lng: -4.17, pais: "Francia" },
+  { id: 4, zona: "Béarn", lat: 43.15, lng: -0.55, pais: "Francia" },
+  { id: 5, zona: "Córcega interior", lat: 42.15, lng: 9.05, pais: "Francia" },
+  { id: 6, zona: "Córcega sur", lat: 41.65, lng: 9.0, pais: "Francia" },
+  { id: 7, zona: "Lorena", lat: 49.12, lng: 6.85, pais: "Francia" },
+  { id: 8, zona: "Ardenas este", lat: 49.7, lng: 4.85, pais: "Francia" },
+  { id: 9, zona: "Ariège", lat: 42.9, lng: 1.5, pais: "Francia" },
+  { id: 10, zona: "Poitou / Vienne", lat: 46.63, lng: 0.5, pais: "Francia" },
+  { id: 11, zona: "Livradois / Haute-Loire", lat: 45.44, lng: 3.58, pais: "Francia" },
+  { id: 12, zona: "Gers / Gascuña", lat: 43.55, lng: 0.55, pais: "Francia" },
+  { id: 13, zona: "Calvados / Bessin", lat: 49.25, lng: -0.7, pais: "Francia" },
+  { id: 14, zona: "Bugey", lat: 45.87, lng: 5.45, pais: "Francia" },
+  { id: 15, zona: "Beauce", lat: 48.27, lng: 1.99, pais: "Francia" },
+  { id: 16, zona: "Diois / Drôme", lat: 44.53, lng: 5.63, pais: "Francia" },
+];
+
 const HUECOS =
   REGION === "baleares"
     ? HUECOS_BALEARES
     : REGION === "alemania"
       ? HUECOS_ALEMANIA
-      : HUECOS_PENINSULA;
+      : REGION === "francia"
+        ? HUECOS_FRANCIA
+        : HUECOS_PENINSULA;
 
 const TERMINOS_ES = [
   "área autocaravanas",
@@ -124,6 +149,11 @@ const TERMINOS_DE = [
   "Stellplatz Wohnmobil",
   "Campingplatz Wohnmobil",
 ];
+const TERMINOS_FR = [
+  "aire camping-car",
+  "aire de service camping-car",
+  "camping camping-car",
+];
 
 const RELEVANCE_RE =
   /\b(autocaravana|autocaravanas|autocaravanes|camper|caravana|camping|c[aà]mping|campismo|campground|aire|area de servicio|área de servicio|sosta|stellplatz|motorhome|campervan|caravaning)\b/i;
@@ -142,6 +172,19 @@ function normalizeText(text: string): string {
     .replace(/[^a-z0-9\s]/g, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function isInFrance(lat: number, lng: number): boolean {
+  if (lat >= 41.32 && lat <= 43.05 && lng >= 8.5 && lng <= 9.6) return true; // Córcega
+  if (lat < 42.3 || lat > 51.15 || lng < -5.2 || lng > 8.3) return false;
+  if (lat > 50.25 && lng < 1.5) return false;
+  if (lat > 49.85 && lng < 0.05) return false;
+  if (lat < 47.2 && lng < -1.55) return false;
+  if (lat < 43.15 && lng > 3.3 && lng < 6.5) return false;
+  if (lat > 47.6 && lng > 7.7) return false;
+  if (lat > 49.55 && lng > 6.2) return false;
+  if (lat < 42.55 && lng < 2.9) return false; // Navarra/Cataluña
+  return true;
 }
 
 function isInGermany(lat: number, lng: number): boolean {
@@ -179,10 +222,12 @@ function classifyTipo(name: string, types: string[], pais?: string) {
 }
 
 function isRelevant(name: string, types: string[]): boolean {
+  if (esPernoctaSinServicio(name)) return false;
   if (/\b(glamping|b[ií]blico|biblico)\b/i.test(name) && !/\b(autocaravana|camper|aire)\b/i.test(name)) {
     return false;
   }
   if (NOISE_RE.test(name)) return false;
+  if (/\blocation (de )?(camping-car|fourgon|van|utilitaire)\b/i.test(name)) return false;
   if (/\b(ferienhof|ferienhaus|wassersportzentrum)\b/i.test(name) && !/\bstellplatz\b/i.test(name)) {
     return false;
   }
@@ -194,6 +239,17 @@ function isRelevant(name: string, types: string[]): boolean {
     )
   ) {
     return false;
+  }
+  if (REGION === "francia") {
+    if (
+      !/\b(camping-car|camping car|campingcar|fourgon|camper|autocaravane|stellplatz)\b/i.test(
+        name
+      ) &&
+      !types.includes("campground") &&
+      !types.includes("rv_park")
+    ) {
+      return false;
+    }
   }
   if (RELEVANCE_RE.test(name)) return true;
   if (types.includes("campground") || types.includes("rv_park")) return true;
@@ -208,7 +264,10 @@ async function nearby(query: string, lat: number, lng: number) {
   url.searchParams.set("radius", "40000");
   url.searchParams.set("keyword", query);
   url.searchParams.set("key", googleApiKey);
-  url.searchParams.set("language", REGION === "alemania" ? "de" : "es");
+  url.searchParams.set(
+    "language",
+    REGION === "alemania" ? "de" : REGION === "francia" ? "fr" : "es"
+  );
 
   const res = await fetch(url.toString());
   const data: any = await res.json();
@@ -311,6 +370,9 @@ async function importUtiles(utiles: any[]) {
     if (REGION === "alemania") {
       if (cc && cc !== "DE") continue;
       if (!isInGermany(hit.lat, hit.lng)) continue;
+    } else if (REGION === "francia") {
+      if (cc && cc !== "FR") continue;
+      if (!isInFrance(hit.lat, hit.lng)) continue;
     } else if (cc && cc !== "ES" && cc !== "PT") {
       continue;
     }
@@ -319,10 +381,13 @@ async function importUtiles(utiles: any[]) {
     const pais =
       REGION === "alemania" || cc === "DE"
         ? "Alemania"
-        : cc === "PT"
-          ? "Portugal"
-          : "España";
-    const slugSuffix = pais === "Alemania" ? "de" : pais === "Portugal" ? "pt" : "es";
+        : REGION === "francia" || cc === "FR"
+          ? "Francia"
+          : cc === "PT"
+            ? "Portugal"
+            : "España";
+    const slugSuffix =
+      pais === "Alemania" ? "de" : pais === "Francia" ? "fr" : pais === "Portugal" ? "pt" : "es";
     const slug = `${normalizeText(hit.name).replace(/\s+/g, "-").slice(0, 80)}-${slugSuffix}-${hit.place_id.slice(-8)}`;
     const { error } = await supabase.from("areas").insert([
       {
@@ -391,6 +456,8 @@ async function main() {
       ? "\nBaleares — archipiélago sin cobertura (13 disparos, radio 40 km)"
       : REGION === "alemania"
         ? "\nAlemania — 16 huecos (radio 40 km)"
+        : REGION === "francia"
+          ? "\nFrancia — 16 huecos (radio 40 km)"
         : "\nPenínsula — búsqueda en 16 huecos (radio 40 km)"
   );
   console.log(doImport ? "MODO IMPORT\n" : "DRY RUN\n");
@@ -408,6 +475,8 @@ async function main() {
         ? TERMINOS_BALEARES
         : REGION === "alemania"
           ? TERMINOS_DE
+          : REGION === "francia"
+            ? TERMINOS_FR
           : hueco.pais === "Portugal"
             ? TERMINOS_PT
             : TERMINOS_ES;
@@ -424,6 +493,7 @@ async function main() {
         if (distCentro > 42) continue;
         if (REGION === "baleares" && !isInBaleares(r.lat, r.lng)) continue;
         if (REGION === "alemania" && !isInGermany(r.lat, r.lng)) continue;
+        if (REGION === "francia" && !isInFrance(r.lat, r.lng)) continue;
         seen.add(r.place_id);
         const relevant = isRelevant(r.name, r.types);
         const inDb = placeIds.has(r.place_id);
