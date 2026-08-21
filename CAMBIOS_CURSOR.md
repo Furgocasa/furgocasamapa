@@ -60,11 +60,13 @@
 ## BLOQUE 3 — Rendimiento del mapa
 
 ### 3.1 Endpoint cacheado de áreas
-- **Archivo nuevo**: `app/api/areas/route.ts` — devuelve todas las áreas activas en 1 respuesta con `Cache-Control: public, s-maxage=600, stale-while-revalidate=3600` (CDN de Vercel; Supabase se consulta ~1 vez/10min en vez de 5-6 queries por visitante). Soporta `?lang=`.
-- **Verificar**: `curl -I https://www.mapafurgocasa.com/api/areas` → cabecera Cache-Control presente; JSON con `{ areas: [...], total }`.
+- **Archivo**: `app/api/areas/route.ts` — todas las áreas activas en 1 respuesta. Paginación estable por `id` (no por `nombre`).
+- **Caché CDN (ago 2026)**: `s-maxage=30`, **sin** `stale-while-revalidate` (antes 10 min + 1 h de copia vieja). Un import masivo (p. ej. Gales) no se veía en el mapa hasta 70 min; ahora como máximo ~30 s + Ctrl+F5.
+- Cabeceras: `Cache-Control`, `CDN-Cache-Control`, `Vercel-CDN-Cache-Control`. Soporta `?lang=` e `?v=` (el `v` invalida la clave de caché).
+- **Verificar**: `curl -I https://www.mapafurgocasa.com/api/areas?v=20260821-wales2` → `s-maxage=30`; JSON `{ areas, total, generated_at }`. Tras Gales+huecos, `total` ≈ 6100 y `pais=Reino Unido` > 0.
 
 ### 3.2 El mapa consume el endpoint con fallback
-- **Archivo**: `app/(public)/mapa/page.tsx` — `loadAreas()` intenta `fetch('/api/areas')` y, si falla, cae al método anterior (paginación directa Supabase). No se rompe nada si el endpoint no está.
+- **Archivo**: `app/(public)/mapa/page.tsx` — `loadAreas()` hace `fetch('/api/areas?v=…', { cache: 'no-store' })` y, si falla, pagina directo a Supabase. Subir `v` después de un import grande.
 
 ### 3.3 console.log fuera de producción
 - **Archivo**: `next.config.js` — `compiler.removeConsole` en producción (conserva error/warn).
@@ -102,8 +104,9 @@
 - **Archivos**: `app/(public)/mapa/page.tsx` (skeleton modernizado, contador píldora translúcida, barra inferior móvil con efecto cristal + píldora activa + badge naranja de filtros activos), `components/mobile/BottomSheet.tsx` (animación de entrada + **FIX**: el gesto de arrastrar-para-cerrar no funcionaba porque `currentYRef` no se actualizaba en `handleTouchMove`), `tailwind.config.ts` (keyframes `slide-up`, `fade-in`).
 
 ### 5.3 Modo offline PWA
-- **Archivo**: `next.config.js` — en `runtimeCaching`, ANTES de la regla genérica `/api/* NetworkOnly`: `/api/areas` NetworkFirst (incluye `?lang=`, 1 semana) + tiles MapTiler y OpenStreetMap CacheFirst (30 días).
-- **Verificar**: el orden de las reglas importa; `/api/areas(?:\?.*)?$` debe ir antes que `/api/.*`.
+- **Archivo**: `next.config.js` — en `runtimeCaching`, ANTES de `/api/* NetworkOnly`: `/api/areas` **NetworkFirst** (con cobertura pide red; la copia local vale hasta 7 días **solo si no hay red**) + tiles MapTiler/OSM CacheFirst (30 días).
+- No confundir con el CDN de Vercel (30 s). El SW no debe servir 7 días de lista si hay red.
+- **Verificar**: `/api/areas(?:\?.*)?$` ANTES que `/api/.*`.
 
 ### 5.4 MapLibre como fallback por defecto
 - **Archivo**: `hooks/useMapConfig.ts` — `DEFAULT_CONFIG.proveedor = 'maplibre'` (antes 'google'). El selector de /admin/configuracion sigue mandando; solo cambia el fallback si la BD no responde.
@@ -224,11 +227,33 @@
 2. `npm run build` → compila.
 3. Grep de seguridad (debe dar 0): `NEXT_PUBLIC_OPENAI|NEXT_PUBLIC_SERPAPI|NEXT_PUBLIC_SUPABASE_SERVICE` en `app/ lib/ components/ hooks/ scripts/`.
 4. `next.config.js`: sin bloque `env:`, con `removeConsole`, y regla `/api/areas(?:\?.*)?$` ANTES de `/api/.*` en runtimeCaching.
-5. `/mapa` accesible sin login y carga desde `/api/areas` (ver Network).
+5. `/mapa` accesible sin login y carga desde `/api/areas?v=` (Network: `s-maxage=30`, `total` ≈ 6100, hay `Reino Unido`).
 6. Chatbot: funciona sin login; pregunta "voy de Madrid a Valencia, ¿dónde paro?" → usa `search_areas_along_route` y muestra tarjetas; cada respuesta crea fila en `chatbot_respuestas_log`.
 7. Página de área: componente "¿Has estado aquí?" visible y funcional.
 8. ~~Migraciones Supabase + backfill ratings~~ — **hechas** (`chatbot_evaluacion_ia`, `google_ratings_total`; ~4932 áreas con total; residual opcional ~306 con place_id y NULL).
 9. Deploy: push a `main` → Vercel. Antes/después: limpiar/rotar claves en Vercel (Bloque 1.5).
+
+---
+
+## BLOQUE EXTRA — Reino Unido / piloto Gales (ago 2026)
+
+- **Qué**: primer lote UK. En Gales no hay “área municipal” al uso: se importan **aires**, **stopovers**, **CL (Certified Locations)** y **touring/campsites**.
+- **Resultado**: ~480 áreas, `pais=Reino Unido`, `comunidad=Gales`. Place Details recorta spillover de Inglaterra.
+- **Tipos**: `publica` = aire/service point; `parking` = stopover; `privada` = CL; `camping` = touring park. Google `rv_park` ≠ área pública (en UK son holiday parks).
+- **Archivos**: `scripts/scripts_empresas/import-wales-pilot.ts`, `config/paises-seo.ts` (`reino-unido`), `app/(public)/mapa-autocaravanas-reino-unido/page.tsx`, `app/sitemap.ts`.
+- **Comandos**: `npm run import:wales:pilot` (dry-run) → `npm run import:wales:from-report`.
+- **Verificar**: `/mapa?pais=Reino%20Unido` y landing `/mapa-autocaravanas-reino-unido`. Si no hay pines y el badge no suma las ~480, invalidar caché (`?v=` + Ctrl+F5).
+
+---
+
+## BLOQUE EXTRA — Huecos de cobertura península (ago 2026)
+
+- **Qué**: detectar celdas de la península (sin islas) a más de **25 km** de cualquier área, agruparlas, y disparar Places (40 km) en los centroides.
+- **Método**: malla 0,20° × 0,25° (~22 km) + haversine + componentes conexos. 16 huecos útiles (Alentejo, Arribes, Sierra Morena, Cuenca, Monegros, etc.).
+- **Import**: ~169 fichas nuevas (España + Portugal). Términos ES (`área autocaravanas`) y PT (`parque de campismo`, `aire camping-car`).
+- **Archivos**: `scripts/scripts_empresas/import-iberia-gaps.ts`.
+- **Comandos**: `npm run import:iberia:gaps` → `npm run import:iberia:gaps -- --from-report --import`.
+- **Verificar**: filtro España/Portugal más denso en Alentejo e interior; no debe haber pines en Canarias por este script.
 
 ---
 

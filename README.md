@@ -133,12 +133,21 @@ SERPAPI_KEY=
 
 ## 📊 Estadísticas
 
-| Región | Países | Áreas |
-|--------|--------|-------|
-| 🇪🇺 Europa | 16 | ~4,500 |
-| 🌎 Sudamérica | 7 | ~400 |
-| 🌴 Centroamérica | 3 | ~100 |
-| **Total** | **26** | **~5,000** |
+Cifras de producción (agosto 2026; crecen con cada import):
+
+| Región | Países (SEO / filtro) | Áreas (aprox.) |
+|--------|----------------------|----------------|
+| 🇪🇺 Europa | 17 landings SEO (incl. Reino Unido) | ~5.500 |
+| 🌎 Sudamérica | Argentina, Chile, Uruguay… | ~400 |
+| 🌴 México / Centroamérica | trailer parks y RV parks | ~400 |
+| **Total activas** | | **~6.100** |
+
+Destacados recientes:
+
+- **Reino Unido (piloto Gales)**: ~480 sitios. No son “áreas ES/FR”: aires, stopovers, CL y touring parks.
+- **Península**: España ~1.100, Portugal ~130. En agosto 2026 se taparon 16 huecos interiores (Alentejo, Arribes, Sierra Morena, Cuenca…) con ~169 fichas nuevas.
+
+Landings: `/mapa-autocaravanas-reino-unido`, `/mapa-autocaravanas-espana`, `/mapa-casas-rodantes-mexico`, etc. (`config/paises-seo.ts`).
 
 ---
 
@@ -257,7 +266,23 @@ Variables opcionales: `BULK_MODE` (`critical` | `all` | `everything`), `BULK_CON
 | `npm run enrich:datos:apply` | Aplica las propuestas de confianza alta SOLO en campos vacíos | Solo OpenAI |
 | `npm run enrich:textos` | Alias de `bulk-enrich.js` (descripciones) | Solo OpenAI |
 
-> 💰 **Política de costes**: el pipeline de enriquecimiento NO usa APIs de pago de Google. Los scripts de corrección de países usan Nominatim (OpenStreetMap, gratis). `actualizar-websites-google.js` requiere `--confirm` porque sí factura a Google.
+> 💰 **Política de costes**: el pipeline de enriquecimiento NO usa APIs de pago de Google. Los scripts de corrección de países usan Nominatim (OpenStreetMap, gratis). `actualizar-websites-google.js` y los **imports por Places** (México, Gales, huecos península) sí facturan a Google: dry-run primero, `--import` solo al revisar el informe.
+
+---
+
+## 🌍 Cobertura e imports geográficos
+
+El mapa carga **todas** las áreas activas desde `GET /api/areas` (CDN Vercel **30 s**, sin `stale-while-revalidate`). El cliente usa `cache: 'no-store'` y `?v=` para invalidar el CDN tras un import masivo. Tras un lote grande: push a `main`, esperar deploy, **Ctrl+F5**.
+
+Cada país se trata como mercado propio (terminología + tipo de sitio), no como un clon de España:
+
+| Mercado | Qué se busca | Script | Comandos |
+|---------|--------------|--------|----------|
+| México | trailer / RV park | `scripts/scripts_empresas/import-mexico-pilot.ts` | `npm run import:mexico:pilot` (dry-run) → `--from-report --import` |
+| Reino Unido / Gales | motorhome aire, stopover, CL, touring park | `scripts/scripts_empresas/import-wales-pilot.ts` | `npm run import:wales:pilot` → `npm run import:wales:from-report` |
+| Huecos península | malla 25 km + Places 40 km en centroides vacíos | `scripts/scripts_empresas/import-iberia-gaps.ts` | `npm run import:iberia:gaps` → `--from-report --import` |
+
+**Huecos (península):** rejilla ~22 km; celda vacía = ninguna área a 25 km; celdas vecinas = un hueco; el centroide es el disparo. No incluye islas. En Windows, si falla TLS: `$env:NODE_TLS_REJECT_UNAUTHORIZED="0"`.
 
 ---
 
@@ -269,6 +294,7 @@ Variables opcionales: `BULK_MODE` (`critical` | `all` | `everything`), `BULK_CON
 
 | Versión | Fecha | Cambios principales |
 |---------|-------|---------------------|
+| v4.3 | Agosto 2026 | Piloto Gales (~480), huecos península (~169), caché `/api/areas` a 30 s |
 | v4.2 | Agosto 2026 | Agentes de texto unificados en `gpt-5.6-terra` |
 | v4.1 | Enero 2026 | Sistema de banners con alternancia inteligente CasiCinco/Furgocasa |
 | v4.0 | Enero 2026 | Migración Vercel, MapLibre/Leaflet, clustering Supercluster |

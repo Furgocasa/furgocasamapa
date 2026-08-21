@@ -77,8 +77,9 @@ tiles del mapa, para que la app funcione sin cobertura.
 **Por qué**: el usuario nos necesita más justo cuando no tiene cobertura.
 
 **Cambios**:
-- [x] `next.config.js`: NetworkFirst para `/api/areas` (incluye `?lang=`, 1 semana)
+- [x] `next.config.js`: NetworkFirst para `/api/areas` (incluye `?lang=`; copia offline hasta 7 días solo sin red)
 - [x] `next.config.js`: CacheFirst para tiles MapTiler y OpenStreetMap (30 días)
+- [x] CDN Vercel de `/api/areas` bajado a **30 s** sin stale (ago 2026): un import se ve al recargar; antes 10 min + 1 h de lista vieja
 
 ---
 
@@ -169,3 +170,7 @@ de BD falla, mejor caer en el gratuito.
 - **21 ago 2026**: Agentes de texto unificados en `gpt-5.6-terra`
   (chatbot, valoración, enrich, scrape, scripts). Imágenes siguen en
   `gpt-image-2`. Vigilar coste del Tío Viajero.
+- **21 ago 2026 (cobertura)**: piloto Gales (~480 aires/stopovers/CL/touring);
+  detección de huecos en península (radio 25 km) + import Places (~169);
+  caché `/api/areas` a 30 s (`s-maxage=30`, sin SWR) para que los lotes
+  salgan en el mapa al hacer Ctrl+F5. Landing `/mapa-autocaravanas-reino-unido`.
