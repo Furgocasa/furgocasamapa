@@ -686,7 +686,7 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
 
       {/* Buscador Geogr├ífico - M├│vil: derecha, Desktop: centro */}
       {map && (
-        <div className="absolute top-12 left-3 right-14 md:top-4 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-80 z-30">
+        <div className="absolute top-12 left-3 right-14 md:top-4 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-80 z-30 pointer-events-none">
           <BuscadorGeografico
             map={map}
             onLocationFound={handleLocationFound}

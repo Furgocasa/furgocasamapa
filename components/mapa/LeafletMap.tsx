@@ -547,7 +547,7 @@ export function LeafletMap({
 
       {/* Buscador Geográfico */}
       {mapLoaded && (
-        <div className="absolute top-12 left-3 right-14 md:top-4 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-80 z-30">
+        <div className="absolute top-12 left-3 right-14 md:top-4 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-80 z-30 pointer-events-none">
           <BuscadorGeografico
             map={map}
             onLocationFound={handleLocationFound}

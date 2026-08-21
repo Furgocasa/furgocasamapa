@@ -52,6 +52,7 @@ export function BuscadorGeografico({
 }: BuscadorGeograficoProps) {
   const [searchValue, setSearchValue] = useState('')
   const [isExpanded, setIsExpanded] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false) // en móvil, plegado a una lupa
   const [showDropdown, setShowDropdown] = useState(false)
   const [areaResults, setAreaResults] = useState<Area[]>([])
   const [placeResults, setPlaceResults] = useState<any[]>([])
@@ -95,7 +96,14 @@ export function BuscadorGeografico({
     setPlaceResults([])
     setShowDropdown(false)
     setIsExpanded(false)
+    setMobileOpen(false)
   }, [])
+
+  const openMobileSearch = () => {
+    setMobileOpen(true)
+    // Foco intencionado: el usuario ha tocado la lupa para escribir
+    setTimeout(() => inputRef.current?.focus(), 50)
+  }
 
   const ensurePlacesServices = useCallback(() => {
     if (typeof window === 'undefined' || !window.google?.maps?.places) return false
@@ -305,7 +313,10 @@ export function BuscadorGeografico({
     if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current)
     blurTimeoutRef.current = setTimeout(() => {
       setShowDropdown(false)
-      if (!searchValue) setIsExpanded(false)
+      if (!searchValue) {
+        setIsExpanded(false)
+        setMobileOpen(false)
+      }
     }, 200)
   }
 
@@ -323,6 +334,19 @@ export function BuscadorGeografico({
       {/* Div oculto para PlacesService en mapas no-Google */}
       <div ref={placesDivRef} className="hidden" aria-hidden="true" />
 
+      {/* Móvil plegado: solo la lupa, centrada. En desktop no existe. */}
+      {!mobileOpen && (
+        <button
+          type="button"
+          onClick={openMobileSearch}
+          className="md:hidden pointer-events-auto mx-auto flex items-center justify-center w-11 h-11 bg-white rounded-full shadow-lg border border-gray-200 text-gray-600 active:scale-95 transition-all"
+          aria-label="Buscar área, ciudad o región"
+        >
+          <MagnifyingGlassIcon className="h-5 w-5" />
+        </button>
+      )}
+
+      <div className={`${mobileOpen ? 'block' : 'hidden'} md:block pointer-events-auto`}>
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
           <MagnifyingGlassIcon className={`h-5 w-5 ${isExpanded ? 'text-gray-400' : 'text-gray-500'}`} />
@@ -436,6 +460,7 @@ export function BuscadorGeografico({
           Busca áreas de autocaravanas o ciudades y regiones
         </p>
       )}
+      </div>
     </div>
   )
 }
