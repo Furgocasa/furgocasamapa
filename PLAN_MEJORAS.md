@@ -132,16 +132,17 @@ de BD falla, mejor caer en el gratuito.
 
 **Pendiente (fase 2)**: streaming de respuestas (SSE) para percepción de velocidad.
 
-**Auditoría de respuestas** (28 jul 2026):
+**Auditoría de respuestas** (28 jul 2026 + 21 ago 2026):
 - [x] Migración `20260728_chatbot_respuestas_log.sql` ✅ ejecutada
 - [x] TODAS las respuestas (también de anónimos) se registran con pregunta, respuesta, búsquedas ejecutadas, tokens, modelo y duración
-- [x] Página `/admin/chatbot-respuestas`: filtro pendientes/revisadas, detalle completo, marcar revisada con nota + enlace en panel admin
+- [x] Página `/admin/chatbot-respuestas`: tabla (fecha, usuario, tipo, mensaje, respuesta, categorización), quesito de %, detalle expandible, marcar revisada
+- [x] Círculo revisión → corrección (regla `.cursor/rules/chatbot-revision.mdc`): evaluar no cierra el ciclo; hay que parchear y pushear
 
 **Agente revisor IA** (28 jul 2026):
 - [x] Código y script listos (`npm run evaluar:chatbot`)
 - [x] Migración `20260728_chatbot_evaluacion_ia.sql` — **ya aplicada en Supabase** (columnas `valoracion_ia`, etc. verificadas)
 - [x] `/admin/chatbot-respuestas`: filtros por veredicto IA, badges y bloque con motivo/sugerencia
-- Flujo de afinado: ejecutar el revisor periódicamente → filtrar "incorrectas" → aplicar las sugerencias al system prompt del chatbot (editable en /admin) → repetir y ver si baja el % de incorrectas
+- [x] Calidad (21 ago): null ≠ Gratis; GPS 0,0 ignorado; geo por Nominatim; alias POI; prompt no hereda filtros de ciudad suelta
 
 ---
 
@@ -174,3 +175,6 @@ de BD falla, mejor caer en el gratuito.
   detección de huecos en península (radio 25 km) + import Places (~169);
   caché `/api/areas` a 30 s (`s-maxage=30`, sin SWR) para que los lotes
   salgan en el mapa al hacer Ctrl+F5. Landing `/mapa-autocaravanas-reino-unido`.
+- **21 ago 2026 (Tío Viajero)**: admin tabla + quesito; primera evaluación
+  (~53% incorrectas, casi todas por “Gratis” con precio null); parches de
+  precio/geo/GPS/prompt; regla de círculo revisión-corrección.

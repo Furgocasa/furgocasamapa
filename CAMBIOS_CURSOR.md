@@ -154,7 +154,20 @@
 - **Script nuevo**: `scripts/evaluar-respuestas-chatbot.js` | **Comando**: `npm run evaluar:chatbot` (dry-run; `EVAL_RUN=1` ejecuta; `EVAL_LIMIT` def 200).
 - Clasifica cada respuesta como correcta/mejorable/incorrecta, con motivo y sugerencia. **Verifica hechos contra los datos reales de las áreas en BD** (carga las áreas de `areas_ids` y compara precios/servicios). Cola = filas con `evaluado_at IS NULL` (reanudable, sin duplicados).
 - La página `/admin/chatbot-respuestas` incluye filtros y badges por veredicto IA.
-- **Flujo de afinado**: evaluar → filtrar incorrectas → aplicar sugerencias al system prompt (editable en /admin) → repetir y comparar %.
+- **Flujo de afinado (círculo, 21 ago 2026)**: evaluar → corregir código/prompt → push a `main`. No quedarse en el informe. Regla: `.cursor/rules/chatbot-revision.mdc`.
+
+### 7.8 Admin: tabla + quesito (21 ago 2026)
+- **Archivos**: `app/admin/chatbot-respuestas/page.tsx`, `app/api/admin/chatbot-respuestas/route.ts`
+- Tabla: Fecha, Usuario (nombre/email), Anónimo/Registrado, Mensaje, Respuesta, Categorización. Fila expandible con motivo IA y nota de revisión.
+- Quesito Recharts (correctas / mejorables / incorrectas / sin evaluar) con %; clic en quesito o tarjeta filtra la tabla.
+- La API enriquece `user_id` con nombre/email de Auth y devuelve `stats` globales (no solo la página).
+
+### 7.9 Correcciones de calidad (21 ago 2026)
+- **Archivos**: `lib/chatbot/functions.ts`, `app/api/chatbot/route.ts`, `components/chatbot/ChatbotWidget.tsx`
+- `precio_noche` null ya no se pinta ni se filtra como Gratis. Gratis solo si `=== 0`.
+- GPS inválido / Null Island (`0,0`) se ignora; sin ciudad/GPS/país no se lanza un ranking mundial.
+- Búsqueda por nombre: alias (Massabielle → Lourdes, bolemdam → Volendam) + geocodificación Nominatim y radio (no ILIKE suelto tipo “Ajo” → Países Bajos).
+- Prompt de calidad: no heredar filtros si solo nombran ciudad; no buscar gasolineras; idioma del último mensaje.
 
 ### 7.6 Conexión chatbot → mapa (tarjetas de área)
 - **Qué**: al clicar una tarjeta de área en el chat, ya NO se abre `/area/[slug]` en pestaña nueva; ahora lleva AL MAPA con esa área seleccionada (centrada y con popup abierto). El chat se minimiza para poder retomarlo. Desde el popup del mapa el usuario ya tiene "Ver detalles".

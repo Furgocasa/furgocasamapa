@@ -42,6 +42,7 @@
 - ⚙️ **Panel de administración** completo (`/admin`)
 - 📊 **Analytics por pestañas**: usuarios, áreas, rutas, engagement
 - 🤖 **Editor de prompts IA** configurable
+- 🧑‍⚖️ **Respuestas del Tío Viajero** (`/admin/chatbot-respuestas`): tabla + quesito de calidad (correcta / mejorable / incorrecta)
 - 🖼️ **Sistema de banners** con alternancia inteligente CasiCinco/Furgocasa
 - 🗺️ **Selector de proveedor de mapa** (Google/MapLibre/Leaflet)
 
@@ -229,6 +230,27 @@ Terra cubre Chat Completions, Responses, function calling y `web_search`. Las fo
 
 > 💰 El Tío Viajero es el agente de más volumen. Vigilar coste OpenAI: si sube demasiado, se puede bajar solo el chatbot desde `/admin/configuracion` sin tocar el resto.
 
+### Tío Viajero: calidad y revisión
+
+Cada respuesta (también anónima) se guarda en `chatbot_respuestas_log`. El admin las ve en [https://www.mapafurgocasa.com/admin/chatbot-respuestas](https://www.mapafurgocasa.com/admin/chatbot-respuestas): tabla (fecha, usuario, anónimo/registrado, mensaje, respuesta, categorización) y quesito de porcentajes.
+
+Revisor automático (clasifica correcta / mejorable / incorrecta y escribe `motivo_ia` + `sugerencia_ia`):
+
+```powershell
+npm run evaluar:chatbot
+$env:NODE_TLS_REJECT_UNAUTHORIZED="0"; $env:EVAL_RUN="1"; npm run evaluar:chatbot
+```
+
+**Círculo revisión → corrección** (regla `.cursor/rules/chatbot-revision.mdc`): al pedir “revisa el chatbot” no basta el informe; hay que parchear prompt o código (`lib/chatbot/functions.ts`, `app/api/chatbot/route.ts`) y pushear a `main`. Las filas viejas del admin no se reescriben.
+
+Reglas de datos que el bot debe cumplir:
+
+- `precio_noche` null → “Precio no disponible”, nunca Gratis. Gratis solo si el precio es `0`.
+- GPS `0,0` / Null Island se ignora; sin ubicación no se busca en todo el mundo.
+- Ciudad o “Ajo, Cantabria” se geocodifica (Nominatim) y se busca por radio.
+- POI conocidos: Massabielle → Lourdes; bolemdam → Volendam.
+- Ciudad suelta no hereda filtros (mascotas, luz, gratis) del turno anterior.
+
 ---
 
 ## 🤖 Enriquecimiento de Descripciones (IA)
@@ -294,6 +316,7 @@ Cada país se trata como mercado propio (terminología + tipo de sitio), no como
 
 | Versión | Fecha | Cambios principales |
 |---------|-------|---------------------|
+| v4.4 | 21 ago 2026 | Admin Tío Viajero (tabla + quesito), ciclo revisión-corrección, null ≠ gratis, geo Nominatim |
 | v4.3 | Agosto 2026 | Piloto Gales (~480), huecos península (~169), caché `/api/areas` a 30 s |
 | v4.2 | Agosto 2026 | Agentes de texto unificados en `gpt-5.6-terra` |
 | v4.1 | Enero 2026 | Sistema de banners con alternancia inteligente CasiCinco/Furgocasa |
