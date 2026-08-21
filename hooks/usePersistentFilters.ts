@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { TIPO_AREA_IDS } from '@/lib/areas/tipo-area'
 
 export interface Filtros {
   busqueda: string
@@ -20,7 +21,11 @@ interface FilterMetadata {
 interface SavedFilters extends Filtros, FilterMetadata {}
 
 const STORAGE_KEY = 'mapa-filters'
-const CURRENT_VERSION = '1.0'
+const CURRENT_VERSION = '2.0'
+
+function tiposValidos(tipos?: string[]): string[] {
+  return (tipos || []).filter((t) => (TIPO_AREA_IDS as readonly string[]).includes(t))
+}
 
 export const usePersistentFilters = () => {
   const [filtros, setFiltros] = useState<Filtros>({
@@ -59,7 +64,7 @@ export const usePersistentFilters = () => {
             busqueda: parsed.busqueda || '',
             pais: paisRestaurado,
             servicios: parsed.servicios || [],
-            tipos: parsed.tipos || [],
+            tipos: tiposValidos(parsed.tipos),
             precio: parsed.precio || '',
             caracteristicas: parsed.caracteristicas || []
           })

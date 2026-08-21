@@ -149,7 +149,7 @@ export function PaisLandingPage({ pais }: PaisLandingPageProps) {
                 +{totalAreas} Áreas Actualizadas
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Base de datos completa con áreas públicas, privadas, campings y parkings en {pais.nombre} y más países. Información verificada de servicios, precios y ubicaciones exactas.
+                Base de datos completa con áreas públicas, privadas y campings en {pais.nombre} y más países. Información verificada de servicios, precios y ubicaciones exactas.
               </p>
             </div>
 

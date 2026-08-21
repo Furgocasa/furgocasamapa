@@ -14,6 +14,7 @@ import { ToastNotification } from '@/components/mapa/ToastNotification'
 import { reverseGeocode } from '@/lib/google/geocoding'
 import { track } from '@/lib/analytics/track'
 import { useLanguage } from '@/lib/i18n'
+import { TIPO_AREA_IDS } from '@/lib/areas/tipo-area'
 
 export default function MapaPage() {
   const { locale, t } = useLanguage()
@@ -393,7 +394,11 @@ export default function MapaPage() {
       }
 
       if (filtros.tipos?.length > 0) {
-        if (!filtros.tipos.includes(area.tipo_area)) return false
+        const tiposActivos = filtros.tipos.filter((t) =>
+          (TIPO_AREA_IDS as readonly string[]).includes(t)
+        )
+        if (tiposActivos.length === 0) return true
+        if (!tiposActivos.includes(area.tipo_area)) return false
       }
 
       // Filtro de precio
