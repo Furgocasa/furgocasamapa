@@ -15,6 +15,17 @@ export const TIPO_AREA_BADGE_CLASSES: Record<TipoArea, string> = {
   camping: 'bg-emerald-500/90 text-white backdrop-blur-md border border-emerald-400/30',
 }
 
+export function tipoAreaParaPrompt(tipo?: string | null): string {
+  if (tipo === 'camping') return 'camping (recinto con parcela)'
+  if (tipo === 'privada') return 'área privada (empresa o particular)'
+  if (tipo === 'publica') return 'área pública (ayuntamiento u organismo)'
+  return 'área de autocaravanas'
+}
+
+/** Para prompts de búsqueda, ficha y chatbot. No buscar estas tres palabras: buscar el nombre local. */
+export const REGLA_TRES_TIPOS_PROMPT =
+  'En este mapa solo hay tres tipos: área pública, área privada y camping. Se busca con el nombre local del territorio (aire, sosta, Stellplatz, camperplaats, CL, parking autocaravanas, trailer park, Weingut). Eso es etiqueta, no un tipo extra. Si no encaja en una de las tres, no entra. No existe la categoría stopover.'
+
 const LATAM = new Set([
   'México',
   'Mexico',

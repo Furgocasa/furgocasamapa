@@ -113,7 +113,7 @@ function buildContexto(area) {
 - Ciudad: ${area.ciudad}
 - Provincia: ${area.provincia}
 - País: ${area.pais}
-- Tipo: ${area.tipo_area || 'área para autocaravanas'}
+- Tipo: ${area.tipo_area === 'camping' ? 'camping (recinto con parcela)' : area.tipo_area === 'privada' ? 'área privada (empresa o particular)' : area.tipo_area === 'publica' ? 'área pública (ayuntamiento u organismo)' : 'área de autocaravanas'}
 `
   const precio = area.precio_noche
   if (precio != null) c += `- Precio: ${precio === 0 ? 'Gratuita' : `${precio}€/noche`}\n`
@@ -130,7 +130,8 @@ function buildContexto(area) {
 function buildMessages(area, extraReminder) {
   const contexto = buildContexto(area)
   const system = `Eres un redactor profesional de fichas de área para autocaravanas, campers y caravanas en español.
-Tienes web_search y DEBES usarla: busca el recinto por su nombre y localidad (ayuntamiento, Park4night, Campercontact, web del camping, prensa local). No inventes un resumen turístico del país.
+Tienes web_search y DEBES usarla: busca el recinto por su nombre local y localidad (ayuntamiento, Park4night, Campercontact, web del camping, prensa local). No inventes un resumen turístico del país.
+En este mapa solo hay tres tipos: área pública, área privada y camping. El nombre local (aire, sosta, Stellplatz, CL, Weingut) es etiqueta. No existe la categoría stopover.
 
 REGLAS DE CALIDAD INNEGOCIABLES:
 - Escribe con seguridad, como quien conoce el sitio. Cifras, topónimos, gestora, fiestas con fecha.

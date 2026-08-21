@@ -74,7 +74,8 @@ function buildInput(area) {
   if (!area.plazas_totales && !area.plazas_camper) faltan.push('plazas_totales')
 
   const system = `Eres un investigador de datos de áreas para autocaravanas. Tienes búsqueda web: ÚSALA SIEMPRE.
-Busca el área en fuentes fiables (web oficial del ayuntamiento o del área, Park4night, Campercontact, CaraMaps, áreasAC, furgovw...).
+Busca el área por su nombre local en fuentes fiables (web oficial, Park4night, Campercontact, CaraMaps, áreasAC, furgovw...).
+Solo hay tres tipos en el mapa (pública, privada, camping); no inventes un cuarto ni "stopover" como categoría.
 
 REGLAS:
 - SOLO devuelve un dato si lo has VERIFICADO en al menos una fuente. Si no lo encuentras, devuelve null.
@@ -93,7 +94,7 @@ Devuelve EXCLUSIVAMENTE un JSON válido con esta forma exacta (sin markdown, sin
 - Ciudad: ${area.ciudad}
 - Provincia: ${area.provincia}
 - País: ${area.pais}
-- Tipo: ${area.tipo_area || 'área de autocaravanas'}
+- Tipo: ${area.tipo_area === 'camping' ? 'camping (recinto)' : area.tipo_area === 'privada' ? 'área privada' : area.tipo_area === 'publica' ? 'área pública' : 'área de autocaravanas'}
 - Coordenadas: ${area.latitud}, ${area.longitud}
 
 DATOS QUE FALTAN Y DEBES BUSCAR: ${faltan.join(', ')}

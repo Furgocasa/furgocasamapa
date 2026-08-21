@@ -758,7 +758,7 @@ export default function BusquedaMasivaPage() {
           })
           if (!decision.admite || !decision.tipo) {
             errorCount++
-            errors.push(`${place.name}: no encaja en las 4 tipologías`)
+            errors.push(`${place.name}: no encaja en las 3 tipologías`)
             continue
           }
 
@@ -999,7 +999,7 @@ export default function BusquedaMasivaPage() {
           })
           if (!decision.admite || !decision.tipo) {
             errorCount++
-            errors.push(`${place.name}: no encaja en las 4 tipologías`)
+            errors.push(`${place.name}: no encaja en las 3 tipologías`)
             continue
           }
 
@@ -1168,10 +1168,8 @@ export default function BusquedaMasivaPage() {
               <strong>💡 Ejemplos de búsqueda:</strong>
             </p>
             <ul className="text-sm text-blue-800 mt-2 space-y-1 list-disc list-inside">
-              <li>"areas autocaravanas murcia" - Busca áreas específicas en Murcia</li>
-              <li>"camping autocaravanas valencia" - Busca campings en Valencia</li>
-              <li>"parking autocaravanas madrid" - Busca parkings en Madrid</li>
-              <li>"área pernocta barcelona" - Busca zonas de pernocta en Barcelona</li>
+              <li>Busca como lo llaman allí: «área autocaravanas Murcia», «aire camping-car Lyon», «sosta camper Pisa», «Stellplatz Trier», «motorhome aire Wales»</li>
+              <li>Lo que entre se guarda como área pública, área privada o camping. Si no encaja, no se añade.</li>
             </ul>
           </div>
         </div>
@@ -1396,7 +1394,7 @@ export default function BusquedaMasivaPage() {
                           ) : !placeAdmite(place) ? (
                             <span
                               className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800"
-                              title={place.motivo_tipo || 'No encaja en las 4 tipologías'}
+                              title={place.motivo_tipo || 'No encaja en las 3 tipologías'}
                             >
                               <XCircleIcon className="w-4 h-4" />
                               No entra
@@ -1541,7 +1539,7 @@ export default function BusquedaMasivaPage() {
                           ) : !placeAdmite(place) ? (
                             <span
                               className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800"
-                              title={place.motivo_tipo || 'No encaja en las 4 tipologías'}
+                              title={place.motivo_tipo || 'No encaja en las 3 tipologías'}
                             >
                               <XCircleIcon className="w-4 h-4" />
                               No entra

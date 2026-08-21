@@ -19,3 +19,4 @@ Si el usuario pide revisar, evaluar o mirar las respuestas del Tío Viajero / ch
 - Parar en “53% incorrectas” o en sugerencias sin parche.
 - Pedir permiso para corregir si el usuario ya pidió revisar: la corrección va incluida.
 - Inventar “Gratis” si `precio_noche` es null; no buscar con GPS 0,0; no heredar filtros de un turno anterior si solo nombran una ciudad.
+- Presentar «stopover» como un cuarto tipo. Solo hay pública, privada y camping.

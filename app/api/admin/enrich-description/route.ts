@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { REGLA_TRES_TIPOS_PROMPT, tipoAreaParaPrompt } from '@/lib/areas/tipo-area'
 import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
 import { DEFAULT_OPENAI_MODEL } from '@/lib/openai/model-validation'
@@ -80,7 +81,7 @@ function buildContexto(area: any): string {
 - Ciudad: ${area.ciudad}
 - Provincia: ${area.provincia}
 - País: ${area.pais}
-- Tipo: ${area.tipo_area || 'área para autocaravanas'}
+- Tipo: ${tipoAreaParaPrompt(area.tipo_area)}
 `
 
   if (area.precio_por_noche || area.precio_noche != null) {
@@ -171,7 +172,8 @@ export async function POST(request: NextRequest) {
       .replace(/\{\{area_pais\}\}/g, area.pais || '')
 
     const defaultSystem = `Eres un redactor profesional de fichas de área para autocaravanas, campers y caravanas en español.
-Tienes web_search y DEBES usarla: busca el recinto por su nombre y localidad (ayuntamiento, Park4night, Campercontact, web del camping, prensa local). No inventes un resumen turístico del país.
+Tienes web_search y DEBES usarla: busca el recinto por su nombre local y localidad (ayuntamiento, Park4night, Campercontact, web del camping, prensa local). No inventes un resumen turístico del país.
+${REGLA_TRES_TIPOS_PROMPT}
 
 REGLAS DE CALIDAD INNEGOCIABLES:
 - Escribe con seguridad, como quien conoce el sitio. Cifras, topónimos, gestora, fiestas con fecha.

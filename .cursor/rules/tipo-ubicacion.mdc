@@ -1,47 +1,38 @@
 ---
-description: Qué entra en el mapa (3 tipos) y qué se descarta
+description: Tres tipos, búsqueda local, clasificar al encontrar
 alwaysApply: true
 ---
 
 # Tipo de ubicación
 
-Solo entran tres cosas. Si no es una de ellas, no está en el mapa.
+Solo tres. Si no encaja, no entra.
 
-| Código | UI | Significado |
-|--------|-----|-------------|
-| `publica` | Área pública | Área de autocaravanas de ayuntamiento / organismo público |
-| `privada` | Área privada | Área de autocaravanas de empresa o particular (casi siempre de cobro) |
+| Código | UI | Qué es |
+|--------|-----|--------|
+| `publica` | Área pública | Titularidad pública (ayuntamiento / organismo) |
+| `privada` | Área privada | Empresa o particular (camper park, granja, Weingut, CL) |
 | `camping` | Camping | Recinto: valla, parcela, a menudo tiendas / bungalows |
 
-No hay cuarto tipo. El nombre local (aire, sosta, Stellplatz, CL, «parking autocaravanas», Weingut) es etiqueta.
+No hay cuarto tipo. Pública/privada es **titularidad**, no precio.
 
-## Pública vs privada
+## Buscar ≠ categorizar
 
-Es **titularidad**, no precio. Un área municipal de pago sigue siendo pública. Una granja, Weingut o camper park gratis sigue siendo privada.
+No se busca «área pública / privada / camping». Se busca **como lo llama la gente en ese territorio**. Al encontrar, `decidirUbicacion()` lo mete en una de las tres o lo descarta.
 
-- «Área / parking / parcheggio / Parkplatz de autocaravanas» → **pública** salvo marca de empresa.
-- Camper park, camperstop, granja, Weingut, Brit Stop, CL británico, finca-caravana → **privada**.
-- En España «área camper + pueblo» (Guitiriz) suele ser municipal. No volcar a privada solo por decir «camper».
+| Territorio | Cómo se busca |
+|---|---|
+| España / Portugal | área / parking / aparcamiento / estacionamento de autocaravanas, camping |
+| Francia | aire camping-car, aire de service, parking camping-car, chez l’habitant |
+| Italia | area sosta, sosta camper, parcheggio camper, campeggio |
+| DACH | Stellplatz, Wohnmobilstellplatz, Weingut Wohnmobil, Campingplatz |
+| Benelux | camperplaats, camperparking |
+| Reino Unido | motorhome aire, stopover, CL, touring / caravan park |
+| LatAm / México | trailer park, RV park, estacionamiento motorhome, casa rodante |
 
-## Camping
-
-Recinto de acampada. En España «área camping» / «área camper» es un **área**, no un camping.
+Un «stopover», Weingut o Brit Stop **se busca** (es el nombre local) y **se guarda como `privada`**. No es un tipo.
 
 ## No entra
 
-Parking del polideportivo, solar, arcén, «alguien durmió aquí», zona de acampada, wild camp, aire naturelle de campo, parking de coches, storage / marina seca, taller, hire.
+Parking de polideportivo, solar, arcén, wild camp, zona de acampada, hire, taller, storage, marina seca, parking de coches.
 
-No filtrar por el JSON `servicios` (casi siempre vacío).
-
-## Reino Unido / Gales
-
-| Señal en el nombre | Tipo |
-|---|---|
-| Arosfan, Y Glyn, aire de Gwynedd | `publica` |
-| «Aire» CAMpRA / anfitrión, CL/CS | `privada` |
-| Club Campsite, touring/holiday/caravan park | `camping` |
-| Brit Stop / pub / motorhome stopover de parcelas | `privada` |
-
-**Búsquedas nuevas:** clasificar al encontrar con `decidirUbicacion`. Si no encaja en una de las tres, no insertar. No default a `publica`.
-
-Código: `lib/areas/tipo-area.ts`.
+**Búsquedas nuevas:** clasificar al encontrar. No default a `publica`. Código: `lib/areas/tipo-area.ts`.

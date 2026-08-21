@@ -2,9 +2,8 @@
  * 🌎 BÚSQUEDA MASIVA AUTOMÁTICA - LATINOAMÉRICA
  * ============================================================================
  *
- * Este script recorre automáticamente todos los países de habla hispana en
- * LATAM buscando áreas de autocaravanas de forma sistemática usando una
- * cuadrícula geográfica.
+ * Este script recorre LATAM buscando con términos locales (trailer park, RV,
+ * casa rodante). Al encontrar: publica | privada | camping, o no entra.
  *
  * ESTRATEGIA:
  * - Divide cada país en cuadrículas geográficas

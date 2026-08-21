@@ -1,0 +1,13 @@
+---
+description: Imports y enriquecimiento usan nombre local y las 3 tipologías
+globs: scripts/**/*.{ts,js},app/api/admin/**/*.ts,app/admin/areas/busqueda-masiva/**
+alwaysApply: false
+---
+
+# Búsqueda y enriquecimiento
+
+Al buscar (Google Places, admin, huecos) usa **términos locales del país**, no «área pública». Ejemplos: `aire camping-car`, `sosta camper`, `Stellplatz`, `camperplaats`, `motorhome aire`, `trailer park`.
+
+Al encontrar: `decidirUbicacion(nombre, { pais, types })`. Si `admite` es false, no insertar. El `tipo` solo puede ser `publica` | `privada` | `camping`.
+
+Al enriquecer (descripción, servicios, datos): el campo `tipo_area` es una de esas tres. El nombre local (aire, sosta, Weingut) se puede citar en el texto; no inventar un cuarto tipo ni «stopover» como categoría. Usa `tipoAreaParaPrompt()` / `REGLA_TRES_TIPOS_PROMPT` de `lib/areas/tipo-area.ts`.

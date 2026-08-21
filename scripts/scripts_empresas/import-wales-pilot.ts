@@ -1,9 +1,9 @@
 /**
- * PILOTO GALES — motorhome aires, stopovers y touring sites
+ * PILOTO GALES — se busca aire / stopover / CL / touring; se guarda publica | privada | camping
  *
  * No busca "áreas de autocaravanas" (jerga ES/FR). Busca el mix UK:
  *   - Arosfan / aire del consejo      → publica
- *   - aire CAMpRA / stopover de parcelas → privada
+ *   - aire CAMpRA / stopover de parcelas / CL → privada
  *   - CL / certified location         → privada
  *   - touring park / campsite         → camping
  *   - Brit Stop / pub                 → parking
@@ -115,7 +115,7 @@ const TERMINOS_GRID = [
   "campsite motorhome",
 ];
 
-/** Búsquedas de texto a escala país: los aires/stopovers son escasos */
+/** Búsquedas de texto a escala país: aires y CL son escasos */
 const TEXT_QUERIES = [
   "motorhome aire Wales",
   "motorhome stopover Wales",
@@ -580,7 +580,7 @@ async function main() {
   }
 
   console.log("\n" + "=".repeat(72));
-  console.log("🇬🇧  PILOTO GALES — aires, stopovers y touring sites");
+  console.log("🇬🇧  PILOTO GALES — se busca aire/stopover/CL/touring; se guarda en las 3 tipologías");
   console.log("=".repeat(72));
   console.log(`Modo: ${doImport ? "IMPORT REAL" : "DRY RUN (sin importar)"}`);
   console.log(`Términos grid: ${TERMINOS_GRID.join(" | ")}`);
@@ -593,7 +593,7 @@ async function main() {
   let busquedas = 0;
   let rawResults = 0;
 
-  console.log("🔎 Text Search (aires / stopovers / CL)\n");
+  console.log("🔎 Text Search (aire / stopover local / CL)\n");
   for (const query of TEXT_QUERIES) {
     busquedas++;
     process.stdout.write(`   "${query}"… `);

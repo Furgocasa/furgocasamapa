@@ -1,5 +1,5 @@
 /**
- * Búsqueda en huecos de cobertura (península o Baleares).
+ * Búsqueda en huecos: términos locales del país; al encontrar, publica | privada | camping o no entra.
  *
  * USO:
  *   npm run import:iberia:gaps
@@ -308,7 +308,7 @@ const TERMINOS_IT = [
   "campeggio camper",
 ];
 
-/** Stopover: aparcamiento de paso en la lengua del país, no el calco de “área”. */
+/** Términos locales extra (parking / Parkplatz / parcheggio). No son un cuarto tipo: al encontrar se clasifican en pública o privada. */
 const STOPOVER_ES = ["aparcamiento autocaravanas"];
 const STOPOVER_BALEARES = ["aparcamiento autocaravanas", "parking autocaravanes"];
 const STOPOVER_PT = ["estacionamento autocaravanas"];
@@ -848,7 +848,7 @@ async function main() {
         : "\nPenínsula — búsqueda en 16 huecos (radio 40 km)"
   );
   if (SOLO_STOPOVER) {
-    console.log("Solo términos locales de stopover (aparcamiento / Parkplatz / parking / parcheggio)\n");
+    console.log("Solo términos locales de parking/Parkplatz/parcheggio (se clasifican en pública o privada)\n");
   }
   console.log(doImport ? "MODO IMPORT\n" : "DRY RUN\n");
 

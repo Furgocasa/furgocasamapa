@@ -160,7 +160,7 @@ Cifras de producción (agosto 2026; crecen con cada import):
 
 Destacados recientes:
 
-- **Reino Unido (piloto Gales)**: ~480 sitios. No son “áreas ES/FR”: aires, stopovers, CL y touring parks.
+- **Reino Unido (piloto Gales)**: ~480 sitios. Se buscan como aire, stopover, CL y touring park; se guardan como pública, privada o camping.
 - **Península**: España ~1.100, Portugal ~130. En agosto 2026 se taparon 16 huecos interiores (Alentejo, Arribes, Sierra Morena, Cuenca…) con ~169 fichas nuevas.
 
 Landings: `/mapa-autocaravanas-reino-unido`, `/mapa-autocaravanas-espana`, `/mapa-casas-rodantes-mexico`, etc. (`config/paises-seo.ts`).
@@ -309,9 +309,9 @@ Variables opcionales: `BULK_MODE` (`critical` | `all` | `everything`), `BULK_CON
 
 ## 🏷️ Tipo de ubicación
 
-Campo `areas.tipo_area`: `publica` | `privada` | `camping`. Código y colores: `lib/areas/tipo-area.ts`.
+Campo `areas.tipo_area`: `publica` | `privada` | `camping`. Código: `lib/areas/tipo-area.ts`.
 
-Solo entra lo que encaja en **una de estas tres**. El nombre local (aire, sosta, Stellplatz, CL, parking autocaravanas) es etiqueta, no un tipo extra.
+Solo entra lo que encaja en **una de estas tres**. **Buscar** y **categorizar** no son lo mismo: se busca con el nombre local del territorio (aire, sosta, Stellplatz, camperplaats, motorhome aire, trailer park, parking autocaravanas). Al encontrar, `decidirUbicacion()` lo agrupa en una de las tres o lo descarta. El nombre local es etiqueta, no un tipo extra.
 
 | Código | Lo que ve el usuario | Qué es | Ejemplos locales |
 |--------|----------------------|--------|------------------|
@@ -331,7 +331,7 @@ En cada búsqueda nueva, `decidirUbicacion()` corre **al encontrar** el sitio: o
 
 El mapa carga **todas** las áreas activas desde `GET /api/areas` (CDN Vercel **30 s**, sin `stale-while-revalidate`). El cliente usa `cache: 'no-store'` y `?v=` para invalidar el CDN tras un import masivo. Tras un lote grande: push a `main`, esperar deploy, **Ctrl+F5**.
 
-Cada país se trata como mercado propio (terminología + tipo de sitio), no como un clon de España:
+Cada país se trata como mercado propio: **se busca con el nombre local**, no con «área pública / privada / camping». Lo encontrado se agrupa en esas tres o no entra.
 
 | Mercado | Qué se busca | Script | Comandos |
 |---------|--------------|--------|----------|
@@ -342,7 +342,7 @@ Cada país se trata como mercado propio (terminología + tipo de sitio), no como
 | Huecos Alemania | Stellplatz + Campingplatz + **Wohnmobilparkplatz / Weingut** | mismo script `--region=alemania` | `npm run import:alemania:gaps` → `--from-report --import` |
 | Huecos Francia | aire + camping + **parking camping-car / chez l’habitant** | mismo script `--region=francia` | `npm run import:francia:gaps` → `--from-report --import` |
 | Huecos Italia | sosta + campeggio + **parcheggio camper** | mismo script `--region=italia` | `npm run import:italia:gaps` → `--from-report --import` |
-| Huecos Suiza | Stellplatz / aire / sosta + stopover local (16 disparos; 41 previas) | mismo script `--region=suiza` | `npm run import:suiza:gaps` → `--from-report --import` |
+| Huecos Suiza | Stellplatz / aire / sosta / parking camping-car (16 disparos) | mismo script `--region=suiza` | `npm run import:suiza:gaps` → `--from-report --import` |
 | Huecos Austria | Stellplatz + Campingplatz + **Wohnmobilparkplatz / Weingut** | mismo script `--region=austria` | `npm run import:austria:gaps` → `--from-report --import` |
 | Huecos Bélgica | camperplaats (Flandes) / aire (Valonia) / Stellplatz (Eupen) | mismo script `--region=belgica` | `npm run import:belgica:gaps` → `--from-report --import` |
 | Huecos Luxemburgo | aire + Stellplatz (6 disparos; 5 previas) | mismo script `--region=luxemburgo` | `npm run import:luxemburgo:gaps` → `--from-report --import` |

@@ -82,6 +82,7 @@ async function evaluar(openai, log, areasReales) {
   }
 
   const system = `Eres el REVISOR DE CALIDAD del chatbot "Tío Viajero" de Mapa Furgocasa (plataforma de áreas para autocaravanas).
+Solo hay tres tipos: área pública, área privada y camping. Si el chatbot presenta "stopover" como un cuarto tipo, penaliza. El nombre local (aire, sosta, Stellplatz) no es un tipo.
 Evalúas UNA respuesta individual del chatbot comparándola con la pregunta del usuario y con los DATOS REALES de la base de datos.
 
 CRITERIOS:

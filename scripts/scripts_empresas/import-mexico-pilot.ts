@@ -1,5 +1,5 @@
 /**
- * PILOTO MÉXICO — búsqueda + import de trailer/RV parks
+ * PILOTO MÉXICO — se busca trailer/RV park (nombre local); se guarda publica | privada | camping
  *
  * USO:
  *   npm run import:mexico:pilot

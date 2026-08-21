@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { tipoAreaParaPrompt } from '@/lib/areas/tipo-area'
 import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
 import { DEFAULT_OPENAI_MODEL } from '@/lib/openai/model-validation'
@@ -186,7 +187,7 @@ agua, electricidad, vaciado_aguas_negras, vaciado_aguas_grises, wifi, duchas, wc
 - Ciudad: ${area.ciudad || ''}
 - Provincia: ${area.provincia || ''}
 - País: ${area.pais || ''}
-- Tipo: ${area.tipo_area || 'desconocido'}
+- Tipo: ${tipoAreaParaPrompt(area.tipo_area)}
 ${area.website ? `- Web: ${area.website}\n` : ''}${serpReinforcement ? `\nINFORMACIÓN DE REFUERZO (contrástala con tu propia búsqueda web; no la tomes como verdad absoluta):\n${serpReinforcement}\n` : ''}
 Busca información actual de ESTA área y prioriza confirmar/rechazar: agua, electricidad, vaciado_aguas_negras, vaciado_aguas_grises, duchas, wc.
 Devuelve SOLO este JSON (true/false en cada clave):
