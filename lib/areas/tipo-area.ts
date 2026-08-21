@@ -150,7 +150,8 @@ function tieneSenalDeLasCuatro(n: string, types: string[]): boolean {
     ) ||
     /\b cl(\s+site)?\b/.test(n) ||
     /\b(camper ?park|camperstop|area camper|area camping)\b/.test(n) ||
-    /\b(weingut|chez l.habitant|parking de passage|brit.?stop)\b/.test(n)
+    /\b(weingut|chez l.habitant|parking de passage|brit.?stop)\b/.test(n) ||
+    /\b(casa.?rodante|casas rodantes|motorhome|trailer)\b/.test(n)
   )
 }
 
@@ -172,8 +173,8 @@ export function esFueraDelMapa(name: string, types: string[] = []): boolean {
     return true
   }
   if (
-    /\b(hire|rental|alquiler|vermietung|noleggio|location de )\b/.test(n) &&
-    /\b(camper|motorhome|van|autocaravana|wohnmobil|fourgon)\b/.test(n)
+    /\b(hire|rental|alquiler|arriendo|vermietung|noleggio|location de )\b/.test(n) &&
+    /\b(camper|motorhome|van|autocaravana|wohnmobil|fourgon|casa.?rodante)\b/.test(n)
   ) {
     return true
   }

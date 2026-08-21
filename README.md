@@ -350,6 +350,7 @@ Cada país se trata como mercado propio: **se busca con el nombre local**, no co
 | Huecos Dinamarca | **autocamperplads** + campingplads + Stellplatz | mismo script `--region=dinamarca` | `npm run import:dinamarca:gaps` → `--from-report --import` |
 | Huecos Suecia | **ställplats** + husbil + camping | mismo script `--region=suecia` | `npm run import:suecia:gaps` → `--from-report --import` |
 | Huecos Noruega | **bobilplass** + camping bobil | mismo script `--region=noruega` | `npm run import:noruega:gaps` → `--from-report --import` |
+| Huecos Chile | **casas rodantes** / motorhome / trailer park (20 disparos N–S) | mismo script `--region=chile` | `npm run import:chile:gaps` → `--from-report --import` |
 
 **Huecos (península):** rejilla ~22 km; celda vacía = ninguna área a 25 km; celdas vecinas = un hueco; el centroide es el disparo. No incluye islas. **Baleares:** 0 áreas previas → 13 disparos; Formentera no devolvió ficha útil. En Windows, si falla TLS: `$env:NODE_TLS_REJECT_UNAUTHORIZED="0"`.
 

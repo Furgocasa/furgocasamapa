@@ -24,6 +24,7 @@
  *   npm run import:dinamarca:gaps
  *   npm run import:suecia:gaps
  *   npm run import:noruega:gaps
+ *   npm run import:chile:gaps
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -75,6 +76,8 @@ let REPORT_NAME =
           ? "suecia-gaps-dry-report.json"
         : REGION === "noruega"
           ? "noruega-gaps-dry-report.json"
+        : REGION === "chile"
+          ? "chile-gaps-dry-report.json"
         : "iberia-gaps-dry-report.json";
 if (SOLO_STOPOVER) {
   REPORT_NAME = REPORT_NAME.replace("-gaps-dry-report.json", "-stopover-dry-report.json");
@@ -325,6 +328,30 @@ const HUECOS_NORUEGA = [
   { id: 16, zona: "Hardanger", lat: 60.07, lng: 6.55, pais: "Noruega" },
 ];
 
+/** Chile: 224 previas (casi todo camping). 20 disparos de norte a sur; se busca casa rodante / motorhome. */
+const HUECOS_CHILE = [
+  { id: 1, zona: "Arica", lat: -18.48, lng: -70.31, pais: "Chile" },
+  { id: 2, zona: "Iquique", lat: -20.22, lng: -70.14, pais: "Chile" },
+  { id: 3, zona: "San Pedro de Atacama", lat: -22.91, lng: -68.2, pais: "Chile" },
+  { id: 4, zona: "Antofagasta", lat: -23.65, lng: -70.4, pais: "Chile" },
+  { id: 5, zona: "Copiapó", lat: -27.37, lng: -70.33, pais: "Chile" },
+  { id: 6, zona: "La Serena / Coquimbo", lat: -29.9, lng: -71.25, pais: "Chile" },
+  { id: 7, zona: "Valparaíso / Viña", lat: -33.05, lng: -71.62, pais: "Chile" },
+  { id: 8, zona: "Santiago", lat: -33.45, lng: -70.67, pais: "Chile" },
+  { id: 9, zona: "Rancagua", lat: -34.17, lng: -70.74, pais: "Chile" },
+  { id: 10, zona: "Talca / Maule", lat: -35.43, lng: -71.66, pais: "Chile" },
+  { id: 11, zona: "Concepción", lat: -36.83, lng: -73.05, pais: "Chile" },
+  { id: 12, zona: "Temuco / Araucanía", lat: -38.74, lng: -72.6, pais: "Chile" },
+  { id: 13, zona: "Pucón / Villarrica", lat: -39.28, lng: -71.98, pais: "Chile" },
+  { id: 14, zona: "Valdivia", lat: -39.81, lng: -73.25, pais: "Chile" },
+  { id: 15, zona: "Puerto Varas / Lagos", lat: -41.32, lng: -72.98, pais: "Chile" },
+  { id: 16, zona: "Chiloé / Castro", lat: -42.48, lng: -73.76, pais: "Chile" },
+  { id: 17, zona: "Coyhaique", lat: -45.57, lng: -72.07, pais: "Chile" },
+  { id: 18, zona: "General Carrera", lat: -46.63, lng: -72.68, pais: "Chile" },
+  { id: 19, zona: "Puerto Natales", lat: -51.73, lng: -72.51, pais: "Chile" },
+  { id: 20, zona: "Punta Arenas", lat: -53.16, lng: -70.91, pais: "Chile" },
+];
+
 const HUECOS =
   REGION === "baleares"
     ? HUECOS_BALEARES
@@ -350,7 +377,9 @@ const HUECOS =
                         ? HUECOS_SUECIA
                         : REGION === "noruega"
                           ? HUECOS_NORUEGA
-                          : HUECOS_PENINSULA;
+                          : REGION === "chile"
+                            ? HUECOS_CHILE
+                            : HUECOS_PENINSULA;
 
 const TERMINOS_ES = [
   "área autocaravanas",
@@ -400,8 +429,13 @@ const TERMINOS_SE = ["ställplats", "husbil ställplats", "camping husbil"];
 const STOPOVER_SE = ["husbilsparkering"];
 const TERMINOS_NO = ["bobilplass", "bobilplasser", "camping bobil"];
 const STOPOVER_NO = ["bobilparkering"];
+const TERMINOS_CL = ["casas rodantes", "motorhome", "camping motorhome"];
+const STOPOVER_CL = ["estacionamiento casas rodantes", "trailer park"];
 
 function terminosDe(hueco: { pais?: string; lang?: string }) {
+  if (REGION === "chile") {
+    return SOLO_STOPOVER ? STOPOVER_CL : [...TERMINOS_CL, ...STOPOVER_CL];
+  }
   if (REGION === "dinamarca") {
     return SOLO_STOPOVER ? STOPOVER_DK : [...TERMINOS_DK, ...STOPOVER_DK];
   }
@@ -466,9 +500,9 @@ function terminosDe(hueco: { pais?: string; lang?: string }) {
 }
 
 const RELEVANCE_RE =
-  /\b(autocaravana|autocaravanas|autocaravanes|camper|caravana|camping|c[aà]mping|campismo|campground|aire|area de servicio|área de servicio|sosta|stellplatz|motorhome|campervan|caravaning|weingut|stopover|camperplaats|husbil|bobil|autocamper)\b|wohnmobil|reisemobil|stallplats|bobilplass|autocamperplads/i;
+  /\b(autocaravana|autocaravanas|autocaravanes|camper|caravana|camping|c[aà]mping|campismo|campground|aire|area de servicio|área de servicio|sosta|stellplatz|motorhome|campervan|caravaning|weingut|stopover|camperplaats|husbil|bobil|autocamper|casa.?rodante)\b|wohnmobil|reisemobil|stallplats|bobilplass|autocamperplads/i;
 const NOISE_RE =
-  /\b(hotel|motel|hostal|hostel|restaurante|restaurant|gasolinera|gas station|dealer|concesionario|venta|alquiler|hire|rental|rentals|rent\b|storage|trasteros?|rimessaggio|agencia|experience|indie campers|vermietung|verkauf|haendler|händler|autohaus|noleggio|overnachten niet toegestaan|no overnight|sin pernocta|vaerksted|teltplass|leieplattform)\b/i;
+  /\b(hotel|motel|hostal|hostel|restaurante|restaurant|gasolinera|gas station|dealer|concesionario|venta|alquiler|arriendo|hire|rental|rentals|rent\b|storage|trasteros?|rimessaggio|agencia|experience|indie campers|vermietung|verkauf|haendler|händler|autohaus|noleggio|overnachten niet toegestaan|no overnight|sin pernocta|vaerksted|teltplass|leieplattform)\b/i;
 
 function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -610,6 +644,14 @@ function isInNorway(lat: number, lng: number): boolean {
   return true;
 }
 
+function isInChile(lat: number, lng: number): boolean {
+  if (lat < -56.0 || lat > -17.5 || lng < -75.7 || lng > -66.4) return false;
+  if (lat > -32 && lat < -23 && lng > -68.0) return false;
+  if (lat < -33 && lat > -40 && lng > -69.8) return false;
+  if (lat < -40 && lat > -48 && lng > -71.0) return false;
+  return true;
+}
+
 function isInBaleares(lat: number, lng: number): boolean {
   if (lat >= 39.25 && lat <= 39.97 && lng >= 2.3 && lng <= 3.48) return true; // Mallorca
   if (lat >= 39.78 && lat <= 40.1 && lng >= 3.78 && lng <= 4.33) return true; // Menorca
@@ -690,6 +732,20 @@ function isRelevant(name: string, types: string[], pais?: string): boolean {
       ) &&
       !types.includes("campground") &&
       !types.includes("rv_park")
+    ) {
+      return false;
+    }
+  }
+  if (REGION === "chile") {
+    if (/\b(hostel|hospedaje)\b/i.test(name)) return false;
+    if (
+      /\bestacionamiento\b/i.test(name) &&
+      !/casa.?rodante|motorhome|camper|trailer|\brv\b|camping/i.test(name)
+    ) {
+      return false;
+    }
+    if (
+      !/casa.?rodante|motorhome|trailer|\brv\b|camper|camping|campamento/i.test(name)
     ) {
       return false;
     }
@@ -851,6 +907,9 @@ async function importUtiles(utiles: any[]) {
     } else if (REGION === "noruega") {
       if (cc && cc !== "NO") continue;
       if (!isInNorway(hit.lat, hit.lng)) continue;
+    } else if (REGION === "chile") {
+      if (cc && cc !== "CL") continue;
+      if (!isInChile(hit.lat, hit.lng)) continue;
     } else if (cc && cc !== "ES" && cc !== "PT") {
       continue;
     }
@@ -879,6 +938,8 @@ async function importUtiles(utiles: any[]) {
               ? "Suecia"
               : REGION === "noruega" || cc === "NO"
                 ? "Noruega"
+          : REGION === "chile" || cc === "CL"
+            ? "Chile"
           : cc === "PT"
             ? "Portugal"
             : "España";
@@ -905,6 +966,8 @@ async function importUtiles(utiles: any[]) {
                         ? "se"
                         : pais === "Noruega"
                           ? "no"
+                        : pais === "Chile"
+                          ? "cl"
                 : pais === "Portugal"
                   ? "pt"
                   : "es";
@@ -1001,6 +1064,8 @@ async function main() {
           ? "\nSuecia — 16 disparos (ställplats, radio 40 km)"
         : REGION === "noruega"
           ? "\nNoruega — 16 disparos (bobilplass, radio 40 km)"
+        : REGION === "chile"
+          ? "\nChile — 20 disparos (casas rodantes / motorhome, radio 40 km)"
         : "\nPenínsula — búsqueda en 16 huecos (radio 40 km)"
   );
   if (SOLO_STOPOVER) {
@@ -1057,6 +1122,7 @@ async function main() {
         if (REGION === "dinamarca" && !isInDenmark(r.lat, r.lng)) continue;
         if (REGION === "suecia" && !isInSweden(r.lat, r.lng)) continue;
         if (REGION === "noruega" && !isInNorway(r.lat, r.lng)) continue;
+        if (REGION === "chile" && !isInChile(r.lat, r.lng)) continue;
         seen.add(r.place_id);
         const decision = decidirUbicacion(r.name, { types: r.types, pais: hueco.pais });
         const relevant = decision.admite;
