@@ -9,7 +9,7 @@
  *   $env:NODE_TLS_REJECT_UNAUTHORIZED="0"; node scripts/bulk-enrich.js
  * Variables opcionales:
  *   BULK_CONCURRENCY  (def 6)   BULK_LIMIT (0=todas)
- *   BULK_MODE         empty | critical | all | everything | serp   (def critical)
+ *   BULK_MODE         empty | critical | all | everything | serp | weak   (def critical)
  *   BULK_PAIS         filtra por país (ej. España). Vacío = todos
  *   BULK_MODEL        (def gpt-5.6-terra)
  *   BULK_TIMEOUT_MS   (def 90000)
@@ -51,7 +51,12 @@ const LOW_QUALITY = [
   /puede que/i, /suele tener/i, /se recomienda (consultar|verificar|confirmar)/i,
   /encantador (municipio|pueblo|localidad)/i, /en cuanto a las caracter/i,
   /en conclusi[oó]n/i, /destino ideal para/i, /impresi[oó]n duradera/i,
-  /aqu[ií] tienes/i, /itinerario sugerido/i
+  /aqu[ií] tienes/i, /itinerario sugerido/i,
+  /no hay servicios (espec[ií]ficos )?confirmados/i,
+  /gratuito o (su )?precio es desconocido/i,
+  /gratuita o de precio desconocido/i,
+  /precio es desconocido/i,
+  /\[Nombre del [ÁA]rea\]/i, /\[n[uú]mero de plazas\]/i, /Villa Hermosa/i
 ]
 const FORBIDDEN = [
   /consult\w*\s+(antes|disponibilidad|directamente|con\s+el|la\s+disponibilidad)/i,
@@ -64,7 +69,11 @@ const FORBIDDEN = [
   /(posiblemente|probablemente|puede\s+que|podría\s+(tener|disponer)|suele\s+tener)/i,
   /encantador (municipio|pueblo|localidad)/i, /en conclusi[oó]n/i,
   /destino ideal para/i, /impresi[oó]n duradera/i,
-  /(por supuesto|aqu[ií] tienes)/i, /itinerario sugerido/i
+  /(por supuesto|aqu[ií] tienes)/i, /itinerario sugerido/i,
+  /no hay servicios (espec[ií]ficos )?confirmados/i,
+  /gratuito o (su )?precio es desconocido/i,
+  /precio es desconocido/i,
+  /\[Nombre del [ÁA]rea\]/i, /Villa Hermosa/i
 ]
 
 function loadCheckpoint() {
@@ -89,6 +98,12 @@ function needsWork(desc) {
   if (t.includes(PLACEHOLDER)) return true
   if (MODE === 'empty') return false
   if (MODE === 'serp') return SERP_MOLD.filter((re) => re.test(t)).length >= 2
+  if (MODE === 'weak') {
+    if (LOW_QUALITY.some((re) => re.test(t))) return true
+    if (SERP_MOLD.some((re) => re.test(t))) return true
+    if (t.length < 2200) return true
+    return false
+  }
   if (LOW_QUALITY.some((re) => re.test(t))) return true
   if (MODE === 'all' && t.length < 200) return true
   return false
@@ -135,6 +150,8 @@ En este mapa solo hay tres tipos: área pública, área privada y camping. El no
 
 REGLAS DE CALIDAD INNEGOCIABLES:
 - Escribe con seguridad, como quien conoce el sitio. Cifras, topónimos, gestora, fiestas con fecha.
+- SEO LOCAL ÚTIL: integra de forma natural el nombre del área, municipio y provincia, y aporta contexto propio del entorno: 3-5 lugares concretos, accesos, transporte, naturaleza o calendario local. Las distancias, frecuencias y tiempos solo se incluyen si una fuente fiable los confirma.
+- No repitas palabras clave ni redactes un texto turístico intercambiable: cada dato local debe ayudar a decidir la parada o la visita.
 - Si el lugar no es un área de pernocta (guarda de caravanas, zona de tiendas, alquiler de furgos), dilo al principio.
 - PROHIBIDO: "consulta antes", "se recomienda verificar", "no se especifica", "no se ha confirmado", "no hay información", "se desconoce", "posiblemente", "encantador municipio", "destino ideal", "en conclusión", "aquí tienes una guía", itinerarios de otro sitio.
 - SERVICIOS: solo los de la base o verificados en internet. Si no hay ficha, no los menciones (ni para negarlos).
@@ -146,11 +163,11 @@ REGLAS DE CALIDAD INNEGOCIABLES:
 TAREA:
 Investiga el área "${area.nombre}" en ${area.ciudad} (${area.provincia}, ${area.pais}) y redacta 350-550 palabras en 4-5 párrafos separados por una línea en blanco:
 
-1) Dónde está el recinto dentro de ${area.ciudad} y qué tipo de parada es.
+1) Dónde está el recinto dentro de ${area.ciudad} y qué tipo de parada es; integra municipio y provincia de forma natural.
 2) Plazas, precio, horarios, gestora o app, estancia máxima y solo servicios confirmados.
-3) Qué ver a pie o cerca: nombres reales.
-4) Gastronomía, fiestas o naturaleza de ESA comarca (plato o producto concreto).
-5) Acceso para vehículo vivienda, mejor época, un dato práctico real.
+3) Qué ver a pie o cerca: 3-5 nombres reales, explicando la conexión práctica desde el área si está confirmada.
+4) Gastronomía, fiestas o naturaleza de ESA comarca (plato o producto concreto, fecha si es verificable).
+5) Acceso para vehículo vivienda, mejor época y un dato práctico local real.
 
 Devuelve solo el texto final, sin títulos ni viñetas.`
 
