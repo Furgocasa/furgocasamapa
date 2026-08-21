@@ -1,0 +1,31 @@
+---
+description: Qué significa activo/inactivo en áreas y cuáles cuentan para enriquecer textos
+alwaysApply: true
+---
+
+# Áreas activas vs inactivas
+
+`areas.activo` no es un estado de calidad: es **visibilidad pública**.
+
+- **Activa (`true`)**: sale en el mapa, fichas de país, chatbot, sitemap y `/area/[slug]`.
+- **Inactiva (`false`)**: sigue en la base, se ve en `/admin/areas`, **no** está en el mapa. No está borrada.
+
+Al contar “áreas sin descripción” o “pendientes de enriquecer”, usar **solo `activo = true`**. Las inactivas no las ve el usuario.
+
+## Inactivas actuales (no rebuscar)
+
+Las inactivas son **ruido del piloto México (28–29 jul 2026)**, no un fallo del mapa. Se desactivaron a propósito:
+
+- Parkings, PEMEX/OXXO, miradores, hoteles sin RV (Google las etiquetó como `rv_park`).
+- Spill de EE.UU. en la frontera (Texas / Big Bend) importado como “México”.
+- Scripts: `scripts/scripts_empresas/cleanup-mexico-noise.ts`, `cleanup-mexico-us-spill.ts`, `enrich-mexico-details.ts` (cerradas).
+
+No reactivarlas ni enriquecerlas salvo revisión manual.
+
+## Texto de descripción
+
+- **Sin texto en el mapa** = `activo = true` y `descripcion` null/vacía.
+- El placeholder `Requiere verificación y enriquecimiento` **ya no existe** en producción.
+- Textos largos con “no hay información” **sí están enriquecidos**; no son pendientes.
+
+Consulta: `scripts/audit-data-quality.js` o `/admin/areas/enriquecer-textos` (filtro “solo sin texto”, solo activas).
