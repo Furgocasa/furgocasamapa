@@ -73,7 +73,7 @@ Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMEN
 | Clustering | Supercluster |
 | IA (texto) | OpenAI `gpt-5.6-terra` |
 | IA (imágenes) | OpenAI `gpt-image-2` / `gpt-image-1` / `dall-e-3` |
-| Búsqueda Web | SerpAPI |
+| Búsqueda Web (textos) | OpenAI `web_search` (Terra) |
 | Hosting | Vercel |
 
 ---

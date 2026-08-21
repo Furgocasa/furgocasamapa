@@ -30,7 +30,9 @@ const LOW_QUALITY = [
   /consult/i, /verifica/i, /enriquecimiento/i, /no se ha confirmado/i,
   /no se especifica/i, /no hay informaci/i, /no dispone/i,
   /se desconoce/i, /posiblemente/i, /probablemente/i,
-  /puede que/i, /suele tener/i, /se recomienda (consultar|verificar|confirmar)/i
+  /puede que/i, /suele tener/i, /se recomienda (consultar|verificar|confirmar)/i,
+  /encantador (municipio|pueblo|localidad)/i, /en cuanto a las caracter/i,
+  /en conclusi[oó]n/i, /destino ideal para/i, /impresi[oó]n duradera/i
 ]
 
 function analizarDescripcion(desc) {

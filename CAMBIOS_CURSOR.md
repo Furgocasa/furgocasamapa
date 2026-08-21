@@ -345,6 +345,16 @@
 
 ---
 
+## BLOQUE — Agente de textos sin SerpAPI (21 ago 2026)
+
+- **Qué**: el agente de descripciones queda como el lote de España de hoy: `gpt-5.6-terra` + `web_search` obligatoria, `reasoning.effort` medium. Se elimina el refuerzo SerpAPI (snippets genéricos del pueblo).
+- **Prompt**: busca el recinto (ayto, Park4night, web del camping), cifras y topónimos; prohíbe el molde viejo («encantador municipio», «no hay información», «aquí tienes una guía»).
+- **Archivos**: `app/api/admin/enrich-description/route.ts`, `app/api/admin/ia-config/route.ts`, `scripts/bulk-enrich.js`, `app/admin/areas/enriquecer-textos/page.tsx`.
+- **Producción**: `ia_config.enrich_description` actualizado (prompts + effort medium).
+- **Verificar**: `/admin/configuracion` → Enriquecer Textos: effort medium y el prompt nuevo. Regenerar un área vieja tipo Yanguas/Baralla y comparar.
+
+---
+
 ## BLOQUE — Unificación de modelos de texto a GPT-5.6 Terra (21 ago 2026)
 
 - **Qué**: todos los agentes de texto pasan a `gpt-5.6-terra` (equilibrio inteligencia/coste). Las imágenes de áreas siguen en `gpt-image-2`.

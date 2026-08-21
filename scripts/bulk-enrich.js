@@ -48,7 +48,10 @@ const LOW_QUALITY = [
   /consult/i, /verifica/i, /enriquecimiento/i, /no se ha confirmado/i,
   /no se especifica/i, /no hay informaci/i, /no dispone/i,
   /se desconoce/i, /posiblemente/i, /probablemente/i,
-  /puede que/i, /suele tener/i, /se recomienda (consultar|verificar|confirmar)/i
+  /puede que/i, /suele tener/i, /se recomienda (consultar|verificar|confirmar)/i,
+  /encantador (municipio|pueblo|localidad)/i, /en cuanto a las caracter/i,
+  /en conclusi[oó]n/i, /destino ideal para/i, /impresi[oó]n duradera/i,
+  /aqu[ií] tienes/i, /itinerario sugerido/i
 ]
 const FORBIDDEN = [
   /consult\w*\s+(antes|disponibilidad|directamente|con\s+el|la\s+disponibilidad)/i,
@@ -58,7 +61,10 @@ const FORBIDDEN = [
   /no\s+se\s+ha\s+confirmado/i,
   /no\s+(se\s+)?(especifica|indica|detalla|aclara|sabe|conoce)/i,
   /información\s+no\s+disponible/i, /se\s+desconoce/i,
-  /(posiblemente|probablemente|puede\s+que|podría\s+(tener|disponer)|suele\s+tener)/i
+  /(posiblemente|probablemente|puede\s+que|podría\s+(tener|disponer)|suele\s+tener)/i,
+  /encantador (municipio|pueblo|localidad)/i, /en conclusi[oó]n/i,
+  /destino ideal para/i, /impresi[oó]n duradera/i,
+  /(por supuesto|aqu[ií] tienes)/i, /itinerario sugerido/i
 ]
 
 function loadCheckpoint() {
@@ -114,31 +120,29 @@ function buildContexto(area) {
 
 function buildMessages(area, extraReminder) {
   const contexto = buildContexto(area)
-  const system = `Eres un redactor profesional especializado en guías de viaje para autocaravanas, campers y caravanas en español.
-Tienes acceso a búsqueda web: ÚSALA para encontrar información real y actual sobre el área y su localidad (servicios, accesos, entorno, atractivos turísticos, gastronomía).
+  const system = `Eres un redactor profesional de fichas de área para autocaravanas, campers y caravanas en español.
+Tienes web_search y DEBES usarla: busca el recinto por su nombre y localidad (ayuntamiento, Park4night, Campercontact, web del camping, prensa local). No inventes un resumen turístico del país.
 
 REGLAS DE CALIDAD INNEGOCIABLES:
-- Escribe con seguridad y precisión, como un experto que conoce el sitio. JAMÁS muestres dudas.
-- PROHIBIDO usar frases dubitativas o de descargo como: "consulta antes", "se recomienda verificar", "conviene confirmar", "no se especifica", "no se ha confirmado", "no hay información", "no disponemos de datos", "se desconoce", "posiblemente", "probablemente", "puede que", "suele tener", "verifica los servicios al llegar".
-- Sobre SERVICIOS: menciona únicamente los confirmados en la base de datos o que verifiques claramente en internet. Si no puedes confirmar un servicio, NO lo menciones (ni para decir que no lo tiene). Nunca inventes.
-- Si no hay servicios confirmables, céntrate en el entorno, la localidad, qué ver y hacer, gastronomía e historia.
-- No menciones la dirección postal (ya aparece en el mapa).
-- Refiérete siempre a "el área de autocaravanas" o "el área de ${area.nombre}", nunca "esta área".
-- Tono informativo, cercano y útil; nada de pomposidad vacía ("destino ideal", "maravilloso", "joya escondida").
-- Español natural y fluido, sin listas ni viñetas.${extraReminder ? `\n\n${extraReminder}` : ''}`
+- Escribe con seguridad, como quien conoce el sitio. Cifras, topónimos, gestora, fiestas con fecha.
+- Si el lugar no es un área de pernocta (guarda de caravanas, zona de tiendas, alquiler de furgos), dilo al principio.
+- PROHIBIDO: "consulta antes", "se recomienda verificar", "no se especifica", "no se ha confirmado", "no hay información", "se desconoce", "posiblemente", "encantador municipio", "destino ideal", "en conclusión", "aquí tienes una guía", itinerarios de otro sitio.
+- SERVICIOS: solo los de la base o verificados en internet. Si no hay ficha, no los menciones (ni para negarlos).
+- No menciones la dirección postal. Nunca "esta área": di "el área de autocaravanas" o "el área de ${area.nombre}".
+- Español en párrafos, sin listas ni viñetas ni pomposidad vacía.${extraReminder ? `\n\n${extraReminder}` : ''}`
 
   const user = `${contexto}
 
 TAREA:
-Investiga en internet el área "${area.nombre}" y la localidad de ${area.ciudad} (${area.provincia}, ${area.pais}) y redacta una descripción de 350-550 palabras en 4-5 párrafos separados por una línea en blanco:
+Investiga el área "${area.nombre}" en ${area.ciudad} (${area.provincia}, ${area.pais}) y redacta 350-550 palabras en 4-5 párrafos separados por una línea en blanco:
 
-1) Presentación del área de autocaravanas y su ubicación dentro de ${area.ciudad}.
-2) Características del área: plazas, precio y servicios (solo los confirmados o verificados).
-3) Qué ver y hacer en ${area.ciudad} y su entorno cercano.
-4) Gastronomía, cultura, fiestas o naturaleza de la zona.
-5) Cierre práctico y útil para el viajero en autocaravana (accesos, mejor época, recomendaciones reales).
+1) Dónde está el recinto dentro de ${area.ciudad} y qué tipo de parada es.
+2) Plazas, precio, horarios, gestora o app, estancia máxima y solo servicios confirmados.
+3) Qué ver a pie o cerca: nombres reales.
+4) Gastronomía, fiestas o naturaleza de ESA comarca (plato o producto concreto).
+5) Acceso para vehículo vivienda, mejor época, un dato práctico real.
 
-Devuelve solo el texto final, en párrafos, sin títulos ni viñetas.`
+Devuelve solo el texto final, sin títulos ni viñetas.`
 
   return [
     { role: 'system', content: system },

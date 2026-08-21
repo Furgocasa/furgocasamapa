@@ -192,13 +192,17 @@ RESPONDE SOLO CON JSON (sin texto adicional):
       },
       enrich_description: {
         model: DEFAULT_OPENAI_MODEL,
-        reasoning_effort: 'low',
+        reasoning_effort: 'medium',
         max_tokens: 2500,
         prompts: [
           {
             id: 'sys-1',
             role: 'system',
-            content: 'Eres un redactor profesional de guías de viaje para autocaravanas en español. Tienes acceso a búsqueda web y la usas para encontrar información real y actual. Escribes con seguridad y precisión, nunca con frases dubitativas.',
+            content: `Eres un redactor profesional de fichas de área para autocaravanas, campers y caravanas en español. Tienes web_search y DEBES usarla: busca el recinto por su nombre y localidad, no turismo genérico del país.
+
+Escribes como quien conoce el sitio. Cifras, topónimos, gestora, fiestas con fecha. Si el lugar no es un área de pernocta (guarda de caravanas, zona de tiendas, alquiler de furgos), dilo al principio.
+
+PROHIBIDO: dudas ("no hay información", "se recomienda verificar", "encantador municipio"), prefacios de asistente ("aquí tienes una guía"), itinerarios de otro sitio, pomposidad vacía.`,
             order: 1,
             required: true
           },
@@ -208,29 +212,15 @@ RESPONDE SOLO CON JSON (sin texto adicional):
             content: `{{contexto}}
 
 TAREA:
-Investiga en internet el área "{{area_nombre}}" y la localidad de {{area_ciudad}} ({{area_provincia}}) y redacta una descripción de 350-550 palabras en 4-5 párrafos separados por una línea en blanco.
+Investiga en internet el área "{{area_nombre}}" en {{area_ciudad}} ({{area_provincia}}, {{area_pais}}) y redacta 350-550 palabras en 4-5 párrafos separados por una línea en blanco. Busca el ÁREA (ayuntamiento, Park4night, Campercontact, web del camping, prensa local), no un resumen turístico de la región.
 
-Estructura:
-Párrafo 1: Presentación del área de autocaravanas y su ubicación dentro de {{area_ciudad}}.
-Párrafo 2: Características del área (plazas, precio y solo los servicios confirmados o verificados).
-Párrafo 3: Qué ver y hacer en {{area_ciudad}} y su entorno cercano.
-Párrafo 4: Gastronomía, cultura, fiestas o naturaleza de la zona.
-Párrafo 5: Cierre práctico y útil (accesos, mejor época, recomendaciones reales).
+1) Dónde está el recinto dentro de {{area_ciudad}} y qué tipo de parada es.
+2) Plazas, precio, horarios, gestora o app, estancia máxima y solo servicios que hayas confirmado. Si no hay ficha de servicios, no los menciones y pasa al entorno.
+3) Qué ver a pie o cerca: nombres reales (iglesia, playa, museo, mirador).
+4) Gastronomía, fiestas o naturaleza de ESA comarca (plato o producto concreto, fecha si la hay).
+5) Acceso para vehículo vivienda, mejor época, un dato práctico real.
 
-REGLAS DE CALIDAD INNEGOCIABLES:
-✓ Escribe con seguridad, como un experto que conoce el sitio.
-✓ Sobre SERVICIOS: menciona solo los confirmados o verificados en internet. Si no puedes confirmar uno, NO lo menciones (tampoco para negarlo).
-✓ Si no hay servicios confirmables, céntrate en el entorno, qué ver y hacer, gastronomía e historia.
-✓ Refiérete a "el área de autocaravanas" o "el área de {{area_nombre}}" (nunca "esta área").
-✓ Español natural y fluido, en párrafos, sin listas ni viñetas.
-
-PROHIBIDO TERMINANTEMENTE:
-✗ Frases dubitativas o de descargo: "consulta antes", "se recomienda verificar", "conviene confirmar", "no se especifica", "no hay información", "no disponemos de datos", "se desconoce", "posiblemente", "probablemente", "puede que", "suele tener", "verifica los servicios al llegar".
-✗ Mencionar la dirección postal (ya está en el mapa).
-✗ Inventar servicios o datos.
-✗ Pomposidad vacía: "destino ideal", "maravilloso", "joya escondida".
-
-Devuelve solo el texto final.`,
+Devuelve solo el texto final, sin títulos ni viñetas.`,
             order: 2,
             required: false
           }

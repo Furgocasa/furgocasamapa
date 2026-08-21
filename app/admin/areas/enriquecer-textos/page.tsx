@@ -19,7 +19,14 @@ const LOW_QUALITY_PATTERNS: RegExp[] = [
   /no\s+(se\s+)?(especifica|indica|detalla|aclara|sabe|conoce)/i,
   /información\s+no\s+disponible/i,
   /se\s+desconoce/i,
-  /(posiblemente|probablemente|puede\s+que|podría\s+(tener|disponer)|suele\s+tener)/i
+  /(posiblemente|probablemente|puede\s+que|podría\s+(tener|disponer)|suele\s+tener)/i,
+  /encantador (municipio|pueblo|localidad)/i,
+  /en cuanto a las caracter/i,
+  /en conclusi[oó]n/i,
+  /destino ideal para/i,
+  /impresi[oó]n duradera/i,
+  /(por supuesto|aqu[ií] tienes)/i,
+  /itinerario sugerido/i
 ]
 
 function isLowQuality(desc: string): boolean {
@@ -62,7 +69,6 @@ export default function EnriquecerTextosPage() {
       const checks = await response.json()
       
       setConfigStatus({
-        // SerpAPI es opcional (solo refuerzo): basta con OpenAI para usar la búsqueda web de GPT-5.5.
         ready: checks.openaiKeyValid,
         checks
       })
@@ -281,7 +287,7 @@ export default function EnriquecerTextosPage() {
 
   const enrichArea = async (areaId: string, forceProcess: boolean = false): Promise<{ success: boolean; error?: string }> => {
     try {
-      // Todo el trabajo pesado (SerpAPI + GPT-5.5 con búsqueda web) se hace en el servidor,
+      // El texto se genera en el servidor (gpt-5.6-terra + web_search).
       // en /api/admin/enrich-description, para no exponer claves ni depender del navegador.
       const response = await fetch('/api/admin/enrich-description', {
         method: 'POST',
@@ -334,15 +340,14 @@ export default function EnriquecerTextosPage() {
     
     console.log('✅ Validaciones pasadas, iniciando proceso...')
 
-    // Estimación de tiempo y costo (GPT-5.5 con búsqueda web: ~25s y ~$0.05 por área)
     const estimatedMinutes = Math.ceil((selectedIds.length * 25) / 60)
-    const estimatedCost = (selectedIds.length * 0.05).toFixed(2)
+    const estimatedCost = (selectedIds.length * 0.04).toFixed(2)
 
     const userConfirmed = confirm(
-      `¿Generar descripciones con GPT-5.5 (búsqueda web) para ${selectedIds.length} área(s)?\n\n` +
-      `⏱️ Tiempo estimado: ${estimatedMinutes} minuto(s)\n` +
-      `💰 Costo aproximado: $${estimatedCost} USD\n\n` +
-      `El modelo busca información real en internet y la refuerza con SerpAPI.`
+      `¿Generar descripciones con gpt-5.6-terra (búsqueda web) para ${selectedIds.length} área(s)?\n\n` +
+      `Tiempo estimado: ${estimatedMinutes} minuto(s)\n` +
+      `Coste aproximado: $${estimatedCost} USD\n\n` +
+      `El modelo investiga el recinto en internet. No usa SerpAPI.`
     )
     
     console.log('❓ Usuario confirmó:', userConfirmed)
@@ -381,8 +386,8 @@ export default function EnriquecerTextosPage() {
         setProcessLog(prev => [...prev, `✗ ${area.nombre} - ${errorMsg}`])
         
         // Si es error de créditos, detener el proceso
-        if (errorMsg.includes('CRÉDITOS') || errorMsg.includes('EXCEDIDOS')) {
-          setProcessLog(prev => [...prev, '', '🛑 PROCESO DETENIDO: Créditos de SerpAPI agotados', 'Recarga tu cuenta en https://serpapi.com/'])
+        if (errorMsg.includes('CRÉDITOS') || errorMsg.includes('EXCEDIDOS') || errorMsg.includes('insufficient_quota') || errorMsg.includes('RATE_LIMIT')) {
+          setProcessLog(prev => [...prev, '', 'PROCESO DETENIDO: crédito o límite de OpenAI.', 'Revisa la factura de OpenAI y relanza el lote.'])
           errors.push(errorMsg)
           break
         }
@@ -444,25 +449,12 @@ export default function EnriquecerTextosPage() {
                       </div>
                     </li>
                   )}
-                  {!configStatus.checks.serpApiKeyValid && (
-                    <li className="flex items-start gap-2">
-                      <span className="text-red-600 font-bold mt-0.5">❌</span>
-                      <div className="flex-1">
-                        <strong>SerpAPI Key</strong> no configurada o inválida
-                        {configStatus.checks.serpApiError && (
-                          <div className="text-xs text-red-700 mt-1 bg-red-100 rounded px-2 py-1 font-mono">
-                            {configStatus.checks.serpApiError}
-                          </div>
-                        )}
-                      </div>
-                    </li>
-                  )}
                 </ul>
                 <div className="bg-red-100 border border-red-300 rounded-lg p-4 text-sm text-red-900">
                   <strong className="block mb-2">📝 Cómo solucionarlo:</strong>
                   <ol className="list-decimal list-inside space-y-1.5 ml-2">
                     <li>Verifica que el archivo <code className="bg-red-200 px-1.5 py-0.5 rounded font-mono text-xs">.env.local</code> existe en la raíz del proyecto</li>
-                    <li>Comprueba que las variables <code className="bg-red-200 px-1.5 py-0.5 rounded font-mono text-xs">OPENAI_API_KEY</code> y <code className="bg-red-200 px-1.5 py-0.5 rounded font-mono text-xs">SERPAPI_KEY</code> estén definidas correctamente</li>
+                    <li>Comprueba que <code className="bg-red-200 px-1.5 py-0.5 rounded font-mono text-xs">OPENAI_API_KEY</code> esté definida en Vercel</li>
                     <li>Reinicia el servidor de desarrollo en PowerShell: <code className="bg-red-200 px-1.5 py-0.5 rounded font-mono text-xs">npm run dev</code></li>
                     <li>Recarga esta página (F5)</li>
                   </ol>
@@ -489,7 +481,7 @@ export default function EnriquecerTextosPage() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Enriquecer con IA</h1>
               <p className="text-gray-600 mt-1">
-                GPT-5.5 busca información real en internet (reforzado con SerpAPI) para generar descripciones de calidad
+                gpt-5.6-terra investiga cada recinto con búsqueda web y redacta la ficha. Sin SerpAPI.
               </p>
             </div>
           </div>
