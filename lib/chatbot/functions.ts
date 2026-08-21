@@ -120,6 +120,47 @@ function esNombreBasura(nombre: string | null | undefined): boolean {
   return !nombre || NOMBRE_BASURA_RE.test(nombre)
 }
 
+/** Null Island / GPS basura: no buscar “cerca de mí” en (0,0). */
+export function esGpsValido(lat?: number | null, lng?: number | null): boolean {
+  if (lat == null || lng == null) return false
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false
+  if (Math.abs(lat) < 0.5 && Math.abs(lng) < 0.5) return false
+  if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return false
+  return true
+}
+
+function normalizarClave(texto: string): string {
+  return texto
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
+const ALIAS_UBICACION: Record<string, string> = {
+  'gruta de massabielle': 'Lourdes, Francia',
+  'grotte de massabielle': 'Lourdes, Francia',
+  'massabielle': 'Lourdes, Francia',
+  'santuario de lourdes': 'Lourdes, Francia',
+  'bolemdam': 'Volendam, Países Bajos',
+}
+
+function resolverAliasUbicacion(nombre: string): string {
+  return ALIAS_UBICACION[normalizarClave(nombre)] || nombre.trim()
+}
+
+const PAISES_NOMBRE_RE =
+  /^(espana|spain|francia|france|portugal|italia|italy|alemania|germany|paises bajos|netherlands|holanda|reino unido|united kingdom|uk|mexico|argentina|chile|peru|marruecos|andorra|belgica|suiza|austria)$/i
+
+function esNombrePais(nombre: string): boolean {
+  return PAISES_NOMBRE_RE.test(normalizarClave(nombre))
+}
+
+function esPrecioGratis(precio: number | null | undefined): boolean {
+  return precio === 0
+}
+}
+
 /**
  * Ordena áreas para respuestas "mejores / top":
  * 1) score bayesiano (rating × volumen)
@@ -177,7 +218,7 @@ export function serializeToolResultForModel(result: any): string {
     return JSON.stringify({
       total: result.length,
       instrucciones:
-        'Usa el campo "resumen" de cada área tal cual (ya incluye servicios solo en true, rating con Nº de valoraciones y enlace /area/{slug}). No inventes servicios ni pegues Google Maps / imágenes.',
+        'Usa el campo "resumen" de cada área tal cual (servicios solo en true, rating y enlace /area/{slug}). Si precio_noche es null el resumen dice "Precio no disponible": NUNCA lo conviertas en Gratis. No inventes servicios ni pegues Google Maps / imágenes.',
       areas: result.map(mapArea),
     })
   }
@@ -265,8 +306,18 @@ export async function searchAreas(params: BusquedaAreasParams): Promise<AreaResu
   console.log('🔍 [searchAreas] Parámetros recibidos:', JSON.stringify(params, null, 2))
   
   try {
+    // Sin ubicación real: no volcar el ranking mundial (evita Argentina con GPS 0,0)
+    if (
+      !esGpsValido(params.ubicacion?.lat, params.ubicacion?.lng) &&
+      !params.ubicacion?.nombre &&
+      !params.pais
+    ) {
+      console.warn('⚠️ [searchAreas] Sin ubicación válida; no se busca en todo el mundo')
+      return []
+    }
+
     // CASO 1: Búsqueda por coordenadas GPS (geolocalización)
-    if (params.ubicacion?.lat && params.ubicacion?.lng) {
+    if (esGpsValido(params.ubicacion?.lat, params.ubicacion?.lng)) {
       console.log('📍 Búsqueda por coordenadas GPS')
       
       const radio = params.ubicacion.radio_km || 50
@@ -300,10 +351,8 @@ export async function searchAreas(params: BusquedaAreasParams): Promise<AreaResu
       
       // Filtro por precio
       if (params.solo_gratuitas) {
-        console.log('💰 Filtrando solo gratuitas')
-        filtered = filtered.filter((area: any) => 
-          !area.precio_noche || area.precio_noche === 0
-        )
+        console.log('💰 Filtrando solo gratuitas (precio_noche === 0)')
+        filtered = filtered.filter((area: any) => esPrecioGratis(area.precio_noche))
       } else if (params.precio_max) {
         console.log(`💰 Filtrando precio máximo: ${params.precio_max}€`)
         filtered = filtered.filter((area: any) => 
@@ -333,18 +382,40 @@ export async function searchAreas(params: BusquedaAreasParams): Promise<AreaResu
     // CASO 2: Búsqueda por nombre de ciudad/provincia/país
     console.log('📍 Búsqueda por nombre de ubicación')
 
+    const nombreUbicacion = params.ubicacion?.nombre
+      ? resolverAliasUbicacion(params.ubicacion.nombre)
+      : ''
+
+    if (nombreUbicacion && !esNombrePais(nombreUbicacion)) {
+      const geo = await geocodeCity(nombreUbicacion)
+      const radioGeo = radioParaTipo(geo?.tipo)
+      if (geo && esGpsValido(geo.lat, geo.lng) && radioGeo != null) {
+        console.log(`📍 Nombre "${nombreUbicacion}" geocodificado → radio ${radioGeo}km`)
+        return searchAreas({
+          ...params,
+          ubicacion: {
+            lat: geo.lat,
+            lng: geo.lng,
+            radio_km: params.ubicacion?.radio_km || radioGeo,
+          },
+        })
+      }
+    }
+
     const { data, error } = await queryAreasResumen((select) => {
       let query = (supabase as any).from('areas')
         .select(select)
         .eq('activo', true)
 
-      if (params.ubicacion?.nombre) {
-        const nombreLike = `%${params.ubicacion.nombre}%`
+      if (nombreUbicacion) {
+        const principal = nombreUbicacion.split(',')[0].trim()
+        const nombreLike = `%${principal}%`
         console.log('🔎 Buscando en:', nombreLike)
         query = query.or(
           `ciudad.ilike.${nombreLike},` +
           `provincia.ilike.${nombreLike},` +
-          `pais.ilike.${nombreLike}`
+          `pais.ilike.${nombreLike},` +
+          `nombre.ilike.${nombreLike}`
         )
       }
 
@@ -361,8 +432,8 @@ export async function searchAreas(params: BusquedaAreasParams): Promise<AreaResu
       }
 
       if (params.solo_gratuitas) {
-        console.log('💰 Filtrando solo gratuitas')
-        query = query.or('precio_noche.is.null,precio_noche.eq.0')
+        console.log('💰 Filtrando solo gratuitas (precio_noche === 0)')
+        query = query.eq('precio_noche', 0)
       } else if (params.precio_max) {
         console.log(`💰 Filtrando precio máximo: ${params.precio_max}€`)
         query = query.lte('precio_noche', params.precio_max)
@@ -556,6 +627,13 @@ export async function buscarAreasPorNombre(nombre: string, limit: number = 5): P
     
     const ranked = rankMejoresAreas(data || [], limit)
     console.log(`✅ Encontradas ${data?.length || 0} → top ${ranked.length} por nombre`)
+    if (ranked.length > 0) return ranked
+
+    const alias = resolverAliasUbicacion(nombre)
+    if (alias !== nombre.trim()) {
+      console.log(`🔎 Sin área "${nombre}"; reintento como ubicación "${alias}"`)
+      return searchAreas({ ubicacion: { nombre: alias } })
+    }
     return ranked
     
   } catch (error) {
@@ -569,12 +647,19 @@ export async function buscarAreasPorNombre(nombre: string, limit: number = 5): P
 // ============================================
 
 // Caché en memoria de geocodificación de ciudades (evita repetir peticiones)
-const geocodeCityCache = new Map<string, { lat: number; lng: number } | null>()
+const geocodeCityCache = new Map<string, { lat: number; lng: number; tipo?: string } | null>()
+
+function radioParaTipo(tipo?: string): number | null {
+  const t = (tipo || '').toLowerCase()
+  if (t === 'country') return null
+  if (['state', 'region', 'province', 'county', 'state_district', 'iso'].includes(t)) return 80
+  return 40
+}
 
 /**
  * Geocodifica una ciudad con Nominatim (OpenStreetMap, GRATIS).
  */
-async function geocodeCity(nombre: string): Promise<{ lat: number; lng: number } | null> {
+async function geocodeCity(nombre: string): Promise<{ lat: number; lng: number; tipo?: string } | null> {
   const key = nombre.trim().toLowerCase()
   if (geocodeCityCache.has(key)) return geocodeCityCache.get(key)!
 
@@ -585,7 +670,11 @@ async function geocodeCity(nombre: string): Promise<{ lat: number; lng: number }
     })
     const data: any = await res.json()
     const result = Array.isArray(data) && data[0]
-      ? { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
+      ? {
+          lat: parseFloat(data[0].lat),
+          lng: parseFloat(data[0].lon),
+          tipo: String(data[0].addresstype || data[0].type || ''),
+        }
       : null
     geocodeCityCache.set(key, result)
     return result
@@ -697,10 +786,13 @@ export function formatAreaParaChat(area: AreaResumen): string {
     texto += `↔ ${(area as any).desvio_km} km de desvío\n`
   }
   
-  if (area.precio_noche !== null && area.precio_noche > 0) {
-    texto += `💰 ${area.precio_noche}€/noche\n`
-  } else {
+  const precio = area.precio_noche
+  if (typeof precio === 'number' && precio > 0) {
+    texto += `💰 ${precio}€/noche\n`
+  } else if (esPrecioGratis(precio)) {
     texto += `💰 Gratis\n`
+  } else {
+    texto += `💰 Precio no disponible\n`
   }
   
   const serviciosDisponibles = formatServiciosLegibles(area.servicios)

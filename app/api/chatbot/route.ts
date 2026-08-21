@@ -18,6 +18,7 @@ import {
   buscarAreasPorNombre,
   searchAreasAlongRoute,
   serializeToolResultForModel,
+  esGpsValido,
   BusquedaAreasParams,
   AreaResumen
 } from '@/lib/chatbot/functions'
@@ -96,7 +97,7 @@ if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) 
 const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
   {
     name: 'search_areas',
-    description: 'Busca áreas de autocaravanas según múltiples criterios. Retorna hasta 10 resultados ordenados por relevancia. USAR SIEMPRE que el usuario pregunte por áreas, ubicaciones, servicios o precios.',
+    description: 'Busca áreas de autocaravanas según múltiples criterios. Retorna hasta 10 resultados. USAR SIEMPRE que el usuario pregunte por áreas, ubicaciones, servicios o precios. NO sirve para gasolineras, restaurantes ni hoteles.',
     parameters: {
       type: 'object',
       properties: {
@@ -154,7 +155,7 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
         },
         solo_gratuitas: {
           type: 'boolean',
-          description: 'true para mostrar SOLO áreas completamente gratuitas (0€)'
+          description: 'true para mostrar SOLO áreas con precio_noche = 0. No incluir áreas con precio desconocido (null).'
         },
         tipo_area: {
           type: 'string',
@@ -389,6 +390,10 @@ export async function POST(req: NextRequest) {
     // Parsear body primero
     const body: ChatbotRequest = await req.json()
     let { messages, conversacionId, ubicacionUsuario, userId, locale } = body
+    if (ubicacionUsuario && !esGpsValido(ubicacionUsuario.lat, ubicacionUsuario.lng)) {
+      logger.warn('GPS inválido o Null Island; se ignora', ubicacionUsuario)
+      ubicacionUsuario = undefined
+    }
     
     // ============================================
     // RATE LIMITING
@@ -627,7 +632,18 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 - /ruta es complemento OPCIONAL después de listar paradas, NUNCA la única respuesta.
 - Servicios: SOLO los que estén en true (ej: "Agua, Electricidad"). NUNCA "[agua: no, ...]".
 - Valoración: "⭐ 4.7/5 (128 valoraciones)" si hay nº de reseñas. No digas "5 estrellas" sin volumen.
-- Links: solo /area/{slug}. Prohibido Google Maps e imágenes markdown.`
+- Links: solo /area/{slug}. Prohibido Google Maps e imágenes markdown.
+
+═══════════════════════════════════════
+✅ CALIDAD DE DATOS (OBLIGATORIO)
+═══════════════════════════════════════
+- PRECIO: Solo di "Gratis" si el resumen o precio_noche es 0. Si dice "Precio no disponible" o precio_noche es null, escribe exactamente eso. NUNCA conviertas un precio desconocido en gratis.
+- FILTROS: Si el usuario solo nombra una ciudad o país ("Murcia", "Viseu", "Cádiz", "En Tecolutla"), busca SIN heredar servicios, tipo_area ni solo_gratuitas del turno anterior.
+- CERCA DE MÍ: si no hay GPS válido en este mensaje, pide la ciudad. No busques en todo el mundo ni inventes una ubicación.
+- POI turísticos (grutas, catedrales, playas, santuarios): busca áreas CERCA de esa ciudad, no un área con ese nombre. Ej: Gruta de Massabielle → Lourdes.
+- Gasolineras, talleres, restaurantes, hoteles: NO están en el catálogo. No llames a search_areas con supermercado. Explica que solo hay áreas de autocaravanas.
+- example.com u otras URLs inventadas: prohibido. Solo /area/{slug}.
+- Idioma: si el último mensaje está en inglés, portugués, francés, alemán o italiano, responde TODO en ese idioma (también títulos y etiquetas).`
     
     // 5. PREPARAR MENSAJES COMPLETOS
     const fullMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
@@ -730,7 +746,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 
         // Inyectar GPS del usuario si busca sin ubicación explícita
         if (
-          ubicacionUsuario &&
+          esGpsValido(ubicacionUsuario?.lat, ubicacionUsuario?.lng) &&
           fnName === 'search_areas' &&
           !fnArgs.ubicacion?.lat &&
           !fnArgs.ubicacion?.nombre

@@ -263,11 +263,14 @@ export default function ChatbotWidget() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            setUbicacion({
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            })
-            console.log('📍 Ubicación obtenida:', position.coords.latitude, position.coords.longitude)
+            const lat = position.coords.latitude
+            const lng = position.coords.longitude
+            if (Math.abs(lat) < 0.5 && Math.abs(lng) < 0.5) {
+              console.log('⚠️ GPS ignorado (Null Island)')
+              return
+            }
+            setUbicacion({ lat, lng })
+            console.log('📍 Ubicación obtenida:', lat, lng)
           },
           (error) => {
             console.log('⚠️ No se pudo obtener ubicación:', error)
@@ -467,7 +470,10 @@ export default function ChatbotWidget() {
             content: m.contenido 
           })),
           conversacionId,
-          ubicacionUsuario: ubicacion,
+          ubicacionUsuario:
+            ubicacion && !(Math.abs(ubicacion.lat) < 0.5 && Math.abs(ubicacion.lng) < 0.5)
+              ? ubicacion
+              : undefined,
           userId: user?.id || undefined, // Con cuenta: se guarda el historial
           locale // La IA responde en el idioma de la interfaz
         })
