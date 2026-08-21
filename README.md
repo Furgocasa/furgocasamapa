@@ -66,7 +66,8 @@
 | Autenticación | Supabase Auth (Google OAuth, Email) |
 | Mapas | Google Maps API, MapLibre GL JS, Leaflet |
 | Clustering | Supercluster |
-| IA | OpenAI GPT-4 / GPT-4o-mini |
+| IA (texto) | OpenAI `gpt-5.6-terra` |
+| IA (imágenes) | OpenAI `gpt-image-2` / `gpt-image-1` / `dall-e-3` |
 | Búsqueda Web | SerpAPI |
 | Hosting | Vercel |
 
@@ -201,9 +202,29 @@ Todos los banners tienen:
 
 ---
 
+## 🤖 Agentes de IA
+
+El modelo de texto por defecto es **`gpt-5.6-terra`** ([docs OpenAI](https://developers.openai.com/api/docs/models/gpt-5.6-terra)): equilibrio entre inteligencia y coste (tier mini de GPT-5.6). Constante en `lib/openai/model-validation.ts` (`DEFAULT_OPENAI_MODEL`). Se configura en producción desde `/admin/configuracion` y se guarda en Supabase.
+
+| Agente | Origen de la config | Modelo actual |
+|--------|---------------------|---------------|
+| Chatbot **Tío Viajero** | `chatbot_config.modelo` | `gpt-5.6-terra` |
+| Valoración de vehículos | `ia_config.valoracion_vehiculos` | `gpt-5.6-terra` |
+| Enriquecer descripciones | `ia_config.enrich_description` | `gpt-5.6-terra` |
+| Auditar servicios de áreas | `ia_config.scrape_services` | `gpt-5.6-terra` |
+| Extraer anuncios (datos mercado) | `DEFAULT_OPENAI_MODEL` en código | `gpt-5.6-terra` |
+| Scripts masivos (enrich, traducir, evaluar chatbot) | env opcional o default | `gpt-5.6-terra` |
+| Imágenes de áreas | `lib/areas/generate-area-image.ts` | `gpt-image-2` (fallback `gpt-image-1`, `dall-e-3`) |
+
+Terra cubre Chat Completions, Responses, function calling y `web_search`. Las fotos **no** usan Terra.
+
+> 💰 El Tío Viajero es el agente de más volumen. Vigilar coste OpenAI: si sube demasiado, se puede bajar solo el chatbot desde `/admin/configuracion` sin tocar el resto.
+
+---
+
 ## 🤖 Enriquecimiento de Descripciones (IA)
 
-Las descripciones de las áreas se generan/mejoran en lote con OpenAI (GPT-5.5 + búsqueda web) mediante el script `scripts/bulk-enrich.js`. El proceso es **reanudable**: cada área completada se guarda en `scripts/enrich-checkpoint.txt` y se salta en ejecuciones posteriores.
+Las descripciones de las áreas se generan/mejoran en lote con OpenAI (`gpt-5.6-terra` + búsqueda web) mediante el script `scripts/bulk-enrich.js`. El proceso es **reanudable**: cada área completada se guarda en `scripts/enrich-checkpoint.txt` y se salta en ejecuciones posteriores.
 
 ### Estado actual (17 jun 2026)
 
@@ -225,14 +246,14 @@ $env:NODE_TLS_REJECT_UNAUTHORIZED="0"; $env:BULK_DRYRUN="1"; node scripts/bulk-e
 $env:NODE_TLS_REJECT_UNAUTHORIZED="0"; node scripts/bulk-enrich.js
 ```
 
-Variables opcionales: `BULK_MODE` (`critical` | `all` | `everything`), `BULK_CONCURRENCY` (def 6), `BULK_LIMIT` (0 = todas), `BULK_MODEL` (def `gpt-5.5`), `BULK_DRYRUN` (1 = solo contar), `BULK_EFFORT` (def `medium`), `BULK_FORCE_SEARCH` (def 1 = web search obligatoria).
+Variables opcionales: `BULK_MODE` (`critical` | `all` | `everything`), `BULK_CONCURRENCY` (def 6), `BULK_LIMIT` (0 = todas), `BULK_MODEL` (def `gpt-5.6-terra`), `BULK_DRYRUN` (1 = solo contar), `BULK_EFFORT` (def `medium`), `BULK_FORCE_SEARCH` (def 1 = web search obligatoria).
 
 ### Auditoría y datos estructurados (jul 2026)
 
 | Comando | Qué hace | Coste |
 |---------|----------|-------|
 | `npm run db:audit` | Informe de calidad: textos incompletos, sin servicios/precio/plazas/foto → `scripts/audit-report.csv` | **0€** |
-| `npm run enrich:datos` | Investiga con GPT-5.5 + web search los datos estructurados que faltan → CSV de propuestas (no toca la BD) | Solo OpenAI |
+| `npm run enrich:datos` | Investiga con `gpt-5.6-terra` + web search los datos estructurados que faltan → CSV de propuestas (no toca la BD) | Solo OpenAI |
 | `npm run enrich:datos:apply` | Aplica las propuestas de confianza alta SOLO en campos vacíos | Solo OpenAI |
 | `npm run enrich:textos` | Alias de `bulk-enrich.js` (descripciones) | Solo OpenAI |
 
@@ -248,6 +269,7 @@ Variables opcionales: `BULK_MODE` (`critical` | `all` | `everything`), `BULK_CON
 
 | Versión | Fecha | Cambios principales |
 |---------|-------|---------------------|
+| v4.2 | Agosto 2026 | Agentes de texto unificados en `gpt-5.6-terra` |
 | v4.1 | Enero 2026 | Sistema de banners con alternancia inteligente CasiCinco/Furgocasa |
 | v4.0 | Enero 2026 | Migración Vercel, MapLibre/Leaflet, clustering Supercluster |
 | v3.7 | Nov 2025 | Limpieza BD automática, PDF valoración |

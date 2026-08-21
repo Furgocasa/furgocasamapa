@@ -113,6 +113,8 @@ de BD falla, mejor caer en el gratuito.
 
 ## Mejora 7 — Tío Viajero IA renovado (28 jul 2026)
 
+**Modelo** (21 ago 2026): `gpt-5.6-terra` en `chatbot_config` (antes `gpt-4o-mini`). Editable en `/admin/configuracion`. Vigilar coste.
+
 **Motor** (`app/api/chatbot/route.ts` + `lib/chatbot/functions.ts`):
 - [x] Migrado de la API obsoleta `functions` a la moderna `tools` con **bucle de hasta 4 rondas**: puede encadenar y combinar varias búsquedas en un mensaje ("compara áreas gratis en Granada y Sevilla")
 - [x] Responde en el **idioma de la interfaz** del usuario (es/en/fr/de/it)
@@ -164,3 +166,6 @@ de BD falla, mejor caer en el gratuito.
 - **28 jul 2026 (tarde)**: Tío Viajero renovado (tools + bucle, sin login,
   tarjetas, ruta Nominatim), auditoría de respuestas, agente revisor IA
   (código listo; migración de columnas pendiente), enlace admin, PWA con `?lang=`.
+- **21 ago 2026**: Agentes de texto unificados en `gpt-5.6-terra`
+  (chatbot, valoración, enrich, scrape, scripts). Imágenes siguen en
+  `gpt-image-2`. Vigilar coste del Tío Viajero.

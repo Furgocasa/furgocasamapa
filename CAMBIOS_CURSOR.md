@@ -83,7 +83,7 @@
 
 ### 4.3 Enriquecimiento de datos estructurados (NUEVO)
 - **Archivo nuevo**: `scripts/enrich-datos-estructurados.js` | **Comandos**: `npm run enrich:datos` (dry-run → CSV propuestas) / `npm run enrich:datos:apply`
-- Investiga con GPT-5.5 + web_search los servicios/precio/plazas que FALTAN. Con `--apply` solo escribe campos VACÍOS y solo con confianza "alta". Nunca sobreescribe datos existentes. Checkpoint propio.
+- Investiga con OpenAI + web_search los servicios/precio/plazas que FALTAN. Default actual: `gpt-5.6-terra` (antes GPT-5.5). Con `--apply` solo escribe campos VACÍOS y solo con confianza "alta". Nunca sobreescribe datos existentes. Checkpoint propio.
 
 ### 4.4 Traducciones i18n (NUEVO)
 - **Archivo nuevo**: `scripts/translate-descriptions.js` | **Comando**: `npm run translate` (dry-run; `TRAD_RUN=1` para ejecutar)
@@ -262,3 +262,20 @@
   1. En Supabase: `select count(*) from datos_mercado_autocaravanas where origen = 'Indie Campers'` → 693.
   2. Re-ejecutar `npm run import:indie-campers` → 0 nuevos (idempotente).
   3. Lanzar valoración IA de un Weinsberg/VW California y comprobar comparables con fuente Indie Campers.
+
+---
+
+## BLOQUE — Unificación de modelos de texto a GPT-5.6 Terra (21 ago 2026)
+
+- **Qué**: todos los agentes de texto pasan a `gpt-5.6-terra` (equilibrio inteligencia/coste). Las imágenes de áreas siguen en `gpt-image-2`.
+- **Producción (Supabase, efecto inmediato)**:
+  - `chatbot_config` (Tío Viajero): `gpt-4o-mini` → `gpt-5.6-terra`
+  - `ia_config.valoracion_vehiculos`: `gpt-5.4-mini` → `gpt-5.6-terra`
+  - `ia_config.enrich_description`: `gpt-5.5` → `gpt-5.6-terra`
+  - `ia_config.scrape_services`: `gpt-5.5` → `gpt-5.6-terra`
+- **Código**: constante `DEFAULT_OPENAI_MODEL` en `lib/openai/model-validation.ts`. Defaults de admin, extract de anuncios y scripts (`bulk-enrich`, `enrich-datos-estructurados`, `translate-descriptions`, `evaluar-respuestas-chatbot`, etc.) alineados.
+- **Coste**: scrape/enrich deberían bajar (salían de `gpt-5.5`). El Tío Viajero sube de precio (alto volumen; vigilar factura). Si hace falta, bajar solo el chatbot desde `/admin/configuracion`.
+- **Verificar**:
+  1. `/admin/configuracion`: modelo `gpt-5.6-terra` en valoración, enrich, scrape y chatbot.
+  2. Una pregunta al Tío Viajero → `chatbot_respuestas_log.modelo` = `gpt-5.6-terra`.
+  3. Una valoración IA o un enrich de área usa Terra (campo `modelo` en la respuesta/log).
