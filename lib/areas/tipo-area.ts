@@ -148,8 +148,22 @@ export function classifyTipoArea(
     return 'privada'
   }
 
+  // En España «área camping» / «área camper» es un área, no un recinto.
+  const esAreaEnNombre =
+    /\barea(s)? (de )?(camping|camper|autocaravanas?|autocaravanes)\b/.test(n)
+  if (esAreaEnNombre) {
+    if (
+      /\b(camper ?park|caravan park|privad|low cost|granja)\b/.test(n) ||
+      /\barea(s)? (de )?camping\b/.test(n)
+    ) {
+      return 'privada'
+    }
+    return 'publica'
+  }
+
   const nameIsCamping =
     !isMotorhomeWording(n) &&
+    !esAreaEnNombre &&
     /\b(camping|campeggio|campismo|campground|campamentos?|campament|caravan park|holiday park|touring park|trailer park|rv park|rv resort|parque de trailers?|parque de campismo)\b/.test(
       n
     )

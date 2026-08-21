@@ -20,6 +20,8 @@ No hay quinto tipo. El nombre local (aire, sosta, Stellplatz, CL) es etiqueta.
 
 **Un stopover puede no tener servicios.** No se admite ni se oculta por el JSON `servicios` (casi siempre vacío: dato pendiente, no el criterio). No filtrar por ficha vacía.
 
+En España, «área camping» o «área camper» es un **área**, no un camping. Si suena a empresa (camper park, «área camping» + nombre comercial) → `privada`.
+
 Pregunta privada vs stopover: ¿el sitio existe para la furgo (área) o la furgo es invitada una noche (stopover)?
 
 Código: `lib/areas/tipo-area.ts`. Doc: README § Tipo de ubicación.

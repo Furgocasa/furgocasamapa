@@ -318,7 +318,7 @@ Solo entra lo que encaja en **una de estas cuatro**. El nombre local (aire, sost
 |--------|----------------------|--------|------------------|
 | `publica` | Área pública | Área de autocaravanas de un ayuntamiento u organismo | Área municipal, aire communale, sosta comunale, Stellplatz kommunal, council aire |
 | `privada` | Área privada | Área de autocaravanas de empresa o particular (casi siempre de cobro) | Camper park, aire privée, CL británico, Stellplatz privat |
-| `camping` | Camping | Recinto: valla, parcela, a menudo tiendas, bungalows, duchas | Camping, campeggio, campingplatz, touring/holiday/caravan park, RV/trailer park |
+| `camping` | Camping | Recinto: valla, parcela, a menudo tiendas, bungalows, duchas | Camping, campeggio, campingplatz, touring/holiday/caravan park, RV/trailer park. En España «área camping» **no** es esto: es un área |
 | `parking` | Stopover | Pernocta de paso **ofrecida** (1 noche): pub, tienda, granja. Puede no tener vaciado ni agua | Stopover UK, parking de passage, Weingut / chez l’habitant |
 
 **Criterio:** ¿es un área municipal, un área empresarial privada, un camping o un stopover que se ofrece como tal? Si no, **no entra**. No hay quinto tipo.
