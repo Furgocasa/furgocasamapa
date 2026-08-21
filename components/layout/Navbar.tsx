@@ -15,7 +15,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { LOCALES, LOCALE_LABELS, LOCALE_NAMES, type Locale, useLanguage } from "@/lib/i18n";
 
-function LocaleFlag({ locale }: { locale: Locale }) {
+function LocaleFlag({ locale, className = "h-4 w-6" }: { locale: Locale; className?: string }) {
   const flags: Record<Locale, JSX.Element> = {
     es: (
       <svg viewBox="0 0 640 480" className="h-full w-full" aria-hidden>
@@ -56,7 +56,7 @@ function LocaleFlag({ locale }: { locale: Locale }) {
   };
 
   return (
-    <span className="inline-flex h-3.5 w-5 shrink-0 overflow-hidden rounded-[3px] shadow-sm ring-1 ring-black/10">
+    <span className={`inline-flex shrink-0 overflow-hidden rounded-sm shadow-sm ring-1 ring-black/10 ${className}`}>
       {flags[locale]}
     </span>
   );
@@ -268,15 +268,15 @@ export function Navbar() {
                   setShowLangMenu((open) => !open);
                   setShowUserMenu(false);
                 }}
-                className="flex items-center gap-1.5 h-10 px-2.5 bg-white/15 text-white border border-white/25 rounded-lg hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-white/40 transition-colors"
+                className="flex items-center gap-2 h-12 px-3 bg-white/15 text-white border border-white/25 rounded-lg hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-white/40 transition-colors"
                 aria-label="Idioma"
                 aria-haspopup="listbox"
                 aria-expanded={showLangMenu}
               >
-                <LocaleFlag locale={locale} />
-                <span className="text-xs font-bold tracking-wide">{LOCALE_LABELS[locale]}</span>
+                <LocaleFlag locale={locale} className="h-5 w-7" />
+                <span className="text-sm font-semibold tracking-wide">{LOCALE_LABELS[locale]}</span>
                 <ChevronDownIcon
-                  className={`w-3.5 h-3.5 opacity-80 transition-transform ${showLangMenu ? "rotate-180" : ""}`}
+                  className={`w-4 h-4 opacity-80 transition-transform ${showLangMenu ? "rotate-180" : ""}`}
                 />
               </button>
 
@@ -304,14 +304,14 @@ export function Navbar() {
                             setShowLangMenu(false);
                             router.refresh();
                           }}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${
+                          className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors ${
                             selected
                               ? "bg-primary-50 text-primary-700"
                               : "text-gray-700 hover:bg-gray-50"
                           }`}
                         >
-                          <LocaleFlag locale={code} />
-                          <span className="text-xs font-bold tracking-wide w-6">
+                          <LocaleFlag locale={code} className="h-4 w-6" />
+                          <span className="text-sm font-semibold tracking-wide w-7">
                             {LOCALE_LABELS[code]}
                           </span>
                           <span className="text-sm flex-1">{LOCALE_NAMES[code]}</span>
@@ -330,7 +330,7 @@ export function Navbar() {
                     setShowUserMenu(!showUserMenu);
                     setShowLangMenu(false);
                   }}
-                  className="flex items-center gap-2 px-3 py-2 bg-white text-primary-600 rounded-lg font-semibold hover:bg-primary-50 transition-colors relative"
+                  className="flex items-center gap-2 h-12 px-3 bg-white text-primary-600 rounded-lg font-semibold hover:bg-primary-50 transition-colors relative"
                 >
                   {user.user_metadata?.profile_photo &&
                   user.user_metadata.profile_photo !== "default_profile.png" ? (
@@ -429,7 +429,7 @@ export function Navbar() {
             ) : (
               <Link
                 href="/auth/login"
-                className="px-4 py-2 bg-white text-primary-600 rounded-lg font-semibold hover:bg-primary-50 transition-colors text-sm"
+                className="inline-flex items-center h-12 px-4 bg-white text-primary-600 rounded-lg font-semibold hover:bg-primary-50 transition-colors text-sm"
               >
                 {t('nav_login')}
               </Link>
