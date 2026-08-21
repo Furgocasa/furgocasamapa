@@ -45,7 +45,7 @@ async function fetchAllAreas(supa: any): Promise<AreaImagenMin[]> {
   while (true) {
     const { data, error } = await supa
       .from('areas')
-      .select('id,nombre,slug,ciudad,provincia,pais,tipo_area,foto_principal,fotos_urls')
+      .select('id,nombre,slug,ciudad,provincia,pais,tipo_area,latitud,longitud,foto_principal,fotos_urls')
       .eq('activo', true)
       .order('id')
       .range(page * pageSize, (page + 1) * pageSize - 1)

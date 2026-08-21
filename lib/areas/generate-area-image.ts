@@ -1,31 +1,169 @@
-import OpenAI from 'openai'
+import OpenAI, { toFile } from 'openai'
 import sharp from 'sharp'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const BUCKET = 'areas'
 const FOLDER = 'ia'
 const MODELS = ['gpt-image-2', 'gpt-image-1', 'dall-e-3'] as const
+const EDIT_MODELS = ['gpt-image-2', 'gpt-image-1'] as const
 
-export function buildAreaImagePrompt(area: {
+export type AreaImageInput = {
+  id?: string
   nombre?: string | null
   ciudad?: string | null
   provincia?: string | null
   pais?: string | null
   tipo_area?: string | null
-}): string {
+  latitud?: number | null
+  longitud?: number | null
+}
+
+function norm(s: string) {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+}
+
+const PAISAJE_POR_PROVINCIA: Array<{ keys: string[]; paisaje: string }> = [
+  {
+    keys: ['soria', 'teruel', 'cuenca', 'guadalajara', 'burgos', 'palencia', 'zamora', 'avila', 'segovia', 'soria provincia'],
+    paisaje: 'inland Castilian highland / meseta: ochre-green dry farmland, pine and holm-oak woods, open plateau, cool clear light, no palm trees, no desert, no Mediterranean beach',
+  },
+  {
+    keys: ['valladolid', 'leon', 'salamanca', 'ciudad real', 'albacete', 'toledo'],
+    paisaje: 'inland Iberian plateau: cereal fields, holm oaks, pale earth, wide sky, continental climate, no palms, no arid Almeria desert',
+  },
+  {
+    keys: ['almeria', 'almería'],
+    paisaje: 'semi-arid southeast Spain: pale dry earth, sparse shrubs, ramblas, harsh light, low ochre hills — not a lush green plateau',
+  },
+  {
+    keys: ['murcia', 'alicante', 'alacant'],
+    paisaje: 'dry Mediterranean southeast: pale soil, low maquis, olive and carob, strong sun; only include sea if the place is actually coastal',
+  },
+  {
+    keys: ['a coruna', 'a coruña', 'coruna', 'lugo', 'pontevedra', 'ourense', 'orense', 'asturias', 'cantabria', 'bizkaia', 'vizcaya', 'gipuzkoa', 'guipuzcoa', 'alava', 'araba'],
+    paisaje: 'green Atlantic north of Spain: lush meadows, oak or eucalyptus, misty cool light, stone and humidity — never desert or Andalusian clichés',
+  },
+  {
+    keys: ['huesca', 'lleida', 'lerida', 'andorra'],
+    paisaje: 'Pyrenean / pre-Pyrenean landscape: mountains, conifers or high pasture, cooler light, possible snow on distant peaks',
+  },
+  {
+    keys: ['navarra', 'nafarroa'],
+    paisaje: 'Navarre: green hills or continental fields depending on the spot, Atlantic-influenced north or dry south — follow the satellite, no tropical look',
+  },
+  {
+    keys: ['barcelona', 'girona', 'gerona', 'tarragona', 'castellon', 'castello', 'valencia', 'illes balears', 'baleares', 'mallorca', 'menorca', 'ibiza'],
+    paisaje: 'western Mediterranean: pines, maquis, pale rock; sea only if the satellite shows coast — not Andalusian desert',
+  },
+  {
+    keys: ['malaga', 'málaga', 'cadiz', 'cádiz', 'huelva', 'granada', 'sevilla', 'cordoba', 'córdoba', 'jaen', 'jaén'],
+    paisaje: 'Andalusia: olive groves, dry hills or sierra; include desert or palms ONLY if the satellite really shows them (Almeria-like), otherwise green-ochre farmland',
+  },
+  {
+    keys: ['caceres', 'cáceres', 'badajoz'],
+    paisaje: 'Extremadura dehesa: holm oaks scattered on pasture, warm dry light, cork and livestock landscape',
+  },
+  {
+    keys: ['las palmas', 'santa cruz de tenerife', 'tenerife', 'gran canaria', 'lanzarote', 'fuerteventura'],
+    paisaje: 'Canary Islands: volcanic rock, laurel forest or dry lava slopes according to the satellite — not mainland meseta',
+  },
+]
+
+function paisajeDeUbicacion(area: AreaImageInput): string {
+  const provincia = area.provincia ? norm(area.provincia) : ''
+  const ciudad = area.ciudad ? norm(area.ciudad) : ''
+  const pais = area.pais ? norm(area.pais) : ''
+  const lat = Number(area.latitud)
+  const lng = Number(area.longitud)
+
+  for (const grupo of PAISAJE_POR_PROVINCIA) {
+    if (grupo.keys.some((k) => provincia === k || provincia.includes(k) || ciudad === k)) {
+      return grupo.paisaje
+    }
+  }
+
+  if (pais.includes('espana') || pais.includes('spain')) {
+    if (Number.isFinite(lat) && lat >= 42.3) {
+      return 'green northern Spain: humid Atlantic vegetation, cool light, no desert and no palm-lined Almeria look'
+    }
+    if (Number.isFinite(lat) && Number.isFinite(lng) && lat <= 37.6 && lng >= -3.2 && lng <= 0.4) {
+      return 'dry southeast Spain: pale earth and sparse scrub, strong sun'
+    }
+    return 'inland or regional Spain matching the real coordinates — not a generic Andalusian postcard'
+  }
+
+  if (Number.isFinite(lat)) {
+    if (lat >= 50) return 'cool northern European landscape: green fields or forest, soft light'
+    if (lat >= 45) return 'temperate European landscape: mixed woodland and farmland'
+    if (lat >= 41) return 'southern-temperate European landscape; follow the satellite, do not invent a desert'
+    if (lat >= 35) return 'Mediterranean or Maghreb latitude: maquis or dry hills only if the satellite shows them'
+    if (lat >= 20) return 'warm / subtropical landscape matching the satellite reference'
+    if (lat <= -20) return 'southern-hemisphere landscape matching the satellite reference'
+  }
+
+  return `real local landscape of ${[area.ciudad, area.provincia, area.pais].filter(Boolean).join(', ') || 'the given coordinates'}`
+}
+
+function tipoAreaTexto(tipo?: string | null) {
+  if (tipo === 'camping') return 'campsite with motorhome pitches'
+  if (tipo === 'parking') return 'overnight motorhome parking area'
+  return 'aire de service / motorhome rest area'
+}
+
+export function buildAreaImagePrompt(area: AreaImageInput, tieneMapa = false): string {
   const lugar = [area.ciudad, area.provincia, area.pais].filter(Boolean).join(', ') || 'Europa'
-  const tipo = area.tipo_area === 'camping'
-    ? 'campsite with motorhome pitches'
-    : area.tipo_area === 'parking'
-      ? 'overnight motorhome parking area'
-      : 'aire de service / motorhome rest area'
+  const tipo = tipoAreaTexto(area.tipo_area)
+  const coords = Number.isFinite(Number(area.latitud)) && Number.isFinite(Number(area.longitud))
+    ? `${Number(area.latitud).toFixed(5)}, ${Number(area.longitud).toFixed(5)}`
+    : null
+  const paisaje = paisajeDeUbicacion(area)
+  const nombre = (area.nombre || '').trim()
 
   return [
-    `Original cinematic photograph-style illustration of a peaceful ${tipo} near ${lugar}.`,
-    'A single generic white camper van with no logos, no brand names, no license plates and no readable text, parked on a tidy gravel pitch.',
-    `Landscape, light and vegetation typical of ${lugar}. Late afternoon, natural light, no people faces, no watermarks, no signage with letters.`,
-    'This must be an original generated scene, not a copy or imitation of any existing stock photo, magazine cover or real campsite photograph.',
+    tieneMapa
+      ? 'The attached image is a satellite screenshot of the EXACT real location of this motorhome area. Use it as geographic ground truth.'
+      : `Generate a scene that belongs specifically to ${lugar}${coords ? ` (${coords})` : ''}.`,
+    `Place: ${nombre || 'motorhome area'} — ${lugar}${coords ? ` — coordinates ${coords}` : ''}.`,
+    `Real landscape to match: ${paisaje}.`,
+    `Original cinematic photograph-style illustration of a peaceful ${tipo} standing in THIS same place, as if someone looked at that map and then photographed the spot from the ground. Do NOT return a map, satellite view or screenshot; return a ground-level scene.`,
+    'Match the real terrain: same ground color, vegetation density, tree or shrub types, relief (flat / hills / mountains), climate and light. It does not need to be the literal parking lot, but it MUST look like that region.',
+    'A single generic white camper van with no logos, no brand names, no license plates and no readable text, parked on a tidy pitch that fits the local ground.',
+    'STRICTLY FORBIDDEN unless clearly visible in the satellite/map reference: palm trees, Andalusian white villages, Tabernas/Almeria desert, tropical beach, generic Mediterranean postcard, alpine snow.',
+    'Late afternoon, natural light, no people faces, no watermarks, no signage with letters.',
+    'This must be an original generated scene, not a copy of any stock photo, magazine cover or real campsite photograph.',
   ].join(' ')
+}
+
+async function fetchLocationMapSnapshot(lat: number, lng: number): Promise<Buffer | null> {
+  const googleKey = process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+  const maptilerKey = process.env.NEXT_PUBLIC_MAPTILER_API_KEY
+  const urls: string[] = []
+
+  if (googleKey) {
+    urls.push(
+      `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=14&size=640x640&scale=2&maptype=satellite&key=${googleKey}`
+    )
+  }
+  if (maptilerKey) {
+    urls.push(
+      `https://api.maptiler.com/maps/satellite/static/${lng},${lat},14/640x640.jpg?key=${maptilerKey}`
+    )
+  }
+
+  for (const url of urls) {
+    try {
+      const resp = await fetch(url)
+      if (!resp.ok) continue
+      const contentType = resp.headers.get('content-type') || ''
+      if (contentType.includes('json') || contentType.includes('text')) continue
+      const arr = await resp.arrayBuffer()
+      if (arr.byteLength < 4000) continue
+      return Buffer.from(arr)
+    } catch {
+      continue
+    }
+  }
+  return null
 }
 
 async function ensureAreasBucket(supabase: SupabaseClient) {
@@ -44,9 +182,55 @@ async function ensureAreasBucket(supabase: SupabaseClient) {
   }
 }
 
-async function generateBytes(prompt: string): Promise<{ bytes: Buffer; contentType: string }> {
+function extractImageBytes(item: { b64_json?: string | null; url?: string | null } | undefined) {
+  if (!item) throw new Error('OpenAI no devolvió imagen')
+  if (item.b64_json) {
+    return { bytes: Buffer.from(item.b64_json, 'base64'), contentType: 'image/jpeg' }
+  }
+  return null
+}
+
+async function downloadImageUrl(url: string) {
+  const resp = await fetch(url)
+  if (!resp.ok) throw new Error(`No se pudo descargar la imagen (${resp.status})`)
+  const arr = await resp.arrayBuffer()
+  return { bytes: Buffer.from(arr), contentType: resp.headers.get('content-type') || 'image/png' }
+}
+
+async function generateBytes(
+  prompt: string,
+  referenciaMapa?: Buffer | null
+): Promise<{ bytes: Buffer; contentType: string }> {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   let lastError: Error | null = null
+
+  if (referenciaMapa) {
+    const image = await toFile(referenciaMapa, 'ubicacion-satelite.jpg', { type: 'image/jpeg' })
+    for (const model of EDIT_MODELS) {
+      try {
+        const result = await openai.images.edit({
+          model,
+          image,
+          prompt,
+          n: 1,
+          size: '1536x1024',
+          quality: 'medium',
+        } as any)
+        const item = result.data?.[0]
+        const fromB64 = extractImageBytes(item)
+        if (fromB64) return fromB64
+        if (item?.url) return downloadImageUrl(item.url)
+        throw new Error('La respuesta de OpenAI no traía b64 ni URL')
+      } catch (e: any) {
+        lastError = e
+        const msg = String(e?.message || e)
+        if (/unknown|not found|not exist|invalid model|does not have access/i.test(msg)) {
+          continue
+        }
+        break
+      }
+    }
+  }
 
   for (const model of MODELS) {
     try {
@@ -60,17 +244,9 @@ async function generateBytes(prompt: string): Promise<{ bytes: Buffer; contentTy
       } as any)
 
       const item = result.data?.[0]
-      if (!item) throw new Error('OpenAI no devolvió imagen')
-
-      if (item.b64_json) {
-        return { bytes: Buffer.from(item.b64_json, 'base64'), contentType: 'image/jpeg' }
-      }
-      if (item.url) {
-        const resp = await fetch(item.url)
-        if (!resp.ok) throw new Error(`No se pudo descargar la imagen (${resp.status})`)
-        const arr = await resp.arrayBuffer()
-        return { bytes: Buffer.from(arr), contentType: resp.headers.get('content-type') || 'image/png' }
-      }
+      const fromB64 = extractImageBytes(item)
+      if (fromB64) return fromB64
+      if (item?.url) return downloadImageUrl(item.url)
       throw new Error('La respuesta de OpenAI no traía b64 ni URL')
     } catch (e: any) {
       lastError = e
@@ -127,13 +303,8 @@ export async function applyAiWatermark(bytes: Buffer): Promise<Buffer> {
 
 export async function generateAndStoreAreaImage(
   supabase: SupabaseClient,
-  area: {
+  area: AreaImageInput & {
     id: string
-    nombre?: string | null
-    ciudad?: string | null
-    provincia?: string | null
-    pais?: string | null
-    tipo_area?: string | null
     foto_principal?: string | null
     fotos_urls?: string[] | null
   }
@@ -143,7 +314,12 @@ export async function generateAndStoreAreaImage(
   }
 
   await ensureAreasBucket(supabase)
-  const generated = await generateBytes(buildAreaImagePrompt(area))
+  const lat = Number(area.latitud)
+  const lng = Number(area.longitud)
+  const mapa = Number.isFinite(lat) && Number.isFinite(lng)
+    ? await fetchLocationMapSnapshot(lat, lng)
+    : null
+  const generated = await generateBytes(buildAreaImagePrompt(area, !!mapa), mapa)
   const bytes = await applyAiWatermark(generated.bytes)
   const path = `${FOLDER}/${area.id}-${Date.now()}.jpg`
 

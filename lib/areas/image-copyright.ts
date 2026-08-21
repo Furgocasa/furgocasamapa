@@ -177,6 +177,8 @@ export type AreaImagenMin = {
   provincia: string | null
   pais: string | null
   tipo_area?: string | null
+  latitud?: number | null
+  longitud?: number | null
   foto_principal: string | null
   fotos_urls: string[] | null
 }

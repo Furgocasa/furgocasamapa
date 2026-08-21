@@ -28,7 +28,7 @@ async function fetchAllAreas(service: ReturnType<typeof createServiceClient>): P
   while (true) {
     const { data, error } = await (service as any)
       .from('areas')
-      .select('id,nombre,slug,ciudad,provincia,pais,tipo_area,foto_principal,fotos_urls')
+      .select('id,nombre,slug,ciudad,provincia,pais,tipo_area,latitud,longitud,foto_principal,fotos_urls')
       .eq('activo', true)
       .order('id')
       .range(page * pageSize, (page + 1) * pageSize - 1)
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
       }
       const { data: area, error } = await (service as any)
         .from('areas')
-        .select('id,nombre,slug,ciudad,provincia,pais,tipo_area,foto_principal,fotos_urls')
+        .select('id,nombre,slug,ciudad,provincia,pais,tipo_area,latitud,longitud,foto_principal,fotos_urls')
         .eq('id', areaId)
         .single()
       if (error || !area) {
