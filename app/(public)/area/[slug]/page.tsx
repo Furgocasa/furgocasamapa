@@ -10,6 +10,7 @@ import { MapaUbicacion } from '@/components/area/MapaUbicacion'
 import { ContactoInfo } from '@/components/area/ContactoInfo'
 import { GaleriaFotos } from '@/components/area/GaleriaFotos'
 import { ValoracionesCompleto } from '@/components/area/ValoracionesCompleto'
+import { HerramientasVehiculo } from '@/components/ui/HerramientasVehiculo'
 import { AreasRelacionadas } from '@/components/area/AreasRelacionadas'
 import { ConfirmarDatosArea } from '@/components/area/ConfirmarDatosArea'
 import { BackToTop } from '@/components/area/BackToTop'
@@ -231,6 +232,9 @@ export default async function AreaPage({ params }: PageProps) {
                 areaNombre={area.nombre}
                 valoraciones={valoraciones || []}
               />
+
+              {/* Vehículo / IA / QR: el tráfico real está aquí, no en la home */}
+              <HerramientasVehiculo compact />
 
               {/* Áreas relacionadas */}
               {areasRelacionadas && areasRelacionadas.length > 0 && (

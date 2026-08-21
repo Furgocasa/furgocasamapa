@@ -7,6 +7,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { InstallAppCTA } from '@/components/ui/InstallAppCTA'
 import { BackToTop } from '@/components/area/BackToTop'
+import { HerramientasVehiculo } from '@/components/ui/HerramientasVehiculo'
 import { useLanguage } from '@/lib/i18n'
 import {
   MapIcon,
@@ -32,6 +33,7 @@ export default function HomePage() {
   const [user, setUser] = useState<any>(null)
   const [misSitios, setMisSitios] = useState<any[]>([])
   const [ultimaRuta, setUltimaRuta] = useState<any>(null)
+  const [vehiculoNombre, setVehiculoNombre] = useState<string | null>(null)
   const [personalLoaded, setPersonalLoaded] = useState(false)
 
   useEffect(() => {
@@ -67,7 +69,7 @@ export default function HomePage() {
         }
         setUser(session.user)
 
-        const [{ data: favs }, { data: rutas }] = await Promise.all([
+        const [{ data: favs }, { data: rutas }, { data: vehiculos }] = await Promise.all([
           (supabase as any)
             .from('favoritos')
             .select('id, created_at, areas ( id, nombre, slug, ciudad, pais, foto_principal, precio_noche, google_rating )')
@@ -80,10 +82,20 @@ export default function HomePage() {
             .eq('user_id', session.user.id)
             .order('created_at', { ascending: false })
             .limit(1),
+          (supabase as any)
+            .from('vehiculos_registrados')
+            .select('marca, modelo')
+            .eq('user_id', session.user.id)
+            .order('created_at', { ascending: false })
+            .limit(1),
         ])
 
         setMisSitios((favs || []).filter((f: any) => f.areas))
         setUltimaRuta(rutas && rutas.length > 0 ? rutas[0] : null)
+        if (vehiculos && vehiculos.length > 0) {
+          const v = vehiculos[0]
+          setVehiculoNombre([v.marca, v.modelo].filter(Boolean).join(' ') || 'mi furgo')
+        }
       } catch (err) {
         console.error('Error loading personal home:', err)
       } finally {
@@ -183,6 +195,10 @@ export default function HomePage() {
                 </Link>
               </div>
             )}
+
+            <div className="mt-6">
+              <HerramientasVehiculo vehiculoNombre={vehiculoNombre} compact />
+            </div>
           </div>
         </section>
       )}
@@ -266,6 +282,15 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Visitante anónimo: las 3 funciones de vehículo, arriba, no a 2 pantallas */}
+      {!user && (
+        <section className="bg-slate-50 border-b border-slate-200">
+          <div className="container mx-auto px-4 py-6 max-w-5xl">
+            <HerramientasVehiculo compact />
+          </div>
+        </section>
+      )}
 
       {/* FEATURES PRINCIPALES - Blanco con tarjetas */}
       <section className="py-20 bg-white">

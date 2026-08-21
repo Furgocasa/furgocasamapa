@@ -323,6 +323,23 @@ export function Navbar() {
                 </>
               )}
             </div>
+            {user && (
+              <Link
+                href="/mis-autocaravanas"
+                className={`flex items-center gap-1.5 h-12 px-3 bg-white/15 text-white border border-white/25 rounded-lg hover:bg-white/25 transition-colors ${
+                  pathname === "/mis-autocaravanas" ? "ring-2 ring-white/50" : ""
+                }`}
+                title={t('nav_vehicles')}
+              >
+                <TruckIcon className="w-5 h-5" />
+                <span className="hidden lg:inline text-sm font-semibold">{t('nav_furgo')}</span>
+                {unreadReports > 0 && (
+                  <span className="bg-red-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">
+                    {unreadReports}
+                  </span>
+                )}
+              </Link>
+            )}
             {user ? (
               <div className="relative">
                 <button

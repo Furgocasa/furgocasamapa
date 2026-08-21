@@ -29,7 +29,7 @@ const TEXTOS: Record<string, {
   ubicacionDetectada: string
 }> = {
   es: {
-    bienvenida: '¡Hola! 👋 Soy el Tío Viajero IA. Pregúntame por áreas, servicios, precios o paradas de ruta. ¿Por dónde empezamos?',
+    bienvenida: '¡Hola! 👋 Soy el Tío Viajero IA. Pregúntame por áreas, rutas… o por valorar tu furgo y el QR anti-golpes. ¿Por dónde empezamos?',
     sugerencias: [
       '🆓 Áreas gratis cerca de mí',
       '⭐ Las mejores áreas de España',
@@ -751,6 +751,18 @@ export default function ChatbotWidget() {
                     {sugerencia}
                   </button>
                 ))}
+                <Link
+                  href="/valoracion-ia-vehiculos"
+                  className="text-xs bg-[#0b3c74] text-white hover:bg-[#0d4a8f] rounded-full px-3 py-1.5 transition-all shadow-sm"
+                >
+                  🤖 ¿Cuánto vale mi furgo?
+                </Link>
+                <Link
+                  href="/sistema-reporte-accidentes"
+                  className="text-xs bg-red-600 text-white hover:bg-red-700 rounded-full px-3 py-1.5 transition-all shadow-sm"
+                >
+                  🛡️ QR anti-golpes
+                </Link>
               </div>
             )}
 
