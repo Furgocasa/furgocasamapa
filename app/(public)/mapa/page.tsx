@@ -15,6 +15,7 @@ import { reverseGeocode } from '@/lib/google/geocoding'
 import { track } from '@/lib/analytics/track'
 import { useLanguage } from '@/lib/i18n'
 import { TIPO_AREA_IDS } from '@/lib/areas/tipo-area'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function MapaPage() {
   const { locale, t } = useLanguage()
@@ -552,72 +553,8 @@ export default function MapaPage() {
   // El mapa es público: no se bloquea la carga esperando la autenticación.
   // (El estado `user` se mantiene por si se necesita para funciones personales.)
 
-  // Skeleton Loader MEJORADO - Solo primera carga, luego cache instantáneo
-  if (initialLoading) {
-    return (
-      <div className="h-[100dvh] flex flex-col overflow-hidden bg-gray-100">
-        <Navbar />
-
-        {/* Skeleton del mapa con animación */}
-        <div className="flex-1 relative">
-          {/* Fondo con patrón de mapa */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-green-50 to-blue-50 opacity-30">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `
-                linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px)
-              `,
-              backgroundSize: '50px 50px'
-            }}></div>
-          </div>
-
-          {/* Indicador de carga centrado */}
-          <div className="absolute inset-0 flex items-center justify-center px-4">
-            <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl ring-1 ring-gray-900/5 p-8 max-w-md w-full">
-              {/* Icono de mapa animado */}
-              <div className="flex justify-center mb-6">
-                <div className="relative">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-500/30">
-                    <MapIcon className="w-11 h-11 text-white" />
-                  </div>
-                  <div className="absolute inset-0 rounded-2xl animate-ping opacity-10 bg-primary-500"></div>
-                </div>
-              </div>
-
-              {/* Texto dinámico basado en si viene de cache */}
-              <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
-                {areas.length > 0 ? '⚡ Carga Instantánea' : 'Cargando Mapa'}
-              </h2>
-              <p className="text-gray-500 text-center mb-6">
-                {areas.length > 0
-                  ? `${areas.length} áreas desde cache...`
-                  : loadingProgress.loaded > 0
-                    ? `${loadingProgress.loaded} áreas cargadas...`
-                    : 'Preparando tu mapa de autocaravanas...'}
-              </p>
-
-              {/* Barra de progreso - solo si está cargando desde servidor */}
-              {loadingProgress.loaded > 0 && areas.length === 0 && (
-                <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="bg-gradient-to-r from-primary-500 to-primary-700 h-full transition-all duration-300 ease-out rounded-full"
-                    style={{
-                      width: `${Math.min((loadingProgress.loaded / 5000) * 100, 100)}%`
-                    }}
-                  ></div>
-                </div>
-              )}
-
-              {/* Spinner */}
-              <div className="flex justify-center mt-6">
-                <div className="animate-spin rounded-full h-8 w-8 border-[3px] border-primary-100 border-t-primary-600"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // La carga inicial ya no bloquea el render: el mapa se monta desde el primer
+  // segundo (con el vuelo de entrada visible) y la tarjeta de carga flota encima.
 
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden relative">
@@ -653,6 +590,70 @@ export default function MapaPage() {
             paisFiltro={filtros.pais}
           />
 
+          {/* Splash de carga: flota sobre el mapa sin bloquearlo, con la
+              furgoneta de marca en ruta. Se despide cuando llegan las áreas. */}
+          <AnimatePresence>
+            {initialLoading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, transition: { duration: 0.45 } }}
+                className="absolute inset-0 z-30 flex items-center justify-center px-4 pointer-events-none"
+              >
+                <motion.div
+                  initial={{ y: 28, scale: 0.95, opacity: 0 }}
+                  animate={{ y: 0, scale: 1, opacity: 1 }}
+                  exit={{ y: 28, scale: 0.95, opacity: 0 }}
+                  transition={{ type: 'spring', damping: 26, stiffness: 300 }}
+                  className="bg-white/90 backdrop-blur-md rounded-3xl shadow-overlay ring-1 ring-gray-900/5 p-8 max-w-sm w-full text-center"
+                >
+                  {/* Furgoneta rodando sobre carretera animada */}
+                  <div className="flex flex-col items-center mb-5">
+                    <svg
+                      viewBox="0 0 96 48"
+                      className="w-28 h-14 animate-[fc-van-bob_1.1s_ease-in-out_infinite]"
+                      aria-hidden
+                    >
+                      <path
+                        d="M6 34 V16 a6 6 0 0 1 6-6 h52 a10 10 0 0 1 8 4 l9 12 a6 6 0 0 1 1 4 v0 a4 4 0 0 1 -4 4 h-66 a6 6 0 0 1 -6 -6 z"
+                        fill="#0b3c74"
+                      />
+                      <rect x="6" y="26" width="82" height="4" rx="2" fill="#FF6B35" />
+                      <rect x="14" y="15" width="14" height="9" rx="2" fill="#dbeafe" />
+                      <rect x="32" y="15" width="14" height="9" rx="2" fill="#dbeafe" />
+                      <path d="M64 15 h4 a6 6 0 0 1 5 3 l4 6 h-13 z" fill="#dbeafe" />
+                      <circle cx="24" cy="38" r="6" fill="#1f2937" />
+                      <circle cx="24" cy="38" r="2.5" fill="#e5e7eb" />
+                      <circle cx="70" cy="38" r="6" fill="#1f2937" />
+                      <circle cx="70" cy="38" r="2.5" fill="#e5e7eb" />
+                    </svg>
+                    <div
+                      className="w-40 h-1 mt-1 rounded-full opacity-50"
+                      style={{
+                        backgroundImage:
+                          'repeating-linear-gradient(90deg, #0b3c74 0 12px, transparent 12px 24px)',
+                        animation: 'fc-road-move 0.5s linear infinite',
+                      }}
+                    />
+                  </div>
+
+                  <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                    Preparando tu viaje…
+                  </h2>
+                  <p className="text-gray-500 text-sm mb-6">
+                    {loadingProgress.loaded > 0
+                      ? `${loadingProgress.loaded.toLocaleString('es-ES')} áreas encontradas`
+                      : 'Buscando áreas de autocaravanas por Europa y Latinoamérica…'}
+                  </p>
+
+                  {/* Barra indeterminada en naranja de acento */}
+                  <div className="relative w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="absolute inset-y-0 w-1/3 rounded-full bg-gradient-to-r from-accent-400 to-accent-600 animate-[fc-bar-slide_1.2s_ease-in-out_infinite]" />
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Contador de resultados con indicador de carga */}
           <div className="absolute top-3 left-3 max-w-[min(11rem,calc(100%-9rem))] bg-white/90 backdrop-blur-md rounded-full shadow-lg ring-1 ring-gray-900/5 px-3 py-1.5 z-10">

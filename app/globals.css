@@ -176,6 +176,22 @@
   @apply bg-gray-400;
 }
 
+/* Splash del mapa: furgoneta en marcha */
+@keyframes fc-van-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes fc-road-move {
+  from { background-position-x: 0; }
+  to { background-position-x: -24px; }
+}
+
+@keyframes fc-bar-slide {
+  from { transform: translateX(-150%); }
+  to { transform: translateX(400%); }
+}
+
 /* Loading spinner */
 .spinner {
   border: 3px solid rgba(0, 0, 0, 0.1);
