@@ -44,6 +44,8 @@ const CHECKPOINT = path.join(__dirname, process.env.DATOS_CHECKPOINT || 'enrich-
 const APPLY = process.argv.includes('--apply')
 const paisArg = process.argv.find((a) => a.startsWith('--pais='))
 const PAIS_FILTER = process.env.DATOS_PAIS || (paisArg ? paisArg.split('=').slice(1).join('=') : '')
+const provinciaArg = process.argv.find((a) => a.startsWith('--provincia='))
+const PROVINCIA_FILTER = process.env.DATOS_PROVINCIA || (provinciaArg ? provinciaArg.split('=').slice(1).join('=') : '')
 const CSV_PATH = path.join(__dirname, 'enrich-datos-propuestas.csv')
 
 // Claves de servicios EXACTAS de la base de datos (ver FiltrosMapa.tsx)
@@ -155,6 +157,7 @@ async function fetchAllAreas(supa) {
       .order('nombre')
       .range(page * pageSize, (page + 1) * pageSize - 1)
     if (PAIS_FILTER) q = q.eq('pais', PAIS_FILTER)
+    if (PROVINCIA_FILTER) q = q.eq('provincia', PROVINCIA_FILTER)
     const { data, error } = await q
     if (error) throw error
     if (!data || data.length === 0) break
@@ -170,7 +173,7 @@ async function main() {
     console.error('Faltan credenciales (.env.local): Supabase (service role) u OpenAI')
     process.exit(1)
   }
-  console.log(`🧭 Modelo: ${MODEL} | Concurrencia: ${CONCURRENCY} | Modo: ${APPLY ? '✍️ APLICAR (solo confianza alta)' : '👀 DRY-RUN (solo CSV de propuestas)'}${PAIS_FILTER ? ` | País: ${PAIS_FILTER}` : ''}`)
+  console.log(`🧭 Modelo: ${MODEL} | Concurrencia: ${CONCURRENCY} | Modo: ${APPLY ? '✍️ APLICAR (solo confianza alta)' : '👀 DRY-RUN (solo CSV de propuestas)'}${PAIS_FILTER ? ` | País: ${PAIS_FILTER}` : ''}${PROVINCIA_FILTER ? ` | Provincia: ${PROVINCIA_FILTER}` : ''}`)
   const openai = new OpenAI({ apiKey: OPENAI_KEY, maxRetries: 2 })
   const supa = createClient(SUPA_URL, SUPA_KEY)
 

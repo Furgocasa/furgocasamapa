@@ -33,6 +33,7 @@ const CONCURRENCY = parseInt(process.env.BULK_CONCURRENCY || '6', 10)
 const LIMIT = parseInt(process.env.BULK_LIMIT || '0', 10)
 const MODE = (process.env.BULK_MODE || 'critical').toLowerCase()
 const PAIS = (process.env.BULK_PAIS || '').trim()
+const PROVINCIA = (process.env.BULK_PROVINCIA || '').trim()
 const MODEL = process.env.BULK_MODEL || 'gpt-5.6-terra'
 // 'medium' por defecto: con 'low' el modelo a veces se salta la búsqueda web
 // y genera textos genéricos/incompletos. Con 'medium' investiga de verdad.
@@ -139,6 +140,10 @@ function buildContexto(area) {
       ? `- Servicios CONFIRMADOS por nuestra base de datos: ${conf.join(', ')}\n`
       : `- Servicios: no confirmados en nuestra base de datos (NO menciones servicios concretos que no verifiques en internet).\n`
   }
+  if (area.descripcion && area.descripcion.trim()) {
+    c += `- TEXTO VIGENTE PARA AUDITAR: ${area.descripcion.trim()}\n`
+    c += '- El texto vigente no sustituye la investigación web, pero úsalo como inventario: conserva en la reescritura todos sus datos operativos que puedas confirmar.\n'
+  }
   return c
 }
 
@@ -152,6 +157,7 @@ REGLAS DE CALIDAD INNEGOCIABLES:
 - Escribe con seguridad, como quien conoce el sitio. Cifras, topónimos, gestora, fiestas con fecha.
 - SEO LOCAL ÚTIL: integra de forma natural el nombre del área, municipio y provincia, y aporta contexto propio del entorno: 3-5 lugares concretos, accesos, transporte, naturaleza o calendario local. Las distancias, frecuencias y tiempos solo se incluyen si una fuente fiable los confirma.
 - No repitas palabras clave ni redactes un texto turístico intercambiable: cada dato local debe ayudar a decidir la parada o la visita.
+- DATOS OPERATIVOS NO NEGOCIABLES: antes de redactar, reúne y conserva todos los datos verificados sobre temporada de apertura, cierres temporales y fecha de reapertura, horarios de llegada/salida o recepción, precio y extras, plazas, estancia máxima, acceso y servicios. Si el lugar está cerrado temporal o estacionalmente, indícalo en el primer párrafo con sus fechas. Nunca omitas un dato operativo confirmado para dejar espacio al SEO local; elimina antes una referencia turística secundaria.
 - Si el lugar no es un área de pernocta (guarda de caravanas, zona de tiendas, alquiler de furgos), dilo al principio.
 - PROHIBIDO: "consulta antes", "se recomienda verificar", "no se especifica", "no se ha confirmado", "no hay información", "se desconoce", "posiblemente", "encantador municipio", "destino ideal", "en conclusión", "aquí tienes una guía", itinerarios de otro sitio.
 - SERVICIOS: solo los de la base o verificados en internet. Si no hay ficha, no los menciones (ni para negarlos).
@@ -164,7 +170,7 @@ TAREA:
 Investiga el área "${area.nombre}" en ${area.ciudad} (${area.provincia}, ${area.pais}) y redacta 350-550 palabras en 4-5 párrafos separados por una línea en blanco:
 
 1) Dónde está el recinto dentro de ${area.ciudad} y qué tipo de parada es; integra municipio y provincia de forma natural.
-2) Plazas, precio, horarios, gestora o app, estancia máxima y solo servicios confirmados.
+2) Temporada de apertura/cierres y reapertura si aplica; plazas, precio y extras, horarios, gestora o app, estancia máxima, acceso y solo servicios confirmados.
 3) Qué ver a pie o cerca: 3-5 nombres reales, explicando la conexión práctica desde el área si está confirmada.
 4) Gastronomía, fiestas o naturaleza de ESA comarca (plato o producto concreto, fecha si es verificable).
 5) Acceso para vehículo vivienda, mejor época y un dato práctico local real.
@@ -226,7 +232,7 @@ async function main() {
     console.error('Faltan credenciales (.env.local): Supabase u OpenAI')
     process.exit(1)
   }
-  console.log(`🧭 Modo: ${MODE} | País: ${PAIS || 'todos'} | Modelo: ${MODEL} | Concurrencia: ${CONCURRENCY}`)
+  console.log(`🧭 Modo: ${MODE} | País: ${PAIS || 'todos'}${PROVINCIA ? ` | Provincia: ${PROVINCIA}` : ''} | Modelo: ${MODEL} | Concurrencia: ${CONCURRENCY}`)
   const openai = new OpenAI({ apiKey: OPENAI_KEY, maxRetries: 2 })
   const supa = createClient(SUPA_URL, SUPA_KEY)
 
@@ -238,6 +244,7 @@ async function main() {
 
   let targets = areas.filter((a) => {
     if (PAIS && a.pais !== PAIS) return false
+    if (PROVINCIA && a.provincia !== PROVINCIA) return false
     return !checkpoint.has(a.id) && needsWork(a.descripcion)
   })
   if (LIMIT > 0) targets = targets.slice(0, LIMIT)

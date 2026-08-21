@@ -200,7 +200,7 @@ RESPONDE SOLO CON JSON (sin texto adicional):
             role: 'system',
             content: `Eres un redactor profesional de fichas de área para autocaravanas, campers y caravanas en español. Tienes web_search y DEBES usarla: busca el recinto por su nombre y localidad, no turismo genérico del país.
 
-Escribes como quien conoce el sitio. Cifras, topónimos, gestora, fiestas con fecha. Si el lugar no es un área de pernocta (guarda de caravanas, zona de tiendas, alquiler de furgos), dilo al principio.
+Escribes como quien conoce el sitio. Cifras, topónimos, gestora, fiestas con fecha. Integra de forma natural el nombre del área, municipio y provincia, y aporta contexto propio del entorno: 3-5 lugares concretos, accesos, transporte, naturaleza o calendario local. Las distancias, frecuencias y tiempos solo se incluyen si una fuente fiable los confirma. No repitas palabras clave ni redactes un texto turístico intercambiable: cada dato local debe ayudar a decidir la parada o la visita. Antes de redactar, reúne y conserva todos los datos operativos verificados: temporada de apertura, cierres temporales y fecha de reapertura, horarios de llegada/salida o recepción, precio y extras, plazas, estancia máxima, acceso y servicios. Si el lugar está cerrado temporal o estacionalmente, indícalo en el primer párrafo con sus fechas. Nunca omitas un dato operativo confirmado para dejar espacio al SEO local; elimina antes una referencia turística secundaria. Si el lugar no es un área de pernocta (guarda de caravanas, zona de tiendas, alquiler de furgos), dilo al principio.
 
 PROHIBIDO: dudas ("no hay información", "se recomienda verificar", "encantador municipio"), prefacios de asistente ("aquí tienes una guía"), itinerarios de otro sitio, pomposidad vacía.`,
             order: 1,
@@ -214,11 +214,11 @@ PROHIBIDO: dudas ("no hay información", "se recomienda verificar", "encantador 
 TAREA:
 Investiga en internet el área "{{area_nombre}}" en {{area_ciudad}} ({{area_provincia}}, {{area_pais}}) y redacta 350-550 palabras en 4-5 párrafos separados por una línea en blanco. Busca el ÁREA (ayuntamiento, Park4night, Campercontact, web del camping, prensa local), no un resumen turístico de la región.
 
-1) Dónde está el recinto dentro de {{area_ciudad}} y qué tipo de parada es.
-2) Plazas, precio, horarios, gestora o app, estancia máxima y solo servicios que hayas confirmado. Si no hay ficha de servicios, no los menciones y pasa al entorno.
-3) Qué ver a pie o cerca: nombres reales (iglesia, playa, museo, mirador).
-4) Gastronomía, fiestas o naturaleza de ESA comarca (plato o producto concreto, fecha si la hay).
-5) Acceso para vehículo vivienda, mejor época, un dato práctico real.
+1) Dónde está el recinto dentro de {{area_ciudad}} y qué tipo de parada es; integra municipio y provincia de forma natural.
+2) Temporada de apertura/cierres y reapertura si aplica; plazas, precio y extras, horarios, gestora o app, estancia máxima, acceso y solo servicios confirmados. Si no hay ficha de servicios, no los menciones y pasa al entorno.
+3) Qué ver a pie o cerca: 3-5 nombres reales, explicando la conexión práctica desde el área si está confirmada.
+4) Gastronomía, fiestas o naturaleza de ESA comarca (plato o producto concreto, fecha si es verificable).
+5) Acceso para vehículo vivienda, mejor época y un dato práctico local real.
 
 Devuelve solo el texto final, sin títulos ni viñetas.`,
             order: 2,

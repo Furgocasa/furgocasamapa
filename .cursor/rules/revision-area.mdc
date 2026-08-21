@@ -1,0 +1,31 @@
+---
+description: La revisión de áreas corrige datos, texto, imágenes y traducciones hasta verificar el resultado
+alwaysApply: true
+---
+
+# Revisión de área = ciclo de corrección
+
+El usuario puede pedir una **revisión de área** para una ficha, ciudad/zona, país o todas las áreas activas. No basta con listar carencias: el ciclo es **auditar → investigar → corregir → verificar públicamente**.
+
+## Orden obligatorio
+
+1. Trabajar solo con `activo = true`, salvo que el usuario pida expresamente revisar una inactiva.
+2. Confirmar identidad, coordenadas, país/localidad y `tipo_area` (`publica`, `privada` o `camping`).
+3. Corregir datos estructurados: 11 servicios, precio (`null` nunca significa gratis) y plazas.
+4. Reescribir la descripción española con `gpt-5.6-terra` + `web_search`: datos del recinto y SEO local útil, natural y verificable; no turismo genérico ni repetición de palabras clave. Antes de publicar, comprobar que conserva todos los datos operativos confirmados: temporada, cierres y reapertura, horarios, precio y extras, plazas, acceso, estancia máxima y servicios. Un cierre temporal o estacional se indica al inicio.
+5. Revisar imágenes: retirar riesgo alto; si no quedan fotos seguras, generar una imagen IA propia marcada. No usar imágenes de terceros como atajo.
+6. Cuando el texto español esté cerrado, actualizar traducciones FR, DE, IT y EN.
+7. Marcar `verificado` solo tras comprobar la ficha pública y reauditar el alcance solicitado.
+
+## Escalas
+
+- **Una ficha**: investigar fuentes oficiales y corregir directamente; comprobar `/area/[slug]`.
+- **Zona o país**: “revisa Murcia/Portugal/una zona” significa revisar **todas** sus áreas activas, no solo las que parezcan débiles. Auditar primero, corregir en lotes reanudables y volver a auditar.
+- **Todas**: trabajar por oleadas y nunca lanzar una modificación masiva sin una auditoría o dry-run previo.
+
+## Restricciones
+
+- Usar `.env.local` y `SUPABASE_SERVICE_ROLE_KEY`; nunca el MCP de Supabase de otra cuenta.
+- No reactivar ni enriquecer el ruido inactivo del piloto México sin instrucción explícita.
+- Servicios, precios, aforo, distancias, horarios y frecuencias solo si están confirmados por una fuente fiable.
+- Consultar `GUIA_REVISION_AREAS.md` para los comandos, checkpoints y criterios de cierre.

@@ -40,7 +40,7 @@
 - 🚨 **Sistema de alertas QR** para accidentes (visible en ficha, home y navbar)
 - ⬆️ **Botón Back to Top** en páginas de detalle
 
-Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMENT.md)**.
+Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMENT.md)**. Para revisar fichas, zonas, países o toda la base: **[GUIA_REVISION_AREAS.md](./GUIA_REVISION_AREAS.md)**.
 
 ### Para Administradores
 - ⚙️ **Panel de administración** completo (`/admin`)
@@ -103,6 +103,7 @@ Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMEN
 ├── supabase/migrations/   # Migraciones SQL
 ├── types/                 # Tipos TypeScript
 ├── GUIA_ENGAGEMENT.md     # Embudo: favoritos, auth, furgo, digest
+├── GUIA_REVISION_AREAS.md # Ciclo de auditoría y corrección de fichas
 ├── PLAN_MEJORAS.md        # Seguimiento de producto
 ├── CAMBIOS_CURSOR.md      # Registro de cambios verificables
 └── .cursor/rules/         # Reglas (tipos, activo, Supabase vía .env.local)

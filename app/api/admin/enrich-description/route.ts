@@ -105,6 +105,11 @@ function buildContexto(area: any): string {
     }
   }
 
+  if (area.descripcion && area.descripcion.trim()) {
+    contexto += `- TEXTO VIGENTE PARA AUDITAR: ${area.descripcion.trim()}\n`
+    contexto += '- El texto vigente no sustituye la investigación web, pero úsalo como inventario: conserva en la reescritura todos sus datos operativos que puedas confirmar.\n'
+  }
+
   return contexto
 }
 
@@ -177,6 +182,9 @@ ${REGLA_TRES_TIPOS_PROMPT}
 
 REGLAS DE CALIDAD INNEGOCIABLES:
 - Escribe con seguridad, como quien conoce el sitio. Cifras, topónimos, gestora, fiestas con fecha.
+- SEO LOCAL ÚTIL: integra de forma natural el nombre del área, municipio y provincia, y aporta contexto propio del entorno: 3-5 lugares concretos, accesos, transporte, naturaleza o calendario local. Las distancias, frecuencias y tiempos solo se incluyen si una fuente fiable los confirma.
+- No repitas palabras clave ni redactes un texto turístico intercambiable: cada dato local debe ayudar a decidir la parada o la visita.
+- DATOS OPERATIVOS NO NEGOCIABLES: antes de redactar, reúne y conserva todos los datos verificados sobre temporada de apertura, cierres temporales y fecha de reapertura, horarios de llegada/salida o recepción, precio y extras, plazas, estancia máxima, acceso y servicios. Si el lugar está cerrado temporal o estacionalmente, indícalo en el primer párrafo con sus fechas. Nunca omitas un dato operativo confirmado para dejar espacio al SEO local; elimina antes una referencia turística secundaria.
 - Si el lugar no es un área de pernocta (guarda de caravanas, zona de tiendas, alquiler de furgos), dilo al principio.
 - PROHIBIDO: "consulta antes", "se recomienda verificar", "no se especifica", "no hay información", "se desconoce", "posiblemente", "encantador municipio", "destino ideal", "en conclusión", "aquí tienes una guía", itinerarios de otro sitio.
 - SERVICIOS: solo los de la base o verificados en internet. Si no hay ficha, no los menciones (ni para negarlos).
@@ -209,11 +217,11 @@ REGLAS DE CALIDAD INNEGOCIABLES:
 TAREA:
 Investiga el área "${area.nombre}" en ${area.ciudad} (${area.provincia}, ${area.pais}) y redacta 350-550 palabras en 4-5 párrafos separados por una línea en blanco:
 
-1) Dónde está el recinto dentro de ${area.ciudad} y qué tipo de parada es.
-2) Plazas, precio, horarios, gestora o app, estancia máxima y solo servicios confirmados.
-3) Qué ver a pie o cerca: nombres reales.
-4) Gastronomía, fiestas o naturaleza de ESA comarca (plato o producto concreto).
-5) Acceso para vehículo vivienda, mejor época, un dato práctico real.
+1) Dónde está el recinto dentro de ${area.ciudad} y qué tipo de parada es; integra municipio y provincia de forma natural.
+2) Temporada de apertura/cierres y reapertura si aplica; plazas, precio y extras, horarios, gestora o app, estancia máxima, acceso y solo servicios confirmados.
+3) Qué ver a pie o cerca: 3-5 nombres reales, explicando la conexión práctica desde el área si está confirmada.
+4) Gastronomía, fiestas o naturaleza de ESA comarca (plato o producto concreto, fecha si es verificable).
+5) Acceso para vehículo vivienda, mejor época y un dato práctico local real.
 
 Devuelve solo el texto final, sin títulos ni viñetas.`
     }

@@ -31,6 +31,9 @@ const MODEL = process.env.TRAD_MODEL || 'gpt-5.6-terra'
 const CONCURRENCY = parseInt(process.env.TRAD_CONCURRENCY || '5', 10)
 const LIMIT = parseInt(process.env.TRAD_LIMIT || '0', 10)
 const RUN = /^(1|true|yes)$/i.test(process.env.TRAD_RUN || '')
+const PROVINCIA = (process.env.TRAD_PROVINCIA || '').trim()
+const FORCE = /^(1|true|yes)$/i.test(process.env.TRAD_FORCE || '')
+const IDS = new Set((process.env.TRAD_IDS || '').split(',').map((id) => id.trim()).filter(Boolean))
 const CHECKPOINT = path.join(__dirname, 'translate-checkpoint.txt')
 
 const IDIOMAS = {
@@ -153,21 +156,25 @@ async function main() {
     console.error('Faltan credenciales (.env.local): Supabase (service role) u OpenAI')
     process.exit(1)
   }
-  console.log(`🌍 Idiomas: ${LANGS.join(', ')} | Modelo: ${MODEL} | Modo: ${RUN ? '✍️ TRADUCIR' : '👀 DRY-RUN (solo contar)'}`)
+  console.log(`🌍 Idiomas: ${LANGS.join(', ')} | Modelo: ${MODEL} | Modo: ${RUN ? '✍️ TRADUCIR' : '👀 DRY-RUN (solo contar)'}${PROVINCIA ? ` | Provincia: ${PROVINCIA}` : ''}${IDS.size ? ` | ${IDS.size} áreas seleccionadas` : ''}${FORCE ? ' | Forzar actualización' : ''}`)
 
   const supa = createClient(SUPA_URL, SUPA_KEY)
   const openai = new OpenAI({ apiKey: OPENAI_KEY, maxRetries: 2 })
   const checkpoint = loadCheckpoint()
 
   console.log('📦 Cargando áreas y traducciones existentes...')
-  const [areas, existing] = await Promise.all([fetchAllAreas(supa), fetchExistingTranslations(supa)])
+  const [allAreas, existing] = await Promise.all([fetchAllAreas(supa), fetchExistingTranslations(supa)])
+  const areas = allAreas.filter((a) =>
+    (!PROVINCIA || a.provincia === PROVINCIA) &&
+    (!IDS.size || IDS.has(a.id))
+  )
 
   let pares = []
   for (const a of areas) {
     if (!a.descripcion || a.descripcion.trim().length < 200) continue
     for (const lang of LANGS) {
       const key = `${a.id}:${lang}`
-      if (existing.has(key) || checkpoint.has(key)) continue
+      if ((!FORCE && existing.has(key)) || (!FORCE && checkpoint.has(key))) continue
       pares.push({ area: a, lang, key })
     }
   }
