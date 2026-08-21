@@ -11,6 +11,7 @@ import { Toast } from '@/components/ui/Toast'
 import { useToast } from '@/hooks/useToast'
 import type { Area } from '@/types/database.types'
 import { useLanguage, getTipoAreaLabel } from '@/lib/i18n'
+import { isImagenIA } from '@/lib/areas/image-copyright'
 
 interface Props {
   area: Area
@@ -139,6 +140,12 @@ export function DetalleAreaHeader({ area }: Props) {
           
           {/* Overlay gradient más sutil y elegante */}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-slate-900/10 mix-blend-multiply" />
+          {isImagenIA(area.foto_principal) && (
+            <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 bg-[#0b3c74]/85 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow">
+              <span aria-hidden>💧</span>
+              AI Generated Image
+            </div>
+          )}
         </div>
 
         {/* Botones flotantes (Navegación) */}

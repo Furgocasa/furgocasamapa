@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import sharp from 'sharp'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const BUCKET = 'areas'
@@ -84,6 +85,46 @@ async function generateBytes(prompt: string): Promise<{ bytes: Buffer; contentTy
   throw lastError || new Error('No se pudo generar la imagen con ningún modelo')
 }
 
+export async function applyAiWatermark(bytes: Buffer): Promise<Buffer> {
+  const image = sharp(bytes)
+  const meta = await image.metadata()
+  const width = meta.width || 1536
+  const height = meta.height || 1024
+  const pad = Math.max(16, Math.round(width * 0.018))
+  const fontSize = Math.max(20, Math.round(width * 0.024))
+  const drop = Math.round(fontSize * 1.15)
+  const boxH = Math.round(fontSize * 2.15)
+  const boxW = Math.round(drop + 18 + fontSize * 11.2)
+  const x = pad
+  const y = height - pad - boxH
+  const dropX = x + 12
+  const dropY = y + Math.round((boxH - drop * 1.15) / 2)
+  const textX = dropX + drop + 10
+  const textY = y + Math.round(boxH * 0.66)
+
+  const svg = Buffer.from(`
+    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+      <rect x="${x}" y="${y}" rx="${Math.round(boxH / 2)}" width="${boxW}" height="${boxH}" fill="rgba(11,60,116,0.78)"/>
+      <path d="M${dropX + drop / 2} ${dropY}
+        C${dropX + drop / 2} ${dropY}, ${dropX} ${dropY + drop * 0.55}, ${dropX} ${dropY + drop * 0.78}
+        a${drop / 2} ${drop / 2} 0 0 0 ${drop} 0
+        C${dropX + drop} ${dropY + drop * 0.55}, ${dropX + drop / 2} ${dropY}, ${dropX + drop / 2} ${dropY} z"
+        fill="#7dd3fc"/>
+      <path d="M${dropX + drop * 0.38} ${dropY + drop * 0.72}
+        a${drop * 0.16} ${drop * 0.2} 0 0 1 ${drop * 0.12} -${drop * 0.28}"
+        fill="rgba(255,255,255,0.55)" stroke="none"/>
+      <text x="${textX}" y="${textY}" fill="#ffffff"
+        font-family="Arial, Helvetica, sans-serif" font-size="${fontSize}"
+        font-weight="700">AI Generated Image</text>
+    </svg>
+  `)
+
+  return sharp(bytes)
+    .composite([{ input: svg, top: 0, left: 0 }])
+    .jpeg({ quality: 86 })
+    .toBuffer()
+}
+
 export async function generateAndStoreAreaImage(
   supabase: SupabaseClient,
   area: {
@@ -102,13 +143,13 @@ export async function generateAndStoreAreaImage(
   }
 
   await ensureAreasBucket(supabase)
-  const { bytes, contentType } = await generateBytes(buildAreaImagePrompt(area))
-  const ext = contentType.includes('png') ? 'png' : 'jpg'
-  const path = `${FOLDER}/${area.id}-${Date.now()}.${ext}`
+  const generated = await generateBytes(buildAreaImagePrompt(area))
+  const bytes = await applyAiWatermark(generated.bytes)
+  const path = `${FOLDER}/${area.id}-${Date.now()}.jpg`
 
   const { error: uploadError } = await supabase.storage
     .from(BUCKET)
-    .upload(path, bytes, { contentType, upsert: true })
+    .upload(path, bytes, { contentType: 'image/jpeg', upsert: true })
   if (uploadError) throw uploadError
 
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)

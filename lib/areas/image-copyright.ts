@@ -142,6 +142,10 @@ export function isProhibidaParaEnriquecer(url: string): boolean {
   return CLASES_ALTO.includes(classifyUrl(url))
 }
 
+export function isImagenIA(url?: string | null): boolean {
+  return classifyUrl(url || '') === 'ia_propia'
+}
+
 export function uniqueUrlsOf(area: { foto_principal?: string | null; fotos_urls?: string[] | null }): string[] {
   const set = new Set<string>()
   if (area.foto_principal) set.add(area.foto_principal)

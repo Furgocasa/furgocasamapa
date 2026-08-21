@@ -21,7 +21,7 @@ import {
   uniqueUrlsOf,
   type AreaImagenMin,
 } from '../lib/areas/image-copyright'
-import { generateAndStoreAreaImage } from '../lib/areas/generate-area-image'
+import { applyAiWatermark, generateAndStoreAreaImage } from '../lib/areas/generate-area-image'
 import fs from 'fs'
 import path from 'path'
 
@@ -30,7 +30,10 @@ const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const args = process.argv.slice(2)
 const SOLO_IA = args.includes('--solo-ia')
 const SOLO_PURGA = args.includes('--solo-purga')
+const REWATERMARK = args.includes('--rewatermark')
 const LIMIT_ONE = args.includes('--una')
+const limitArg = args.find((a) => a.startsWith('--limit='))
+const LIMIT = limitArg ? parseInt(limitArg.slice('--limit='.length), 10) : 0
 const idsFileArg = args.find((a) => a.startsWith('--ids-file='))
 const IDS_FILE = idsFileArg ? idsFileArg.slice('--ids-file='.length) : ''
 const CHECKPOINT = path.join(__dirname, 'imagenes-ia-checkpoint.txt')
@@ -70,6 +73,36 @@ async function main() {
     process.exit(1)
   }
   const supabase = createClient(SUPA_URL, SUPA_KEY)
+
+  if (REWATERMARK) {
+    console.log('💧 Reaplicando marca AI Generated Image en fotos IA...')
+    const { data: files, error } = await supabase.storage.from('areas').list('ia', { limit: 1000 })
+    if (error) throw error
+    let ok = 0
+    for (const file of files || []) {
+      if (!file.name || file.name.endsWith('/')) continue
+      const pathInBucket = `ia/${file.name}`
+      const { data, error: dlError } = await supabase.storage.from('areas').download(pathInBucket)
+      if (dlError || !data) {
+        console.log('  skip', file.name, dlError?.message)
+        continue
+      }
+      const input = Buffer.from(await data.arrayBuffer())
+      const marked = await applyAiWatermark(input)
+      const { error: upError } = await supabase.storage
+        .from('areas')
+        .upload(pathInBucket, marked, { contentType: 'image/jpeg', upsert: true })
+      if (upError) {
+        console.log('  error', file.name, upError.message)
+        continue
+      }
+      ok++
+      console.log(`  OK ${file.name}`)
+    }
+    console.log(`💧 Listo: ${ok} imágenes marcadas`)
+    return
+  }
+
   console.log('📦 Cargando áreas...')
   let areas = await fetchAllAreas(supabase)
   console.log(`   ${areas.length} áreas activas`)
@@ -117,6 +150,7 @@ async function main() {
   const done = loadCheckpoint()
   let pendientes = emptiedIds.filter((id) => !done.has(id))
   if (LIMIT_ONE) pendientes = pendientes.slice(0, 1)
+  else if (LIMIT > 0) pendientes = pendientes.slice(0, LIMIT)
   console.log(`\n🎨 Generar IA: ${pendientes.length} pendientes (${done.size} ya hechas)`)
 
   let ok = 0
