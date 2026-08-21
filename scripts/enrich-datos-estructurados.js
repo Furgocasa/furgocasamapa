@@ -22,7 +22,7 @@
  *
  * Variables opcionales:
  *   DATOS_CONCURRENCY (def 4)   DATOS_LIMIT (0 = todas)
- *   DATOS_MODEL (def gpt-5.5)   DATOS_TIMEOUT_MS (def 90000)
+ *   DATOS_MODEL (def gpt-5.6-terra)   DATOS_TIMEOUT_MS (def 90000)
  *   DATOS_CHECKPOINT (def enrich-datos-checkpoint.txt)
  *
  * Reanudable: igual que bulk-enrich.js, con checkpoint propio.
@@ -38,7 +38,7 @@ const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const OPENAI_KEY = process.env.OPENAI_API_KEY
 const CONCURRENCY = parseInt(process.env.DATOS_CONCURRENCY || '4', 10)
 const LIMIT = parseInt(process.env.DATOS_LIMIT || '0', 10)
-const MODEL = process.env.DATOS_MODEL || 'gpt-5.5'
+const MODEL = process.env.DATOS_MODEL || 'gpt-5.6-terra'
 const REQ_TIMEOUT_MS = parseInt(process.env.DATOS_TIMEOUT_MS || '90000', 10)
 const CHECKPOINT = path.join(__dirname, process.env.DATOS_CHECKPOINT || 'enrich-datos-checkpoint.txt')
 const APPLY = process.argv.includes('--apply')

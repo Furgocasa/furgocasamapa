@@ -1,7 +1,7 @@
 /**
  * Runner de enriquecimiento masivo de DESCRIPCIONES (llamada DIRECTA a OpenAI).
  *
- * Llama a la API de OpenAI (Responses + web_search, GPT-5.5) sin pasar por el
+ * Llama a la API de OpenAI (Responses + web_search, GPT-5.6 Terra) sin pasar por el
  * servidor Next, para máxima fiabilidad y velocidad en lotes grandes.
  * Mantiene el MISMO prompt y limpieza que /api/admin/enrich-description.
  *
@@ -10,7 +10,7 @@
  * Variables opcionales:
  *   BULK_CONCURRENCY  (def 6)   BULK_LIMIT (0=todas)
  *   BULK_MODE         critical | all | everything   (def critical)
- *   BULK_MODEL        (def gpt-5.5)
+ *   BULK_MODEL        (def gpt-5.6-terra)
  *   BULK_TIMEOUT_MS   (def 90000)
  *   BULK_CHECKPOINT   (def enrich-checkpoint.txt)
  *   BULK_DRYRUN       1|true => solo cuenta pendientes y sale (no gasta crédito)
@@ -31,7 +31,7 @@ const OPENAI_KEY = process.env.OPENAI_API_KEY
 const CONCURRENCY = parseInt(process.env.BULK_CONCURRENCY || '6', 10)
 const LIMIT = parseInt(process.env.BULK_LIMIT || '0', 10)
 const MODE = (process.env.BULK_MODE || 'critical').toLowerCase()
-const MODEL = process.env.BULK_MODEL || 'gpt-5.5'
+const MODEL = process.env.BULK_MODEL || 'gpt-5.6-terra'
 // 'medium' por defecto: con 'low' el modelo a veces se salta la búsqueda web
 // y genera textos genéricos/incompletos. Con 'medium' investiga de verdad.
 const EFFORT = process.env.BULK_EFFORT || 'medium'

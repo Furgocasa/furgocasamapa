@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import OpenAI from "openai";
+import { DEFAULT_OPENAI_MODEL } from "@/lib/openai/model-validation";
 
 // POST: Extraer datos de un anuncio a partir de una URL
 export async function POST(request: NextRequest) {
@@ -162,7 +163,7 @@ Responde en formato JSON:
 
     try {
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: DEFAULT_OPENAI_MODEL,
         messages: [
           {
             role: "system",

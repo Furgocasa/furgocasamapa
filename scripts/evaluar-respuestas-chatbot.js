@@ -19,7 +19,7 @@
  *   $env:EVAL_RUN="1"; node scripts/evaluar-respuestas-chatbot.js   # evaluar de verdad
  *
  * Variables opcionales:
- *   EVAL_MODEL        (def "gpt-5.5")
+ *   EVAL_MODEL        (def "gpt-5.6-terra")
  *   EVAL_CONCURRENCY  (def 4)
  *   EVAL_LIMIT        (def 200 por ejecución; 0 = todas)
  *
@@ -33,7 +33,7 @@ const OpenAI = require('openai')
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const OPENAI_KEY = process.env.OPENAI_API_KEY
-const MODEL = process.env.EVAL_MODEL || 'gpt-5.5'
+const MODEL = process.env.EVAL_MODEL || 'gpt-5.6-terra'
 const CONCURRENCY = parseInt(process.env.EVAL_CONCURRENCY || '4', 10)
 const LIMIT = parseInt(process.env.EVAL_LIMIT || '200', 10)
 const RUN = /^(1|true|yes)$/i.test(process.env.EVAL_RUN || '')

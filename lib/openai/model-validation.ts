@@ -1,5 +1,8 @@
 import OpenAI from 'openai'
 
+/** Modelo de texto por defecto: equilibrio inteligencia/coste (tier mini de GPT-5.6). */
+export const DEFAULT_OPENAI_MODEL = 'gpt-5.6-terra'
+
 const CACHE_TTL_MS = 10 * 60 * 1000
 const ALLOWED_PREFIXES = ['gpt-', 'o1', 'o3', 'o4']
 

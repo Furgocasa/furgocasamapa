@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
+import { DEFAULT_OPENAI_MODEL } from '@/lib/openai/model-validation'
 
 // La búsqueda web + razonamiento puede tardar; ampliamos el límite de la función.
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'
 
-// Modelo por defecto: GPT-5.5 (soporta la herramienta web_search vía Responses API).
-const DEFAULT_MODEL = 'gpt-5.5'
+// Modelo por defecto: GPT-5.6 Terra (soporta web_search vía Responses API).
+const DEFAULT_MODEL = DEFAULT_OPENAI_MODEL
 
 // Frases prohibidas: textos dubitativos / "consultar antes" que no queremos ver nunca.
 const FORBIDDEN_PATTERNS: RegExp[] = [
@@ -202,7 +203,7 @@ export async function POST(request: NextRequest) {
 
     const config = configData?.config_value || {}
     let model = (config.model || '').trim()
-    // Si el modelo configurado no soporta web_search, forzamos GPT-5.5.
+    // Si el modelo configurado no soporta web_search, forzamos GPT-5.6 Terra.
     if (!model || !modelSupportsWebSearch(model)) {
       model = DEFAULT_MODEL
     }
@@ -330,7 +331,7 @@ Devuelve solo el texto final, en párrafos, sin títulos ni viñetas.`
       success: true,
       descripcion,
       modelo: model,
-      fuente: serpReinforcement ? 'GPT-5.5 web_search + SerpAPI' : 'GPT-5.5 web_search'
+      fuente: serpReinforcement ? `${model} web_search + SerpAPI` : `${model} web_search`
     })
 
   } catch (error: any) {

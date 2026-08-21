@@ -101,7 +101,7 @@ Responde SOLO con el nombre del chasis (ej: "Fiat Ducato"), sin explicaciones.`
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5.6-terra",
       messages: [
         { role: "system", content: "Eres un experto en autocaravanas." },
         { role: "user", content: prompt }

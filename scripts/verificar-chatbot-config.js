@@ -60,7 +60,7 @@ INSERT INTO chatbot_config (
 ) VALUES (
   'asistente_principal',
   'Asistente principal de Furgocasa',
-  'gpt-4o-mini',
+  'gpt-5.6-terra',
   0.7,
   1000,
   'Eres el Tío Viajero IA, un asistente experto en autocaravanas y campings.',

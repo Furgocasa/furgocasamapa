@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { validateOpenAIModel } from '@/lib/openai/model-validation'
+import { validateOpenAIModel, DEFAULT_OPENAI_MODEL } from '@/lib/openai/model-validation'
 
 function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
     // Valores por defecto con nueva estructura de prompts
     const defaults: Record<string, any> = {
       scrape_services: {
-        model: 'gpt-5.5',
+        model: DEFAULT_OPENAI_MODEL,
         reasoning_effort: 'low',
         max_tokens: 2000,
         prompts: [
@@ -191,7 +191,7 @@ RESPONDE SOLO CON JSON (sin texto adicional):
         ]
       },
       enrich_description: {
-        model: 'gpt-5.5',
+        model: DEFAULT_OPENAI_MODEL,
         reasoning_effort: 'low',
         max_tokens: 2500,
         prompts: [

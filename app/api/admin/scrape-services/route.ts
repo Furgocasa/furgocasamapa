@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
+import { DEFAULT_OPENAI_MODEL } from '@/lib/openai/model-validation'
 
 // La búsqueda web + razonamiento puede tardar; ampliamos el límite de la función.
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'
 
-// Modelo por defecto: GPT-5.5 (soporta la herramienta web_search vía Responses API).
-const DEFAULT_MODEL = 'gpt-5.5'
+// Modelo por defecto: GPT-5.6 Terra (soporta web_search vía Responses API).
+const DEFAULT_MODEL = DEFAULT_OPENAI_MODEL
 
 // Servicios que buscamos (deben coincidir EXACTAMENTE con la base de datos)
 const SERVICIOS_VALIDOS = [
@@ -48,7 +49,7 @@ function isReasoningModel(model: string): boolean {
 
 /**
  * Refuerzo con SerpAPI (best-effort). 1 búsqueda enfocada a plataformas y servicios.
- * Si no hay clave o falla, devolvemos cadena vacía: GPT-5.5 buscará por su cuenta.
+ * Si no hay clave o falla, devolvemos cadena vacía: el modelo buscará por su cuenta.
  */
 async function buildSerpReinforcement(area: any): Promise<string> {
   const serpApiKey = process.env.SERPAPI_KEY
@@ -274,7 +275,7 @@ Devuelve SOLO este JSON (true/false en cada clave):
       servicios: serviciosFinales,
       total_detectados: totalServicios,
       modelo: model,
-      fuente: serpReinforcement ? 'GPT-5.5 web_search + SerpAPI' : 'GPT-5.5 web_search'
+      fuente: serpReinforcement ? `${model} web_search + SerpAPI` : `${model} web_search`
     })
 
   } catch (error: any) {

@@ -39,6 +39,10 @@ interface ChatbotConfig {
 }
 
 const FALLBACK_OPENAI_MODELS = [
+  'gpt-5.6-terra',
+  'gpt-5.6-sol',
+  'gpt-5.5',
+  'gpt-5.4-mini',
   'gpt-5',
   'gpt-5-mini',
   'gpt-5-nano',
@@ -858,7 +862,7 @@ export default function ConfiguracionPage() {
                   onChange={(e) => updateConfigValue('model', e.target.value)}
                   list="openai-models-list"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
-                  placeholder="Ej: gpt-5, gpt-5-mini, gpt-4.1, gpt-4o-mini..."
+                  placeholder="Ej: gpt-5.6-terra, gpt-5.5, gpt-5.4-mini..."
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Escribe cualquier modelo válido de tu cuenta OpenAI. Sugerencias cargadas: {modelOptions.length}.
@@ -1125,7 +1129,7 @@ export default function ConfiguracionPage() {
                   onChange={(e) => updateChatbotConfigValue('modelo', e.target.value)}
                   list="openai-models-list"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ej: gpt-5, gpt-5-mini, gpt-4.1, gpt-4o-mini..."
+                  placeholder="Ej: gpt-5.6-terra, gpt-5.5, gpt-5.4-mini..."
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Puedes usar cualquier modelo disponible. Sugerencias cargadas: {modelOptions.length}.

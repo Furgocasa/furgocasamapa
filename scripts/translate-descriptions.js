@@ -13,7 +13,7 @@
  *
  * Variables opcionales:
  *   TRAD_LANGS        (def "fr,de,it,en")
- *   TRAD_MODEL        (def "gpt-5.5")
+ *   TRAD_MODEL        (def "gpt-5.6-terra")
  *   TRAD_CONCURRENCY  (def 5)
  *   TRAD_LIMIT        (0 = todas)
  */
@@ -27,7 +27,7 @@ const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const OPENAI_KEY = process.env.OPENAI_API_KEY
 const LANGS = (process.env.TRAD_LANGS || 'fr,de,it,en').split(',').map((l) => l.trim().toLowerCase())
-const MODEL = process.env.TRAD_MODEL || 'gpt-5.5'
+const MODEL = process.env.TRAD_MODEL || 'gpt-5.6-terra'
 const CONCURRENCY = parseInt(process.env.TRAD_CONCURRENCY || '5', 10)
 const LIMIT = parseInt(process.env.TRAD_LIMIT || '0', 10)
 const RUN = /^(1|true|yes)$/i.test(process.env.TRAD_RUN || '')

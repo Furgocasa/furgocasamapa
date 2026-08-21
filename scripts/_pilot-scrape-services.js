@@ -134,7 +134,7 @@ Devuelve SOLO este JSON (true/false en cada clave):
 
   const t0 = Date.now()
   const response = await openai.responses.create({
-    model: 'gpt-5.5',
+    model: 'gpt-5.6-terra',
     tools: [{ type: 'web_search' }],
     input: [
       { role: 'system', content: systemInstruction },
