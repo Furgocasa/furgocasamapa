@@ -7,21 +7,43 @@ alwaysApply: true
 
 Solo entran cuatro cosas. Si no es una de ellas, no está en el mapa.
 
-| Código | Significado |
-|--------|-------------|
-| `publica` | Área de autocaravanas municipal / organismo público |
-| `privada` | Área de autocaravanas de empresa o particular |
-| `camping` | Recinto de acampada (valla, parcela, a menudo tiendas/bungalows) |
-| `parking` | Stopover: pernocta de paso **ofrecida** (pub, tienda, granja). En UI = Stopover |
+| Código | UI | Significado |
+|--------|-----|-------------|
+| `publica` | Área pública | Área de autocaravanas de ayuntamiento / organismo público |
+| `privada` | Área privada | Área de autocaravanas de empresa o particular (casi siempre de cobro) |
+| `camping` | Camping | Recinto: valla, parcela, a menudo tiendas / bungalows |
+| `parking` | Stopover | Pernocta de paso **ofrecida** por un anfitrión (pub, tienda, granja) |
 
-No hay quinto tipo. El nombre local (aire, sosta, Stellplatz, CL) es etiqueta.
+No hay quinto tipo. El nombre local (aire, sosta, Stellplatz, CL, «parking autocaravanas») es etiqueta.
 
-**No entra:** parking del polideportivo, solar, arcén, “alguien durmió aquí”, zona de acampada, wild camp, aire naturelle de campo. No es stopover: nadie lo ofrece como pernocta de autocaravana.
+## Área vs stopover (en el mundo y aquí)
 
-**Un stopover puede no tener servicios.** No se admite ni se oculta por el JSON `servicios` (casi siempre vacío: dato pendiente, no el criterio). No filtrar por ficha vacía.
+- **Área de autocaravanas:** el sitio **existe para la furgo**. Hay plazas pensadas para pernocta (y a menudo agua/vaciado). Puede ser municipal (`publica`) o de empresa (`privada`). En España el ayuntamiento a menudo lo llama «parking / aparcamiento de autocaravanas»: **sigue siendo un área**, no un stopover.
+- **Stopover:** el sitio **existe para otra cosa** (pub, tienda, bodega, granja) y **invita** a la furgo una noche. En UK se llama stopover / Brit Stops; en Francia parking de passage / chez l’habitant; en Alemania a veces Weingut. Puede no tener servicios. Eso no lo convierte en «parking cualquiera».
 
-En España, «área camping» o «área camper» es un **área**, no un camping. Si suena a empresa (camper park, «área camping» + nombre comercial) → `privada`.
+Pregunta: ¿el sitio existe para la furgo (área) o la furgo es invitada una noche (stopover)?
 
-Pregunta privada vs stopover: ¿el sitio existe para la furgo (área) o la furgo es invitada una noche (stopover)?
+**No es stopover:** «Parking Autocaravanas Riaño», aparcamiento municipal, parking de un camper park, el solar del polideportivo, «alguien durmió aquí».
+
+## Pública vs privada
+
+Es **titularidad**, no precio. Un área municipal de pago sigue siendo pública. Una granja o camper park gratis sigue siendo privada.
+
+En España:
+
+- «Área de autocaravanas [pueblo]» o «Parking autocaravanas [pueblo]» → **pública** salvo marca de empresa.
+- «Área camper [pueblo]» (Guitiriz, Mondoñedo, Villafáfila) → a menudo **municipal**. No volcar a privada solo por decir «camper».
+- Camper park, camperstop, «área camping» + nombre comercial, granja (excepto el pueblo La Granja d’Escarp), finca-caravana, Barcelona Beach, PortAventura → **privada**.
+
+## Camping
+
+Recinto de acampada. En España «área camping» / «área camper» es un **área**, no un camping.
+
+## No entra
+
+Parking del polideportivo, solar, arcén, «alguien durmió aquí», zona de acampada, wild camp, aire naturelle de campo, parking de coches (Atocha), storage / marina seca.
+
+**Un stopover puede no tener servicios.** No se admite ni se oculta por el JSON `servicios` (casi siempre vacío). No filtrar por ficha vacía.
 
 Código: `lib/areas/tipo-area.ts`. Doc: README § Tipo de ubicación.
+Revisar tipos en España: no usar `reclassify-tipos.ts` a ciegas sobre Europa; el sesgo histórico era «área + nombre = pública» y «parking = stopover».

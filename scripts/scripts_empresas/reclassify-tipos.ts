@@ -6,6 +6,7 @@
  *   npx ts-node --project tsconfig.scripts.json scripts/scripts_empresas/reclassify-tipos.ts --apply
  *   npx ts-node --project tsconfig.scripts.json scripts/scripts_empresas/reclassify-tipos.ts --ocultar-sin-servicio
  *   npx ts-node --project tsconfig.scripts.json scripts/scripts_empresas/reclassify-tipos.ts --ocultar-sin-servicio --apply
+ *   npx ts-node --project tsconfig.scripts.json scripts/scripts_empresas/reclassify-tipos.ts --pais España --apply
  */
 import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
@@ -22,6 +23,10 @@ dotenv.config({ path: ".env.local" });
 
 const APPLY = process.argv.includes("--apply");
 const OCULTAR_SIN_SERVICIO = process.argv.includes("--ocultar-sin-servicio");
+const PAIS_ARG = (() => {
+  const i = process.argv.indexOf("--pais");
+  return i >= 0 ? process.argv[i + 1] : "";
+})();
 const LATAM = new Set([
   "México",
   "Mexico",
@@ -135,6 +140,7 @@ async function main() {
 
   for (const a of areas) {
     if (!TARGET_PAISES.has(a.pais)) continue;
+    if (PAIS_ARG && a.pais !== PAIS_ARG) continue;
     const types = Array.isArray(a.google_types) ? a.google_types : [];
     const next = classifyTipoArea(a.nombre, { pais: a.pais, types });
     if (next !== a.tipo_area) {
@@ -168,9 +174,16 @@ async function main() {
     xs.forEach((c) => console.log(`  [${c.from}] ${c.nombre}`));
   };
   show("España", "camping");
-  show("España", "privada");
+  show("España", "privada", 40);
   show("España", "parking");
-  show("España", "publica");
+  show("España", "publica", 200);
+  const warn = changes.filter(
+    (c) => c.pais === "España" && (c.from === "privada" || c.from === "camping")
+  );
+  if (warn.length) {
+    console.log("\nREVISAR (salen de privada/camping):");
+    warn.forEach((c) => console.log(`  [${c.from}→${c.to}] ${c.nombre}`));
+  }
   show("México", "camping");
   show("México", "privada");
 

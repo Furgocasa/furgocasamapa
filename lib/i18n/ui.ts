@@ -70,7 +70,7 @@ const UI: Record<Locale, UiDict> = {
     type_public_hint: 'Municipal u organismo público',
     type_private_hint: 'Empresa o particular',
     type_camping_hint: 'Camping o parque con parcela y servicios',
-    type_stopover_hint: 'Aparcamiento de paso / pernocta',
+    type_stopover_hint: 'Pernocta de paso ofrecida (pub, tienda, granja)',
   },
   en: {
     nav_mapa: 'Map',
@@ -137,7 +137,7 @@ const UI: Record<Locale, UiDict> = {
     type_public_hint: 'Municipal or public body',
     type_private_hint: 'Company or private owner',
     type_camping_hint: 'Campsite or holiday park',
-    type_stopover_hint: 'Overnight / passage parking',
+    type_stopover_hint: 'Host overnight (pub, shop, farm)',
   },
   fr: {
     nav_mapa: 'Carte',
@@ -204,7 +204,7 @@ const UI: Record<Locale, UiDict> = {
     type_public_hint: 'Municipale ou organisme public',
     type_private_hint: 'Entreprise ou particulier',
     type_camping_hint: 'Camping ou parc résidentiel',
-    type_stopover_hint: 'Parking de passage / nuit',
+    type_stopover_hint: 'Nuit chez l’habitant (pub, commerce, ferme)',
   },
   de: {
     nav_mapa: 'Karte',
@@ -271,7 +271,7 @@ const UI: Record<Locale, UiDict> = {
     type_public_hint: 'Kommunal oder öffentlich',
     type_private_hint: 'Unternehmen oder privat',
     type_camping_hint: 'Campingplatz oder Ferienpark',
-    type_stopover_hint: 'Durchgangs- / Übernachtungsparkplatz',
+    type_stopover_hint: 'Übernachtung beim Gastgeber (Pub, Laden, Hof)',
   },
   it: {
     nav_mapa: 'Mappa',
@@ -338,7 +338,7 @@ const UI: Record<Locale, UiDict> = {
     type_public_hint: 'Comunale o ente pubblico',
     type_private_hint: 'Azienda o privato',
     type_camping_hint: 'Campeggio o parco vacanze',
-    type_stopover_hint: 'Parcheggio di passaggio / pernotto',
+    type_stopover_hint: 'Pernotto offerto (pub, negozio, fattoria)',
   },
 }
 

@@ -61,21 +61,51 @@ function isMotorhomeWording(n: string): boolean {
   return /\bcamping[-\s]?cars?\b|\bcampingcar\b/.test(n)
 }
 
-function esStopoverHint(n: string): boolean {
-  if (/\b(weingut|chez l.habitant|parking de passage|brit.?stop)\b/.test(n)) {
-    return true
-  }
+/** Anfitrión que invita una noche. No es un área: el sitio existe para otra cosa. */
+function esStopoverDeAnfitrion(n: string): boolean {
+  return /\b(weingut|chez l.habitant|parking de passage|brit.?stop|stopover|stop over)\b/.test(n)
+}
+
+function esParkingAutocaravana(n: string): boolean {
+  return (
+    /\b(parking|aparcamiento|estacionamiento|estacionamento)\b/.test(n) &&
+    /\b(autocaravana|autocaravanes|caravana|camper|wohnmobil|reisemobil|camping[-\s]?car|motorhome)\b/.test(
+      n
+    )
+  )
+}
+
+/**
+ * En España/Portugal «Parking autocaravanas» es un área (municipal o privada),
+ * no un stopover. El stopover es pub/tienda/granja que invita una noche.
+ */
+function esStopoverHint(n: string, pais?: string): boolean {
+  if (esStopoverDeAnfitrion(n)) return true
+  if (pais === 'España' || pais === 'Portugal') return false
+
   const motorhome =
-    /\b(autocaravana|autocaravanes|caravana|camper|wohnmobil|reisemobil|camping[-\s]?car|motorhome)\b/.test(n) ||
-    /wohnmobil|reisemobil/.test(n)
-  if (!motorhome && !/\b(stopover|stop over|overnight parking)\b/.test(n)) {
+    /\b(autocaravana|autocaravanes|caravana|camper|wohnmobil|reisemobil|camping[-\s]?car|motorhome)\b/.test(
+      n
+    ) || /wohnmobil|reisemobil/.test(n)
+  if (!motorhome && !/\b(overnight parking)\b/.test(n)) {
     return false
   }
   return (
-    /\b(stopover|stop over|overnight parking)\b/.test(n) ||
+    /\b(overnight parking)\b/.test(n) ||
     (/\b(parking|aparcamiento|estacionamiento|estacionamento|parkplatz|parcheggio)\b/.test(n) &&
       !/\barea de (servicio|servicios|autocaravanas|aparcamiento)\b/.test(n) &&
       !/\b(stellplatz|area sosta|sosta camper)\b/.test(n))
+  )
+}
+
+function esMarcaPrivada(n: string): boolean {
+  return (
+    /\b(camper ?park|camperpark|camper ?parking|camper ?stop|camperstop|vanventure|low cost|bon bini|stop and go|barcelona beach|granadaparking|portaventura|ciutat caravaning|parkingvan|mundo autocaravanas|valcaravan|webcaravan|sol calnegre|tortuga mora|los narejos|maravilla parking|el moreral|murcia rio|anibal)\b/.test(
+      n
+    ) ||
+    (/\bgranja\b/.test(n) && !/\bla granja(\s+d|\s*$)/.test(n) && !/\barea(s)? autocaravanas la granja\b/.test(n)) ||
+    /\bfinca-?caravana\b/.test(n) ||
+    (/\bcaravan park\b/.test(n) && /\barea\b/.test(n))
   )
 }
 
@@ -125,7 +155,8 @@ export function getTipoAreaBadgeClass(tipo?: string | null): string {
  * Pública = municipal / organismo público.
  * Privada = empresa o particular.
  * Camping = camping comercial / CL / trailer/RV park.
- * Parking (Stopover) = aparcamiento de paso / pernocta.
+ * Parking (Stopover) = anfitrión que invita una noche (pub, tienda, granja).
+ * En España «Parking autocaravanas» es un área, no un stopover.
  * Zona de acampada y similar no se clasifican: usar esPernoctaSinServicio().
  */
 export function classifyTipoArea(
@@ -135,6 +166,7 @@ export function classifyTipoArea(
   const n = norm(name)
   const types = opts.types || []
   const pais = (opts.pais || '').trim()
+  const iberia = pais === 'España' || pais === 'Portugal'
 
   const municipal =
     /\b(municipal|municipio|ayuntamiento|concejo|consell|consorcio|diputacion|alcaldia|publico|publica|gratuit[oa]? municipal)\b/.test(
@@ -145,35 +177,44 @@ export function classifyTipoArea(
     /\b(aire d'accueil|aire de services?|aires? de |area de servicio|area de servicos?|area de servico|estacion de servicio|sosta)\b/.test(
       n
     ) ||
-    /\barea (de )?(autocaravanas?|autocaravanes|servicio|servicios|aparcamiento)\b/.test(n) ||
+    /\barea (de )?(autocaravanas?|autocaravanes|servicio|servicios|aparcamiento|estacionamiento)\b/.test(
+      n
+    ) ||
     /\barea autocaravanas?\b/.test(n) ||
     (/\baires?\b/.test(n) && !/\b(airport|aire acondicionado)\b/.test(n))
+
+  if (esStopoverDeAnfitrion(n)) {
+    return 'parking'
+  }
 
   if (/\b(privad[oa]|privata)\b/.test(n) && (esAire || /\barea\b/.test(n))) {
     return 'privada'
   }
 
-  if (/\bcamping[-\s]?car park\b/.test(n)) {
+  if (/\bcamping[-\s]?car park\b/.test(n) || esMarcaPrivada(n)) {
     return 'privada'
   }
 
   // En España «área camping» / «área camper» es un área, no un recinto.
+  // «Área camper + pueblo» suele ser municipal (Guitiriz). Marca comercial → privada.
   const esAreaEnNombre =
     /\barea(s)? (de )?(camping|camper|autocaravanas?|autocaravanes)\b/.test(n)
   if (esAreaEnNombre) {
-    if (
-      /\b(camper ?park|camper ?stop|caravan park|privad|low cost|granja)\b/.test(n) ||
-      /\barea(s)? (de )?camping\b/.test(n)
-    ) {
+    if (esMarcaPrivada(n) || /\barea(s)? (de )?camping\b/.test(n)) {
       return 'privada'
     }
+    return 'publica'
+  }
+
+  // Parking/aparcamiento de autocaravanas en Iberia = área (titularidad por marca).
+  if (iberia && esParkingAutocaravana(n)) {
     return 'publica'
   }
 
   const nameIsCamping =
     !isMotorhomeWording(n) &&
     !esAreaEnNombre &&
-    /\b(camping|campeggio|campismo|campground|campamentos?|campament|caravan park|holiday park|touring park|trailer park|rv park|rv resort|parque de trailers?|parque de campismo)\b/.test(
+    /\b(camping|campeggio|campismo|campground|campamentos?|campament|acampada|caravan park|holiday park|touring park|trailer park|rv park|rv resort|parque de trailers?|parque de campismo)\b/.test(
       n
     )
   const typeIsCamping =
@@ -195,7 +236,7 @@ export function classifyTipoArea(
     return 'publica'
   }
 
-  if (esAire || (municipal && !esStopoverHint(n))) {
+  if (esAire || (municipal && !esStopoverHint(n, pais))) {
     return 'publica'
   }
 
@@ -203,7 +244,7 @@ export function classifyTipoArea(
     return 'privada'
   }
 
-  if (esStopoverHint(n)) {
+  if (esStopoverHint(n, pais)) {
     return 'parking'
   }
 

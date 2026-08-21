@@ -160,7 +160,7 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
         tipo_area: {
           type: 'string',
           enum: ['publica', 'privada', 'camping', 'parking'],
-          description: 'Tipo: publica (municipal), privada (empresa/particular), camping, parking (stopover / aparcamiento de paso)'
+          description: 'Tipo: publica (área municipal/organismo), privada (área de empresa o particular: camper park, granja), camping (recinto), parking (stopover: pub/tienda/granja que invita una noche). En España un "parking de autocaravanas" municipal es publica, no parking.'
         },
         pais: {
           type: 'string',
@@ -639,6 +639,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 ═══════════════════════════════════════
 - PRECIO: Solo di "Gratis" si el resumen o precio_noche es 0. Si dice "Precio no disponible" o precio_noche es null, escribe exactamente eso. NUNCA conviertas un precio desconocido en gratis.
 - FILTROS: Si el usuario solo nombra una ciudad o país ("Murcia", "Viseu", "Cádiz", "En Tecolutla"), busca SIN heredar servicios, tipo_area ni solo_gratuitas del turno anterior.
+- TIPO: publica = área de ayuntamiento. privada = área de empresa/particular (camper park, granja). camping = recinto. parking/stopover = un anfitrión (pub, tienda) invita una noche. En España "parking autocaravanas" del pueblo es área pública, no stopover. «Área camper + pueblo» puede ser municipal. No digas stopover por llevar la palabra parking.
 - CERCA DE MÍ: si no hay GPS válido en este mensaje, pide la ciudad. No busques en todo el mundo ni inventes una ubicación.
 - POI turísticos (grutas, catedrales, playas, santuarios): busca áreas CERCA de esa ciudad, no un área con ese nombre. Ej: Gruta de Massabielle → Lourdes.
 - Gasolineras, talleres, restaurantes, hoteles: NO están en el catálogo. No llames a search_areas con supermercado. Explica que solo hay áreas de autocaravanas.
