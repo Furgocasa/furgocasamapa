@@ -10,9 +10,12 @@
  *   npx ts-node --project tsconfig.scripts.json scripts/scrape-official-images.ts
  *
  * Dry-run: IMG_DRYRUN=1
+ * Sin IA: IMG_NO_IA=1
+ * Lista: IMG_IDS=id1,id2  o IMG_IDS_FILE=scripts/foo-ids.txt
  */
 import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
+import * as fs from 'fs'
 dotenv.config({ path: '.env.local' })
 import { isImagenIA } from '../lib/areas/image-copyright'
 import { scrapeFotosWebOficial } from '../lib/areas/scrape-official-images'
@@ -24,6 +27,18 @@ const TIPO = (process.env.IMG_TIPO || '').trim()
 const NOMBRE = (process.env.IMG_NOMBRE || '').trim()
 const DRY = /^(1|true|yes)$/i.test(process.env.IMG_DRYRUN || '')
 const FORCE = /^(1|true|yes)$/i.test(process.env.IMG_FORCE || '')
+const NO_IA = /^(1|true|yes)$/i.test(process.env.IMG_NO_IA || '')
+const MAX_FOTOS = Math.max(1, parseInt(process.env.IMG_MAX || '3', 10) || 3)
+const IDS = new Set(
+  [
+    ...(process.env.IMG_IDS || '').split(/[,\s]+/),
+    ...((process.env.IMG_IDS_FILE || '') && fs.existsSync(process.env.IMG_IDS_FILE!)
+      ? fs.readFileSync(process.env.IMG_IDS_FILE!, 'utf8').split(/\r?\n/)
+      : []),
+  ]
+    .map((id) => id.trim())
+    .filter(Boolean)
+)
 
 async function main() {
   const supa = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -49,22 +64,40 @@ async function main() {
   }
 
   const targets = all.filter((a) => {
+    if (IDS.size && !IDS.has(a.id)) return false
     if (FORCE) return true
     if (a.website) return isImagenIA(a.foto_principal) || !a.foto_principal
     return !a.foto_principal
   })
 
-  console.log(`🧭 ${PAIS || 'todos'} ${PROVINCIA || ''} ${TIPO || ''} | ${all.length} áreas, ${targets.length} a rascar`)
+  console.log(
+    `🧭 ${PAIS || 'todos'} ${PROVINCIA || ''} ${TIPO || ''} | ${all.length} áreas, ${targets.length} a rascar | max ${MAX_FOTOS} fotos${NO_IA ? ' | sin IA' : ''}${IDS.size ? ` | ${IDS.size} ids` : ''}`
+  )
   if (DRY) {
-    targets.forEach((a) => console.log(' -', a.nombre, a.website))
+    const conWeb = targets.filter((a) => a.website).length
+    console.log(`   Con web: ${conWeb}  Sin web: ${targets.length - conWeb}`)
+    targets.forEach((a) => console.log(' -', a.nombre, a.website || '(sin web)'))
     return
   }
 
   let ok = 0
   let miss = 0
+  let oficiales = 0
   for (const area of targets) {
-    const fotos = area.website ? await scrapeFotosWebOficial(area.website, 7) : []
+    const webOficial =
+      area.website &&
+      !/instagram\.com|facebook\.com|fb\.com|tiktok\.com|twitter\.com|x\.com|booking\.com/i.test(
+        area.website
+      )
+        ? area.website
+        : null
+    const fotos = webOficial ? await scrapeFotosWebOficial(webOficial, MAX_FOTOS) : []
     if (!fotos.length) {
+      if (NO_IA) {
+        miss++
+        console.log(`↷ ${area.nombre} -> sin foto oficial (${area.website || 'sin web'})`)
+        continue
+      }
       try {
         const ia = await generateAndStoreAreaImage(supa, area)
         ok++
@@ -89,9 +122,10 @@ async function main() {
       continue
     }
     ok++
+    oficiales++
     console.log(`✓ ${area.nombre} (${fotos.length}) ${fotos[0].slice(0, 90)}`)
   }
-  console.log(`\nRESUMEN: ${ok} OK, ${miss} sin foto, de ${targets.length}`)
+  console.log(`\nRESUMEN: ${ok} OK (${oficiales} web oficial), ${miss} sin foto, de ${targets.length}`)
 }
 
 main().catch((e) => {
