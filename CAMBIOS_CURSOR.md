@@ -3,7 +3,8 @@
 > Documento para que el agente de Cursor verifique, paso a paso, todos los
 > cambios realizados el **28 de julio de 2026** con Claude (Cowork).
 > Cada bloque indica: qué se cambió, en qué archivos, y CÓMO verificarlo.
-> Complementa a `PLAN_MEJORAS.md` (visión de producto y pasos manuales).
+> Complementa a `PLAN_MEJORAS.md` (visión de producto y pasos manuales)
+> y a `GUIA_ENGAGEMENT.md` (embudo, furgo/IA/QR, digest).
 
 ---
 
@@ -349,3 +350,41 @@
   1. `/admin/configuracion`: modelo `gpt-5.6-terra` en valoración, enrich, scrape y chatbot.
   2. Una pregunta al Tío Viajero → `chatbot_respuestas_log.modelo` = `gpt-5.6-terra`.
   3. Una valoración IA o un enrich de área usa Terra (campo `modelo` en la respuesta/log).
+
+---
+
+## BLOQUE — Embudo de engagement (21 ago 2026)
+
+> Guía: `GUIA_ENGAGEMENT.md`. Checklist de verificación en su §6.
+
+### Favoritos sin cuenta + sync
+- **Archivos**: `lib/favoritos/local.ts`, `components/ui/FavoritosSync.tsx` (layout), `components/area/DetalleAreaHeader.tsx`
+- **Verificar**: incógnito, corazón en una ficha → badge + banner. Tras login, fila en `favoritos` y toast de sync.
+
+### AuthModal y WelcomeModal
+- **Archivos**: `components/ui/AuthModal.tsx`, `components/ui/WelcomeModal.tsx`, `app/(public)/auth/login/page.tsx`
+- **Verificar**: WelcomeModal solo en `/`. En `/area/...` no aparece. Estuve aquí / guardar ruta abren modal, no redirigen a `/auth/login` perdiendo contexto. Login clásico honra `?next=`.
+
+### Estuve aquí
+- **Archivo**: `components/area/ValoracionesCompleto.tsx`
+- **Verificar**: un botón; estrellas + Publicar → `visitas` + `valoraciones`. Sin “Registrar visita” y “Escribir valoración” separados.
+
+### Planificador
+- **Archivo**: `components/ruta/PlanificadorRuta.tsx`
+- **Verificar**: guardar sin sesión abre AuthModal (ruta no se pierde). Tras guardar, si hay áreas, modal para añadirlas a favoritos.
+
+### Home + ficha + navbar (furgo visible)
+- **Archivos**: `components/ui/HerramientasVehiculo.tsx`, `app/page.tsx`, `app/(public)/area/[slug]/page.tsx`, `components/layout/Navbar.tsx`, `lib/i18n/ui.ts` (`nav_furgo`)
+- **Verificar**: bloque de 3 tarjetas en ficha (bajo valoraciones) y bajo el hero de la home. Con sesión, icono camión en navbar → `/mis-autocaravanas`.
+
+### Chatbot
+- **Archivo**: `components/chatbot/ChatbotWidget.tsx`
+- **Verificar**: corazón en cards; “Guardar estas N áreas”; chips a `/valoracion-ia-vehiculos` y `/sistema-reporte-accidentes`.
+
+### Digest semanal
+- **Archivos**: `app/api/cron/digest-semanal/route.ts`, `vercel.json` (`0 9 * * 5`)
+- **Verificar**: sin `RESEND_API_KEY` → `{ skipped: true }`. Con key + favoritos → email. Variables documentadas en `.env.example` y `GUIA_ENGAGEMENT.md` §5.
+
+### Tracking
+- **Archivo**: `lib/analytics/track.ts` (tipos ya existían; ahora se disparan)
+- **Verificar**: en `user_interactions`, eventos `area_favorite`, `area_rate`, `area_visit_register`, `route_save` tras usar esas acciones.

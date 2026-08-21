@@ -31,12 +31,16 @@
 - 📱 **Responsive** adaptado a móvil y desktop
 
 ### Para Usuarios
-- 🛣️ **Planificador de rutas** con paradas intermedias
-- 🤖 **Chatbot IA "Tío Viajero"** - búsqueda conversacional
-- 👤 **Dashboard personal**: visitas, favoritos, rutas guardadas
+- 🛣️ **Planificador de rutas** con paradas intermedias (guardar + volcar áreas a favoritos)
+- 🤖 **Chatbot IA "Tío Viajero"** — áreas, corazón en cards, atajos a tasación IA y QR
+- ❤️ **Favoritos sin cuenta** (localStorage) y sync al crear sesión
+- ⭐ **Estuve aquí**: visita + valoración de área en un solo modal
+- 👤 **Home logada**: sitios guardados + última ruta + bloque furgo
 - 🚐 **Gestión de vehículos** con valoración automática IA
-- 🚨 **Sistema de alertas QR** para accidentes
+- 🚨 **Sistema de alertas QR** para accidentes (visible en ficha, home y navbar)
 - ⬆️ **Botón Back to Top** en páginas de detalle
+
+Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMENT.md)**.
 
 ### Para Administradores
 - ⚙️ **Panel de administración** completo (`/admin`)
@@ -82,9 +86,10 @@
 │   │   ├── mapa/          # Mapa principal
 │   │   ├── ruta/          # Planificador de rutas
 │   │   ├── area/[slug]/   # Detalle de área
-│   │   └── perfil/        # Dashboard usuario
+│   │   ├── perfil/        # Dashboard usuario
+│   │   └── mis-autocaravanas/
 │   ├── admin/             # Panel administración
-│   └── api/               # API Routes
+│   └── api/               # API Routes (incl. /api/cron/digest-semanal)
 ├── components/
 │   ├── mapa/              # MapaInteractivoGoogle, MapLibreMap, LeafletMap
 │   ├── banners/           # Sistema de banners CasiCinco + Furgocasa
@@ -94,9 +99,12 @@
 │   ├── banners_furgocasa/ # Archivos HTML editables de banners
 │   └── banners_casicinco/ # Archivos HTML editables de banners
 ├── hooks/                 # useMapConfig, useToast, etc.
-├── lib/                   # Supabase clients, utilidades
+├── lib/                   # Supabase, i18n, analytics, favoritos/local.ts
 ├── supabase/migrations/   # Migraciones SQL
 ├── types/                 # Tipos TypeScript
+├── GUIA_ENGAGEMENT.md     # Embudo: favoritos, auth, furgo, digest
+├── PLAN_MEJORAS.md        # Seguimiento de producto
+├── CAMBIOS_CURSOR.md      # Registro de cambios verificables
 └── .cursor/rules/         # Reglas del proyecto
 ```
 
@@ -128,7 +136,14 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
 OPENAI_API_KEY=
 SERPAPI_KEY=
+
+# Digest semanal de favoritos (opcional; sin esto el cron no envía)
+RESEND_API_KEY=
+EMAIL_FROM=Mapa Furgocasa <hola@mapafurgocasa.com>
+CRON_SECRET=
 ```
+
+Detalle del cron y del embudo: [GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMENT.md) §5.
 
 ---
 
@@ -317,6 +332,7 @@ Cada país se trata como mercado propio (terminología + tipo de sitio), no como
 
 | Versión | Fecha | Cambios principales |
 |---------|-------|---------------------|
+| v4.5 | 21 ago 2026 | Embudo de engagement: favoritos locales, AuthModal, Estuve aquí, furgo visible en ficha/home, digest semanal |
 | v4.4 | 21 ago 2026 | Admin Tío Viajero (tabla + quesito), ciclo revisión-corrección, null ≠ gratis, geo Nominatim |
 | v4.3 | Agosto 2026 | Piloto Gales (~480), huecos península (~169), caché `/api/areas` a 30 s |
 | v4.2 | Agosto 2026 | Agentes de texto unificados en `gpt-5.6-terra` |

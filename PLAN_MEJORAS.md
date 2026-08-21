@@ -14,6 +14,7 @@
 | 5 | MapLibre por defecto | ✅ Hecho | Coste/mantenimiento |
 | 6 | Higiene técnica | ✅ Hecho (fase 1) | Deuda técnica |
 | 7 | Tío Viajero IA renovado | ✅ Hecho | Conversión/UX |
+| 8 | Embudo de engagement + visibilidad furgo | ✅ Hecho (21 ago 2026) | Retención / adopción |
 
 ---
 
@@ -146,6 +147,33 @@ de BD falla, mejor caer en el gratuito.
 
 ---
 
+## Mejora 8 — Embudo de engagement + visibilidad de furgo (21 ago 2026)
+
+**Guía completa**: [GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMENT.md)
+
+**Qué**: el tráfico aterriza en fichas de área y se va. Favoritos, visitas,
+valoraciones, tasación IA, registro de vehículo y QR casi no se usaban
+porque pedían login demasiado pronto o porque no se veían.
+
+**Cambios**:
+- [x] Favoritos locales (`lib/favoritos/local.ts`) + sync al login (`FavoritosSync`)
+- [x] `AuthModal` inline (Google + email mínimo); `?next=` en login clásico
+- [x] `WelcomeModal` solo en `/`
+- [x] “Estuve aquí”: visita + estrellas en un modal (`ValoracionesCompleto`)
+- [x] Planificador: login inline al guardar; ofrecer áreas de la ruta como favoritos
+- [x] Home logada: sitios + última ruta; visitante: bloque furgo bajo el hero
+- [x] Chatbot: corazón en cards + chips tasación IA / QR
+- [x] Bloque “Tu furgo también vive aquí” en cada ficha (`HerramientasVehiculo`)
+- [x] Navbar: acceso visible a `/mis-autocaravanas` si hay sesión
+- [x] Cron digest semanal `GET /api/cron/digest-semanal` (Resend; skip si no hay key)
+- [x] Tracking `area_favorite`, `area_rate`, `area_visit_register`, `route_save`
+
+**Pendiente (manual, Vercel)**:
+- [ ] `RESEND_API_KEY` + dominio verificado; opcional `EMAIL_FROM`, `CRON_SECRET`
+- [ ] Maquetar el HTML del digest según `mail_mapas/REGLAS_MAQUETACION_EMAILS.md` (Outlook)
+
+---
+
 ## Pasos manuales pendientes (Narciso)
 
 1. ~~**Supabase SQL Editor**: migraciones `chatbot_evaluacion_ia` y `google_ratings_total`~~ — **hechas** (verificado en BD). Backfill ratings casi completo (~4.9k con valor; residual opcional ~300 con `place_id` y total NULL).
@@ -156,6 +184,7 @@ de BD falla, mejor caer en el gratuito.
    y después `npm run translate` con `TRAD_RUN=1`.
 4. Mover `usuarios-nuevos.*` fuera del proyecto.
 5. Tras ejecutar la migración del revisor: `EVAL_RUN=1 npm run evaluar:chatbot`.
+6. **Vercel (engagement)**: `RESEND_API_KEY`, `EMAIL_FROM`, `CRON_SECRET` para el digest de favoritos. Sin la key no se envía nada. Ver `GUIA_ENGAGEMENT.md` §5.
 
 ---
 
@@ -179,3 +208,6 @@ de BD falla, mejor caer en el gratuito.
 - **21 ago 2026 (Tío Viajero)**: admin tabla + quesito; primera evaluación
   (~53% incorrectas, casi todas por “Gratis” con precio null); parches de
   precio/geo/GPS/prompt; regla de círculo revisión-corrección.
+- **21 ago 2026 (engagement)**: favoritos sin cuenta, AuthModal, Estuve aquí,
+  home logada, digest cron, y bloque furgo/IA/QR en ficha + navbar + chatbot.
+  Guía: `GUIA_ENGAGEMENT.md`.

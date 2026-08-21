@@ -100,6 +100,23 @@ Si tienes un diseño de 2 o 3 columnas en PC que deben apilarse una encima de la
 - Usa una pila de fuentes seguras en tus estilos en línea:
   `font-family: Arial, Helvetica, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;`
 
+## 10. Digest semanal de favoritos (producto)
+
+El envío semanal (“Tus sitios guardados · ¿Has estado ya?”) vive en
+`app/api/cron/digest-semanal/route.ts` (Vercel Cron, viernes 09:00 UTC).
+Solo se manda a usuarios con ≥1 favorito. Configuración: `GUIA_ENGAGEMENT.md` §5.
+
+El HTML actual del route es un primer corte (divs + estilos inline). **Antes
+de usarlo en producción con Outlook**, sustituirlo por una plantilla de esta
+carpeta (tablas + comentarios MSO) y mantener el mismo copy:
+
+- Asunto: `Tus N sitios guardados · ¿Has estado ya en alguno?`
+- Lista de hasta 8 áreas con enlace a `https://www.mapafurgocasa.com/area/{slug}`
+- CTA “Estuve aquí” / “Abrir el mapa”
+- Pie: se recibe porque hay áreas guardadas
+
+Variables: `RESEND_API_KEY`, `EMAIL_FROM`, `CRON_SECRET`.
+
 ## Resumen del Workflow al crear un nuevo email
 1. Copia y pega la estructura de un email ya corregido (ej. `51_email-recordatorio-mejora-mapa.html`).
 2. Mantén las envolturas condicionales para Microsoft (Outlook).
