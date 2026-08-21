@@ -9,7 +9,7 @@
  *   $env:NODE_TLS_REJECT_UNAUTHORIZED="0"; node scripts/bulk-enrich.js
  * Variables opcionales:
  *   BULK_CONCURRENCY  (def 6)   BULK_LIMIT (0=todas)
- *   BULK_MODE         empty | critical | all | everything   (def critical)
+ *   BULK_MODE         empty | critical | all | everything | serp   (def critical)
  *   BULK_PAIS         filtra por país (ej. España). Vacío = todos
  *   BULK_MODEL        (def gpt-5.6-terra)
  *   BULK_TIMEOUT_MS   (def 90000)
@@ -72,14 +72,23 @@ function loadCheckpoint() {
 }
 function appendCheckpoint(id) { try { fs.appendFileSync(CHECKPOINT, id + '\n') } catch {} }
 
+const SERP_MOLD = [
+  /no se ha confirmado/i, /no se dispone de informaci/i,
+  /no hay informaci[oó]n espec[ií]fica/i, /no se detalla/i,
+  /se recomienda (verificar|consultar|informar)/i,
+  /encantador (municipio|pueblo|localidad)/i,
+  /en cuanto a las caracter[ií]sticas/i, /en conclusi[oó]n/i,
+  /destino ideal para/i, /impresi[oó]n duradera/i,
+  /podr[ií]a indicar que/i, /no se especifica/i
+]
+
 function needsWork(desc) {
   if (MODE === 'everything') return true
   if (!desc || !desc.trim()) return true
   const t = desc.trim()
   if (t.includes(PLACEHOLDER)) return true
-  // empty: solo sin texto o placeholder. No reescribe textos largos
-  // que coincidan con frases tipo "no hay información".
   if (MODE === 'empty') return false
+  if (MODE === 'serp') return SERP_MOLD.filter((re) => re.test(t)).length >= 2
   if (LOW_QUALITY.some((re) => re.test(t))) return true
   if (MODE === 'all' && t.length < 200) return true
   return false
