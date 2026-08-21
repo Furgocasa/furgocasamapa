@@ -7,6 +7,7 @@ import { ArrowLeftIcon, PhotoIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import type { Area } from '@/types/database.types'
 import { createClient } from '@/lib/supabase/client'
+import { isProhibidaParaEnriquecer } from '@/lib/areas/image-copyright'
 
 export default function EnriquecerImagenesPage() {
   const [areas, setAreas] = useState<Area[]>([])
@@ -217,8 +218,8 @@ export default function EnriquecerImagenesPage() {
 
   const esImagenValida = (url: string): boolean => {
     if (!url) return false
-    
-    // Evitar imágenes pequeñas de iconos o tracking
+    if (isProhibidaParaEnriquecer(url)) return false
+
     const blacklist = [
       'logo', 'icon', 'avatar', 'pixel', 'badge',
       'tracking', 'analytics', 'ad.', '/ads/',
@@ -226,7 +227,7 @@ export default function EnriquecerImagenesPage() {
       '1x1', '16x16', '32x32', '64x64',
       'data:image', 'base64'
     ]
-    
+
     const urlLower = url.toLowerCase()
     return !blacklist.some((term: any) => urlLower.includes(term))
   }

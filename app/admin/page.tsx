@@ -89,6 +89,13 @@ export default function AdminDashboardPage() {
       color: 'from-pink-500 to-rose-600'
     },
     {
+      title: 'Derechos de imagen',
+      description: 'Revisa, borra fotos de terceros y genera IA',
+      icon: <ExclamationTriangleIcon className="w-12 h-12" />,
+      href: '/admin/areas/revisar-imagenes',
+      color: 'from-amber-500 to-red-600'
+    },
+    {
       title: 'Usuarios',
       description: 'Gestiona usuarios del sistema',
       icon: <UsersIcon className="w-12 h-12" />,

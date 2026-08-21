@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { isProhibidaParaEnriquecer } from '@/lib/areas/image-copyright'
 
 function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -229,7 +230,8 @@ export async function POST(request: NextRequest) {
 
 // Funciones auxiliares
 function esImagenValida(url: string): boolean {
-  // Filtrar imágenes inválidas
+  if (isProhibidaParaEnriquecer(url)) return false
+
   const urlLower = url.toLowerCase()
   
   // RECHAZAR: Miniaturas de YouTube/Vimeo
