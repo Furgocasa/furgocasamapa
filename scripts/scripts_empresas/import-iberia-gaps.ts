@@ -96,7 +96,11 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
 
 function classifyTipo(name: string, types: string[]): TipoArea {
   const n = name.toLowerCase();
-  if (/\b(aire|área de servicio|area de servicio|aire de service)\b/.test(n)) {
+  if (
+    /\b(aire|área de servicio|area de servicio|area de servico|área de serviço|aire de service|esta[cç][aã]o de servi[cç]o|sosta|servizio)\b/.test(
+      n
+    )
+  ) {
     return "publica";
   }
   if (/\b(parking|aparcamiento|estacionamiento)\b/.test(n) && RELEVANCE_RE.test(n)) {
@@ -113,6 +117,9 @@ function classifyTipo(name: string, types: string[]): TipoArea {
 }
 
 function isRelevant(name: string, types: string[]): boolean {
+  if (/\b(glamping|b[ií]blico|biblico)\b/i.test(name) && !/\b(autocaravana|camper|aire)\b/i.test(name)) {
+    return false;
+  }
   if (NOISE_RE.test(name) && !RELEVANCE_RE.test(name)) return false;
   if (RELEVANCE_RE.test(name)) return true;
   if (types.includes("campground") || types.includes("rv_park")) return true;
@@ -220,8 +227,76 @@ function tooCloseToExisting(
   return coords.some((c) => haversine(lat, lng, c.lat, c.lng) < minKm);
 }
 
+async function importUtiles(utiles: any[]) {
+  let imported = 0;
+  for (const hit of utiles) {
+    const details = await placeDetails(hit.place_id);
+    await delay(120);
+    if (details?.business_status === "CLOSED_PERMANENTLY") continue;
+    const cc = details?.country_code;
+    if (cc && cc !== "ES" && cc !== "PT") continue;
+    const pais = cc === "PT" ? "Portugal" : "España";
+    const slug = `${normalizeText(hit.name).replace(/\s+/g, "-").slice(0, 80)}-${pais === "Portugal" ? "pt" : "es"}-${hit.place_id.slice(-8)}`;
+    const { error } = await supabase.from("areas").insert([
+      {
+        nombre: hit.name,
+        slug,
+        tipo_area: classifyTipo(hit.name, hit.types || []),
+        pais,
+        comunidad: details?.comunidad || null,
+        comunidad_autonoma: details?.comunidad || null,
+        provincia: details?.provincia || hit.hueco,
+        ciudad: details?.ciudad || null,
+        direccion:
+          details?.formatted_address || hit.formatted_address || null,
+        codigo_postal: details?.codigo_postal || null,
+        latitud: hit.lat,
+        longitud: hit.lng,
+        google_place_id: hit.place_id,
+        google_types: details?.google_types || hit.types,
+        google_maps_url:
+          details?.google_maps_url ||
+          `https://www.google.com/maps/place/?q=place_id:${hit.place_id}`,
+        website: details?.website || null,
+        telefono: details?.telefono || null,
+        google_rating: details?.google_rating ?? hit.rating ?? null,
+        google_ratings_total:
+          details?.google_ratings_total ?? hit.user_ratings_total ?? null,
+        verificado: false,
+        activo: true,
+        servicios: {},
+      },
+    ]);
+    if (error) {
+      console.error(`  ❌ ${hit.name}: ${error.message}`);
+    } else {
+      imported++;
+      if (imported % 15 === 0) console.log(`  … ${imported}/${utiles.length}`);
+    }
+    await delay(60);
+  }
+  console.log(`\nImportadas: ${imported}\n`);
+}
+
 async function main() {
   const doImport = process.argv.includes("--import");
+  const fromReport = process.argv.includes("--from-report");
+
+  if (fromReport) {
+    if (!doImport) {
+      console.error("Usa: --from-report --import");
+      process.exit(1);
+    }
+    const report = JSON.parse(fs.readFileSync(REPORT_PATH, "utf8"));
+    const { placeIds } = await loadExisting();
+    const utiles = (report.allHits || [])
+      .filter((h: any) => isRelevant(h.name, h.types || []))
+      .filter((h: any) => !placeIds.has(h.place_id) && !h.cercaExistente && !h.inDb);
+    console.log(`Import desde informe: ${utiles.length} candidatos`);
+    await importUtiles(utiles);
+    return;
+  }
+
   console.log("\nPenínsula — búsqueda en 16 huecos (radio 40 km)");
   console.log(doImport ? "MODO IMPORT\n" : "DRY RUN\n");
 
@@ -310,58 +385,11 @@ async function main() {
   });
 
   if (!doImport) {
-    console.log("\nDRY RUN. Importar: npm run import:iberia:gaps -- --import\n");
+    console.log("\nDRY RUN. Importar: npm run import:iberia:gaps -- --from-report --import\n");
     return;
   }
 
-  let imported = 0;
-  for (const hit of utiles) {
-    const details = await placeDetails(hit.place_id);
-    await delay(120);
-    if (details?.business_status === "CLOSED_PERMANENTLY") continue;
-    const cc = details?.country_code;
-    if (cc && cc !== "ES" && cc !== "PT") continue;
-    const pais = cc === "PT" ? "Portugal" : "España";
-    const slug = `${normalizeText(hit.name).replace(/\s+/g, "-").slice(0, 80)}-${pais === "Portugal" ? "pt" : "es"}-${hit.place_id.slice(-8)}`;
-    const { error } = await supabase.from("areas").insert([
-      {
-        nombre: hit.name,
-        slug,
-        tipo_area: hit.tipo_area,
-        pais,
-        comunidad: details?.comunidad || null,
-        comunidad_autonoma: details?.comunidad || null,
-        provincia: details?.provincia || hit.hueco,
-        ciudad: details?.ciudad || null,
-        direccion:
-          details?.formatted_address || hit.formatted_address || null,
-        codigo_postal: details?.codigo_postal || null,
-        latitud: hit.lat,
-        longitud: hit.lng,
-        google_place_id: hit.place_id,
-        google_types: details?.google_types || hit.types,
-        google_maps_url:
-          details?.google_maps_url ||
-          `https://www.google.com/maps/place/?q=place_id:${hit.place_id}`,
-        website: details?.website || null,
-        telefono: details?.telefono || null,
-        google_rating: details?.google_rating ?? hit.rating ?? null,
-        google_ratings_total:
-          details?.google_ratings_total ?? hit.user_ratings_total ?? null,
-        verificado: false,
-        activo: true,
-        servicios: {},
-      },
-    ]);
-    if (error) {
-      console.error(`  ❌ ${hit.name}: ${error.message}`);
-    } else {
-      imported++;
-      if (imported % 15 === 0) console.log(`  … ${imported}/${utiles.length}`);
-    }
-    await delay(60);
-  }
-  console.log(`\nImportadas: ${imported}\n`);
+  await importUtiles(utiles);
 }
 
 main().catch((err) => {
