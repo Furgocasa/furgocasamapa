@@ -15,6 +15,7 @@
 | 6 | Higiene técnica | ✅ Hecho (fase 1) | Deuda técnica |
 | 7 | Tío Viajero IA renovado | ✅ Hecho | Conversión/UX |
 | 8 | Embudo de engagement + visibilidad furgo | ✅ Hecho (21 ago 2026) | Retención / adopción |
+| 9 | Estética 3.0 (marca, basemap, móvil, filtros) | ✅ Hecho fase 1 (21 ago 2026) | Percepción de producto / UX |
 
 ---
 
@@ -214,3 +215,9 @@ porque pedían login demasiado pronto o porque no se veían.
 - **21 ago 2026 (engagement)**: favoritos sin cuenta, AuthModal, Estuve aquí,
   home logada, digest cron, y bloque furgo/IA/QR en ficha + navbar + chatbot.
   Guía: `GUIA_ENGAGEMENT.md`.
+- **21 ago 2026 (estética 3.0)**: tokens de marca (azul `#0b3c74` + naranja),
+  Inter/Outfit, basemap propio en runtime, entrada cinematográfica, splash con
+  furgoneta, móvil descongestionado (lupa plegable, GPS/zoom solo icono,
+  z-index sane), filtros táctiles sin cabecera duplicada. Pendiente fase 2:
+  pines silueta furgo + card flotante, transición card → ficha.
+  Guía: `GUIA_DISENO_V3.md`.

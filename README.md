@@ -24,11 +24,16 @@
 
 ### Mapa Interactivo
 - 🗺️ **3 proveedores intercambiables**: Google Maps, MapLibre GL, Leaflet
+- 🎨 **Basemap propio Furgocasa** (tema de marca aplicado en runtime sobre MapLibre)
+- 🎬 **Entrada cinematográfica**: vuelo desde Europa + caída escalonada de marcadores
+- 🚐 **Splash de carga** con furgoneta animada flotando sobre el mapa (no bloquea)
 - 🔵 **Clustering inteligente** con Supercluster (agrupa marcadores por zoom)
 - 🎯 **Zoom inteligente** por región/país (Europa, Sudamérica, Centroamérica)
-- 🔍 **Filtros avanzados**: servicios, precio, país, región, GPS
-- 📍 **Búsqueda geográfica** con autocompletado Google Places
+- 🔍 **Filtros táctiles 3.0**: tarjetas por tipo, chips de servicios, precio segmentado
+- 📍 **Búsqueda geográfica** con autocompletado Google Places (lupa plegable en móvil)
 - 📱 **Responsive** adaptado a móvil y desktop
+
+Sistema visual completo (tokens, basemap, móvil, filtros): **[GUIA_DISENO_V3.md](./GUIA_DISENO_V3.md)**.
 
 ### Para Usuarios
 - 🛣️ **Planificador de rutas** con paradas intermedias (guardar + volcar áreas a favoritos)
@@ -66,7 +71,8 @@ Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMEN
 | Categoría | Tecnología |
 |-----------|------------|
 | Frontend | Next.js 14, React 18, TypeScript 5 |
-| Estilos | Tailwind CSS |
+| Estilos | Tailwind CSS (tokens de marca) + Framer Motion |
+| Tipografía | Inter (texto) + Outfit (títulos) vía `next/font` |
 | Base de Datos | Supabase (PostgreSQL + RLS) |
 | Autenticación | Supabase Auth (Google OAuth, Email) |
 | Mapas | Google Maps API, MapLibre GL JS, Leaflet |
@@ -102,6 +108,7 @@ Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMEN
 ├── lib/                   # Supabase, i18n, analytics, favoritos/local.ts
 ├── supabase/migrations/   # Migraciones SQL
 ├── types/                 # Tipos TypeScript
+├── GUIA_DISENO_V3.md      # Sistema visual 3.0: tokens, basemap, móvil, filtros
 ├── GUIA_ENGAGEMENT.md     # Embudo: favoritos, auth, furgo, digest
 ├── GUIA_REVISION_AREAS.md # Ciclo de auditoría y corrección de fichas
 ├── PLAN_MEJORAS.md        # Seguimiento de producto
@@ -367,6 +374,7 @@ Cada país se trata como mercado propio: **se busca con el nombre local**, no co
 
 | Versión | Fecha | Cambios principales |
 |---------|-------|---------------------|
+| v4.7 | 21 ago 2026 | **Estética 3.0**: basemap propio, entrada cinematográfica, splash furgoneta, filtros táctiles, lupa plegable móvil, tokens de marca (ver `GUIA_DISENO_V3.md`) |
 | v4.6 | 21 ago 2026 | Tipo de ubicación: 4 categorías; zona de acampada / wild camp fuera; servicios vacíos ≠ ocultar |
 | v4.5 | 21 ago 2026 | Embudo de engagement: favoritos locales, AuthModal, Estuve aquí, furgo visible en ficha/home, digest semanal |
 | v4.4 | 21 ago 2026 | Admin Tío Viajero (tabla + quesito), ciclo revisión-corrección, null ≠ gratis, geo Nominatim |

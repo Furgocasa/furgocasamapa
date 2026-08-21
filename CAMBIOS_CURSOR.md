@@ -430,3 +430,43 @@
 ### Tracking
 - **Archivo**: `lib/analytics/track.ts` (tipos ya existían; ahora se disparan)
 - **Verificar**: en `user_interactions`, eventos `area_favorite`, `area_rate`, `area_visit_register`, `route_save` tras usar esas acciones.
+
+---
+
+## BLOQUE — Estética 3.0 (21 ago 2026)
+
+> Guía completa del sistema visual: `GUIA_DISENO_V3.md`. Commits: `99df132`,
+> `ad6883b`, `581b0a9`, `ce0a6b4`, `9124956`, `d6c52f9`, `ad06b32`, `f586422`.
+
+### Tokens de marca y tipografía
+- **Qué**: paleta corporativa (`primary` azul `#0b3c74`, `accent` naranja `#ff6b35`, `tipo.*`), fuentes Inter/Outfit vía `next/font`, sombras `card`/`overlay`.
+- **Archivos**: `tailwind.config.ts`, `app/layout.tsx`, `app/globals.css`
+- **Verificar**: `h1`–`h4` renderizan en Outfit; `grep -r "sky-" components/mapa` no devuelve estilos activos en los controles renovados.
+
+### Basemap propio + entrada cinematográfica
+- **Qué**: `applyBrandTheme()` re-pinta el estilo MapTiler en runtime (agua `#4d749e` = azul + 25% blanco); vuelo inicial desde Europa una vez (`hasFlownRef`); marcadores con caída escalonada.
+- **Archivos**: `lib/map/brand-style.ts` (nuevo), `components/mapa/MapLibreMap.tsx`, `components/area/MapaUbicacion.tsx`
+- **Verificar**: en `/mapa` con MapLibre el agua es azul claro de marca y los POIs comerciales no salen; el mini-mapa de una ficha comparte tema.
+
+### Splash de carga
+- **Qué**: sustituye la pantalla completa bloqueante por tarjeta flotante translúcida con furgoneta SVG animada (`fc-van-bob`, `fc-road-move`, `fc-bar-slide`); el mapa se ve y se mueve debajo.
+- **Archivos**: `app/(public)/mapa/page.tsx`, `app/globals.css`
+- **Verificar**: al cargar `/mapa` el mapa es visible tras el splash y este se desvanece al llegar las áreas.
+
+### Móvil: controles del mapa
+- **Qué**: GPS y Restablecer zoom solo-icono (texto `hidden md:inline` + `aria-label`); buscador plegado a lupa circular alineada con el contador (fila `top-3`), se expande con foco al tocarla; wrapper con `pointer-events-none` para no bloquear el arrastre; z-index de controles bajado de `z-[1000]` a `z-30`; sin `autoFocus` en el buscador de país.
+- **Archivos**: `components/mapa/BuscadorGeografico.tsx`, `MapLibreMap.tsx`, `MapaInteractivoGoogle.tsx`, `LeafletMap.tsx`, `FiltrosMapa.tsx`
+- **Verificar**: en móvil la fila superior es contador + lupa + zooms en una línea; al abrir un sheet nada del mapa lo tapa; abrir filtro de país no levanta el teclado.
+
+### Filtros 3.0
+- **Qué**: cabecera interna solo desktop (adiós doble «Filtros + X» en móvil); tipos como tarjetas con color de `getTipoAreaColor()`; servicios en chips 2 col; precio segmentado; características en acento; footer con «Ver resultados (N)» (cierra sheet) y «Limpiar filtros (n)» deshabilitado a 0; clave i18n `show_results` en 5 idiomas.
+- **Archivos**: `components/mapa/FiltrosMapa.tsx`, `lib/i18n/ui.ts`
+- **Verificar**: en móvil el sheet de filtros muestra una sola cabecera; tocar «Área pública» enciende la tarjeta en azul `#0284c7`; «Ver resultados» cierra la hoja.
+
+### Micro-interacciones y ficha
+- **Qué**: BottomSheet con Framer Motion + arrastre para cerrar; corazón favorito con pop; secciones de ficha unificadas (`rounded-2xl shadow-card`); popup del mapa con chips píldora y botones de marca; logo blanco en footer.
+- **Archivos**: `components/mobile/BottomSheet.tsx`, `components/area/DetalleAreaHeader.tsx`, `components/area/GaleriaFotos.tsx` (+ resto de secciones), `components/mapa/areaPopup.ts`, `components/layout/Footer.tsx`
+- **Verificar**: arrastrar el sheet hacia abajo lo cierra con muelle; togglear favorito hace pop; el popup de un área usa botón azul `#0b3c74` y chips redondos.
+
+### Pendiente (fase siguiente)
+- Pines con silueta de furgo + card flotante deslizable; transición card → ficha. Detalle en `GUIA_DISENO_V3.md` §8.
