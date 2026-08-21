@@ -150,8 +150,11 @@ function buildContexto(area) {
 
 function buildMessages(area, extraReminder) {
   const contexto = buildContexto(area)
+  const busqueda = /^(Argentina|Chile)$/i.test(area.pais)
+    ? 'En Argentina y Chile busca como lo llama la gente: camping, motorhome, casa rodante, trailer park, RV park, estacionamiento. Fuentes: web del camping, municipalidad, iOverlander, prensa local. No uses aire, sosta ni Stellplatz.'
+    : 'busca el recinto por su nombre local y localidad (ayuntamiento, Park4night, Campercontact, web del camping, prensa local).'
   const system = `Eres un redactor profesional de fichas de área para autocaravanas, campers y caravanas en español.
-Tienes web_search y DEBES usarla: busca el recinto por su nombre local y localidad (ayuntamiento, Park4night, Campercontact, web del camping, prensa local). No inventes un resumen turístico del país.
+Tienes web_search y DEBES usarla: ${busqueda} No inventes un resumen turístico del país.
 En este mapa solo hay tres tipos: área pública, área privada y camping. El nombre local (aire, sosta, Stellplatz, CL, Weingut) es etiqueta. No existe la categoría stopover.
 
 REGLAS DE CALIDAD INNEGOCIABLES:
