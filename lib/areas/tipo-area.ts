@@ -87,7 +87,10 @@ function esParkingAutocaravana(n: string): boolean {
 function esAnfitrionPrivado(n: string): boolean {
   return (
     esStopoverDeAnfitrion(n) ||
-    /\b(weingut|obsthof|bauernhof|buschenschank|heuriger|chez l.habitant|brit.?stop)\b/.test(n)
+    /\b(weingut|obsthof|bauernhof|buschenschank|heuriger|chez l.habitant|brit.?stop)\b/.test(n) ||
+    /\b(a la ferme|bienvenue a la ferme|ferme de |ferme des |ferme du |france ?passion|homecamper)\b/.test(
+      n
+    )
   )
 }
 
@@ -97,6 +100,7 @@ function esMarcaPrivada(n: string): boolean {
       n
     ) ||
     (/\bgranja\b/.test(n) && !/\bla granja(\s+d|\s*$)/.test(n) && !/\barea(s)? autocaravanas la granja\b/.test(n)) ||
+    (/\bdomaine\b/.test(n) && !/\b(municipal|communale|mairie)\b/.test(n)) ||
     /\bfinca-?caravana\b/.test(n) ||
     (/\bcaravan park\b/.test(n) && /\barea\b/.test(n))
   )
@@ -164,6 +168,16 @@ export function esFueraDelMapa(name: string, types: string[] = []): boolean {
     return true
   }
   if (/^\d+\s*,/.test(name.trim())) return true
+  if (/^\d+$/.test(name.trim())) return true
+  if (/\bgens du voyage\b/.test(n)) return true
+  if (/\bdaytime (camper )?parking\b/.test(n)) return true
+  if (/\baire de repos\b/.test(n) && !/\b(service|services|accueil)\b/.test(n)) return true
+  if (
+    /\b(hivernage|gardiennage|stockage)\b/.test(n) &&
+    !/\b(aire|stellplatz|camping|campsite)\b/.test(n)
+  ) {
+    return true
+  }
   if (types.includes('car_dealer')) return true
   if (
     types.includes('car_repair') &&
@@ -173,8 +187,14 @@ export function esFueraDelMapa(name: string, types: string[] = []): boolean {
     return true
   }
   if (
-    /\b(hire|rental|alquiler|arriendo|vermietung|noleggio|location de )\b/.test(n) &&
+    /\b(hire|rentals?|alquiler(es)?|arriendo(s)?|vermietung|noleggio|location de )\b/.test(n) &&
     /\b(camper|motorhome|van|autocaravana|wohnmobil|fourgon|casa.?rodante)\b/.test(n)
+  ) {
+    return true
+  }
+  if (
+    /\b(showroom|fabrica|factory|equipamiento|kit motorhome|toldos motorhome)\b/.test(n) &&
+    /\b(motorhome|casa.?rodante|camper)\b/.test(n)
   ) {
     return true
   }
@@ -299,7 +319,7 @@ export function classifyTipoArea(
     !isMotorhomeWording(n) &&
     !esAreaEnNombre &&
     !/\b(rimessaggio|soccorso|storage|invernaje)\b/.test(n) &&
-    /\b(camping|campeggio|campismo|campground|campamentos?|campament|acampada|caravan park|holiday park|touring park|trailer park|rv park|rv resort|parque de trailers?|parque de campismo|campingplads|campingplass)\b/.test(
+    /\b(camping|campeggio|campismo|campground|campsite|camp site|campamentos?|campament|acampada|caravan park|holiday park|touring park|trailer park|rv park|rv resort|parque de trailers?|parque de campismo|campingplads|campingplass)\b/.test(
       n
     )
 
@@ -311,7 +331,11 @@ export function classifyTipoArea(
     return 'privada'
   }
 
-  if (/\b(privad[oa]|privata)\b/.test(n) && (esAire || /\barea\b/.test(n))) {
+  if (/\b(privad[oa]|privata|privee?)\b/.test(n) && (esAire || /\barea\b/.test(n) || /\bcamping[-\s]?car/.test(n))) {
+    return 'privada'
+  }
+
+  if (/\bgites?\b/.test(n) && (esAire || /\bcamping[-\s]?car/.test(n))) {
     return 'privada'
   }
 
@@ -323,7 +347,9 @@ export function classifyTipoArea(
   }
 
   // Parking / Parkplatz / parcheggio de autocaravanas = área.
+  // «Camper parking» en Benelux/EN es el nombre del sitio, no el ayuntamiento.
   if (esParkingAutocaravana(n)) {
+    if (/\bcamper parking\b/.test(n)) return 'privada'
     return 'publica'
   }
   const typeIsCamping =

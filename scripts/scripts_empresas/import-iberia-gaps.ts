@@ -25,6 +25,7 @@
  *   npm run import:suecia:gaps
  *   npm run import:noruega:gaps
  *   npm run import:chile:gaps
+ *   npm run import:argentina:gaps
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -78,6 +79,8 @@ let REPORT_NAME =
           ? "noruega-gaps-dry-report.json"
         : REGION === "chile"
           ? "chile-gaps-dry-report.json"
+        : REGION === "argentina"
+          ? "argentina-gaps-dry-report.json"
         : "iberia-gaps-dry-report.json";
 if (SOLO_STOPOVER) {
   REPORT_NAME = REPORT_NAME.replace("-gaps-dry-report.json", "-stopover-dry-report.json");
@@ -352,6 +355,30 @@ const HUECOS_CHILE = [
   { id: 20, zona: "Punta Arenas", lat: -53.16, lng: -70.91, pais: "Chile" },
 ];
 
+/** Argentina: 247 previas. Ruta 40 + litoral + AMBA; mismas palabras que Chile. */
+const HUECOS_ARGENTINA = [
+  { id: 1, zona: "Buenos Aires", lat: -34.6, lng: -58.38, pais: "Argentina" },
+  { id: 2, zona: "Mar del Plata", lat: -38.0, lng: -57.55, pais: "Argentina" },
+  { id: 3, zona: "Rosario", lat: -32.95, lng: -60.64, pais: "Argentina" },
+  { id: 4, zona: "Córdoba", lat: -31.42, lng: -64.18, pais: "Argentina" },
+  { id: 5, zona: "Mendoza", lat: -32.89, lng: -68.85, pais: "Argentina" },
+  { id: 6, zona: "San Rafael", lat: -34.61, lng: -68.33, pais: "Argentina" },
+  { id: 7, zona: "Salta", lat: -24.79, lng: -65.41, pais: "Argentina" },
+  { id: 8, zona: "Jujuy / Quebrada", lat: -23.58, lng: -65.45, pais: "Argentina" },
+  { id: 9, zona: "Iguazú", lat: -25.68, lng: -54.45, pais: "Argentina" },
+  { id: 10, zona: "Posadas", lat: -27.37, lng: -55.9, pais: "Argentina" },
+  { id: 11, zona: "Tucumán", lat: -26.81, lng: -65.22, pais: "Argentina" },
+  { id: 12, zona: "Neuquén", lat: -38.95, lng: -68.06, pais: "Argentina" },
+  { id: 13, zona: "Bariloche", lat: -41.13, lng: -71.31, pais: "Argentina" },
+  { id: 14, zona: "San Martín de los Andes", lat: -40.16, lng: -71.35, pais: "Argentina" },
+  { id: 15, zona: "Esquel", lat: -42.91, lng: -71.32, pais: "Argentina" },
+  { id: 16, zona: "Puerto Madryn", lat: -42.77, lng: -65.04, pais: "Argentina" },
+  { id: 17, zona: "El Calafate", lat: -50.34, lng: -72.26, pais: "Argentina" },
+  { id: 18, zona: "El Chaltén", lat: -49.33, lng: -72.89, pais: "Argentina" },
+  { id: 19, zona: "Río Gallegos", lat: -51.62, lng: -69.22, pais: "Argentina" },
+  { id: 20, zona: "Ushuaia", lat: -54.8, lng: -68.3, pais: "Argentina" },
+];
+
 const HUECOS =
   REGION === "baleares"
     ? HUECOS_BALEARES
@@ -379,7 +406,9 @@ const HUECOS =
                           ? HUECOS_NORUEGA
                           : REGION === "chile"
                             ? HUECOS_CHILE
-                            : HUECOS_PENINSULA;
+                            : REGION === "argentina"
+                              ? HUECOS_ARGENTINA
+                              : HUECOS_PENINSULA;
 
 const TERMINOS_ES = [
   "área autocaravanas",
@@ -433,7 +462,7 @@ const TERMINOS_CL = ["casas rodantes", "motorhome", "camping motorhome"];
 const STOPOVER_CL = ["estacionamiento casas rodantes", "trailer park"];
 
 function terminosDe(hueco: { pais?: string; lang?: string }) {
-  if (REGION === "chile") {
+  if (REGION === "chile" || REGION === "argentina") {
     return SOLO_STOPOVER ? STOPOVER_CL : [...TERMINOS_CL, ...STOPOVER_CL];
   }
   if (REGION === "dinamarca") {
@@ -644,6 +673,15 @@ function isInNorway(lat: number, lng: number): boolean {
   return true;
 }
 
+function isInArgentina(lat: number, lng: number): boolean {
+  if (lat < -55.1 || lat > -21.7 || lng < -73.6 || lng > -53.5) return false;
+  if (lng < -70.8 && lat > -40 && lat < -23) return false;
+  if (lng < -72.5 && lat > -46 && lat < -40) return false;
+  if (lat > -25.4 && lng > -54.6) return false;
+  if (lat < -33.5 && lat > -35.2 && lng > -58.1 && lng < -56.5) return false;
+  return true;
+}
+
 function isInChile(lat: number, lng: number): boolean {
   if (lat < -56.0 || lat > -17.5 || lng < -75.7 || lng > -66.4) return false;
   if (lat > -32 && lat < -23 && lng > -68.0) return false;
@@ -736,8 +774,21 @@ function isRelevant(name: string, types: string[], pais?: string): boolean {
       return false;
     }
   }
-  if (REGION === "chile") {
+  if (REGION === "chile" || REGION === "argentina") {
     if (/\b(hostel|hospedaje)\b/i.test(name)) return false;
+    if (
+      /\b(showroom|fabrica|factory|equipamiento|kit|rental|rentals|alquiler|arriendo|toldos)\b/i.test(
+        name
+      )
+    ) {
+      return false;
+    }
+    if (
+      /\b(guarderia|cochera|park to fly|nautica)\b/i.test(name) &&
+      !/casa.?rodante|camping motorhome|area/i.test(name)
+    ) {
+      return false;
+    }
     if (
       /\bestacionamiento\b/i.test(name) &&
       !/casa.?rodante|motorhome|camper|trailer|\brv\b|camping/i.test(name)
@@ -746,6 +797,19 @@ function isRelevant(name: string, types: string[], pais?: string): boolean {
     }
     if (
       !/casa.?rodante|motorhome|trailer|\brv\b|camper|camping|campamento/i.test(name)
+    ) {
+      return false;
+    }
+    if (
+      /\b(tienda|accesorios|tanques|vendo|carrozados|impresion)\b/i.test(name)
+    ) {
+      return false;
+    }
+    if (
+      /motorhome|casa.?rodante|trailer/i.test(name) &&
+      !/camping|campamento|estacionamiento|parking|parador|area|autocamp|rv park|trailer park|caravan park/i.test(
+        name
+      )
     ) {
       return false;
     }
@@ -910,6 +974,9 @@ async function importUtiles(utiles: any[]) {
     } else if (REGION === "chile") {
       if (cc && cc !== "CL") continue;
       if (!isInChile(hit.lat, hit.lng)) continue;
+    } else if (REGION === "argentina") {
+      if (cc && cc !== "AR") continue;
+      if (!isInArgentina(hit.lat, hit.lng)) continue;
     } else if (cc && cc !== "ES" && cc !== "PT") {
       continue;
     }
@@ -940,6 +1007,8 @@ async function importUtiles(utiles: any[]) {
                 ? "Noruega"
           : REGION === "chile" || cc === "CL"
             ? "Chile"
+          : REGION === "argentina" || cc === "AR"
+            ? "Argentina"
           : cc === "PT"
             ? "Portugal"
             : "España";
@@ -968,6 +1037,8 @@ async function importUtiles(utiles: any[]) {
                           ? "no"
                         : pais === "Chile"
                           ? "cl"
+                        : pais === "Argentina"
+                          ? "ar"
                 : pais === "Portugal"
                   ? "pt"
                   : "es";
@@ -1066,6 +1137,8 @@ async function main() {
           ? "\nNoruega — 16 disparos (bobilplass, radio 40 km)"
         : REGION === "chile"
           ? "\nChile — 20 disparos (casas rodantes / motorhome, radio 40 km)"
+        : REGION === "argentina"
+          ? "\nArgentina — 20 disparos (casas rodantes / motorhome, radio 40 km)"
         : "\nPenínsula — búsqueda en 16 huecos (radio 40 km)"
   );
   if (SOLO_STOPOVER) {
@@ -1123,9 +1196,10 @@ async function main() {
         if (REGION === "suecia" && !isInSweden(r.lat, r.lng)) continue;
         if (REGION === "noruega" && !isInNorway(r.lat, r.lng)) continue;
         if (REGION === "chile" && !isInChile(r.lat, r.lng)) continue;
+        if (REGION === "argentina" && !isInArgentina(r.lat, r.lng)) continue;
         seen.add(r.place_id);
         const decision = decidirUbicacion(r.name, { types: r.types, pais: hueco.pais });
-        const relevant = decision.admite;
+        const relevant = decision.admite && isRelevant(r.name, r.types || [], hueco.pais);
         const inDb = placeIds.has(r.place_id);
         const cercaExistente = tooCloseToExisting(r.lat, r.lng, coords);
         hits.push({
