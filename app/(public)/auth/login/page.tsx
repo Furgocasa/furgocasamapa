@@ -142,28 +142,28 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-sky-100 flex items-center justify-center p-4">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-sky-50 via-white to-sky-100 flex items-center justify-center p-4 py-8">
       <div className="w-full max-w-md">
         {/* Logo y título */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 md:mb-8">
           <div className="flex justify-center mb-4">
             <Image
               src="/logo-negro.png"
               alt="FurgoCasa Logo"
               width={160}
               height={60}
-              className="h-auto w-auto max-w-[200px]"
+              className="h-auto w-auto max-w-[160px] md:max-w-[200px]"
               priority
             />
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
             {t('auth_login_title')}
           </h1>
-          <p className="text-gray-600">{t('auth_login_sub')}</p>
+          <p className="text-gray-600 text-sm md:text-base">{t('auth_login_sub')}</p>
         </div>
 
         {/* Tarjeta de login */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white rounded-2xl shadow-xl p-5 sm:p-8">
           {/* Mensaje de error */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">

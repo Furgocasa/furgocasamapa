@@ -14,8 +14,8 @@ export default function LoginWall({ onClose, feature = 'ruta' }: LoginWallProps)
   const isMapa = feature === 'mapa'
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="relative max-w-md w-full mx-4 bg-white rounded-2xl shadow-2xl p-8 animate-fade-in">
+    <div className="fixed inset-0 z-[12000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="relative max-w-md w-full bg-white rounded-2xl shadow-2xl p-5 sm:p-8 animate-fade-in max-h-[min(90dvh,calc(100dvh-2rem))] overflow-y-auto">
         {/* Icono de candado */}
         <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-6">
           <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

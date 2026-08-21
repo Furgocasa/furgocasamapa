@@ -165,7 +165,7 @@ export function DetalleAreaHeader({ area }: Props) {
       )}
       <div className="relative w-full max-w-[1600px] mx-auto bg-gray-50">
         {/* Contenedor principal con bordes redondeados en desktop */}
-        <div className="relative h-[400px] md:h-[450px] md:rounded-b-3xl overflow-hidden bg-slate-200 shadow-sm max-w-[1600px] mx-auto">
+        <div className="relative h-[280px] sm:h-[340px] md:h-[450px] md:rounded-b-3xl overflow-hidden bg-slate-200 shadow-sm max-w-[1600px] mx-auto">
           {area.foto_principal ? (
             <Image
               src={area.foto_principal}
@@ -205,7 +205,7 @@ export function DetalleAreaHeader({ area }: Props) {
         </div>
 
         {/* Botones flotantes (Navegación) */}
-        <div className="absolute top-6 left-0 right-0 px-4 md:px-8 flex justify-between items-center safe-top max-w-[1600px] mx-auto z-10">
+        <div className="absolute top-3 sm:top-6 left-0 right-0 px-3 sm:px-4 md:px-8 flex justify-between items-center max-w-[1600px] mx-auto z-10">
           <button
             onClick={() => router.back()}
             className="w-11 h-11 bg-white/90 backdrop-blur-md flex items-center justify-center rounded-full shadow-sm hover:bg-white transition-all text-slate-700 border border-white/20"
@@ -243,10 +243,10 @@ export function DetalleAreaHeader({ area }: Props) {
 
 
         {/* Información superpuesta (Glassmorphism) */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 max-w-[1200px] mx-auto z-10">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-12 max-w-[1200px] mx-auto z-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 md:gap-6">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2 md:mb-4">
                 {/* Badge tipo de área */}
                 <span className={`${getTipoAreaColor(area.tipo_area)} px-4 py-1.5 rounded-full text-xs font-bold tracking-wider shadow-sm`}>
                   {getTipoAreaLabel(area.tipo_area, locale)}
@@ -262,26 +262,26 @@ export function DetalleAreaHeader({ area }: Props) {
                 )}
               </div>
 
-              <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-3 tracking-tight drop-shadow-md">
+              <h1 className="text-xl sm:text-3xl md:text-5xl font-extrabold text-white mb-2 md:mb-3 tracking-tight drop-shadow-md break-words">
                 {area.nombre}
               </h1>
               
-              <div className="flex items-center gap-2 text-slate-200 text-sm md:text-base font-medium drop-shadow-sm">
-                <MapPinIcon className="w-5 h-5 text-slate-300" />
-                <span>{area.direccion || `${area.ciudad}, ${area.provincia}`}</span>
+              <div className="flex items-start gap-2 text-slate-200 text-xs sm:text-sm md:text-base font-medium drop-shadow-sm">
+                <MapPinIcon className="w-4 h-4 md:w-5 md:h-5 text-slate-300 shrink-0 mt-0.5" />
+                <span className="line-clamp-2">{area.direccion || `${area.ciudad}, ${area.provincia}`}</span>
               </div>
             </div>
 
             {/* Panel lateral derecho en hero (Rating y Precio) */}
             {(area.google_rating || (area.precio_noche !== null && area.precio_noche !== undefined)) && (
-              <div className="flex items-center bg-black/40 backdrop-blur-lg border border-white/20 p-5 rounded-3xl shadow-xl">
+              <div className="flex items-center self-start bg-black/40 backdrop-blur-lg border border-white/20 p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-xl">
                 {area.google_rating && (
-                  <div className={`flex flex-col items-center justify-center px-5 ${(area.precio_noche !== null && area.precio_noche !== undefined) ? 'border-r border-white/20' : ''}`}>
-                    <div className="flex items-center gap-1 text-white font-bold text-2xl">
-                      <span className="text-amber-400 text-xl">★</span>
+                  <div className={`flex flex-col items-center justify-center px-3 sm:px-5 ${(area.precio_noche !== null && area.precio_noche !== undefined) ? 'border-r border-white/20' : ''}`}>
+                    <div className="flex items-center gap-1 text-white font-bold text-xl sm:text-2xl">
+                      <span className="text-amber-400 text-lg sm:text-xl">★</span>
                       {area.google_rating.toFixed(1)}
                     </div>
-                    <span className="text-xs text-slate-300 font-medium tracking-wider uppercase mt-1">
+                    <span className="text-[10px] sm:text-xs text-slate-300 font-medium tracking-wider uppercase mt-1">
                       {(area.google_ratings_total ?? 0) > 0
                         ? `${area.google_ratings_total} valoraciones`
                         : 'Rating'}
@@ -290,8 +290,8 @@ export function DetalleAreaHeader({ area }: Props) {
                 )}
                 
                 {area.precio_noche !== null && area.precio_noche !== undefined && (
-                  <div className="flex flex-col items-center justify-center px-5">
-                    <div className="text-white font-bold text-2xl">
+                  <div className="flex flex-col items-center justify-center px-3 sm:px-5">
+                    <div className="text-white font-bold text-xl sm:text-2xl">
                       {area.precio_noche === 0 ? t('free') : `${area.precio_noche}€`}
                     </div>
                     <span className="text-xs text-slate-300 font-medium tracking-wider uppercase mt-1">

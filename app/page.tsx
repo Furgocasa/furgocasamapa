@@ -205,78 +205,78 @@ export default function HomePage() {
 
       {/* HERO - Azul corporativo con stats */}
       <section className="relative bg-gradient-to-br from-[#0b3c74] via-[#0d4a8f] to-[#0b3c74] text-white overflow-hidden">
-        <div className="container mx-auto px-4 py-16 md:py-24">
+        <div className="container mx-auto px-4 py-8 md:py-24">
           <div className="max-w-4xl mx-auto text-center">
             {/* Badge superior */}
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full mb-8 border border-white/30">
-              <SparklesIcon className="w-5 h-5" />
-              <span className="font-semibold">{t('home_badge_ai')}</span>
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-2 md:px-6 md:py-3 rounded-full mb-5 md:mb-8 border border-white/30 max-w-full">
+              <SparklesIcon className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
+              <span className="font-semibold text-xs sm:text-sm md:text-base leading-snug">{t('home_badge_ai')}</span>
             </div>
 
             {/* Tres iconos principales */}
-            <div className="flex justify-center items-center gap-6 md:gap-12 mb-8">
+            <div className="flex justify-center items-center gap-5 md:gap-12 mb-5 md:mb-8">
               {/* Icono Mapa */}
               <div className="flex flex-col items-center">
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/30 mb-2">
-                  <MapIcon className="w-8 h-8 md:w-10 md:h-10 text-white" />
+                <div className="w-12 h-12 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/30 mb-2">
+                  <MapIcon className="w-6 h-6 md:w-10 md:h-10 text-white" />
                 </div>
-                <span className="text-sm md:text-base font-semibold text-white/90">{t('home_icon_map')}</span>
+                <span className="text-xs md:text-base font-semibold text-white/90">{t('home_icon_map')}</span>
               </div>
 
               {/* Icono Rutas */}
               <div className="flex flex-col items-center">
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/30 mb-2">
-                  <ArrowPathIcon className="w-8 h-8 md:w-10 md:h-10 text-white" />
+                <div className="w-12 h-12 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/30 mb-2">
+                  <ArrowPathIcon className="w-6 h-6 md:w-10 md:h-10 text-white" />
                 </div>
-                <span className="text-sm md:text-base font-semibold text-white/90">{t('home_icon_routes')}</span>
+                <span className="text-xs md:text-base font-semibold text-white/90">{t('home_icon_routes')}</span>
               </div>
 
               {/* Icono IA */}
               <div className="flex flex-col items-center">
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/30 mb-2">
-                  <SparklesIcon className="w-8 h-8 md:w-10 md:h-10 text-white" />
+                <div className="w-12 h-12 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/30 mb-2">
+                  <SparklesIcon className="w-6 h-6 md:w-10 md:h-10 text-white" />
                 </div>
-                <span className="text-sm md:text-base font-semibold text-white/90">{t('home_icon_ai')}</span>
+                <span className="text-xs md:text-base font-semibold text-white/90">{t('home_icon_ai')}</span>
               </div>
             </div>
 
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+            <h1 className="text-[1.7rem] leading-tight sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-3 md:mb-6">
               {t('home_h1')}
             </h1>
 
-            <p className="text-xl md:text-2xl text-white/90 mb-10 leading-relaxed max-w-3xl mx-auto">
+            <p className="text-base md:text-2xl text-white/90 mb-6 md:mb-10 leading-relaxed max-w-3xl mx-auto">
               {t('home_lead')}
             </p>
 
             {/* CTAs principales */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center mb-8 md:mb-16">
               <Link
                 href="/auth/register"
-                className="inline-flex items-center justify-center px-8 py-4 bg-white text-[#0b3c74] rounded-xl font-bold text-lg hover:bg-gray-100 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
+                className="inline-flex items-center justify-center px-8 py-3.5 md:py-4 bg-white text-[#0b3c74] rounded-xl font-bold text-base md:text-lg hover:bg-gray-100 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
               >
                 {t('home_cta_start')}
               </Link>
               <Link
                 href="/mapa"
-                className="inline-flex items-center justify-center px-8 py-4 bg-transparent text-white rounded-xl font-bold text-lg border-2 border-white hover:bg-white/10 transition-all"
+                className="inline-flex items-center justify-center px-8 py-3.5 md:py-4 bg-transparent text-white rounded-xl font-bold text-base md:text-lg border-2 border-white hover:bg-white/10 transition-all"
               >
                 {t('home_cta_map')}
               </Link>
             </div>
 
             {/* Stats cards */}
-            <div className="grid grid-cols-3 gap-4 max-w-3xl mx-auto">
-              <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-6 border border-white/20">
-                <div className="text-4xl md:text-5xl font-bold text-white mb-1">+{totalAreas}</div>
-                <div className="text-sm text-white/80">{t('home_stat_areas')}</div>
+            <div className="grid grid-cols-3 gap-2 md:gap-4 max-w-3xl mx-auto">
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-3 md:py-6 px-1 border border-white/20">
+                <div className="text-2xl md:text-5xl font-bold text-white mb-1 tabular-nums">+{totalAreas}</div>
+                <div className="text-[11px] md:text-sm text-white/80 leading-tight">{t('home_stat_areas')}</div>
               </div>
-              <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-6 border border-white/20">
-                <div className="text-4xl md:text-5xl font-bold text-white mb-1">100%</div>
-                <div className="text-sm text-white/80">{t('home_stat_free')}</div>
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-3 md:py-6 px-1 border border-white/20">
+                <div className="text-2xl md:text-5xl font-bold text-white mb-1">100%</div>
+                <div className="text-[11px] md:text-sm text-white/80 leading-tight">{t('home_stat_free')}</div>
               </div>
-              <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-6 border border-white/20">
-                <div className="text-4xl md:text-5xl font-bold text-white mb-1">24/7</div>
-                <div className="text-sm text-white/80">{t('home_stat_updated')}</div>
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl py-3 md:py-6 px-1 border border-white/20">
+                <div className="text-2xl md:text-5xl font-bold text-white mb-1">24/7</div>
+                <div className="text-[11px] md:text-sm text-white/80 leading-tight">{t('home_stat_updated')}</div>
               </div>
             </div>
           </div>
@@ -293,13 +293,13 @@ export default function HomePage() {
       )}
 
       {/* FEATURES PRINCIPALES - Blanco con tarjetas */}
-      <section className="py-20 bg-white">
+      <section className="py-12 md:py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16 max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-10 md:mb-16 max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
               {t('home_features_title')}
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-lg md:text-xl text-gray-600">
               {t('home_features_sub')}
             </p>
           </div>
@@ -359,60 +359,60 @@ export default function HomePage() {
       </section>
 
       {/* GESTIÓN IA - Destacado con fondo gris claro */}
-      <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
+      <section className="py-12 md:py-20 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             {/* Badge superior */}
-            <div className="flex justify-center mb-8">
-              <div className="inline-flex items-center gap-2 bg-[#0b3c74] text-white px-6 py-3 rounded-full font-bold shadow-lg">
-                <SparklesIcon className="w-5 h-5" />
+            <div className="flex justify-center mb-6 md:mb-8">
+              <div className="inline-flex items-center gap-2 bg-[#0b3c74] text-white px-4 py-2.5 md:px-6 md:py-3 rounded-full font-bold shadow-lg text-xs sm:text-sm md:text-base">
+                <SparklesIcon className="w-5 h-5 shrink-0" />
                 POWERED BY GPT-5.6 TERRA
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl p-10 md:p-12 shadow-xl border-2 border-[#0b3c74]/20">
-              <div className="flex items-start gap-6 mb-8">
-                <div className="w-20 h-20 bg-[#0b3c74] rounded-2xl flex items-center justify-center flex-shrink-0">
-                  <TruckIcon className="w-12 h-12 text-white" />
+            <div className="bg-white rounded-2xl md:rounded-3xl p-5 sm:p-8 md:p-12 shadow-xl border-2 border-[#0b3c74]/20">
+              <div className="flex items-start gap-4 md:gap-6 mb-8">
+                <div className="w-14 h-14 md:w-20 md:h-20 bg-[#0b3c74] rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <TruckIcon className="w-8 h-8 md:w-12 md:h-12 text-white" />
                 </div>
-                <div>
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                <div className="min-w-0">
+                  <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-4">
                     {t('home_ai_title')}
                   </h2>
-                  <p className="text-xl text-gray-600 leading-relaxed">
+                  <p className="text-base md:text-xl text-gray-600 leading-relaxed">
                     {t('home_ai_lead')}
                   </p>
                 </div>
               </div>
 
               {/* Grid de características */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-8">
+                <div className="bg-gray-50 rounded-xl p-3 md:p-5 border border-gray-200">
                   <div className="text-3xl mb-3">🤖</div>
                   <p className="font-bold text-gray-900 mb-1">{t('home_ai_card1')}</p>
                   <p className="text-sm text-gray-600">{t('home_ai_card1_sub')}</p>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div className="bg-gray-50 rounded-xl p-3 md:p-5 border border-gray-200">
                   <div className="text-3xl mb-3">📊</div>
                   <p className="font-bold text-gray-900 mb-1">{t('home_ai_card2')}</p>
                   <p className="text-sm text-gray-600">{t('home_ai_card2_sub')}</p>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div className="bg-gray-50 rounded-xl p-3 md:p-5 border border-gray-200">
                   <div className="text-3xl mb-3">🔧</div>
                   <p className="font-bold text-gray-900 mb-1">{t('home_ai_card3')}</p>
                   <p className="text-sm text-gray-600">{t('home_ai_card3_sub')}</p>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div className="bg-gray-50 rounded-xl p-3 md:p-5 border border-gray-200">
                   <div className="text-3xl mb-3">💰</div>
                   <p className="font-bold text-gray-900 mb-1">{t('home_ai_card4')}</p>
                   <p className="text-sm text-gray-600">{t('home_ai_card4_sub')}</p>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div className="bg-gray-50 rounded-xl p-3 md:p-5 border border-gray-200">
                   <div className="text-3xl mb-3">📈</div>
                   <p className="font-bold text-gray-900 mb-1">{t('home_ai_card5')}</p>
                   <p className="text-sm text-gray-600">{t('home_ai_card5_sub')}</p>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div className="bg-gray-50 rounded-xl p-3 md:p-5 border border-gray-200">
                   <div className="text-3xl mb-3">📸</div>
                   <p className="font-bold text-gray-900 mb-1">{t('home_ai_card6')}</p>
                   <p className="text-sm text-gray-600">{t('home_ai_card6_sub')}</p>
@@ -463,7 +463,7 @@ export default function HomePage() {
 
               {/* Grid de características */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div className="bg-gray-50 rounded-xl p-3 md:p-5 border border-gray-200">
                   <div className="flex items-start gap-4">
                     <div className="text-3xl">🚨</div>
                     <div>
@@ -472,7 +472,7 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div className="bg-gray-50 rounded-xl p-3 md:p-5 border border-gray-200">
                   <div className="flex items-start gap-4">
                     <div className="text-3xl">🔔</div>
                     <div>
@@ -481,7 +481,7 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div className="bg-gray-50 rounded-xl p-3 md:p-5 border border-gray-200">
                   <div className="flex items-start gap-4">
                     <div className="text-3xl">📞</div>
                     <div>
@@ -490,7 +490,7 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div className="bg-gray-50 rounded-xl p-3 md:p-5 border border-gray-200">
                   <div className="flex items-start gap-4">
                     <div className="text-3xl">📋</div>
                     <div>

@@ -24,10 +24,10 @@ export default function InstalarAppPage() {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <Navbar />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="mb-12">
+        <div className="text-center mb-8 md:mb-12">
+          <div className="mb-6 md:mb-12">
             <Link
               href="/"
               className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 transition-colors"
@@ -37,25 +37,25 @@ export default function InstalarAppPage() {
             </Link>
           </div>
           
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-700 rounded-3xl mb-6 shadow-lg">
-            <DevicePhoneMobileIcon className="w-12 h-12 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-primary-500 to-primary-700 rounded-3xl mb-6 shadow-lg">
+            <DevicePhoneMobileIcon className="w-10 h-10 md:w-12 md:h-12 text-white" />
           </div>
           
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
+          <h1 className="text-3xl sm:text-5xl font-bold text-gray-900 mb-4">
             Instala Furgocasa en 3 pasos
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-base md:text-xl text-gray-600 max-w-2xl mx-auto">
             Disfruta de la mejor experiencia móvil con acceso instantáneo desde tu pantalla de inicio
           </p>
         </div>
 
         {/* Selector de Dispositivo */}
-        <div className="flex justify-center gap-4 mb-12">
+        <div className="flex flex-col sm:flex-row justify-center gap-3 mb-8 md:mb-12">
           <button
             onClick={() => setDispositivo('ios')}
-            className={`flex items-center gap-3 px-8 py-4 rounded-xl font-semibold text-lg transition-all ${
+            className={`flex items-center justify-center gap-3 px-5 py-3 md:px-8 md:py-4 rounded-xl font-semibold text-base md:text-lg transition-all ${
               dispositivo === 'ios'
-                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg scale-105'
+                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg sm:scale-105'
                 : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-300'
             }`}
           >
@@ -65,9 +65,9 @@ export default function InstalarAppPage() {
           
           <button
             onClick={() => setDispositivo('android')}
-            className={`flex items-center gap-3 px-8 py-4 rounded-xl font-semibold text-lg transition-all ${
+            className={`flex items-center justify-center gap-3 px-5 py-3 md:px-8 md:py-4 rounded-xl font-semibold text-base md:text-lg transition-all ${
               dispositivo === 'android'
-                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg scale-105'
+                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg sm:scale-105'
                 : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-green-300'
             }`}
           >

@@ -68,8 +68,8 @@ export default function WelcomeModal() {
   if (!esHome || !isOpen || user) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full my-8 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full my-4 md:my-8 max-h-[min(90dvh,calc(100dvh-2rem))] overflow-y-auto">
         {/* Header azul */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 sm:p-8 text-center relative">
           <button

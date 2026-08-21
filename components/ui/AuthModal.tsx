@@ -128,8 +128,8 @@ export default function AuthModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 sm:p-6 max-h-[min(90dvh,calc(100dvh-2rem))] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 p-1"

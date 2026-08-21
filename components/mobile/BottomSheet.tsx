@@ -68,9 +68,9 @@ export default function BottomSheet({
   if (!isOpen) return null
 
   const getHeightClass = () => {
-    if (snapPoints.includes('full')) return 'h-[90vh]'
-    if (snapPoints.includes('half')) return 'h-[60vh]'
-    return 'h-[40vh]'
+    if (snapPoints.includes('full')) return 'h-[90dvh]'
+    if (snapPoints.includes('half')) return 'h-[60dvh]'
+    return 'h-[40dvh]'
   }
 
   return (
@@ -84,7 +84,7 @@ export default function BottomSheet({
       {/* Bottom Sheet */}
       <div
         ref={sheetRef}
-        className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-50 transition-transform duration-300 ease-out md:hidden flex flex-col animate-slide-up ${getHeightClass()}`}
+        className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-50 transition-transform duration-300 ease-out md:hidden flex flex-col animate-slide-up pb-[env(safe-area-inset-bottom)] ${getHeightClass()}`}
       >
         {/* Drag Handle */}
         <div

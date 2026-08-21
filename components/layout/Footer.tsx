@@ -32,7 +32,7 @@ export function Footer() {
   }, []);
 
   return (
-    <footer className="bg-gray-900 text-gray-300">
+    <footer className="bg-gray-900 text-gray-300 pb-20 md:pb-0">
       <div className="max-w-7xl mx-auto px-4 py-12">
         {/* Grid Principal */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">

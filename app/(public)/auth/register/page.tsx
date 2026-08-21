@@ -135,8 +135,8 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-sky-100 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-100 text-center">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-sky-50 via-white to-sky-100 flex items-center justify-center p-4 py-8">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-5 sm:p-8 border border-gray-100 text-center">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             {needsEmailConfirmation ? (
               <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,25 +174,25 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-sky-100 flex items-center justify-center p-4">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-sky-50 via-white to-sky-100 flex items-center justify-center p-4 py-8">
       <div className="w-full max-w-md">
         {/* Logo y título */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 md:mb-8">
           <Link href="/" className="inline-block">
             <Image 
               src="/logo-negro.png" 
               alt="Furgocasa" 
               width={200} 
               height={80}
-              className="mx-auto mb-4"
+              className="mx-auto mb-4 max-w-[160px] md:max-w-[200px] h-auto"
             />
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('auth_register_title')}</h1>
-          <p className="text-gray-600">{t('auth_register_sub')}</p>
+          <p className="text-gray-600 text-sm md:text-base">{t('auth_register_sub')}</p>
         </div>
 
         {/* Formulario */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+        <div className="bg-white rounded-2xl shadow-xl p-5 sm:p-8 border border-gray-100">
           <form onSubmit={handleRegister} className="space-y-5">
             {/* Nombre y Apellido */}
             <div className="grid grid-cols-2 gap-4">

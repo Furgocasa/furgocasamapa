@@ -550,7 +550,7 @@ export default function MapaPage() {
   // Skeleton Loader MEJORADO - Solo primera carga, luego cache instantáneo
   if (initialLoading) {
     return (
-      <div className="h-screen flex flex-col overflow-hidden bg-gray-100">
+      <div className="h-[100dvh] flex flex-col overflow-hidden bg-gray-100">
         <Navbar />
 
         {/* Skeleton del mapa con animación */}
@@ -615,7 +615,7 @@ export default function MapaPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden relative">
+    <div className="h-[100dvh] flex flex-col overflow-hidden relative">
       {/* Navbar - siempre visible */}
       <Navbar />
 
@@ -650,7 +650,7 @@ export default function MapaPage() {
 
 
           {/* Contador de resultados con indicador de carga */}
-          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md rounded-full shadow-lg ring-1 ring-gray-900/5 px-4 py-2 z-10">
+          <div className="absolute top-3 left-3 max-w-[min(11rem,calc(100%-9rem))] bg-white/90 backdrop-blur-md rounded-full shadow-lg ring-1 ring-gray-900/5 px-3 py-1.5 z-10">
             <p className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
               <span className="text-sky-600 font-bold tabular-nums">{areasParaMapa.length}</span>
               {areasParaMapa.length === 1 ? 'área' : 'áreas'}
@@ -722,8 +722,8 @@ export default function MapaPage() {
       </BottomSheet>
 
       {/* Bottom Bar (solo móvil) - Mapa, Filtros, Lista */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-200/80 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] safe-bottom z-40">
-        <div className="flex items-center justify-around h-16 px-3">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-200/80 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] z-40 pb-[env(safe-area-inset-bottom)]">
+        <div className="flex items-center justify-around h-14 px-3">
           {/* Mapa */}
           <button
             onClick={() => {

@@ -517,6 +517,16 @@ export default function ChatbotWidget() {
     return null
   }
 
+  // En login/registro el widget tapa CTAs y campos en móvil
+  if (pathname?.startsWith('/auth') || pathname?.startsWith('/admin')) {
+    return null
+  }
+
+  const isMapa = pathname === '/mapa'
+  const fabAnchor = isMapa
+    ? 'fixed z-[11000] right-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:right-6 md:bottom-6'
+    : 'fixed z-[11000] right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))] md:right-6 md:bottom-6'
+
   // El Tío Viajero es PÚBLICO: sin cuenta también funciona (rate limit por IP).
   // Con cuenta, además, se guarda el historial de conversaciones.
 
@@ -526,7 +536,7 @@ export default function ChatbotWidget() {
       {isHidden && (
         <button
           onClick={handleShow}
-          className="fixed bottom-24 right-6 md:bottom-6 bg-blue-600 text-white rounded-full w-8 h-8 shadow-lg hover:bg-blue-700 transition-all z-[11000] flex items-center justify-center text-xl font-bold"
+          className={`${fabAnchor} bg-blue-600 text-white rounded-full w-8 h-8 shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center text-xl font-bold`}
           title="Mostrar Tío Viajero IA"
         >
           +
@@ -535,19 +545,19 @@ export default function ChatbotWidget() {
 
       {/* Botón flotante con avatar - cuando el chat está cerrado */}
       {!isOpen && !isHidden && (
-        <div className="fixed bottom-24 right-6 md:bottom-6 z-[11000] group">
+        <div className={`${fabAnchor} group`}>
           <button
             onClick={handleOpen}
-            className="bg-gradient-to-r from-blue-600 to-gray-700 rounded-full p-2 shadow-2xl hover:scale-110 transition-transform relative"
+            className="bg-gradient-to-r from-blue-600 to-gray-700 rounded-full p-1.5 md:p-2 shadow-2xl hover:scale-110 transition-transform relative"
             title="Tío Viajero IA"
           >
             <img 
               src="/tio-viajero-avatar.png" 
               alt="Tío Viajero IA" 
-              className="w-14 h-14 object-cover rounded-full border-2 border-white"
+              className="w-12 h-12 md:w-14 md:h-14 object-cover rounded-full border-2 border-white"
             />
             {/* Badge "IA" */}
-            <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg">
+            <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-[10px] md:text-xs font-bold px-1.5 md:px-2 py-0.5 rounded-full shadow-lg">
               IA
             </span>
           </button>
@@ -564,19 +574,19 @@ export default function ChatbotWidget() {
       
       {/* Avatar minimizado con botón de expandir */}
       {isOpen && isMinimized && !isHidden && (
-        <div className="fixed bottom-24 right-6 md:bottom-6 z-[11000] group">
+        <div className={`${fabAnchor} group`}>
           <button
             onClick={handleExpand}
-            className="bg-gradient-to-r from-blue-600 to-gray-700 rounded-full p-2 shadow-2xl hover:scale-110 transition-transform relative"
+            className="bg-gradient-to-r from-blue-600 to-gray-700 rounded-full p-1.5 md:p-2 shadow-2xl hover:scale-110 transition-transform relative"
             title="Expandir Tío Viajero IA"
           >
             <img 
               src="/tio-viajero-avatar.png" 
               alt="Tío Viajero IA" 
-              className="w-14 h-14 object-cover rounded-full border-2 border-white"
+              className="w-12 h-12 md:w-14 md:h-14 object-cover rounded-full border-2 border-white"
             />
             {/* Badge "IA" */}
-            <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg">
+            <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-[10px] md:text-xs font-bold px-1.5 md:px-2 py-0.5 rounded-full shadow-lg">
               IA
             </span>
           </button>
@@ -593,9 +603,9 @@ export default function ChatbotWidget() {
       
       {/* Ventana del chat */}
       {isOpen && !isMinimized && !isHidden && (
-        <div className="fixed bottom-24 right-6 md:bottom-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-[11000] border border-gray-200 max-w-[calc(100vw-3rem)] max-h-[calc(100vh-3rem)]">
+        <div className="fixed inset-0 md:inset-auto md:bottom-6 md:right-6 w-full md:w-96 h-full md:h-[600px] bg-white md:rounded-2xl shadow-2xl flex flex-col z-[11000] border-0 md:border border-gray-200 md:max-w-[calc(100vw-3rem)] md:max-h-[calc(100vh-3rem)] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-gray-700 text-white p-4 rounded-t-2xl flex justify-between items-center">
+          <div className="bg-gradient-to-r from-blue-600 to-gray-700 text-white p-4 md:rounded-t-2xl flex justify-between items-center">
             <div className="flex items-center gap-3">
               <img 
                 src="/tio-viajero-avatar.png" 
@@ -792,7 +802,7 @@ export default function ChatbotWidget() {
           </div>
           
           {/* Input */}
-          <div className="p-4 border-t bg-white rounded-b-2xl">
+          <div className="p-4 border-t bg-white md:rounded-b-2xl">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -800,7 +810,7 @@ export default function ChatbotWidget() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && enviarMensaje()}
                 placeholder={txt.placeholder}
-                className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="flex-1 border border-gray-300 rounded-full px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
                 disabled={sending}
               />
               <button

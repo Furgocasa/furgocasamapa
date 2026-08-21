@@ -12,6 +12,8 @@ import {
   TruckIcon,
   ChevronDownIcon,
   CheckIcon,
+  Bars3Icon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { LOCALES, LOCALE_LABELS, LOCALE_NAMES, type Locale, useLanguage } from "@/lib/i18n";
 
@@ -67,6 +69,7 @@ export function Navbar() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [unreadReports, setUnreadReports] = useState(0);
   const router = useRouter();
   const pathname = usePathname();
@@ -122,6 +125,12 @@ export function Navbar() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    setShowMobileMenu(false);
+    setShowLangMenu(false);
+    setShowUserMenu(false);
+  }, [pathname]);
 
   // Actualizar reportes no leídos cada 30 segundos si hay usuario
   useEffect(() => {
@@ -185,51 +194,23 @@ export function Navbar() {
   };
 
   return (
-    <header className="bg-primary-600 text-white shadow-lg z-30 shrink-0">
-      <div className="max-w-7xl mx-auto px-4 lg:px-6">
-        <div className="flex items-center justify-between h-16">
+    <header className="bg-primary-600 text-white shadow-lg z-30 shrink-0 pt-[env(safe-area-inset-top)]">
+      <div className="max-w-7xl mx-auto px-3 md:px-4 lg:px-6">
+        <div className="flex items-center justify-between h-14 md:h-16 gap-2">
           {/* Logo */}
           <Link
             href={user ? "/mapa" : "/"}
-            className="flex items-center hover:opacity-90 transition-opacity"
+            className="flex items-center shrink-0 hover:opacity-90 transition-opacity"
           >
             <Image
               src="/logo-furgocasa.png"
               alt="Furgocasa"
               width={180}
               height={40}
-              className="h-10 w-auto"
+              className="h-8 md:h-10 w-auto max-w-[132px] md:max-w-none"
               priority
             />
           </Link>
-
-          {/* Navegación Móvil (visible en pantallas pequeñas) */}
-          <nav className="flex md:hidden items-center space-x-4">
-            <Link
-              href="/mapa"
-              className={`text-white font-semibold hover:text-primary-100 transition-colors text-sm ${
-                pathname === "/mapa" ? "border-b-2 border-white pb-1" : ""
-              }`}
-            >
-              {t('nav_mapa')}
-            </Link>
-            <Link
-              href="/ruta"
-              className={`text-white font-semibold hover:text-primary-100 transition-colors text-sm ${
-                pathname === "/ruta" ? "border-b-2 border-white pb-1" : ""
-              }`}
-            >
-              {t('nav_ruta')}
-            </Link>
-            <Link
-              href="/accidente"
-              className={`text-white font-semibold hover:text-primary-100 transition-colors text-sm ${
-                pathname === "/accidente" ? "border-b-2 border-white pb-1" : ""
-              }`}
-            >
-              {t('nav_reportar')}
-            </Link>
-          </nav>
 
           {/* Navegación Desktop */}
           <nav className="hidden md:flex items-center space-x-6">
@@ -260,23 +241,24 @@ export function Navbar() {
           </nav>
 
           {/* Usuario / Login */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
             <div className="relative">
               <button
                 type="button"
                 onClick={() => {
                   setShowLangMenu((open) => !open);
                   setShowUserMenu(false);
+                  setShowMobileMenu(false);
                 }}
-                className="flex items-center gap-2 h-12 px-3 bg-white/15 text-white border border-white/25 rounded-lg hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-white/40 transition-colors"
+                className="flex items-center gap-1.5 md:gap-2 h-10 md:h-12 px-2 md:px-3 bg-white/15 text-white border border-white/25 rounded-lg hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-white/40 transition-colors"
                 aria-label="Idioma"
                 aria-haspopup="listbox"
                 aria-expanded={showLangMenu}
               >
-                <LocaleFlag locale={locale} className="h-5 w-7" />
-                <span className="text-sm font-semibold tracking-wide">{LOCALE_LABELS[locale]}</span>
+                <LocaleFlag locale={locale} className="h-4 w-6 md:h-5 md:w-7" />
+                <span className="hidden sm:inline text-sm font-semibold tracking-wide">{LOCALE_LABELS[locale]}</span>
                 <ChevronDownIcon
-                  className={`w-4 h-4 opacity-80 transition-transform ${showLangMenu ? "rotate-180" : ""}`}
+                  className={`hidden sm:block w-4 h-4 opacity-80 transition-transform ${showLangMenu ? "rotate-180" : ""}`}
                 />
               </button>
 
@@ -326,7 +308,7 @@ export function Navbar() {
             {user && (
               <Link
                 href="/mis-autocaravanas"
-                className={`flex items-center gap-1.5 h-12 px-3 bg-white/15 text-white border border-white/25 rounded-lg hover:bg-white/25 transition-colors ${
+                className={`flex items-center gap-1.5 h-10 md:h-12 px-2.5 md:px-3 bg-white/15 text-white border border-white/25 rounded-lg hover:bg-white/25 transition-colors ${
                   pathname === "/mis-autocaravanas" ? "ring-2 ring-white/50" : ""
                 }`}
                 title={t('nav_vehicles')}
@@ -347,7 +329,7 @@ export function Navbar() {
                     setShowUserMenu(!showUserMenu);
                     setShowLangMenu(false);
                   }}
-                  className="flex items-center gap-2 h-12 px-3 bg-white text-primary-600 rounded-lg font-semibold hover:bg-primary-50 transition-colors relative"
+                  className="flex items-center gap-2 h-10 md:h-12 px-2.5 md:px-3 bg-white text-primary-600 rounded-lg font-semibold hover:bg-primary-50 transition-colors relative"
                 >
                   {user.user_metadata?.profile_photo &&
                   user.user_metadata.profile_photo !== "default_profile.png" ? (
@@ -446,13 +428,62 @@ export function Navbar() {
             ) : (
               <Link
                 href="/auth/login"
-                className="inline-flex items-center h-12 px-4 bg-white text-primary-600 rounded-lg font-semibold hover:bg-primary-50 transition-colors text-sm"
+                className="inline-flex items-center h-10 md:h-12 px-3 md:px-4 bg-white text-primary-600 rounded-lg font-semibold hover:bg-primary-50 transition-colors text-sm"
               >
-                {t('nav_login')}
+                <span className="sm:hidden">{t('nav_login_short')}</span>
+                <span className="hidden sm:inline">{t('nav_login')}</span>
               </Link>
             )}
+            <button
+              type="button"
+              className="md:hidden inline-flex items-center justify-center h-10 w-10 rounded-lg bg-white/15 border border-white/25 hover:bg-white/25 transition-colors"
+              aria-label={t('nav_menu')}
+              aria-expanded={showMobileMenu}
+              onClick={() => {
+                setShowMobileMenu((open) => !open);
+                setShowLangMenu(false);
+                setShowUserMenu(false);
+              }}
+            >
+              {showMobileMenu ? (
+                <XMarkIcon className="w-6 h-6" />
+              ) : (
+                <Bars3Icon className="w-6 h-6" />
+              )}
+            </button>
           </div>
         </div>
+        {showMobileMenu && (
+          <nav className="md:hidden border-t border-white/20 py-2 pb-3">
+            <Link
+              href="/mapa"
+              onClick={() => setShowMobileMenu(false)}
+              className={`block px-3 py-3 rounded-lg font-semibold ${
+                pathname === "/mapa" ? "bg-white/15" : "hover:bg-white/10"
+              }`}
+            >
+              {t('nav_mapa')}
+            </Link>
+            <Link
+              href="/ruta"
+              onClick={() => setShowMobileMenu(false)}
+              className={`block px-3 py-3 rounded-lg font-semibold ${
+                pathname === "/ruta" ? "bg-white/15" : "hover:bg-white/10"
+              }`}
+            >
+              {t('nav_ruta')}
+            </Link>
+            <Link
+              href="/accidente"
+              onClick={() => setShowMobileMenu(false)}
+              className={`block px-3 py-3 rounded-lg font-semibold ${
+                pathname === "/accidente" ? "bg-white/15" : "hover:bg-white/10"
+              }`}
+            >
+              {t('nav_reportar_full')}
+            </Link>
+          </nav>
+        )}
       </div>
     </header>
   );

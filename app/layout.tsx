@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'Furgocasa',
   },
   openGraph: {
@@ -82,6 +82,7 @@ export const viewport: Viewport = {
   maximumScale: 5,
   userScalable: true,
   themeColor: '#0b3c74',
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({

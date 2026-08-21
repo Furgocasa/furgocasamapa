@@ -37,7 +37,7 @@ export function BackToTop() {
   return (
     <button
       onClick={scrollToTop}
-      className="fixed bottom-6 left-6 z-50 bg-[#0b3c74] hover:bg-[#0d4a8f] text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#0b3c74] focus:ring-offset-2"
+      className="fixed left-4 z-50 bg-[#0b3c74] hover:bg-[#0d4a8f] text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#0b3c74] focus:ring-offset-2 bottom-[max(1.25rem,env(safe-area-inset-bottom))]"
       aria-label="Volver arriba"
       title="Volver arriba"
     >
