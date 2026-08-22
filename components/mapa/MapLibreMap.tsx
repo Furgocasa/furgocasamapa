@@ -120,6 +120,12 @@ export function MapLibreMap({
       mapInstance.addControl(new maplibregl.NavigationControl(), 'top-right')
       // A la izquierda: a la derecha queda debajo del botón del Tío Viajero
       mapInstance.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left')
+      // MapLibre abre el © en escritorio y solo lo pliega al mover; lo contraemos ya.
+      const attrib = mapInstance.getContainer().querySelector('.maplibregl-ctrl-attrib')
+      if (attrib) {
+        attrib.classList.remove('maplibregl-compact-show')
+        attrib.removeAttribute('open')
+      }
 
       // Crear popup singleton (como InfoWindow de Google)
       popupRef.current = new maplibregl.Popup({

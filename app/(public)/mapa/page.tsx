@@ -663,80 +663,78 @@ export default function MapaPage() {
             )}
           </AnimatePresence>
 
-          {/* Contador de resultados y leyenda de tipos justo debajo */}
-          <div className="absolute top-3 left-3 z-10 flex flex-col items-start gap-2">
-            <div className="max-w-[min(11rem,calc(100%-9rem))] bg-white/90 backdrop-blur-md rounded-full shadow-lg ring-1 ring-gray-900/5 px-3 py-1.5">
-              <p className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
-                <span className="text-primary-600 font-bold tabular-nums">{areasParaMapa.length}</span>
-                {areasParaMapa.length === 1 ? 'área' : 'áreas'}
-                {filtros.pais && !filtros.pais.startsWith('REGION_') && (
-                  <span className="text-xs text-gray-500 font-normal">· {filtros.pais}</span>
-                )}
-                {loading && (
-                  <span className="inline-flex items-center gap-1">
-                    <span className="animate-spin rounded-full h-3 w-3 border-2 border-primary-200 border-t-primary-600"></span>
-                  </span>
-                )}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setLeyendaAbierta((v) => !v)}
-              aria-expanded={leyendaAbierta}
-              className="flex bg-white/90 backdrop-blur-md rounded-full shadow-lg ring-1 ring-gray-900/5 w-11 h-11 items-center justify-center active:scale-95 transition-transform"
-              aria-label={t('type_filter')}
-            >
-              <span className="flex items-center" aria-hidden>
-                {TIPO_AREA_IDS.map((tipo, i) => (
-                  <span
-                    key={tipo}
-                    className={`w-[15px] h-[15px] rounded-full ring-2 ring-white flex items-center justify-center ${i > 0 ? '-ml-1' : ''}`}
-                    style={{ backgroundColor: getTipoAreaColor(tipo) }}
-                  >
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff">
-                      <path d={getTipoAreaIconPath(tipo)} />
-                    </svg>
-                  </span>
-                ))}
-              </span>
-            </button>
-
-            {leyendaAbierta && (
-              <div className="bg-white/95 backdrop-blur-md shadow-lg rounded-2xl p-3 ring-1 ring-gray-900/5 w-60">
-                <p className="text-xs font-semibold text-gray-900 mb-2">{t('type_filter')}</p>
-                <div className="space-y-2">
-                  {TIPO_AREA_IDS.map((tipo) => (
-                    <div key={tipo} className="flex items-start gap-2">
-                      <span
-                        className="w-[22px] h-[22px] shrink-0 rounded-full border-2 border-white shadow-sm flex items-center justify-center"
-                        style={{ backgroundColor: getTipoAreaColor(tipo) }}
-                        aria-hidden
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff">
-                          <path d={getTipoAreaIconPath(tipo)} />
-                        </svg>
-                      </span>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-xs text-gray-900 leading-tight">
-                          {getTipoAreaLabel(tipo, locale)}
-                        </p>
-                        <p className="text-[11px] text-gray-500 leading-tight">
-                          {t(
-                            tipo === 'publica'
-                              ? 'type_public_hint'
-                              : tipo === 'privada'
-                                ? 'type_private_hint'
-                                : 'type_camping_hint'
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+          {/* Recuento, botón de tipos y leyenda independientes: abrir la leyenda no ensancha el badge */}
+          <div className="absolute top-3 left-3 z-10 w-max whitespace-nowrap bg-white/90 backdrop-blur-md rounded-full shadow-lg ring-1 ring-gray-900/5 px-3 py-1.5">
+            <p className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
+              <span className="text-primary-600 font-bold tabular-nums">{areasParaMapa.length}</span>
+              {areasParaMapa.length === 1 ? 'área' : 'áreas'}
+              {filtros.pais && !filtros.pais.startsWith('REGION_') && (
+                <span className="text-xs text-gray-500 font-normal">· {filtros.pais}</span>
+              )}
+              {loading && (
+                <span className="inline-flex items-center gap-1">
+                  <span className="animate-spin rounded-full h-3 w-3 border-2 border-primary-200 border-t-primary-600"></span>
+                </span>
+              )}
+            </p>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setLeyendaAbierta((v) => !v)}
+            aria-expanded={leyendaAbierta}
+            className="absolute top-14 left-3 z-10 flex bg-white/90 backdrop-blur-md rounded-full shadow-lg ring-1 ring-gray-900/5 w-11 h-11 items-center justify-center active:scale-95 transition-transform"
+            aria-label={t('type_filter')}
+          >
+            <span className="flex items-center" aria-hidden>
+              {TIPO_AREA_IDS.map((tipo, i) => (
+                <span
+                  key={tipo}
+                  className={`w-[15px] h-[15px] rounded-full ring-2 ring-white flex items-center justify-center ${i > 0 ? '-ml-1' : ''}`}
+                  style={{ backgroundColor: getTipoAreaColor(tipo) }}
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff">
+                    <path d={getTipoAreaIconPath(tipo)} />
+                  </svg>
+                </span>
+              ))}
+            </span>
+          </button>
+
+          {leyendaAbierta && (
+            <div className="absolute top-[6.75rem] left-3 z-30 bg-white/95 backdrop-blur-md shadow-lg rounded-2xl p-3 ring-1 ring-gray-900/5 w-60">
+              <p className="text-xs font-semibold text-gray-900 mb-2">{t('type_filter')}</p>
+              <div className="space-y-2">
+                {TIPO_AREA_IDS.map((tipo) => (
+                  <div key={tipo} className="flex items-start gap-2">
+                    <span
+                      className="w-[22px] h-[22px] shrink-0 rounded-full border-2 border-white shadow-sm flex items-center justify-center"
+                      style={{ backgroundColor: getTipoAreaColor(tipo) }}
+                      aria-hidden
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff">
+                        <path d={getTipoAreaIconPath(tipo)} />
+                      </svg>
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-xs text-gray-900 leading-tight">
+                        {getTipoAreaLabel(tipo, locale)}
+                      </p>
+                      <p className="text-[11px] text-gray-500 leading-tight">
+                        {t(
+                          tipo === 'publica'
+                            ? 'type_public_hint'
+                            : tipo === 'privada'
+                              ? 'type_private_hint'
+                              : 'type_camping_hint'
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Panel de Resultados - Desktop y Tablet */}
