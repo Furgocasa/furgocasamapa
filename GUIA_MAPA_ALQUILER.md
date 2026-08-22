@@ -614,3 +614,66 @@ impresiones de consultas «áreas … {provincia/zona}». Objetivo fase 1:
 que las 50 provincias impriman en 4–6 semanas y roben posiciones a
 Park4Night/blogs en 3–6 meses. El bloque «Destacadas» convierte ese
 tráfico en el argumento de los 20 €/mes del §14.
+
+---
+
+## 16. Datos de las fichas ES: precio, servicios, fotos (oleadas)
+
+Radiografía (22 ago 2026, 1.819 activas ES): descripción 100 %, foto
+principal 89 %, servicios 63 %, **precio 18 %** (públicas: **2 %**),
+plazas 31 %, verificadas 8. Solo **12 áreas marcadas gratuitas** en toda
+España, con 969 públicas: «gratis» es la palabra de más CTR del sector
+y casi no podemos decirla. `null` **nunca** se convierte en gratis sin
+verificar.
+
+El top de fichas por visitas confirma el agujero: 56 de las 60 más
+vistas (90 días) no tienen precio, con Cantabria dominando el tráfico
+(Potes, Comillas, Suances, Ajo).
+
+### Oleadas (en orden de retorno)
+
+1. **Las que ya rankean (~100 fichas top por tráfico).** Completar
+   precio, 11 servicios y plazas con el ciclo de revisión de
+   `GUIA_REVISION_AREAS.md`; marcar `verificado`. Mejora el snippet
+   donde ya hay clics.
+2. **Censo de gratuitas.** Verificar públicas gratis (webs municipales,
+   directorios). Alimenta FAQs y descriptions de las landings de
+   provincia («N gratuitas en X»).
+3. **Precios de campings.** 444 sin precio, 96 % con teléfono y web.
+   Investigable por lotes. **La llamada de «confirme su ficha» es el
+   primer toque comercial**: se les enseña su ficha y su provincia, se
+   pide precio/servicios y se siembra el destacado del §14. Enriquecer
+   y vender es la misma llamada.
+- **Privadas (117): a mano y las primeras.** Pocas, con teléfono (69) y
+  son el cliente natural del destacado.
+- **Fotos no es el incendio** (89 % con principal). Galerías de
+  públicas despacio y con la regla de imágenes de siempre (sin riesgo;
+  IA propia marcada si no hay segura).
+
+---
+
+## 17. Casi Cinco: el modelo del mapa NO se replica con restaurantes
+
+Decidido el 22 ago 2026. El modelo «SEO caliente → ficha → descuento →
+lead → cuota fija» funciona en áreas porque el vertical está
+**desatendido**: al buscar «camping el peral», Google no lo resuelve
+(Park4Night sin fichas indexables, webs de campings malas, Maps no
+contesta vaciado/barrera/precio). Hay vacío; nos metemos.
+
+Los restaurantes son lo contrario: **el vertical local más servido del
+mundo.** El que tiene hambre abre Google Maps y lo resuelve sin salir
+(fotos, carta, reservar). La SERP del nombre del restaurante ya está
+ocupada: panel de Google, TripAdvisor, TheFork, su Instagram. No hay
+posición 1 alcanzable; es pelear contra Google mismo.
+
+El cobro también está inventado con gigante: **TheFork** da descuentos
+del 30 % y reservas contables con comisión por comensal. Un restaurante
+al que se le pidan 20 €/mes por un cupón no verificable compara y no
+paga. El camping paga porque nadie más le trae ese tráfico; el
+restaurante tiene cola de plataformas.
+
+Lo que Casi Cinco sí tiene: **curaduría** (solo 4,7★) = marca de
+confianza para audiencia prestada. Su sitio en el trinomio es el que
+ya tiene: «cena cerca» en la ficha del área y el cliente Furgocasa en
+ruta. Satélite del ecosistema, coste cero. **No** invertir en guerra
+SEO de restaurantes ni en fichas propias contra Maps/TheFork.
