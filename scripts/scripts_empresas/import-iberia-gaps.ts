@@ -50,6 +50,11 @@
  *   npm run import:campings:zaragoza
  *   npm run import:campings:huesca
  *   npm run import:campings:lleida
+ *   npm run import:campings:navarra
+ *   npm run import:campings:rioja
+ *   npm run import:campings:alava
+ *   npm run import:campings:gipuzkoa
+ *   npm run import:campings:bizkaia
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -154,6 +159,16 @@ let REPORT_NAME =
           ? "huesca-campings-dry-report.json"
         : REGION === "lleida"
           ? "lleida-campings-dry-report.json"
+        : REGION === "navarra"
+          ? "navarra-campings-dry-report.json"
+        : REGION === "rioja"
+          ? "rioja-campings-dry-report.json"
+        : REGION === "alava"
+          ? "alava-campings-dry-report.json"
+        : REGION === "gipuzkoa"
+          ? "gipuzkoa-campings-dry-report.json"
+        : REGION === "bizkaia"
+          ? "bizkaia-campings-dry-report.json"
         : "iberia-gaps-dry-report.json";
 if (SOLO_STOPOVER) {
   REPORT_NAME = REPORT_NAME.replace("-gaps-dry-report.json", "-stopover-dry-report.json");
@@ -748,6 +763,54 @@ const HUECOS_LLEIDA = [
   { id: 10, zona: "Les Borges", lat: 41.52, lng: 0.87, pais: "España" },
 ];
 
+const HUECOS_NAVARRA = [
+  { id: 1, zona: "Tudela", lat: 42.06, lng: -1.61, pais: "España" },
+  { id: 2, zona: "Tafalla", lat: 42.53, lng: -1.67, pais: "España" },
+  { id: 3, zona: "Pamplona", lat: 42.81, lng: -1.65, pais: "España" },
+  { id: 4, zona: "Estella", lat: 42.67, lng: -2.03, pais: "España" },
+  { id: 5, zona: "Sangüesa", lat: 42.58, lng: -1.25, pais: "España" },
+  { id: 6, zona: "Elizondo", lat: 43.15, lng: -1.52, pais: "España" },
+  { id: 7, zona: "Ochagavía", lat: 42.91, lng: -1.09, pais: "España" },
+  { id: 8, zona: "Viana", lat: 42.51, lng: -2.37, pais: "España" },
+  { id: 9, zona: "Isaba", lat: 42.86, lng: -0.92, pais: "España" },
+];
+
+const HUECOS_RIOJA = [
+  { id: 1, zona: "Calahorra", lat: 42.3, lng: -1.96, pais: "España" },
+  { id: 2, zona: "Arnedo", lat: 42.23, lng: -2.1, pais: "España" },
+  { id: 3, zona: "Logroño", lat: 42.46, lng: -2.45, pais: "España" },
+  { id: 4, zona: "Haro", lat: 42.58, lng: -2.85, pais: "España" },
+  { id: 5, zona: "Ezcaray", lat: 42.33, lng: -3.01, pais: "España" },
+  { id: 6, zona: "Nájera", lat: 42.42, lng: -2.73, pais: "España" },
+];
+
+const HUECOS_ALAVA = [
+  { id: 1, zona: "Laguardia", lat: 42.55, lng: -2.58, pais: "España" },
+  { id: 2, zona: "Vitoria", lat: 42.85, lng: -2.67, pais: "España" },
+  { id: 3, zona: "Salvatierra", lat: 42.85, lng: -2.39, pais: "España" },
+  { id: 4, zona: "Amurrio", lat: 43.05, lng: -3.0, pais: "España" },
+  { id: 5, zona: "Peñacerrada", lat: 42.64, lng: -2.71, pais: "España" },
+];
+
+const HUECOS_GIPUZKOA = [
+  { id: 1, zona: "Hondarribia", lat: 43.36, lng: -1.79, pais: "España" },
+  { id: 2, zona: "Donostia", lat: 43.32, lng: -1.98, pais: "España" },
+  { id: 3, zona: "Zarautz", lat: 43.28, lng: -2.17, pais: "España" },
+  { id: 4, zona: "Tolosa", lat: 43.13, lng: -2.07, pais: "España" },
+  { id: 5, zona: "Zumarraga", lat: 43.08, lng: -2.32, pais: "España" },
+  { id: 6, zona: "Oñati", lat: 43.03, lng: -2.41, pais: "España" },
+  { id: 7, zona: "Beasain", lat: 43.05, lng: -2.2, pais: "España" },
+];
+
+const HUECOS_BIZKAIA = [
+  { id: 1, zona: "Gernika", lat: 43.32, lng: -2.68, pais: "España" },
+  { id: 2, zona: "Bilbao", lat: 43.26, lng: -2.93, pais: "España" },
+  { id: 3, zona: "Durango", lat: 43.17, lng: -2.63, pais: "España" },
+  { id: 4, zona: "Balmaseda", lat: 43.19, lng: -3.2, pais: "España" },
+  { id: 5, zona: "Bermeo", lat: 43.42, lng: -2.72, pais: "España" },
+  { id: 6, zona: "Ondarroa", lat: 43.32, lng: -2.42, pais: "España" },
+];
+
 const CAMPING_ZONAS: Record<
   string,
   {
@@ -902,6 +965,36 @@ const CAMPING_ZONAS: Record<
     provinciaRe: /\b(lleida|l[eé]rida)\b/i,
     isIn: (lat, lng) => lat >= 41.25 && lat <= 42.86 && lng >= 0.3 && lng <= 1.9,
     huecos: HUECOS_LLEIDA,
+  },
+  navarra: {
+    label: "Navarra",
+    provinciaRe: /\b(navarra|nafarroa)\b/i,
+    isIn: (lat, lng) => lat >= 41.9 && lat <= 43.32 && lng >= -2.5 && lng <= -0.72,
+    huecos: HUECOS_NAVARRA,
+  },
+  rioja: {
+    label: "La Rioja",
+    provinciaRe: /\b(la rioja|rioja)\b/i,
+    isIn: (lat, lng) => lat >= 41.9 && lat <= 42.65 && lng >= -3.15 && lng <= -1.74,
+    huecos: HUECOS_RIOJA,
+  },
+  alava: {
+    label: "Álava",
+    provinciaRe: /(alava|álava|araba)/i,
+    isIn: (lat, lng) => lat >= 42.47 && lat <= 43.22 && lng >= -3.3 && lng <= -2.25,
+    huecos: HUECOS_ALAVA,
+  },
+  gipuzkoa: {
+    label: "Gipuzkoa",
+    provinciaRe: /\b(gipuzkoa|guip[uú]zcoa)\b/i,
+    isIn: (lat, lng) => lat >= 42.9 && lat <= 43.4 && lng >= -2.55 && lng <= -1.73,
+    huecos: HUECOS_GIPUZKOA,
+  },
+  bizkaia: {
+    label: "Bizkaia",
+    provinciaRe: /\b(bizkaia|vizcaya)\b/i,
+    isIn: (lat, lng) => lat >= 43.0 && lat <= 43.46 && lng >= -3.45 && lng <= -2.4,
+    huecos: HUECOS_BIZKAIA,
   },
 };
 
