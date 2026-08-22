@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Navbar } from '@/components/layout/Navbar'
 import { createClient } from '@/lib/supabase/client'
 import {
   ArrowLeftIcon,
@@ -212,7 +211,6 @@ export default function RevisarImagenesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link href="/admin" className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-4">
           <ArrowLeftIcon className="w-5 h-5 mr-2" />

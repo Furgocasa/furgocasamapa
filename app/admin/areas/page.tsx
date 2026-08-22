@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Navbar } from '@/components/layout/Navbar'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal'
 import { useDragToScroll } from '@/hooks/useDragToScroll'
@@ -620,7 +619,6 @@ export default function AdminAreasPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="spinner mb-4"></div>
@@ -633,8 +631,6 @@ export default function AdminAreasPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Link

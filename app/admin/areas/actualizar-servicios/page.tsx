@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Navbar } from '@/components/layout/Navbar'
 import { AdminTable, AdminTableColumn } from '@/components/admin/AdminTable'
 import Link from 'next/link'
 import type { Area } from '@/types/database.types'
@@ -568,7 +567,6 @@ export default function ActualizarServiciosPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <ArrowPathIcon className="w-12 h-12 text-sky-600 animate-spin mx-auto mb-4" />
@@ -581,8 +579,6 @@ export default function ActualizarServiciosPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
       {/* Banner de advertencia de configuración */}
       {configStatus && !configStatus.ready && (
         <div className="bg-red-50 border-b-4 border-red-400">

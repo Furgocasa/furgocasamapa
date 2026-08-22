@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Navbar } from '@/components/layout/Navbar'
 import { createClient } from '@/lib/supabase/client'
 import { AdminTable, AdminTableColumn } from '@/components/admin/AdminTable'
 import { SparklesIcon, MagnifyingGlassIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
@@ -419,8 +418,6 @@ export default function EnriquecerTextosPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
       {/* Banner de advertencia de configuración */}
       {configStatus && !configStatus.ready && (
         <div className="bg-red-50 border-b-4 border-red-400">

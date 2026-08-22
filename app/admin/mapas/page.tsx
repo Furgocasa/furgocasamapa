@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Navbar } from '@/components/layout/Navbar'
 import { MapIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
 
 export default function AdminMapasPage() {
@@ -132,8 +131,6 @@ export default function AdminMapasPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         {/* Header */}
         <div className="mb-8">

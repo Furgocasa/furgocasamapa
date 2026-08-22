@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Navbar } from '@/components/layout/Navbar'
 import { createClient } from '@/lib/supabase/client'
 import { CogIcon, ArrowPathIcon, CheckIcon } from '@heroicons/react/24/outline'
 import { PromptMessage, IAConfigValue, PROMPT_COLORS, PROMPT_LABELS } from '@/types/ia-config.types'
@@ -549,7 +548,6 @@ export default function ConfiguracionPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
         <div className="flex items-center justify-center h-96">
           <div className="text-gray-600">Cargando configuración...</div>
         </div>
@@ -559,8 +557,6 @@ export default function ConfiguracionPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="mb-8">

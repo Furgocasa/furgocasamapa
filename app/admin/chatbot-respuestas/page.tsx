@@ -11,8 +11,6 @@ import { Fragment, useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { createClient } from '@/lib/supabase/client'
-import { Navbar } from '@/components/layout/Navbar'
-
 interface UsuarioLog {
   nombre: string | null
   email: string | null
@@ -193,7 +191,6 @@ export default function ChatbotRespuestasPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
       <div className="p-6 max-w-[1500px] mx-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Respuestas del Tío Viajero</h1>

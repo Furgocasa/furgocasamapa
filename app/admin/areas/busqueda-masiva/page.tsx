@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useDragToScroll } from '@/hooks/useDragToScroll'
-import { Navbar } from '@/components/layout/Navbar'
 import Link from 'next/link'
 import {
   ArrowLeftIcon,
@@ -1090,8 +1089,6 @@ export default function BusquedaMasivaPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-4">
