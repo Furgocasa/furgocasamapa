@@ -282,3 +282,7 @@ con teléfono. Mercado = WhatsApp/lead, no OTA.
 - **22 ago 2026 (CTR)**: title/description de `/area` dejan de ser
   «nombre | Mapa Furgocasa» + tocho. Plantilla con tipo, ciudad, precio y
   servicios. `lib/areas/seo-snippet.ts`. Google tarda días en recrawlear.
+- **22 ago 2026 (leads medibles)**: WhatsApp «¿Hay plaza?» en
+  privada/camping ES; clics `plaza_*` en analytics. Destacar ≠ cobrar por
+  existir. `con_descuento_furgocasa` es el gancho (0 áreas ahora).
+  `GUIA_MAPA_ALQUILER.md` §14.

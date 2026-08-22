@@ -467,4 +467,49 @@ esta semana».
 - Un Booking/Pitchup de áreas. El tercer cliente, si se abre, son
   **leads** (§12), no una pasarela.
 
-Si hay duda, releer el §1.
+---
+
+## 14. Referencia SEO en España (norte)
+
+Shock = el mapa no gana a Park4Night. Oportunidad = **cuando alguien busca el
+nombre de un área o camping en España, salimos primeros**. No cuando busca
+«app autocaravanas». En esa ficha ve Furgocasa (alquiler) y, si el sitio
+cobra, puede pedir plaza. Eso es el golpe en el pecho.
+
+### Lo que se cobra y lo que no
+
+- **Salir en el mapa es gratis.** Quitar un camping porque no paga destruye
+  SEO y valor para el viajero. El catálogo no se vende.
+- **Destacar sí se cobra:** orden, badge, respuesta rápida. El gancho que
+  ya existe en producto es `con_descuento_furgocasa` (filtro del mapa +
+  chip en el popup). A 22 ago 2026 hay **0 áreas** con el flag a true:
+  está listo como producto comercial, no como inventario.
+- El trato con el dueño: descuento a clientes Furgocasa + destacado en
+  ficha/mapa. El viajero gana precio; Furgocasa gana marca; el sitio gana
+  leads. Nadie desaparece del mapa si no firma.
+
+### Cómo se mide un lead (para no inventar)
+
+Un lead **no** es una visita a `/area`. Es un gesto hacia el dueño.
+
+En `user_interactions`, `event_type = click`:
+
+| `event_data.cta` | Qué es | ¿Lead? |
+|------------------|--------|--------|
+| `plaza_whatsapp` | WhatsApp «¿Hay plaza?» en privada/camping ES | **Sí** |
+| `plaza_tel` / `plaza_email` / `plaza_web` | Tel, mail o web del dueño (misma ficha) | **Sí** |
+| `alquiler` | CTA Furgocasa | Dinero de rental, no lead de sitio |
+| `cena_cerca` | Casi Cinco | Otro negocio |
+| `contacto_*` / `navegacion_maps` | Pública o Maps | No es lead comercial |
+
+El WhatsApp sale solo en **privada o camping de España** con teléfono
+(`ContactoInfo`). El texto lleva «Mapa Furgocasa» para que el dueño sepa
+de dónde viene.
+
+Golpe en el pecho, cada lunes: cuántos `plaza_*` en 7 días, por tipo y
+por slug. Eso se enseña a un camping: «esta ficha os trajo N contactos».
+
+Admin: `/admin/analytics` (eventos `click`). Filtrar por
+`event_data.cta` que empiece por `plaza_`.
+
+Si hay duda, releer el §1 y este §14.
