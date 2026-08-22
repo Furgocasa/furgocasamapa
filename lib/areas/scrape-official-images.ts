@@ -5,7 +5,9 @@ const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
 
 const JUNK =
-  /logo|logotipo|favicon|sprite|avatar|whatsapp|wasap|pixel|1x1|flags?\/|redes-sociales|widgetkit\/cache|wifi|kit-digital|free-wifi|signal_|banner-kit|opengraph-image|twitter-image|elementor\/thumbs|cabecera|header-logo|site_backgro|artboard/i
+  /logo|logotipo|favicon|sprite|avatar|whatsapp|wasap|pixel|1x1|flags?\/|redes-sociales|widgetkit\/cache|wifi|kit-digital|free-wifi|signal_|banner-kit|opengraph-image|twitter-image|elementor\/thumbs|cabecera|header-logo|site_backgro|artboard|subvencion|subvenció|nextgeneration|ivace|idae|aviso-legal|politica-de-privacidad|cookies-policy/i
+const DOCUMENTO_NOMBRE =
+  /subvencion|subvenció|nextgeneration|ivace|financiado-por|aviso-legal|documento-|cartel-|convocatoria|ayuda-publica/i
 const FLAGS = /\/(spain|france|germany|italy|united-kingdom|portugal|nederland|belgium)\.png/i
 const PHOTO_EXT = /\.(jpe?g|png|webp)(\?|#|$)/i
 const EXTRA_PATHS = [
@@ -104,10 +106,37 @@ export function esFotoMapa(url: string): boolean {
   return MAPA_NOMBRE.test(url.toLowerCase()) || MAPA_NOMBRE.test(pathnameFoto(url))
 }
 
+export function esFotoDocumentoPorNombre(url: string): boolean {
+  const u = url.toLowerCase()
+  return DOCUMENTO_NOMBRE.test(u) || DOCUMENTO_NOMBRE.test(pathnameFoto(url))
+}
+
+/** Cartel, PDF escaneado o aviso legal: mucho blanco y poco color. */
+export async function esDocumentoVisual(buf: Buffer): Promise<boolean> {
+  try {
+    const { data, info } = await sharp(buf)
+      .resize(96, 96, { fit: 'inside' })
+      .removeAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true })
+    let blancos = 0
+    const pixeles = info.width * info.height
+    for (let i = 0; i < data.length; i += info.channels) {
+      const r = data[i]
+      const g = data[i + 1]
+      const b = data[i + 2]
+      if (r > 228 && g > 228 && b > 228) blancos++
+    }
+    return blancos / pixeles > 0.52
+  } catch {
+    return false
+  }
+}
+
 export function esFotoOficialUsable(url: string): boolean {
   if (!url || isProhibidaParaEnriquecer(url)) return false
   const u = url.toLowerCase()
-  if (JUNK.test(u) || FLAGS.test(u) || esFotoMapa(url)) return false
+  if (JUNK.test(u) || FLAGS.test(u) || esFotoMapa(url) || esFotoDocumentoPorNombre(url)) return false
   if (u.includes('.svg') || u.includes('.gif')) return false
   const w = widthHint(url)
   if (w && w < 300) return false
@@ -136,7 +165,7 @@ export function esFotoRecintoPorNombre(url: string): boolean {
 
 /** Nombre de archivo / ruta: monumento, pueblo, pez, “landscape” de stock. */
 export function esFotoEntornoPorNombre(url: string): boolean {
-  if (esFotoMapa(url)) return true
+  if (esFotoMapa(url) || esFotoDocumentoPorNombre(url)) return true
   const path = pathnameFoto(url)
   if (esFotoRecintoPorNombre(url)) return false
   return ENTORNO_NOMBRE.test(path)
@@ -245,6 +274,7 @@ async function validarFoto(url: string, referer?: string): Promise<FotoOk | null
     const ratio = w / Math.max(h || w * 0.65, 1)
     const cuadrada = h && w < 800 && h < 800 && ratio > 0.82 && ratio < 1.22
     if (cuadrada && buf.length < 80000) return null
+    if (await esDocumentoVisual(buf)) return null
     return { url, w, h: h || Math.round(w * 0.65), bytes: buf.length }
   } catch {
     return null
