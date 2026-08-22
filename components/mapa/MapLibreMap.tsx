@@ -6,11 +6,27 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import Supercluster from 'supercluster'
 import type { Area } from '@/types/database.types'
 import { BuscadorGeografico } from './BuscadorGeografico'
-import { buildAreaPopupHTML } from './areaPopup'
+import { buildAreaPopupHTML, getAreaFocusCameraOffset } from './areaPopup'
 import { useLanguage } from '@/lib/i18n'
 import { getTipoAreaColor } from '@/lib/areas/tipo-area'
 import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
 import { applyBrandTheme, applyMapLanguage } from '@/lib/map/brand-style'
+
+function focusAreaOnMapLibre(
+  map: maplibregl.Map,
+  lngLat: [number, number],
+  zoom?: number
+) {
+  const el = map.getContainer()
+  const offset = getAreaFocusCameraOffset(el.clientHeight, el.clientWidth)
+  map.flyTo({
+    center: lngLat,
+    ...(zoom != null ? { zoom } : {}),
+    duration: zoom != null ? 800 : 400,
+    offset,
+    essential: true,
+  })
+}
 
 interface MapLibreMapProps {
   areas: Area[]
@@ -106,7 +122,8 @@ export function MapLibreMap({
 
       // Crear popup singleton (como InfoWindow de Google)
       popupRef.current = new maplibregl.Popup({
-        offset: 25,
+        offset: 14,
+        anchor: 'top',
         closeButton: true,
         closeOnClick: true,
         maxWidth: '360px',
@@ -351,7 +368,7 @@ export function MapLibreMap({
                 .addTo(map)
             }
             
-            map.panTo([lng, lat])
+            focusAreaOnMapLibre(map, [lng, lat])
           })
 
           const marker = new maplibregl.Marker({ element: el })
@@ -390,12 +407,7 @@ export function MapLibreMap({
       Number(areaSeleccionada.latitud)
     ]
     
-    // Centrar mapa
-    map.flyTo({
-      center: lngLat,
-      zoom: 14,
-      duration: 800
-    })
+    focusAreaOnMapLibre(map, lngLat, 14)
     
     // Mostrar popup después de que el mapa se centre
     setTimeout(() => {

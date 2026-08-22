@@ -161,3 +161,24 @@ export function buildAreaPopupHTML(
     </div>
   `
 }
+
+/**
+ * Offset de cámara (px desde el centro del mapa) al enfocar un área.
+ * Y negativo = el marcador queda por encima del centro, con hueco para la card debajo.
+ */
+export function getAreaFocusCameraOffset(
+  containerHeight: number,
+  containerWidth = 1024
+): [number, number] {
+  if (!containerHeight || containerHeight < 120) return [0, -90]
+
+  const isNarrow = containerWidth < 768
+  const topSafe = isNarrow ? 104 : 86
+  const cardSpace = isNarrow
+    ? Math.round(Math.min(430, containerHeight * 0.7))
+    : 450
+  const preferredY = isNarrow ? topSafe : Math.round(containerHeight * 0.3)
+  const markerY = Math.max(topSafe, Math.min(preferredY, containerHeight - cardSpace))
+
+  return [0, Math.round(markerY - containerHeight / 2)]
+}

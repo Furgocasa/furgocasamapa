@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Area } from '@/types/database.types'
 import { BuscadorGeografico } from './BuscadorGeografico'
-import { buildAreaPopupHTML } from './areaPopup'
+import { buildAreaPopupHTML, getAreaFocusCameraOffset } from './areaPopup'
 import Supercluster from 'supercluster'
 import { useLanguage } from '@/lib/i18n'
 import { getTipoAreaColor } from '@/lib/areas/tipo-area'
@@ -15,6 +15,19 @@ let L: any = null
 if (typeof window !== 'undefined') {
   L = require('leaflet')
   require('leaflet/dist/leaflet.css')
+}
+
+function focusAreaOnLeaflet(map: any, latLng: [number, number] | any, zoom?: number) {
+  const size = map.getSize()
+  const [offsetX, offsetY] = getAreaFocusCameraOffset(size.y, size.x)
+  const targetZoom = zoom ?? map.getZoom()
+  const projected = map.project(latLng, targetZoom)
+  const target = map.unproject(projected.add([offsetX, -offsetY]), targetZoom)
+  if (zoom != null) {
+    map.flyTo(target, zoom, { duration: 0.8 })
+  } else {
+    map.panTo(target, { animate: true, duration: 0.4 })
+  }
 }
 
 interface LeafletMapProps {
@@ -110,8 +123,13 @@ export function LeafletMap({
         closeButton: true,
         autoClose: true,
         closeOnClick: true,
-        className: 'leaflet-popup-custom'
+        autoPan: false,
+        offset: [0, 14],
+        className: 'leaflet-popup-custom leaflet-popup-below'
       })
+      popupRef.current._getAnchor = function () {
+        return L.point(0, 0)
+      }
 
       mapInstance.on('load', () => {
         console.log('✅ Leaflet cargado')
@@ -287,7 +305,7 @@ export function LeafletMap({
                 .openOn(map)
             }
             
-            map.panTo([lat, lng])
+            focusAreaOnLeaflet(map, [lat, lng])
           })
 
           markersRef.current[id] = marker
@@ -317,7 +335,7 @@ export function LeafletMap({
 
     const latLng = [Number(areaSeleccionada.latitud), Number(areaSeleccionada.longitud)]
     
-    map.flyTo(latLng, 14, { duration: 0.8 })
+    focusAreaOnLeaflet(map, latLng, 14)
     
     setTimeout(() => {
       if (popupRef.current && map) {
@@ -503,6 +521,18 @@ export function LeafletMap({
     <div className="relative w-full h-full">
       {/* Estilos para popup */}
       <style jsx global>{`
+        .leaflet-popup-below.leaflet-popup {
+          margin-bottom: 0;
+          margin-top: 8px;
+        }
+        .leaflet-popup-below .leaflet-popup-tip-container {
+          top: 0;
+          bottom: auto;
+          margin-top: -20px;
+        }
+        .leaflet-popup-below .leaflet-popup-tip {
+          transform: rotate(180deg);
+        }
         .leaflet-popup-content-wrapper {
           padding: 0 !important;
           border-radius: 16px !important;

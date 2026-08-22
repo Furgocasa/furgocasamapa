@@ -6,7 +6,7 @@ import { MarkerClusterer, SuperClusterAlgorithm } from '@googlemaps/markercluste
 import type { Area } from '@/types/database.types'
 import Link from 'next/link'
 import { BuscadorGeografico } from './BuscadorGeografico'
-import { buildAreaPopupHTML } from './areaPopup'
+import { buildAreaPopupHTML, getAreaFocusCameraOffset } from './areaPopup'
 import { getMapStyle } from '@/lib/mapStyles'
 import { useLanguage } from '@/lib/i18n'
 import { getTipoAreaColor } from '@/lib/areas/tipo-area'
@@ -16,6 +16,37 @@ import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/li
 type GoogleMap = any
 type GoogleMarker = any
 type GoogleInfoWindow = any
+
+function focusAreaOnGoogle(
+  map: GoogleMap,
+  position: { lat: number; lng: number },
+  zoom?: number
+) {
+  const div = map.getDiv?.() as HTMLElement | undefined
+  const [offsetX, offsetY] = getAreaFocusCameraOffset(
+    div?.clientHeight || 600,
+    div?.clientWidth || 1024
+  )
+  if (zoom != null) map.setZoom(zoom)
+
+  const google = (window as any).google
+  const projection = typeof map.getProjection === 'function' ? map.getProjection() : null
+  const z = map.getZoom()
+  if (projection && google?.maps?.Point && z != null) {
+    const scale = Math.pow(2, z)
+    const world = projection.fromLatLngToPoint(position)
+    // InfoWindow nativo abre ARRIBA: invertimos Y para dejar hueco sobre el pin
+    const shifted = new google.maps.Point(
+      world.x + offsetX / scale,
+      world.y + offsetY / scale
+    )
+    map.panTo(projection.fromPointToLatLng(shifted))
+    return
+  }
+
+  map.panTo(position)
+  map.panBy(offsetX, offsetY)
+}
 
 interface MapaInteractivoGoogleProps {
   areas: Area[]
@@ -154,6 +185,7 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
           // Crear InfoWindow ├║nica para reutilizar
           infoWindowRef.current = new google.maps.InfoWindow({
             maxWidth: 340,
+            disableAutoPan: true,
           })
 
           hoverInfoWindowRef.current = new google.maps.InfoWindow({
@@ -259,8 +291,8 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
           infoWindowRef.current.setContent(content)
           infoWindowRef.current.open(map, marker)
           
-          // Centrar mapa en el marcador
-          map.panTo(marker.getPosition()!)
+          const pos = marker.getPosition()
+          if (pos) focusAreaOnGoogle(map, { lat: pos.lat(), lng: pos.lng() })
         }
       })
 
@@ -362,19 +394,15 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
     const marker = markersRef.current.find((m, index) => markerIdsRef.current[index] === areaSeleccionada.id)
     
     if (marker) {
-      // Centrar mapa
-      map.panTo(marker.getPosition()!)
-      map.setZoom(14)
+      const pos = marker.getPosition()
+      if (pos) focusAreaOnGoogle(map, { lat: pos.lat(), lng: pos.lng() }, 14)
       
-      // Mostrar InfoWindow
       const content = createInfoWindowContent(areaSeleccionada)
       infoWindowRef.current.setContent(content)
       infoWindowRef.current.open(map, marker)
     } else {
-      // Si no hay marker (área no visible), crear InfoWindow temporal
       const position = { lat: areaSeleccionada.latitud, lng: areaSeleccionada.longitud }
-      map.panTo(position)
-      map.setZoom(14)
+      focusAreaOnGoogle(map, position, 14)
       
       const content = createInfoWindowContent(areaSeleccionada)
       infoWindowRef.current.setContent(content)
