@@ -91,6 +91,7 @@ const AREA_HOSTS = [
   'geniuscamping.com', 'aireparkreservation.com', 'caramaps.com',
   'meinwomo.net', 'reseauaireservices.com', 'campcation-prod-images',
   'idylcar.fr', 'pleinairclub.it', 'where-e.com', 'guiagps.com',
+  'clubrural.com', 'campings.net',
 ]
 
 const GOOGLE_HOSTS = [

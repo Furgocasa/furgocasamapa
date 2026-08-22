@@ -86,7 +86,7 @@ async function main() {
   for (const area of targets) {
     const webOficial =
       area.website &&
-      !/instagram\.com|facebook\.com|fb\.com|tiktok\.com|twitter\.com|x\.com|booking\.com|guiagps\.com|park4night\.com|pitchup\.com|camping\.info|acsi\.eu/i.test(
+      !/instagram\.com|facebook\.com|fb\.com|tiktok\.com|twitter\.com|x\.com|booking\.com|guiagps\.com|park4night\.com|pitchup\.com|camping\.info|acsi\.eu|clubrural\.com|campings\.net/i.test(
         area.website
       )
         ? area.website
