@@ -250,7 +250,7 @@ export function ListaResultados({
                             </span>
                           </div>
                           {(area.google_ratings_total ?? 0) > 0 && (
-                            <span className="font-bold text-sm text-gray-900">
+                            <span className="text-xs text-gray-500">
                               {(area.google_ratings_total ?? 0).toLocaleString(locale)} {t('reviews')}
                             </span>
                           )}
@@ -339,7 +339,7 @@ export function ListaResultados({
                       href={`/area/${area.slug}`}
                       target="_blank"
                       onClick={(e) => e.stopPropagation()}
-                      className="flex-1 text-center text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg px-3 py-2 transition-colors"
+                      className="flex-1 text-center text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg px-3 py-2 transition-colors"
                     >
                       {t('view_details')}
                     </Link>
@@ -348,7 +348,7 @@ export function ListaResultados({
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="flex-1 text-center text-sm font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-lg px-3 py-2 transition-colors"
+                      className="flex-1 text-center text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-lg px-3 py-2 transition-colors"
                     >
                       {t('how_to_get')}
                     </a>
