@@ -682,6 +682,12 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
 
       setIsLoading(false)
       console.log('✅ Planificador de rutas inicializado')
+
+      // Si el contenedor nació con ancho 0, Google Maps se queda en blanco hasta un resize.
+      requestAnimationFrame(() => {
+        google.maps.event.trigger(mapInstance, 'resize')
+        mapInstance.setCenter({ lat: 40.4168, lng: -3.7038 })
+      })
     } catch (error: any) {
       console.error('❌ Error cargando Google Maps:', error)
       showToast(`Error al cargar Google Maps: ${error.message}`, 'error')
@@ -1763,7 +1769,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
   }
 
   return (
-    <div className="h-full relative flex overflow-hidden min-h-0">
+    <div className="h-full w-full min-h-0 min-w-0 flex overflow-hidden">
       {/* Login inline para guardar la ruta sin perderla */}
       {showAuthModal && (
         <AuthModal
@@ -1900,8 +1906,8 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
       </aside>
 
       {/* Mapa siempre visible: en móvil el planificador y la lista son hojas, como en /mapa */}
-      <div className="flex-1 relative z-10 h-full">
-        <div ref={mapRef} className="w-full h-full" />
+      <div className="flex-1 relative z-10 h-full min-w-0 min-h-0">
+        <div ref={mapRef} className="absolute inset-0" />
 
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90">

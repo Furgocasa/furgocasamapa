@@ -56,7 +56,7 @@ export default function RutaPage() {
     <div className="h-[100dvh] flex flex-col overflow-hidden relative">
       <Navbar />
 
-      <main className={`flex-1 relative flex overflow-hidden min-h-0 ${!user ? 'blur-sm pointer-events-none select-none' : ''}`}>
+      <main className={`flex-1 overflow-hidden min-h-0 ${!user ? 'blur-sm pointer-events-none select-none' : ''}`}>
         <Suspense fallback={
           <div className="flex items-center justify-center h-full w-full">
             <div className="text-center">
@@ -65,10 +65,12 @@ export default function RutaPage() {
             </div>
           </div>
         }>
-          <PlanificadorRuta
-            vistaMovil={vistaActual}
-            onRutaCalculada={handleRutaCalculada}
-          />
+          <div className="h-full w-full min-h-0">
+            <PlanificadorRuta
+              vistaMovil={vistaActual}
+              onRutaCalculada={handleRutaCalculada}
+            />
+          </div>
         </Suspense>
       </main>
 
