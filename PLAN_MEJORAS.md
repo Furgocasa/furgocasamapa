@@ -221,3 +221,6 @@ porque pedían login demasiado pronto o porque no se veían.
   z-index sane), filtros táctiles sin cabecera duplicada. Pendiente fase 2:
   pines silueta furgo + card flotante, transición card → ficha.
   Guía: `GUIA_DISENO_V3.md`.
+- **22 ago 2026 (splash)**: el van del modal de carga es un Ducato H2 L3
+  camperizado (caja alta, sin raya suelta) y el texto avisa de más de 9.000
+  áreas en más de 25 países, con frases rotatorias. Guía: `GUIA_DISENO_V3.md` §3.

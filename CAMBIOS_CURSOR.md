@@ -449,9 +449,9 @@
 - **Verificar**: en `/mapa` con MapLibre el agua es azul claro de marca y los POIs comerciales no salen; el mini-mapa de una ficha comparte tema.
 
 ### Splash de carga
-- **Qué**: sustituye la pantalla completa bloqueante por tarjeta flotante translúcida con furgoneta SVG animada (`fc-van-bob`, `fc-road-move`, `fc-bar-slide`); el mapa se ve y se mueve debajo.
-- **Archivos**: `app/(public)/mapa/page.tsx`, `app/globals.css`
-- **Verificar**: al cargar `/mapa` el mapa es visible tras el splash y este se desvanece al llegar las áreas.
+- **Qué**: sustituye la pantalla completa bloqueante por tarjeta flotante translúcida. El van es un Ducato H2 L3 (`SplashFurgo`), no un cuña; bota con `fc-van-bob`. Textos en `lib/i18n/ui.ts` (`splash_*`). Barra `fc-bar-slide`. El mapa se ve y se mueve debajo.
+- **Archivos**: `app/(public)/mapa/page.tsx`, `lib/i18n/ui.ts`, `app/globals.css`
+- **Verificar**: al cargar `/mapa` el mapa es visible tras el splash; la furgo tiene caja alta y morro corto, sin raya azul suelta; el texto habla de +9.000 áreas en +25 países; el splash se desvanece al llegar las áreas.
 
 ### Móvil: controles del mapa
 - **Qué**: GPS y Restablecer zoom solo-icono (texto `hidden md:inline` + `aria-label`); buscador plegado a lupa circular alineada con el contador (fila `top-3`), se expande con foco al tocarla; wrapper con `pointer-events-none` para no bloquear el arrastre; z-index de controles bajado de `z-[1000]` a `z-30`; sin `autoFocus` en el buscador de país.
@@ -470,3 +470,12 @@
 
 ### Pendiente (fase siguiente)
 - Pines con silueta de furgo + card flotante deslizable; transición card → ficha. Detalle en `GUIA_DISENO_V3.md` §8.
+
+---
+
+## BLOQUE — Splash Ducato (22 ago 2026)
+
+### Perfil H2 L3 y copy de espera
+- **Qué**: se redibujó el SVG del splash (nave/cuña → Ducato H2 L3 camperizado) y se cambió el texto a “más de 9.000 áreas en más de 25 países” + frases rotatorias. Se quitó la carretera azul que se confundía con el chasis.
+- **Archivos**: `app/(public)/mapa/page.tsx` (`SplashFurgo`), `lib/i18n/ui.ts` (claves `splash_*` en ES/EN/FR/DE/IT)
+- **Verificar**: Ctrl+F5 en `/mapa`. Caja alta, batalla larga, parabrisas y toldo visibles; ninguna línea sale del morro ni del portón; copy y chistes en el idioma activo.

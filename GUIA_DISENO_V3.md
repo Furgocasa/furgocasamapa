@@ -78,16 +78,23 @@ sola vez por sesión (guard `hasFlownRef`). Los marcadores entran con caída
 escalonada (keyframes `fc-marker-drop` + `animation-delay` por índice, en el
 `style jsx` del componente).
 
-### Splash de carga (`app/(public)/mapa/page.tsx`)
+### Splash de carga (`app/(public)/mapa/page.tsx`, `SplashFurgo`)
 
 Ya **no** hay pantalla completa que bloquee: el mapa se renderiza debajo desde el
 primer frame. Mientras `initialLoading`, flota una tarjeta translúcida
-(`bg-white/90 backdrop-blur-md`, `shadow-overlay`, `pointer-events-none`) con:
+(`bg-white/95 backdrop-blur-md`, `shadow-overlay`, `pointer-events-none`) con:
 
-- Furgoneta SVG de marca botando (`fc-van-bob`)
-- Carretera en movimiento (`fc-road-move`)
-- Barra de progreso indeterminada (`fc-bar-slide`)
-- Contador de áreas encontradas en vivo
+- Silueta de **Fiat Ducato H2 L3** camperizado (caja alta, batalla larga, morro
+  corto). La franja naranja va recortada al cuerpo y para en el pilar A: no se
+  sale del morro ni del portón.
+- Textos i18n (`splash_title`, `splash_body`, `splash_joke_*`, `splash_found`)
+  en `lib/i18n/ui.ts`. El cuerpo avisa de más de 9.000 áreas en más de 25
+  países; debajo rotan tres frases cortas.
+- Barra indeterminada (`fc-bar-slide`). El van bota (`fc-van-bob`).
+- Contador en vivo cuando ya hay áreas (`splash_found`).
+
+No usar una carretera azul del color de la carrocería: se lee como una raya
+suelta del chasis. Las marcas de asfalto van en gris, solo bajo la batalla.
 
 Los keyframes viven en `app/globals.css`. Entrada/salida con `AnimatePresence`
 de Framer Motion.
