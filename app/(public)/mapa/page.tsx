@@ -7,7 +7,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import BottomSheet from '@/components/mobile/BottomSheet'
 import { createClient } from '@/lib/supabase/client'
 import type { Area } from '@/types/database.types'
-import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
+import { useEffect, useState, useMemo, useRef, useCallback, useId } from 'react'
 import { MapIcon, FunnelIcon, ListBulletIcon } from '@heroicons/react/24/outline'
 import { usePersistentFilters } from '@/hooks/usePersistentFilters'
 import { ToastNotification } from '@/components/mapa/ToastNotification'
@@ -17,12 +17,15 @@ import { useLanguage } from '@/lib/i18n'
 import { TIPO_AREA_IDS } from '@/lib/areas/tipo-area'
 import { motion, AnimatePresence } from 'framer-motion'
 
+const SPLASH_JOKES = ['splash_joke_1', 'splash_joke_2', 'splash_joke_3'] as const
+
 export default function MapaPage() {
   const { locale, t } = useLanguage()
   const [areas, setAreas] = useState<Area[]>([])
   const [loading, setLoading] = useState(true)
   const [initialLoading, setInitialLoading] = useState(true) // Para skeleton loader
   const [loadingProgress, setLoadingProgress] = useState({ loaded: 0, total: 0 })
+  const [splashJoke, setSplashJoke] = useState(0)
   const [areaSeleccionada, setAreaSeleccionada] = useState<Area | null>(null)
   const [mostrarFiltros, setMostrarFiltros] = useState(false)
   const [mostrarLista, setMostrarLista] = useState(false)
@@ -155,6 +158,14 @@ export default function MapaPage() {
 
     loadAreas()
   }, [locale])
+
+  useEffect(() => {
+    if (!initialLoading) return
+    const id = window.setInterval(() => {
+      setSplashJoke((i) => (i + 1) % SPLASH_JOKES.length)
+    }, 3400)
+    return () => window.clearInterval(id)
+  }, [initialLoading])
 
   // ✅ OPTIMIZACIÓN #3: Obtener ubicación del usuario CON REVERSE GEOCODING (con cache)
   useEffect(() => {
@@ -605,50 +616,55 @@ export default function MapaPage() {
                   animate={{ y: 0, scale: 1, opacity: 1 }}
                   exit={{ y: 28, scale: 0.95, opacity: 0 }}
                   transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-                  className="bg-white/90 backdrop-blur-md rounded-3xl shadow-overlay ring-1 ring-gray-900/5 p-8 max-w-sm w-full text-center"
+                  className="relative overflow-hidden bg-white/95 backdrop-blur-md rounded-3xl shadow-overlay ring-1 ring-gray-900/5 px-7 py-8 max-w-[22rem] w-full text-center"
                 >
-                  {/* Furgoneta rodando sobre carretera animada */}
+                  <div className="absolute inset-x-0 top-0 h-1 bg-accent-500" />
+
                   <div className="flex flex-col items-center mb-5">
-                    <svg
-                      viewBox="0 0 96 48"
-                      className="w-28 h-14 animate-[fc-van-bob_1.1s_ease-in-out_infinite]"
-                      aria-hidden
-                    >
-                      <path
-                        d="M6 34 V16 a6 6 0 0 1 6-6 h52 a10 10 0 0 1 8 4 l9 12 a6 6 0 0 1 1 4 v0 a4 4 0 0 1 -4 4 h-66 a6 6 0 0 1 -6 -6 z"
-                        fill="#0b3c74"
-                      />
-                      <rect x="6" y="26" width="82" height="4" rx="2" fill="#FF6B35" />
-                      <rect x="14" y="15" width="14" height="9" rx="2" fill="#dbeafe" />
-                      <rect x="32" y="15" width="14" height="9" rx="2" fill="#dbeafe" />
-                      <path d="M64 15 h4 a6 6 0 0 1 5 3 l4 6 h-13 z" fill="#dbeafe" />
-                      <circle cx="24" cy="38" r="6" fill="#1f2937" />
-                      <circle cx="24" cy="38" r="2.5" fill="#e5e7eb" />
-                      <circle cx="70" cy="38" r="6" fill="#1f2937" />
-                      <circle cx="70" cy="38" r="2.5" fill="#e5e7eb" />
-                    </svg>
+                    <SplashFurgo />
                     <div
-                      className="w-40 h-1 mt-1 rounded-full opacity-50"
+                      className="w-44 h-1.5 mt-0.5 rounded-full"
                       style={{
                         backgroundImage:
-                          'repeating-linear-gradient(90deg, #0b3c74 0 12px, transparent 12px 24px)',
-                        animation: 'fc-road-move 0.5s linear infinite',
+                          'repeating-linear-gradient(90deg, #0b3c74 0 10px, transparent 10px 20px)',
+                        backgroundSize: '20px 100%',
+                        animation: 'fc-road-move 0.45s linear infinite',
+                        opacity: 0.35,
                       }}
                     />
                   </div>
 
-                  <h2 className="text-2xl font-bold text-gray-900 mb-1">
-                    Preparando tu viaje…
+                  <h2 className="text-[1.65rem] leading-tight font-bold text-gray-900 mb-2">
+                    {t('splash_title')}
                   </h2>
-                  <p className="text-gray-500 text-sm mb-6">
-                    {loadingProgress.loaded > 0
-                      ? `${loadingProgress.loaded.toLocaleString('es-ES')} áreas encontradas`
-                      : 'Buscando áreas de autocaravanas por Europa y Latinoamérica…'}
+                  <p className="text-gray-600 text-[13.5px] leading-relaxed mb-3">
+                    {t('splash_body')}
                   </p>
+                  <div className="min-h-[2.75rem] mb-5 flex items-center justify-center">
+                    <AnimatePresence mode="wait">
+                      <motion.p
+                        key={SPLASH_JOKES[splashJoke]}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.28 }}
+                        className="text-primary-700 text-[13px] italic px-1"
+                      >
+                        {t(SPLASH_JOKES[splashJoke])}
+                      </motion.p>
+                    </AnimatePresence>
+                  </div>
 
-                  {/* Barra indeterminada en naranja de acento */}
+                  {loadingProgress.loaded > 0 && (
+                    <p className="text-xs font-medium text-gray-400 mb-3 tabular-nums">
+                      {t('splash_found', {
+                        n: loadingProgress.loaded.toLocaleString(locale),
+                      })}
+                    </p>
+                  )}
+
                   <div className="relative w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="absolute inset-y-0 w-1/3 rounded-full bg-gradient-to-r from-accent-400 to-accent-600 animate-[fc-bar-slide_1.2s_ease-in-out_infinite]" />
+                    <div className="absolute inset-y-0 w-1/3 rounded-full bg-accent-500 animate-[fc-bar-slide_1.2s_ease-in-out_infinite]" />
                   </div>
                 </motion.div>
               </motion.div>
@@ -790,5 +806,51 @@ export default function MapaPage() {
         </div>
       </nav>
     </div>
+  )
+}
+
+/** Camper de marca: el stripe naranja queda recortado al cuerpo, no se sale del morro. */
+function SplashFurgo() {
+  const rawId = useId()
+  const clipId = `fc-van-body-${rawId.replace(/:/g, '')}`
+
+  return (
+    <svg
+      viewBox="0 0 168 72"
+      className="w-44 h-[4.6rem] animate-[fc-van-bob_1.1s_ease-in-out_infinite]"
+      aria-hidden
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <path d="M22 50 V24 a8 8 0 0 1 8-8 h62 a5 5 0 0 1 5 5 v2 h11 a8 8 0 0 1 6.5 3.4 L138 46.5 a5 5 0 0 1 1.5 3.5 V50 H22 Z" />
+        </clipPath>
+      </defs>
+
+      <ellipse cx="82" cy="64" rx="46" ry="3.5" fill="#0b3c74" opacity="0.1" />
+
+      <path
+        d="M22 50 V24 a8 8 0 0 1 8-8 h62 a5 5 0 0 1 5 5 v2 h11 a8 8 0 0 1 6.5 3.4 L138 46.5 a5 5 0 0 1 1.5 3.5 V50 H22 Z"
+        fill="#0b3c74"
+      />
+
+      {/* Franja solo dentro del cuerpo: termina en la cabina, no en el parachoques */}
+      <g clipPath={`url(#${clipId})`}>
+        <rect x="24" y="36" width="80" height="6" fill="#FF6B35" />
+      </g>
+
+      <rect x="34" y="21" width="20" height="11" rx="2" fill="#dbeafe" />
+      <rect x="58" y="21" width="20" height="11" rx="2" fill="#dbeafe" />
+      <path d="M109 25.5 h6 a6 6 0 0 1 4.8 2.6 L126 40 H109 Z" fill="#dbeafe" />
+      <rect x="82.5" y="28" width="1.4" height="14" rx="0.6" fill="#082a52" opacity="0.45" />
+
+      <circle cx="132" cy="47.2" r="2.1" fill="#fde68a" />
+
+      <g>
+        <circle cx="46" cy="52" r="8" fill="#1f2937" />
+        <circle cx="46" cy="52" r="3.2" fill="#e5e7eb" />
+        <circle cx="118" cy="52" r="8" fill="#1f2937" />
+        <circle cx="118" cy="52" r="3.2" fill="#e5e7eb" />
+      </g>
+    </svg>
   )
 }
