@@ -55,6 +55,12 @@
  *   npm run import:campings:alava
  *   npm run import:campings:gipuzkoa
  *   npm run import:campings:bizkaia
+ *   npm run import:campings:cantabria
+ *   npm run import:campings:asturias
+ *   npm run import:campings:lugo
+ *   npm run import:campings:ourense
+ *   npm run import:campings:pontevedra
+ *   npm run import:campings:coruna
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -169,6 +175,18 @@ let REPORT_NAME =
           ? "gipuzkoa-campings-dry-report.json"
         : REGION === "bizkaia"
           ? "bizkaia-campings-dry-report.json"
+        : REGION === "cantabria"
+          ? "cantabria-campings-dry-report.json"
+        : REGION === "asturias"
+          ? "asturias-campings-dry-report.json"
+        : REGION === "lugo"
+          ? "lugo-campings-dry-report.json"
+        : REGION === "ourense"
+          ? "ourense-campings-dry-report.json"
+        : REGION === "pontevedra"
+          ? "pontevedra-campings-dry-report.json"
+        : REGION === "coruna"
+          ? "coruna-campings-dry-report.json"
         : "iberia-gaps-dry-report.json";
 if (SOLO_STOPOVER) {
   REPORT_NAME = REPORT_NAME.replace("-gaps-dry-report.json", "-stopover-dry-report.json");
@@ -811,6 +829,70 @@ const HUECOS_BIZKAIA = [
   { id: 6, zona: "Ondarroa", lat: 43.32, lng: -2.42, pais: "España" },
 ];
 
+const HUECOS_CANTABRIA = [
+  { id: 1, zona: "Castro Urdiales", lat: 43.38, lng: -3.22, pais: "España" },
+  { id: 2, zona: "Laredo", lat: 43.41, lng: -3.41, pais: "España" },
+  { id: 3, zona: "Santander", lat: 43.46, lng: -3.8, pais: "España" },
+  { id: 4, zona: "Santillana", lat: 43.39, lng: -4.11, pais: "España" },
+  { id: 5, zona: "San Vicente", lat: 43.38, lng: -4.4, pais: "España" },
+  { id: 6, zona: "Potes", lat: 43.15, lng: -4.62, pais: "España" },
+  { id: 7, zona: "Reinosa", lat: 43.0, lng: -4.14, pais: "España" },
+  { id: 8, zona: "Solares", lat: 43.38, lng: -3.73, pais: "España" },
+];
+
+const HUECOS_ASTURIAS = [
+  { id: 1, zona: "Llanes", lat: 43.42, lng: -4.75, pais: "España" },
+  { id: 2, zona: "Ribadesella", lat: 43.46, lng: -5.06, pais: "España" },
+  { id: 3, zona: "Cangas de Onís", lat: 43.35, lng: -5.13, pais: "España" },
+  { id: 4, zona: "Gijón", lat: 43.54, lng: -5.66, pais: "España" },
+  { id: 5, zona: "Oviedo", lat: 43.36, lng: -5.84, pais: "España" },
+  { id: 6, zona: "Avilés", lat: 43.56, lng: -5.92, pais: "España" },
+  { id: 7, zona: "Cudillero", lat: 43.56, lng: -6.14, pais: "España" },
+  { id: 8, zona: "Luarca", lat: 43.54, lng: -6.54, pais: "España" },
+  { id: 9, zona: "Tineo", lat: 43.33, lng: -6.41, pais: "España" },
+  { id: 10, zona: "Somiedo", lat: 43.09, lng: -6.25, pais: "España" },
+];
+
+const HUECOS_LUGO = [
+  { id: 1, zona: "Ribadeo", lat: 43.54, lng: -7.04, pais: "España" },
+  { id: 2, zona: "Foz", lat: 43.57, lng: -7.26, pais: "España" },
+  { id: 3, zona: "Viveiro", lat: 43.66, lng: -7.59, pais: "España" },
+  { id: 4, zona: "Lugo", lat: 43.01, lng: -7.56, pais: "España" },
+  { id: 5, zona: "Sarria", lat: 42.78, lng: -7.41, pais: "España" },
+  { id: 6, zona: "Monforte", lat: 42.52, lng: -7.51, pais: "España" },
+  { id: 7, zona: "Quiroga", lat: 42.48, lng: -7.27, pais: "España" },
+];
+
+const HUECOS_OURENSE = [
+  { id: 1, zona: "O Barco", lat: 42.42, lng: -6.98, pais: "España" },
+  { id: 2, zona: "Ourense", lat: 42.34, lng: -7.86, pais: "España" },
+  { id: 3, zona: "Verín", lat: 41.94, lng: -7.44, pais: "España" },
+  { id: 4, zona: "Xinzo", lat: 42.06, lng: -7.72, pais: "España" },
+  { id: 5, zona: "Allariz", lat: 42.19, lng: -7.8, pais: "España" },
+  { id: 6, zona: "Ribadavia", lat: 42.29, lng: -8.14, pais: "España" },
+];
+
+const HUECOS_PONTEVEDRA = [
+  { id: 1, zona: "Tui", lat: 42.05, lng: -8.64, pais: "España" },
+  { id: 2, zona: "Vigo", lat: 42.24, lng: -8.72, pais: "España" },
+  { id: 3, zona: "Pontevedra", lat: 42.43, lng: -8.64, pais: "España" },
+  { id: 4, zona: "Sanxenxo", lat: 42.4, lng: -8.81, pais: "España" },
+  { id: 5, zona: "Vilagarcía", lat: 42.6, lng: -8.76, pais: "España" },
+  { id: 6, zona: "A Guarda", lat: 41.9, lng: -8.87, pais: "España" },
+  { id: 7, zona: "Lalín", lat: 42.66, lng: -8.11, pais: "España" },
+];
+
+const HUECOS_CORUNA = [
+  { id: 1, zona: "Melide", lat: 42.91, lng: -8.01, pais: "España" },
+  { id: 2, zona: "Santiago", lat: 42.88, lng: -8.54, pais: "España" },
+  { id: 3, zona: "Noia", lat: 42.78, lng: -8.89, pais: "España" },
+  { id: 4, zona: "Carballo", lat: 43.21, lng: -8.69, pais: "España" },
+  { id: 5, zona: "A Coruña", lat: 43.36, lng: -8.41, pais: "España" },
+  { id: 6, zona: "Ferrol", lat: 43.48, lng: -8.23, pais: "España" },
+  { id: 7, zona: "Ortigueira", lat: 43.68, lng: -7.85, pais: "España" },
+  { id: 8, zona: "Fisterra", lat: 42.91, lng: -9.26, pais: "España" },
+];
+
 const CAMPING_ZONAS: Record<
   string,
   {
@@ -995,6 +1077,42 @@ const CAMPING_ZONAS: Record<
     provinciaRe: /\b(bizkaia|vizcaya)\b/i,
     isIn: (lat, lng) => lat >= 43.0 && lat <= 43.46 && lng >= -3.45 && lng <= -2.4,
     huecos: HUECOS_BIZKAIA,
+  },
+  cantabria: {
+    label: "Cantabria",
+    provinciaRe: /cantabria/i,
+    isIn: (lat, lng) => lat >= 42.85 && lat <= 43.52 && lng >= -4.85 && lng <= -3.12,
+    huecos: HUECOS_CANTABRIA,
+  },
+  asturias: {
+    label: "Asturias",
+    provinciaRe: /(asturias|asturies)/i,
+    isIn: (lat, lng) => lat >= 42.88 && lat <= 43.67 && lng >= -7.03 && lng <= -4.48,
+    huecos: HUECOS_ASTURIAS,
+  },
+  lugo: {
+    label: "Lugo",
+    provinciaRe: /\blugo\b/i,
+    isIn: (lat, lng) => lat >= 42.32 && lat <= 43.78 && lng >= -7.95 && lng <= -6.77,
+    huecos: HUECOS_LUGO,
+  },
+  ourense: {
+    label: "Ourense",
+    provinciaRe: /(ourense|orense)/i,
+    isIn: (lat, lng) => lat >= 41.81 && lat <= 42.57 && lng >= -8.37 && lng <= -6.73,
+    huecos: HUECOS_OURENSE,
+  },
+  pontevedra: {
+    label: "Pontevedra",
+    provinciaRe: /\bpontevedra\b/i,
+    isIn: (lat, lng) => lat >= 41.81 && lat <= 42.8 && lng >= -8.91 && lng <= -8.05,
+    huecos: HUECOS_PONTEVEDRA,
+  },
+  coruna: {
+    label: "A Coruña",
+    provinciaRe: /(a coru[nñ]a|la coru[nñ]a|coru[nñ]a)/i,
+    isIn: (lat, lng) => lat >= 42.48 && lat <= 43.79 && lng >= -9.3 && lng <= -7.7,
+    huecos: HUECOS_CORUNA,
   },
 };
 
@@ -1318,9 +1436,12 @@ function isInChile(lat: number, lng: number): boolean {
   return true;
 }
 
-function esProvinciaCamping(details: { provincia?: string | null } | null): boolean {
+function esProvinciaCamping(details: { provincia?: string | null; comunidad?: string | null } | null): boolean {
   if (!CAMPING) return false;
-  return CAMPING.provinciaRe.test(details?.provincia || "");
+  return (
+    CAMPING.provinciaRe.test(details?.provincia || "") ||
+    CAMPING.provinciaRe.test(details?.comunidad || "")
+  );
 }
 
 function isInBaleares(lat: number, lng: number): boolean {
@@ -1701,7 +1822,7 @@ async function importUtiles(utiles: any[]) {
         comunidad_autonoma: onBalears ? "Illes Balears" : details?.comunidad || null,
         provincia: onBalears
           ? details?.provincia || "Illes Balears"
-          : details?.provincia || hit.hueco,
+          : details?.provincia || (CAMPING ? CAMPING.label : hit.hueco),
         ciudad: details?.ciudad || null,
         direccion:
           details?.formatted_address || hit.formatted_address || null,
