@@ -17,6 +17,7 @@ import { CtaAlquilerFurgocasa } from '@/components/area/CtaAlquilerFurgocasa'
 import { CtaCenaCerca } from '@/components/area/CtaCenaCerca'
 import { LANG_COOKIE, isTranslationLocale, normalizeLocale } from '@/lib/i18n/config'
 import { mergeAreaTranslation } from '@/lib/i18n/mergeAreaTranslation'
+import { areaSeoSnippet } from '@/lib/areas/seo-snippet'
 import type { Metadata } from 'next'
 import Script from 'next/script'
 
@@ -51,12 +52,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
   }
 
+  const snippet = areaSeoSnippet({
+    nombre: area.nombre,
+    ciudad: area.ciudad,
+    provincia: area.provincia,
+    tipo_area: area.tipo_area,
+    precio_noche: area.precio_noche,
+    precio_24h: area.precio_24h,
+    acceso_24h: area.acceso_24h,
+    servicios: area.servicios && typeof area.servicios === 'object' ? area.servicios : null,
+  })
+
   return {
-    title: `${area.nombre} - ${area.ciudad} | Mapa Furgocasa`,
-    description: area.descripcion || `Área para autocaravanas en ${area.ciudad}, ${area.provincia}. ${area.tipo_area} con servicios completos.`,
+    title: snippet.title,
+    description: snippet.description,
     openGraph: {
-      title: area.nombre,
-      description: area.descripcion || `Área para autocaravanas en ${area.ciudad}`,
+      title: snippet.title,
+      description: snippet.description,
       images: area.foto_principal ? [area.foto_principal] : [],
     },
   }

@@ -279,3 +279,6 @@ con teléfono. Mercado = WhatsApp/lead, no OTA.
 - **22 ago 2026 (leads)**: documentado el tercer cliente (campings/privadas
   ES, WhatsApp, no Booking). Inventario: 850 bookable, 772 con teléfono.
   `GUIA_MAPA_ALQUILER.md` §12. Sin código de producto.
+- **22 ago 2026 (CTR)**: title/description de `/area` dejan de ser
+  «nombre | Mapa Furgocasa» + tocho. Plantilla con tipo, ciudad, precio y
+  servicios. `lib/areas/seo-snippet.ts`. Google tarda días en recrawlear.
