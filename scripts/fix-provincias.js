@@ -134,6 +134,7 @@ async function main() {
 
   const renombrar = [] // alias → canónico (sin geocoding)
   const geocodificar = [] // provincia sucia
+  const limpiarCiudad = [] // ciudad con código postal pegado («17230 Palamós»)
   for (const r of rows) {
     const canon = canonicaPorNorm.get(norm(r.provincia))
     if (canon) {
@@ -143,11 +144,17 @@ async function main() {
     } else {
       geocodificar.push(r)
     }
+    const ciudad = (r.ciudad || '').trim()
+    const m = ciudad.match(/^\d{4,5}[\s,–-]+(.+)$/)
+    if (m && m[1].trim().length >= 2) {
+      limpiarCiudad.push({ id: r.id, nombre: r.nombre, de: r.ciudad, a: m[1].trim() })
+    }
   }
   console.log(`Renombrar alias→canónico: ${renombrar.length}`)
+  console.log(`Ciudades con CP pegado: ${limpiarCiudad.length}`)
   console.log(`Necesitan geocoding: ${geocodificar.length}`)
 
-  const report = { modo: APPLY ? 'apply' : 'dry-run', renombrar, geo_ok: [], geo_fail: [] }
+  const report = { modo: APPLY ? 'apply' : 'dry-run', renombrar, limpiar_ciudad: limpiarCiudad, geo_ok: [], geo_fail: [] }
 
   for (let i = 0; i < geocodificar.length; i++) {
     const r = geocodificar[i]
@@ -182,6 +189,11 @@ async function main() {
     let aplicados = 0
     for (const u of renombrar) {
       const { error } = await supabase.from('areas').update({ provincia: u.a }).eq('id', u.id)
+      if (error) console.error(`Error ${u.id}:`, error.message)
+      else aplicados++
+    }
+    for (const u of limpiarCiudad) {
+      const { error } = await supabase.from('areas').update({ ciudad: u.a }).eq('id', u.id)
       if (error) console.error(`Error ${u.id}:`, error.message)
       else aplicados++
     }
