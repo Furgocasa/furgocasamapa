@@ -54,3 +54,14 @@ TODO debe funcionar IDÉNTICO en los 3.**
 ## 📁 Archivo de referencia:
 
 **MapLibreMap.tsx** es el modelo principal. Cuando haya dudas, copiar de ahí y adaptar las APIs específicas de cada librería.
+
+## 🔗 Proyecto hermano: Casi Cinco
+
+El mapa se mantiene a la par con **Casi Cinco** (`Eskala IA\5 - CASI CINCO APP WEB\Casi_cinco_app`,
+https://www.casicinco.com). Si el usuario dice «como en Casi Cinco», «como en la otra» o «igual que
+en el otro mapa», lee **`PARIDAD_CASI_CINCO_FURGOCASA.md`** (raíz, idéntico en los dos repos): tiene
+la tabla de archivos equivalentes, lo ya igualado con su commit y lo que **no** se copia.
+
+Reglas al hacerlo: abrir el archivo original del otro proyecto antes de copiar, conservar la
+taxonomía propia (pública / privada / camping, nunca los tiers), replicar en los 3 motores,
+`npm run build` antes del push y anotar el resultado en ese documento.

@@ -189,6 +189,12 @@ Los 3 proveedores de mapa comparten **funcionalidad idéntica**:
 
 El admin puede cambiar el proveedor desde `/admin/configuracion`.
 
+### Proyecto hermano: Casi Cinco
+
+La estética y la UX del mapa se mantienen a la par con **Casi Cinco** (https://www.casicinco.com).
+Qué archivo equivale a cuál, qué se ha igualado ya y qué no se debe igualar está en
+[`PARIDAD_CASI_CINCO_FURGOCASA.md`](./PARIDAD_CASI_CINCO_FURGOCASA.md), que existe igual en los dos repositorios.
+
 ---
 
 ## 🖼️ Sistema de Banners
