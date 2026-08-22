@@ -26,8 +26,8 @@ import { StarIcon as StarSolid } from '@heroicons/react/24/solid'
 
 export default function HomePage() {
   const { t } = useLanguage()
-  /** Fallback alineado con metadatos (+3600) hasta cargar el conteo real desde Supabase */
-  const [totalAreas, setTotalAreas] = useState(3600)
+  /** Fallback alineado con metadatos (+9.000) hasta cargar el conteo real desde Supabase */
+  const [totalAreas, setTotalAreas] = useState(9000)
 
   // Home logada: mis sitios guardados + última ruta
   const [user, setUser] = useState<any>(null)

@@ -22,8 +22,8 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.mapafurgocasa.com'),
-  title: 'Mapa Furgocasa - Áreas Autocaravanas + Gestión Inteligente con IA | +3600 Ubicaciones',
-  description: '🚐 Descubre +3600 áreas para autocaravanas en Europa y LATAM. 🤖 Gestión inteligente con IA: valoración automática GPT-5.6 Terra, control de mantenimiento, gastos, ROI. 📍 Sistema QR anti-robos. 🗺️ Planifica rutas. ¡100% GRATIS!',
+  title: 'Mapa Furgocasa - Áreas Autocaravanas + Gestión Inteligente con IA | +9.000 Ubicaciones',
+  description: '🚐 Descubre +9.000 áreas para autocaravanas en Europa y LATAM. 🤖 Gestión inteligente con IA: valoración automática GPT-5.6 Terra, control de mantenimiento, gastos, ROI. 📍 Sistema QR anti-robos. 🗺️ Planifica rutas. ¡100% GRATIS!',
   keywords: [
     'áreas autocaravanas',
     'mapa autocaravanas',
@@ -70,8 +70,8 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'es_ES',
     url: 'https://www.mapafurgocasa.com',
-    title: '🚐 Mapa Furgocasa - Áreas + Gestión Inteligente IA | +3600 Ubicaciones',
-    description: '🤖 Gestión inteligente con IA GPT-5.6 Terra: valoración automática, control total de mantenimiento, gastos, ROI. 📍 +3600 áreas verificadas en Europa y LATAM. 🔒 Sistema QR anti-robos. ¡100% GRATIS!',
+    title: '🚐 Mapa Furgocasa - Áreas + Gestión Inteligente IA | +9.000 Ubicaciones',
+    description: '🤖 Gestión inteligente con IA GPT-5.6 Terra: valoración automática, control total de mantenimiento, gastos, ROI. 📍 +9.000 áreas verificadas en Europa y LATAM. 🔒 Sistema QR anti-robos. ¡100% GRATIS!',
     siteName: 'Mapa Furgocasa',
     images: [{
       url: 'https://www.mapafurgocasa.com/og-image-v2.jpg',
@@ -83,7 +83,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: '🚐 Mapa Furgocasa - IA + Áreas Autocaravanas',
-    description: '🤖 Valoración automática GPT-5.6 Terra | 📍 +3600 áreas verificadas | 🔒 Sistema QR antirrobo | 🗺️ Planificador rutas | ¡GRATIS!',
+    description: '🤖 Valoración automática GPT-5.6 Terra | 📍 +9.000 áreas verificadas | 🔒 Sistema QR antirrobo | 🗺️ Planificador rutas | ¡GRATIS!',
     images: ['https://www.mapafurgocasa.com/og-image-v2.jpg'],
     creator: '@furgocasa',
   },

@@ -8,7 +8,7 @@ import { SparklesIcon, TruckIcon, MapIcon, ShieldCheckIcon, ChartBarIcon, Wrench
 
 export const metadata: Metadata = {
   title: 'Mapa Furgocasa vs Park4Night | Alternativa GRATUITA con Valoración IA',
-  description: '¿Buscas alternativa a Park4Night? Mapa Furgocasa tiene TODO: 4,900+ áreas + gestión vehículo + valoración IA + alertas accidentes + exportar GPX. 100% GRATIS. Park4Night solo es un mapa, nosotros somos una plataforma completa.',
+  description: '¿Buscas alternativa a Park4Night? Mapa Furgocasa tiene TODO: 9,000+ áreas + gestión vehículo + valoración IA + alertas accidentes + exportar GPX. 100% GRATIS. Park4Night solo es un mapa, nosotros somos una plataforma completa.',
   keywords: 'park4night, park4night alternativa, park4night gratis, mapa autocaravanas, areas autocaravanas españa, park 4 night español, alternativa park4night, mejor que park4night, app autocaravanas gratis',
   openGraph: {
     title: 'Mapa Furgocasa vs Park4Night - La Alternativa COMPLETA y GRATUITA',
@@ -85,7 +85,7 @@ export default function ComparativaPage() {
               {/* Stats Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                  <div className="text-3xl md:text-4xl font-bold mb-2">4,900+</div>
+                  <div className="text-3xl md:text-4xl font-bold mb-2">9,000+</div>
                   <div className="text-sm text-white/80">Áreas Verificadas</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
@@ -152,7 +152,7 @@ export default function ComparativaPage() {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="bg-white rounded-xl p-6 shadow-lg border-l-4 border-[#0b3c74]">
                 <MapIcon className="w-10 h-10 text-[#0b3c74] mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 mb-2">4,900+ áreas verificadas</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">9,000+ áreas verificadas</h3>
                 <p className="text-gray-600">En más de 25 países de Europa y Latinoamérica</p>
               </div>
 
@@ -316,7 +316,7 @@ export default function ComparativaPage() {
                   <tbody className="divide-y divide-gray-200">
                     <tr className="hover:bg-gray-50">
                       <td className="px-6 py-4 font-medium">🗺️ Mapa de Áreas</td>
-                      <td className="px-6 py-4 text-center text-green-600 font-bold">✓ 4,900+</td>
+                      <td className="px-6 py-4 text-center text-green-600 font-bold">✓ 9,000+</td>
                       <td className="px-6 py-4 text-center text-green-600 font-bold">✓</td>
                       <td className="px-6 py-4 text-center text-green-600 font-bold">✓</td>
                     </tr>
@@ -670,7 +670,7 @@ export default function ComparativaPage() {
                 },
                 {
                   question: '¿Por qué cambiar de Park4Night a Mapa Furgocasa?',
-                  answer: 'Porque tendrás TODO en una sola app: el mapa de áreas que ya conoces (con 4,900+ ubicaciones verificadas) PLUS gestión completa de tu autocaravana, valoración profesional con IA, sistema de seguridad con QR, análisis económico completo, y exportación de rutas. Todo gratis. Es como tener Park4Night + 6 apps más en una sola plataforma.'
+                  answer: 'Porque tendrás TODO en una sola app: el mapa de áreas que ya conoces (con 9,000+ ubicaciones verificadas) PLUS gestión completa de tu autocaravana, valoración profesional con IA, sistema de seguridad con QR, análisis económico completo, y exportación de rutas. Todo gratis. Es como tener Park4Night + 6 apps más en una sola plataforma.'
                 },
                 {
                   question: '¿Sirve para particulares y para empresas de alquiler?',
@@ -713,7 +713,7 @@ export default function ComparativaPage() {
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                  <div className="text-3xl md:text-4xl font-bold mb-2">4,900+</div>
+                  <div className="text-3xl md:text-4xl font-bold mb-2">9,000+</div>
                   <div className="text-sm text-white/80">Áreas Verificadas</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
@@ -752,7 +752,7 @@ export default function ComparativaPage() {
                 Mapa Furgocasa - La alternativa española a Park4Night
               </h3>
               <p className="text-gray-700 leading-relaxed text-base">
-                Si buscas <strong>alternativas a Park4Night en español</strong>, has encontrado la mejor opción. Mapa Furgocasa nace de la experiencia real de <strong>Furgocasa</strong>, empresa especializada en el sector del caravaning desde hace años. Con miles de kilómetros recorridos y el feedback constante de viajeros reales, hemos creado una plataforma que va mucho más allá de un simple mapa de áreas. Somos la <strong>primera plataforma integral</strong> que combina: mapa interactivo con más de 4,900 áreas verificadas en Europa y Latinoamérica, planificador de rutas con exportación a GPS (Garmin, TomTom), gestión completa de tu vehículo (mantenimientos, averías, mejoras, kilometraje), valoración automática con inteligencia artificial (GPT-5.6 Terra + búsqueda de mercado real), sistema único de alertas de accidentes mediante código QR, control financiero total (gastos, coste por kilómetro, rentabilidad), y chatbot inteligente 24/7. Todo esto <strong>completamente gratis</strong>, sin suscripciones premium ni funciones bloqueadas. Mientras Park4Night cobra 4.99€/mes por funciones avanzadas, nosotros ofrecemos TODO sin coste. Únete a miles de caravanistas que ya disfrutan de la experiencia completa.
+                Si buscas <strong>alternativas a Park4Night en español</strong>, has encontrado la mejor opción. Mapa Furgocasa nace de la experiencia real de <strong>Furgocasa</strong>, empresa especializada en el sector del caravaning desde hace años. Con miles de kilómetros recorridos y el feedback constante de viajeros reales, hemos creado una plataforma que va mucho más allá de un simple mapa de áreas. Somos la <strong>primera plataforma integral</strong> que combina: mapa interactivo con más de 9,000 áreas verificadas en Europa y Latinoamérica, planificador de rutas con exportación a GPS (Garmin, TomTom), gestión completa de tu vehículo (mantenimientos, averías, mejoras, kilometraje), valoración automática con inteligencia artificial (GPT-5.6 Terra + búsqueda de mercado real), sistema único de alertas de accidentes mediante código QR, control financiero total (gastos, coste por kilómetro, rentabilidad), y chatbot inteligente 24/7. Todo esto <strong>completamente gratis</strong>, sin suscripciones premium ni funciones bloqueadas. Mientras Park4Night cobra 4.99€/mes por funciones avanzadas, nosotros ofrecemos TODO sin coste. Únete a miles de caravanistas que ya disfrutan de la experiencia completa.
               </p>
             </div>
           </div>
@@ -775,7 +775,7 @@ export default function ComparativaPage() {
                 "name": "¿Qué diferencia hay entre Mapa Furgocasa y Park4Night?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Park4Night es solo un mapa de áreas. Mapa Furgocasa es una plataforma completa que incluye: mapa de 4,900+ áreas, gestión completa del vehículo, valoración automática con IA (GPT-5.6 Terra), sistema de alertas de accidentes con QR, control financiero total, exportación de rutas a GPS, y mucho más. Todo 100% gratis."
+                  "text": "Park4Night es solo un mapa de áreas. Mapa Furgocasa es una plataforma completa que incluye: mapa de 9,000+ áreas, gestión completa del vehículo, valoración automática con IA (GPT-5.6 Terra), sistema de alertas de accidentes con QR, control financiero total, exportación de rutas a GPS, y mucho más. Todo 100% gratis."
                 }
               },
               {
@@ -791,7 +791,7 @@ export default function ComparativaPage() {
                 "name": "¿Por qué cambiar de Park4Night a Mapa Furgocasa?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Porque tendrás TODO en una sola app: el mapa de áreas que ya conoces (con 4,900+ ubicaciones verificadas) más gestión completa de tu autocaravana, valoración profesional con IA, sistema de seguridad con QR, análisis económico completo, y exportación de rutas. Todo gratis."
+                  "text": "Porque tendrás TODO en una sola app: el mapa de áreas que ya conoces (con 9,000+ ubicaciones verificadas) más gestión completa de tu autocaravana, valoración profesional con IA, sistema de seguridad con QR, análisis económico completo, y exportación de rutas. Todo gratis."
                 }
               }
             ]

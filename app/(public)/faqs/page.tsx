@@ -17,7 +17,7 @@ const faqs: FAQ[] = [
   {
     categoria: 'general',
     pregunta: '¿Qué es Mapa Furgocasa?',
-    respuesta: 'Mapa Furgocasa es una plataforma completa para viajeros en autocaravana, camper o furgoneta camperizada. Ofrecemos un mapa interactivo con más de 4900 áreas de estacionamiento en Europa y Latinoamérica, planificador de rutas, gestión de vehículos y una comunidad activa de viajeros.'
+    respuesta: 'Mapa Furgocasa es una plataforma completa para viajeros en autocaravana, camper o furgoneta camperizada. Ofrecemos un mapa interactivo con más de 9.000 áreas de estacionamiento en Europa y Latinoamérica, planificador de rutas, gestión de vehículos y una comunidad activa de viajeros.'
   },
   {
     categoria: 'general',
@@ -32,7 +32,7 @@ const faqs: FAQ[] = [
   {
     categoria: 'general',
     pregunta: '¿Qué países están cubiertos?',
-    respuesta: 'Actualmente cubrimos más de 15 países en Europa (España, Portugal, Francia, Italia, Alemania, Andorra, etc.) y Latinoamérica (Argentina, Chile, Uruguay, Brasil, Colombia, Perú, etc.). Seguimos expandiendo nuestra cobertura constantemente.'
+    respuesta: 'Cubrimos más de 25 países en Europa (España, Francia, Italia, Alemania, Portugal, Reino Unido, Países Bajos, Noruega…) y Latinoamérica (México, Argentina, Chile, Uruguay, Costa Rica…). Seguimos expandiendo la cobertura.'
   },
   {
     categoria: 'general',
@@ -64,7 +64,7 @@ const faqs: FAQ[] = [
   {
     categoria: 'areas',
     pregunta: '¿Cuántas áreas tenéis en el mapa?',
-    respuesta: 'Actualmente tenemos más de 4900 áreas de estacionamiento para autocaravanas en Europa y Latinoamérica. Actualizamos constantemente nuestra base de datos con nuevas áreas y verificamos la información existente.'
+    respuesta: 'Actualmente tenemos más de 9.000 áreas de estacionamiento para autocaravanas en Europa y Latinoamérica. Actualizamos constantemente nuestra base de datos con nuevas áreas y verificamos la información existente.'
   },
   {
     categoria: 'areas',

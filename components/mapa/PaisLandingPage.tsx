@@ -24,7 +24,7 @@ interface PaisLandingPageProps {
 
 export function PaisLandingPage({ pais }: PaisLandingPageProps) {
   const { t } = useLanguage()
-  const [totalAreas, setTotalAreas] = useState(3600) // fallback hasta cargar conteo real
+  const [totalAreas, setTotalAreas] = useState(9000) // fallback hasta cargar conteo real
 
   useEffect(() => {
     cargarTotalAreas()

@@ -9,7 +9,7 @@ import { useLanguage } from "@/lib/i18n";
 export function Footer() {
   const { t } = useLanguage();
   const currentYear = new Date().getFullYear();
-  const [totalAreas, setTotalAreas] = useState(3600); // fallback hasta cargar conteo real
+  const [totalAreas, setTotalAreas] = useState(9000); // fallback hasta cargar conteo real
 
   useEffect(() => {
     const loadTotalAreas = async () => {

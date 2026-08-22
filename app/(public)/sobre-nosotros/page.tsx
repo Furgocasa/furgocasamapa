@@ -88,7 +88,7 @@ export default function SobreNosotrosPage() {
                   Mapa de Áreas
                 </h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Más de 4.900 áreas verificadas en España, Portugal, Francia, Andorra, Argentina y más países. Información actualizada constantemente.
+                  Más de 9.000 áreas verificadas en más de 25 países de Europa y Latinoamérica: España, Francia, Italia, Alemania, México, Reino Unido, Argentina, Chile y más. Información actualizada constantemente.
                 </p>
               </div>
 

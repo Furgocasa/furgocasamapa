@@ -7,7 +7,7 @@ Mapa Furgocasa (https://www.mapafurgocasa.com) es la plataforma más completa pa
 ## Páginas principales
 
 - [Inicio](https://www.mapafurgocasa.com/): Presentación de la plataforma y acceso a las funciones principales
-- [Mapa de áreas](https://www.mapafurgocasa.com/mapa): Mapa interactivo con +4900 áreas de pernocta (España, Portugal, Francia, Andorra, Argentina y más)
+- [Mapa de áreas](https://www.mapafurgocasa.com/mapa): Mapa interactivo con +9.000 áreas de pernocta en más de 25 países de Europa y Latinoamérica
 - [Planificador de rutas](https://www.mapafurgocasa.com/ruta): Crea rutas y descubre áreas cercanas al trayecto
 - [Sobre nosotros](https://www.mapafurgocasa.com/sobre-nosotros): Historia, misión y valores de Mapa Furgocasa
 - [Contacto](https://www.mapafurgocasa.com/contacto): Soporte — info@furgocasa.com
@@ -18,7 +18,7 @@ Mapa Furgocasa (https://www.mapafurgocasa.com) es la plataforma más completa pa
 ## Qué ofrece
 
 - Mapa de áreas de autocaravanas con filtros por servicios, precio y ubicación
-- Fichas de área en `/area/{id}` con información actualizada
+- Fichas de área en `/area/{nombre}-{ciudad}` con información actualizada
 - Planificación de rutas con sugerencias de paradas
 - Gestión del vehículo: mantenimientos, gastos, histórico de valor y galería
 - Valoración automática de vehículos con IA (GPT-5.6 Terra)
