@@ -479,3 +479,12 @@
 - **Qué**: se redibujó el SVG del splash (nave/cuña → Ducato H2 L3 camperizado) y se cambió el texto a “más de 9.000 áreas en más de 25 países” + frases rotatorias. Se quitó la carretera azul que se confundía con el chasis.
 - **Archivos**: `app/(public)/mapa/page.tsx` (`SplashFurgo`), `lib/i18n/ui.ts` (claves `splash_*` en ES/EN/FR/DE/IT)
 - **Verificar**: Ctrl+F5 en `/mapa`. Caja alta, batalla larga, parabrisas y toldo visibles; ninguna línea sale del morro ni del portón; copy y chistes en el idioma activo.
+
+---
+
+## BLOQUE — Buscadores sin tildes (22 ago 2026)
+
+### Matching insensible a acentos
+- **Qué**: `rio` encuentra `Río`, `cordoba` encuentra `Córdoba`. Aplica al filtro «Buscar área, ciudad…», al buscador «¿A dónde ir?» y al buscador de país. Helper `sinTildes()` en `lib/areas/slug.ts` (NFD + quitar diacríticos).
+- **Archivos**: `lib/areas/slug.ts`, `app/(public)/mapa/page.tsx`, `components/mapa/BuscadorGeografico.tsx`, `components/mapa/FiltrosMapa.tsx`
+- **Verificar**: en `/mapa` escribir `rio` o `murcia rio` y ver «Área Camper Murcia Río» en Lugares y en el desplegable del mapa. `mexico` debe listar México en País / Región.

@@ -376,6 +376,7 @@ Cada país se trata como mercado propio: **se busca con el nombre local**, no co
 
 | Versión | Fecha | Cambios principales |
 |---------|-------|---------------------|
+| v4.9 | 22 ago 2026 | Buscadores del mapa insensibles a tildes (`rio` → Río) |
 | v4.8 | 22 ago 2026 | Splash del mapa: Ducato H2 L3 (sin raya suelta) y copy de +9.000 áreas en +25 países |
 | v4.7 | 21 ago 2026 | **Estética 3.0**: basemap propio, entrada cinematográfica, splash furgoneta, filtros táctiles, lupa plegable móvil, tokens de marca (ver `GUIA_DISENO_V3.md`) |
 | v4.6 | 21 ago 2026 | Tipo de ubicación: 4 categorías; zona de acampada / wild camp fuera; servicios vacíos ≠ ocultar |
