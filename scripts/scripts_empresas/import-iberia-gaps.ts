@@ -47,6 +47,9 @@
  *   npm run import:campings:caceres
  *   npm run import:campings:teruel
  *   npm run import:campings:guadalajara
+ *   npm run import:campings:zaragoza
+ *   npm run import:campings:huesca
+ *   npm run import:campings:lleida
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -145,6 +148,12 @@ let REPORT_NAME =
           ? "teruel-campings-dry-report.json"
         : REGION === "guadalajara"
           ? "guadalajara-campings-dry-report.json"
+        : REGION === "zaragoza"
+          ? "zaragoza-campings-dry-report.json"
+        : REGION === "huesca"
+          ? "huesca-campings-dry-report.json"
+        : REGION === "lleida"
+          ? "lleida-campings-dry-report.json"
         : "iberia-gaps-dry-report.json";
 if (SOLO_STOPOVER) {
   REPORT_NAME = REPORT_NAME.replace("-gaps-dry-report.json", "-stopover-dry-report.json");
@@ -701,6 +710,44 @@ const HUECOS_GUADALAJARA = [
   { id: 8, zona: "Orea", lat: 40.55, lng: -1.73, pais: "España" },
 ];
 
+const HUECOS_ZARAGOZA = [
+  { id: 1, zona: "Zaragoza", lat: 41.65, lng: -0.89, pais: "España" },
+  { id: 2, zona: "Calatayud", lat: 41.35, lng: -1.64, pais: "España" },
+  { id: 3, zona: "Daroca", lat: 41.12, lng: -1.41, pais: "España" },
+  { id: 4, zona: "Caspe", lat: 41.24, lng: -0.04, pais: "España" },
+  { id: 5, zona: "Ejea", lat: 42.13, lng: -1.14, pais: "España" },
+  { id: 6, zona: "Tarazona", lat: 41.9, lng: -1.73, pais: "España" },
+  { id: 7, zona: "Mequinenza", lat: 41.37, lng: 0.3, pais: "España" },
+  { id: 8, zona: "Belchite", lat: 41.31, lng: -0.75, pais: "España" },
+  { id: 9, zona: "Sos", lat: 42.5, lng: -1.21, pais: "España" },
+];
+
+const HUECOS_HUESCA = [
+  { id: 1, zona: "Huesca", lat: 42.14, lng: -0.41, pais: "España" },
+  { id: 2, zona: "Barbastro", lat: 42.04, lng: 0.13, pais: "España" },
+  { id: 3, zona: "Fraga", lat: 41.52, lng: 0.35, pais: "España" },
+  { id: 4, zona: "Jaca", lat: 42.57, lng: -0.55, pais: "España" },
+  { id: 5, zona: "Sabiñánigo", lat: 42.52, lng: -0.37, pais: "España" },
+  { id: 6, zona: "Aínsa", lat: 42.42, lng: 0.14, pais: "España" },
+  { id: 7, zona: "Benasque", lat: 42.61, lng: 0.52, pais: "España" },
+  { id: 8, zona: "Graus", lat: 42.19, lng: 0.34, pais: "España" },
+  { id: 9, zona: "Sariñena", lat: 41.79, lng: -0.16, pais: "España" },
+  { id: 10, zona: "Broto", lat: 42.6, lng: -0.12, pais: "España" },
+];
+
+const HUECOS_LLEIDA = [
+  { id: 1, zona: "Lleida", lat: 41.62, lng: 0.63, pais: "España" },
+  { id: 2, zona: "Balaguer", lat: 41.79, lng: 0.79, pais: "España" },
+  { id: 3, zona: "Tàrrega", lat: 41.65, lng: 1.14, pais: "España" },
+  { id: 4, zona: "Tremp", lat: 42.17, lng: 0.89, pais: "España" },
+  { id: 5, zona: "La Seu", lat: 42.36, lng: 1.46, pais: "España" },
+  { id: 6, zona: "Sort", lat: 42.41, lng: 1.13, pais: "España" },
+  { id: 7, zona: "Vielha", lat: 42.7, lng: 0.8, pais: "España" },
+  { id: 8, zona: "Pont de Suert", lat: 42.41, lng: 0.74, pais: "España" },
+  { id: 9, zona: "Espot", lat: 42.58, lng: 1.09, pais: "España" },
+  { id: 10, zona: "Les Borges", lat: 41.52, lng: 0.87, pais: "España" },
+];
+
 const CAMPING_ZONAS: Record<
   string,
   {
@@ -837,6 +884,24 @@ const CAMPING_ZONAS: Record<
     provinciaRe: /\bguadalajara\b/i,
     isIn: (lat, lng) => lat >= 40.25 && lat <= 41.32 && lng >= -3.5 && lng <= -1.7,
     huecos: HUECOS_GUADALAJARA,
+  },
+  zaragoza: {
+    label: "Zaragoza",
+    provinciaRe: /\bzaragoza\b/i,
+    isIn: (lat, lng) => lat >= 40.93 && lat <= 42.75 && lng >= -2.18 && lng <= 0.43,
+    huecos: HUECOS_ZARAGOZA,
+  },
+  huesca: {
+    label: "Huesca",
+    provinciaRe: /\bhuesca\b/i,
+    isIn: (lat, lng) => lat >= 41.35 && lat <= 42.93 && lng >= -0.95 && lng <= 0.77,
+    huecos: HUECOS_HUESCA,
+  },
+  lleida: {
+    label: "Lleida",
+    provinciaRe: /\b(lleida|l[eé]rida)\b/i,
+    isIn: (lat, lng) => lat >= 41.25 && lat <= 42.86 && lng >= 0.3 && lng <= 1.9,
+    huecos: HUECOS_LLEIDA,
   },
 };
 
