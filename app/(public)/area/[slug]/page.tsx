@@ -10,12 +10,11 @@ import { InformacionBasica } from '@/components/area/InformacionBasica'
 import { MapaUbicacion } from '@/components/area/MapaUbicacion'
 import { ContactoInfo } from '@/components/area/ContactoInfo'
 import { GaleriaFotos } from '@/components/area/GaleriaFotos'
-import { HerramientasVehiculo } from '@/components/ui/HerramientasVehiculo'
 import { AreasRelacionadas } from '@/components/area/AreasRelacionadas'
 import { ConfirmarDatosArea } from '@/components/area/ConfirmarDatosArea'
 import { BackToTop } from '@/components/area/BackToTop'
-import { BannerRotativo } from '@/components/banners/BannerRotativo'
-import { BannerProvider } from '@/components/banners/BannerContext'
+import { CtaAlquilerFurgocasa } from '@/components/area/CtaAlquilerFurgocasa'
+import { CtaCenaCerca } from '@/components/area/CtaCenaCerca'
 import { LANG_COOKIE, isTranslationLocale, normalizeLocale } from '@/lib/i18n/config'
 import { mergeAreaTranslation } from '@/lib/i18n/mergeAreaTranslation'
 import type { Metadata } from 'next'
@@ -158,44 +157,39 @@ export default async function AreaPage({ params }: PageProps) {
     })
   }
 
+  const ctaArea = {
+    id: String(area.id),
+    slug: String(area.slug || ''),
+    pais: area.pais,
+    ciudad: area.ciudad,
+    provincia: area.provincia,
+    comunidad: area.comunidad,
+  }
+
   return (
-    <BannerProvider>
+    <>
       {/* Schema.org JSON-LD para SEO */}
       <Script
         id="schema-area"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
       />
-      {/* Navbar */}
       <Navbar />
 
       <div className="min-h-screen bg-gray-50">
-        {/* Header con imagen y acciones */}
         <DetalleAreaHeader area={area} />
 
-        {/* Contenido principal */}
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-8">
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
-            
-            {/* Columna Izquierda (Principal) - 60% */}
             <div className="w-full lg:w-[60%] space-y-8">
-              {/* Información básica */}
               <InformacionBasica area={area} />
 
-              {/* 🎯 Banner 1: Después de info básica */}
-              <BannerRotativo
-                areaId={area.id}
-                position="after-info"
-                strategy="weighted"
-                priority={1}
-              />
+              <CtaAlquilerFurgocasa area={ctaArea} />
 
-              {/* Servicios */}
               {area.servicios && (
                 <ServiciosGrid servicios={area.servicios as any} />
               )}
 
-              {/* Contribución de usuarios: confirmar datos del área */}
               <ConfirmarDatosArea
                 areaId={area.id}
                 serviciosActuales={area.servicios as any}
@@ -203,7 +197,6 @@ export default async function AreaPage({ params }: PageProps) {
                 plazasActuales={area.plazas_totales}
               />
 
-              {/* Galería de fotos */}
               {(() => {
                 let fotos = area.fotos_urls
                 if (typeof fotos === 'string' && fotos.trim()) {
@@ -219,47 +212,29 @@ export default async function AreaPage({ params }: PageProps) {
                 return null
               })()}
 
-              {/* 🎯 Banner 2: Después de galería (Último banner) */}
-              <BannerRotativo
-                areaId={area.id}
-                position="after-gallery"
-                strategy="weighted"
-                priority={2}
-              />
-
-              {/* Vehículo / IA / QR: el tráfico real está aquí, no en la home */}
-              <HerramientasVehiculo compact />
-
-              {/* Áreas relacionadas */}
               {areasRelacionadas && areasRelacionadas.length > 0 && (
                 <AreasRelacionadas areas={areasRelacionadas} />
               )}
+
+              <CtaCenaCerca area={ctaArea} />
             </div>
 
-            {/* Columna Derecha (Sticky) - 40% */}
             <div className="w-full lg:w-[40%] relative">
               <div className="sticky top-24 space-y-8">
-                {/* Mapa de ubicación */}
                 <MapaUbicacion
                   latitud={Number(area.latitud)}
                   longitud={Number(area.longitud)}
                   nombre={area.nombre}
                 />
-
-                {/* Información de contacto */}
                 <ContactoInfo area={area} />
               </div>
             </div>
-            
           </div>
         </div>
       </div>
 
-      {/* Footer - Solo en páginas de detalle para SEO */}
       <Footer />
-
-      {/* Botón volver arriba */}
       <BackToTop />
-    </BannerProvider>
+    </>
   )
 }

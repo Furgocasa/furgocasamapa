@@ -16,7 +16,7 @@
 | 7 | Tío Viajero IA renovado | ✅ Hecho | Conversión/UX |
 | 8 | Embudo de engagement + visibilidad furgo | ✅ Hecho (21 ago 2026) | Retención / adopción |
 | 9 | Estética 3.0 (marca, basemap, móvil, filtros) | ✅ Hecho fase 1 (21 ago 2026) | Percepción de producto / UX |
-| 10 | Mapa al servicio del alquiler (CTA ficha, banners, onboarding cliente) | 📋 Guía lista (22 ago 2026) | Ingresos Furgocasa / marca |
+| 10 | Mapa al servicio del alquiler (CTA ficha, banners, onboarding cliente) | 🔄 Ficha hecha (22 ago 2026) | Ingresos Furgocasa / marca |
 
 ---
 
@@ -205,8 +205,9 @@ las páginas admin a tokens cuando se toquen por otro motivo.
 alquiler. La ficha SEO hoy sortea banners 50/50 con CasiCinco y empuja IA/QR.
 El CTA de dinero es `furgocasa.com/es` genérico.
 
-**Aún no implementado.** Criterio y plan 90 días en la guía. No importar
-países ni ampliar features hasta cerrar CTA + onboarding del que ya pagó.
+**Ficha (hecho, 22 ago 2026):** CTA de alquiler fijo y contextual solo en
+España; sin banners 50/50 ni IA/QR; Casi Cinco solo «cena cerca» al final,
+también solo España. Onboarding del que ya pagó: pendiente (email/WhatsApp).
 
 ---
 
@@ -267,4 +268,7 @@ países ni ampliar features hasta cerrar CTA + onboarding del que ya pagó.
   Ver Mejora 9 y `GUIA_DISENO_V3.md` §9.
 - **22 ago 2026 (alquiler)**: criterio escrito. El mapa vuelve al job original
   (soporte al cliente Furgocasa + SEO hacia reserva). Guía:
-  `GUIA_MAPA_ALQUILER.md`. Aún sin código.
+  `GUIA_MAPA_ALQUILER.md`.
+- **22 ago 2026 (CTA ficha)**: `/area` sin banners 50/50 ni IA/QR. CTA de
+  alquiler contextual solo en España; Casi Cinco solo «cena cerca» al final,
+  solo España. `lib/areas/cta-comercial.ts`.

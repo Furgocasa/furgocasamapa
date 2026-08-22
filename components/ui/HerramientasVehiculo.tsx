@@ -1,9 +1,8 @@
 'use client'
 
 /**
- * Descubre las tres funciones de vehículo que hoy casi nadie ve:
- * valoración IA, registro/mantenimiento y QR de accidentes.
- * Compacto a propósito: va en fichas de área (donde está el tráfico).
+ * Tasación IA, registro y QR. Solo home / perfil.
+ * No va en /area: esa ficha vende el alquiler (GUIA_MAPA_ALQUILER.md).
  */
 
 import Link from 'next/link'

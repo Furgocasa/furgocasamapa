@@ -149,8 +149,8 @@ Qué dice, según zona:
 | Murcia / entorno base | Alquila una camper en Murcia y duerme aquí | URL de la base Murcia + UTM |
 | Alicante / Valencia / Levante | Esta ruta se hace desde nuestras bases del Levante | Base más cercana |
 | Madrid / Albacete | Salimos desde Madrid / Albacete | Esa base |
-| Resto de España / Portugal / sur de FR | Alquila una camper para recorrer esta zona | `furgocasa.com/es` o landing de producto |
-| Resto del mundo | CTA suave o ninguno | No forzar Murcia en un área de Chile |
+| Resto de España | Alquila una camper para recorrer esta zona | `/es/reservar` |
+| Fuera de España | **Nada** | Ni alquiler ni Casi Cinco |
 
 UTM obligatorio en todos los enlaces:
 
@@ -296,12 +296,12 @@ pague su sitio.
 
 ### Semanas 1–2 — Ficha y medición
 
-- [ ] Componente CTA alquiler en `/area/[slug]` (siempre, contextual).
-- [ ] Quitar `HerramientasVehiculo` de la ficha.
-- [ ] `BannerRotativo` en ficha: CasiCinco como máximo un slot, debajo
-      del CTA; fallback SSR ya no es CasiCinco.
-- [ ] UTMs en todos los destinos a `furgocasa.com`.
-- [ ] Evento de analytics `cta_alquiler_click` (además del UTM).
+- [x] Componente CTA alquiler en `/area/[slug]` (siempre, contextual, **solo España**).
+- [x] Quitar `HerramientasVehiculo` de la ficha.
+- [x] Sin `BannerRotativo` en la ficha. Casi Cinco: un enlace «cena cerca»
+      al final, **solo España**, con `city`/`province` hacia `/mapa`.
+- [x] UTMs en alquiler y cena cerca.
+- [x] Evento `click` con `event_data.cta` = `alquiler` | `cena_cerca`.
 - [ ] En Furgocasa: vista o nota de reservas con
       `utm_source=mapafurgocasa`.
 
