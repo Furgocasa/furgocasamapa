@@ -32,6 +32,10 @@
  *   npm run import:campings:tarragona
  *   npm run import:campings:barcelona
  *   npm run import:campings:gerona
+ *   npm run import:campings:almeria
+ *   npm run import:campings:malaga
+ *   npm run import:campings:cadiz
+ *   npm run import:campings:huelva
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -99,6 +103,14 @@ let REPORT_NAME =
           ? "barcelona-campings-dry-report.json"
         : REGION === "gerona"
           ? "gerona-campings-dry-report.json"
+        : REGION === "almeria"
+          ? "almeria-campings-dry-report.json"
+        : REGION === "malaga"
+          ? "malaga-campings-dry-report.json"
+        : REGION === "cadiz"
+          ? "cadiz-campings-dry-report.json"
+        : REGION === "huelva"
+          ? "huelva-campings-dry-report.json"
         : "iberia-gaps-dry-report.json";
 if (SOLO_STOPOVER) {
   REPORT_NAME = REPORT_NAME.replace("-gaps-dry-report.json", "-stopover-dry-report.json");
@@ -482,6 +494,55 @@ const HUECOS_GERONA = [
   { id: 12, zona: "Platja d'Aro", lat: 41.82, lng: 3.07, pais: "España" },
 ];
 
+const HUECOS_ALMERIA = [
+  { id: 1, zona: "Almería", lat: 36.84, lng: -2.46, pais: "España" },
+  { id: 2, zona: "Roquetas", lat: 36.76, lng: -2.61, pais: "España" },
+  { id: 3, zona: "El Ejido", lat: 36.75, lng: -2.81, pais: "España" },
+  { id: 4, zona: "Adra", lat: 36.75, lng: -3.02, pais: "España" },
+  { id: 5, zona: "Mojácar", lat: 37.14, lng: -1.85, pais: "España" },
+  { id: 6, zona: "Vera", lat: 37.25, lng: -1.86, pais: "España" },
+  { id: 7, zona: "Carboneras", lat: 36.99, lng: -1.89, pais: "España" },
+  { id: 8, zona: "Cabo de Gata", lat: 36.78, lng: -2.14, pais: "España" },
+  { id: 9, zona: "Tabernas", lat: 37.05, lng: -2.39, pais: "España" },
+  { id: 10, zona: "Vélez-Blanco", lat: 37.69, lng: -2.1, pais: "España" },
+];
+
+const HUECOS_MALAGA = [
+  { id: 1, zona: "Málaga", lat: 36.72, lng: -4.42, pais: "España" },
+  { id: 2, zona: "Marbella", lat: 36.51, lng: -4.89, pais: "España" },
+  { id: 3, zona: "Estepona", lat: 36.43, lng: -5.15, pais: "España" },
+  { id: 4, zona: "Fuengirola", lat: 36.54, lng: -4.62, pais: "España" },
+  { id: 5, zona: "Nerja", lat: 36.75, lng: -3.88, pais: "España" },
+  { id: 6, zona: "Vélez-Málaga", lat: 36.77, lng: -4.1, pais: "España" },
+  { id: 7, zona: "Ronda", lat: 36.74, lng: -5.16, pais: "España" },
+  { id: 8, zona: "Antequera", lat: 37.02, lng: -4.56, pais: "España" },
+  { id: 9, zona: "Mijas", lat: 36.6, lng: -4.64, pais: "España" },
+];
+
+const HUECOS_CADIZ = [
+  { id: 1, zona: "Cádiz", lat: 36.53, lng: -6.29, pais: "España" },
+  { id: 2, zona: "Jerez", lat: 36.69, lng: -6.14, pais: "España" },
+  { id: 3, zona: "El Puerto", lat: 36.59, lng: -6.23, pais: "España" },
+  { id: 4, zona: "Chiclana", lat: 36.42, lng: -6.15, pais: "España" },
+  { id: 5, zona: "Tarifa", lat: 36.01, lng: -5.6, pais: "España" },
+  { id: 6, zona: "Algeciras", lat: 36.13, lng: -5.45, pais: "España" },
+  { id: 7, zona: "Barbate", lat: 36.19, lng: -5.92, pais: "España" },
+  { id: 8, zona: "Sanlúcar", lat: 36.78, lng: -6.35, pais: "España" },
+  { id: 9, zona: "Arcos", lat: 36.75, lng: -5.81, pais: "España" },
+  { id: 10, zona: "Los Barrios", lat: 36.18, lng: -5.49, pais: "España" },
+];
+
+const HUECOS_HUELVA = [
+  { id: 1, zona: "Huelva", lat: 37.26, lng: -6.95, pais: "España" },
+  { id: 2, zona: "Punta Umbría", lat: 37.18, lng: -6.97, pais: "España" },
+  { id: 3, zona: "Matalascañas", lat: 37.02, lng: -6.55, pais: "España" },
+  { id: 4, zona: "Ayamonte", lat: 37.21, lng: -7.4, pais: "España" },
+  { id: 5, zona: "Isla Cristina", lat: 37.2, lng: -7.32, pais: "España" },
+  { id: 6, zona: "Lepe", lat: 37.25, lng: -7.2, pais: "España" },
+  { id: 7, zona: "Aracena", lat: 37.89, lng: -6.56, pais: "España" },
+  { id: 8, zona: "Riotinto", lat: 37.69, lng: -6.55, pais: "España" },
+];
+
 const CAMPING_ZONAS: Record<
   string,
   {
@@ -528,6 +589,30 @@ const CAMPING_ZONAS: Record<
     provinciaRe: /\b(gerona|girona)\b/i,
     isIn: (lat, lng) => lat >= 41.62 && lat <= 42.5 && lng >= 1.72 && lng <= 3.33,
     huecos: HUECOS_GERONA,
+  },
+  almeria: {
+    label: "Almería",
+    provinciaRe: /\balmer[ií]a\b/i,
+    isIn: (lat, lng) => lat >= 36.66 && lat <= 37.7 && lng >= -3.15 && lng <= -1.63,
+    huecos: HUECOS_ALMERIA,
+  },
+  malaga: {
+    label: "Málaga",
+    provinciaRe: /\bm[aá]laga\b/i,
+    isIn: (lat, lng) => lat >= 36.4 && lat <= 37.28 && lng >= -5.65 && lng <= -3.72,
+    huecos: HUECOS_MALAGA,
+  },
+  cadiz: {
+    label: "Cádiz",
+    provinciaRe: /\bc[aá]diz\b/i,
+    isIn: (lat, lng) => lat >= 36.0 && lat <= 36.95 && lng >= -6.52 && lng <= -5.28,
+    huecos: HUECOS_CADIZ,
+  },
+  huelva: {
+    label: "Huelva",
+    provinciaRe: /\bhuelva\b/i,
+    isIn: (lat, lng) => lat >= 36.95 && lat <= 38.05 && lng >= -7.52 && lng <= -6.35,
+    huecos: HUECOS_HUELVA,
   },
 };
 
