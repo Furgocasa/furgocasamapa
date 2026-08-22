@@ -286,3 +286,11 @@ con teléfono. Mercado = WhatsApp/lead, no OTA.
   privada/camping ES; clics `plaza_*` en analytics. Destacar ≠ cobrar por
   existir. `con_descuento_furgocasa` es el gancho (0 áreas ahora).
   `GUIA_MAPA_ALQUILER.md` §14.
+- **22 ago 2026 (landings provincia)**: fase 1 del §15. `/areas` +
+  `/areas/{provincia}` (~50, servidor, ISR 1h): H1 exacto, resumen con
+  datos vivos, listado por tipo, FAQs con schema, vecinas, destacadas
+  `con_descuento_furgocasa` arriba. Limpieza de `areas.provincia`
+  (`scripts/fix-provincias.js`, dry-run + apply). Interlinking: ficha →
+  provincia, landing España → provincias, sitemap. Quitadas keywords
+  ocultas de las landings país. Pendiente: fase 1b (texto editorial
+  único), fase 2 (zonas), fase 3 (ciudades ≥3).

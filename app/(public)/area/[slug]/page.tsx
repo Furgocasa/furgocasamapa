@@ -18,8 +18,11 @@ import { CtaCenaCerca } from '@/components/area/CtaCenaCerca'
 import { LANG_COOKIE, isTranslationLocale, normalizeLocale } from '@/lib/i18n/config'
 import { mergeAreaTranslation } from '@/lib/i18n/mergeAreaTranslation'
 import { areaSeoSnippet } from '@/lib/areas/seo-snippet'
+import { isEspana } from '@/lib/areas/cta-comercial'
+import { normalizarProvincia } from '@/lib/areas/provincias'
 import type { Metadata } from 'next'
 import Script from 'next/script'
+import Link from 'next/link'
 
 interface PageProps {
   params: {
@@ -178,6 +181,9 @@ export default async function AreaPage({ params }: PageProps) {
     comunidad: area.comunidad,
   }
 
+  // Landing SEO de la provincia (§15): interlinking ficha → /areas/{provincia}
+  const provinciaLanding = isEspana(areaRaw.pais) ? normalizarProvincia(areaRaw.provincia) : null
+
   return (
     <>
       {/* Schema.org JSON-LD para SEO */}
@@ -226,6 +232,15 @@ export default async function AreaPage({ params }: PageProps) {
 
               {areasRelacionadas && areasRelacionadas.length > 0 && (
                 <AreasRelacionadas areas={areasRelacionadas} />
+              )}
+
+              {provinciaLanding && (
+                <Link
+                  href={`/areas/${provinciaLanding.slug}`}
+                  className="block bg-white rounded-2xl shadow-card p-5 text-center font-semibold text-[#0b3c74] hover:bg-[#EEF4FB] transition-colors"
+                >
+                  Ver todas las áreas de autocaravanas en {provinciaLanding.nombre} →
+                </Link>
               )}
 
               <CtaCenaCerca area={ctaArea} />

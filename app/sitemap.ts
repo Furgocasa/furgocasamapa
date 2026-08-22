@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { normalizarProvincia } from '@/lib/areas/provincias'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.mapafurgocasa.com'
@@ -36,6 +37,43 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   const areas = allAreas
+
+  // Landings por provincia (España): /areas + /areas/{provincia} (§15)
+  const provinciaSlugs = new Set<string>()
+  {
+    let pageProv = 0
+    let hasMoreProv = true
+    while (hasMoreProv) {
+      const { data, error } = await (supabase as any)
+        .from('areas')
+        .select('provincia')
+        .eq('activo', true)
+        .eq('pais', 'España')
+        .range(pageProv * pageSize, (pageProv + 1) * pageSize - 1)
+      if (error || !data || data.length === 0) break
+      for (const row of data) {
+        const prov = normalizarProvincia(row.provincia)
+        if (prov) provinciaSlugs.add(prov.slug)
+      }
+      pageProv++
+      if (data.length < pageSize) hasMoreProv = false
+    }
+  }
+
+  const provinciaPages: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/areas`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.85,
+    },
+    ...[...provinciaSlugs].sort().map((slug) => ({
+      url: `${baseUrl}/areas/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.8,
+    })),
+  ]
 
   // URLs estáticas del sitio
   const staticPages: MetadataRoute.Sitemap = [
@@ -243,6 +281,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }))
     : []
 
-  return [...staticPages, ...paisesLandingPages, ...areaPages]
+  return [...staticPages, ...paisesLandingPages, ...provinciaPages, ...areaPages]
 }
 

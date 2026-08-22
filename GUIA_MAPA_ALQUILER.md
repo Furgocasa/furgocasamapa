@@ -513,3 +513,104 @@ Admin: `/admin/analytics` (eventos `click`). Filtrar por
 `event_data.cta` que empiece por `plaza_`.
 
 Si hay duda, releer el §1 y este §14.
+
+---
+
+## 15. Landings por territorio (provincia → zona → ciudad)
+
+### Por qué existen
+
+GSC (16 meses): los clics llegan por **nombre de sitio** («camping el
+peral», «parking autocaravanas marbella»). Eso es el §14 funcionando.
+Lo que falta es la búsqueda de planificación: «áreas de autocaravanas
+en Girona», «dormir autocaravana cabo de gata». Hoy esa consulta no
+tiene página: las landings de país (`/mapa-autocaravanas-espana`) son
+un folleto de la app —sin una sola área, renderizado en cliente, con
+keywords ocultas— y la ficha individual es demasiado concreta.
+
+La respuesta correcta **no es un blog** (rueda de hámster) sino páginas
+de listado programáticas: nuestros datos haciendo SEO.
+
+### Las tres fases
+
+| Fase | Qué | Cuántas | Regla |
+|------|-----|---------|-------|
+| **1. Provincias** | `/areas/{provincia}` + índice `/areas` | ~50 | Todas de golpe; ninguna sale vacía |
+| **1b. Texto editorial** | Párrafos únicos por provincia | 50 | IA + revisión, guardados; nunca plantilla clonada |
+| **2. Zonas** | Mar Menor, Cabo de Gata, Costa Brava… | 20–30 | Curadas a mano: config con municipios + texto con criterio (normativa del parque, etc.) |
+| **3. Ciudades** | `/areas/{provincia}/{ciudad}` | 100–200 | Solo con **≥3 áreas activas**; automático con umbral. Con 1 área ya rankea la ficha: no canibalizar |
+
+**Requisito previo de la fase 1:** el campo `provincia` está sucio en
+~430 de 1.819 áreas activas de España (códigos postales, calles,
+pueblos, «Lérida» vs «Lleida»). Limpieza con script + dry-run antes de
+generar nada; si no, el 24 % de las áreas no sale en su provincia.
+
+### Anatomía de la página (la plantilla SEO)
+
+Todo renderizado en **servidor** (ISR ~1 h). Nada de `use client` para
+el contenido. La consulta objetivo manda en cada bloque:
+
+1. **URL**: `/areas/girona`. Corta, keyword en la ruta, sin país.
+2. **Title** (~60): `Áreas de autocaravanas en Girona: 70 áreas y campings`.
+   El número es dato vivo (se actualiza con la base) y sube CTR.
+3. **Meta description** (~155) con datos reales: «70 áreas para
+   autocaravanas en Girona: 24 públicas, 12 gratuitas, 46 campings y
+   privadas. Precios, servicios y mapa. De Empuriabrava a Palamós.»
+4. **H1** = la consulta exacta: `Áreas de autocaravanas en Girona`.
+5. **Resumen dinámico** bajo el H1 (2 frases, answer-box para el
+   fragmento destacado): totales por tipo, cuántas gratuitas, rango de
+   precios. Generado de los datos → único por página y siempre fresco.
+6. **Chips de datos rápidos**: total, públicas / privadas / campings,
+   gratuitas, con agua / vaciado / electricidad.
+7. **H2 «Áreas destacadas en Girona»** — solo si hay
+   `con_descuento_furgocasa`. Este bloque ES el producto que se vende
+   al dueño (§14): primera pantalla de su provincia.
+8. **H2 «Todas las áreas de autocaravanas en Girona»** con **H3 por
+   tipo** («Áreas públicas», «Áreas privadas», «Campings que admiten
+   autocaravanas») — los H3 capturan las variantes de búsqueda. Cards
+   con nombre enlazado a la ficha (ancla = nombre del sitio, refuerza
+   el ranking de la ficha), ciudad, precio (0 = Gratis, null no se
+   inventa), rating y 3–4 servicios.
+9. **H2 «Por localidad»**: lista de ciudades con conteo (texto, no
+   enlaces muertos; en fase 3 se enlazan las que tengan página).
+10. **H2 editorial** (fase 1b): 150–250 palabras únicas por provincia
+    —pernocta vs acampada, estacionalidad, costa/interior—. Hasta que
+    exista, la página vive del resumen dinámico; **nunca** párrafo
+    clonado con el nombre cambiado (huella de doorway).
+11. **H2 «Preguntas frecuentes»** + schema `FAQPage`. 3–4 preguntas
+    respondidas con datos reales: «¿Cuántas áreas hay en Girona?»,
+    «¿Hay áreas gratuitas?» (nombres de las top 3 gratis), «¿Cuánto
+    cuesta?» (rango real). Datos → respuestas únicas.
+12. **Cierre**: provincias limítrofes (interlinking), enlace a
+    `/mapa?provincia=X` y CTA alquiler Furgocasa discreto al final
+    (mismo criterio que la ficha: solo España, abajo).
+13. **Breadcrumbs visibles** + `BreadcrumbList`; `ItemList` con las
+    áreas; `CollectionPage`.
+14. **Técnica**: canonical self, solo ES por ahora, `next/image` lazy
+    con alt «Área de autocaravanas {nombre} en {ciudad}, {provincia}»,
+    sin mapa interactivo pesado en fase 1 (CWV manda; el mapa vive en
+    `/mapa`).
+
+### Interlinking (el multiplicador)
+
+- Ficha → su provincia: «Ver las 70 áreas de Girona».
+- Provincia → todas sus fichas + provincias vecinas + índice.
+- Landing España → índice `/areas` + provincias top.
+- Sitemap: `/areas` + las ~50 provincias.
+- Quitar el `<div hidden>` de keywords de las landings de país (SEO
+  de 2008: riesgo, cero beneficio).
+
+### Qué no hacer
+
+- Página por pueblo con 1 área (canibaliza la ficha, granja de páginas).
+- Texto plantilla repetido 50 veces.
+- Registro, IA o folleto de app en estas páginas: son puerta de Google.
+- Replicarlo fuera de España antes de que España funcione.
+
+### Medición
+
+GSC → Rendimiento → Páginas que empiecen por `/areas/`. Clics e
+impresiones de consultas «áreas … {provincia/zona}». Objetivo fase 1:
+que las 50 provincias impriman en 4–6 semanas y roben posiciones a
+Park4Night/blogs en 3–6 meses. El bloque «Destacadas» convierte ese
+tráfico en el argumento de los 20 €/mes del §14.

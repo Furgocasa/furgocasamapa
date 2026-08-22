@@ -18,11 +18,19 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline'
 
-interface PaisLandingPageProps {
-  pais: PaisSEO
+export interface ProvinciaLanding {
+  slug: string
+  nombre: string
+  total: number
 }
 
-export function PaisLandingPage({ pais }: PaisLandingPageProps) {
+interface PaisLandingPageProps {
+  pais: PaisSEO
+  /** Enlaces a las landings /areas/{provincia} (§15). Solo España por ahora. */
+  provincias?: ProvinciaLanding[]
+}
+
+export function PaisLandingPage({ pais, provincias }: PaisLandingPageProps) {
   const { t } = useLanguage()
   const [totalAreas, setTotalAreas] = useState(9000) // fallback hasta cargar conteo real
 
@@ -233,6 +241,41 @@ export function PaisLandingPage({ pais }: PaisLandingPageProps) {
         </div>
       </section>
 
+      {/* ÁREAS POR PROVINCIA (interlinking SEO) */}
+      {provincias && provincias.length > 0 && (
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="max-w-5xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 text-center">
+                Áreas de autocaravanas por provincia
+              </h2>
+              <p className="text-lg text-gray-600 mb-8 text-center">
+                Elige provincia y ve el listado completo con precios y servicios
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {provincias.map((p) => (
+                  <Link
+                    key={p.slug}
+                    href={`/areas/${p.slug}`}
+                    className="group bg-white border-2 border-gray-200 rounded-xl px-4 py-3 hover:border-[#0b3c74] hover:shadow-lg transition-all"
+                  >
+                    <span className="block font-semibold text-gray-900 group-hover:text-[#0b3c74] transition-colors">
+                      {p.nombre}
+                    </span>
+                    <span className="block text-sm text-gray-500">{p.total} áreas</span>
+                  </Link>
+                ))}
+              </div>
+              <div className="text-center mt-6">
+                <Link href="/areas" className="font-semibold text-[#0b3c74] hover:underline">
+                  Ver todas las provincias →
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* CTA FINAL */}
       <section className="py-20 bg-gradient-to-br from-[#0b3c74] to-[#0d4a8f] text-white">
         <div className="container mx-auto px-4 text-center">
@@ -258,13 +301,6 @@ export function PaisLandingPage({ pais }: PaisLandingPageProps) {
           </div>
         </div>
       </section>
-
-      {/* Keywords ocultos para SEO */}
-      <div className="hidden">
-        {pais.keywords.map(keyword => (
-          <span key={keyword}>{keyword}</span>
-        ))}
-      </div>
 
       <Footer />
     </div>

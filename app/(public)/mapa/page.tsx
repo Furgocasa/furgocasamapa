@@ -509,14 +509,20 @@ export default function MapaPage() {
     if (areas.length === 0 || areaUrlProcesadaRef.current) return
     const params = new URLSearchParams(window.location.search)
     const slug = params.get('area')
+    const provincia = params.get('provincia')
     if (slug) {
       areaUrlProcesadaRef.current = true
       // Pequeño margen para que el mapa esté montado antes de centrar
       setTimeout(() => selectAreaBySlug(slug), 400)
       // Limpiar la URL para no re-seleccionar al recargar
       window.history.replaceState({}, '', window.location.pathname)
+    } else if (provincia) {
+      // Llegada desde las landings /areas/{provincia} (§15)
+      areaUrlProcesadaRef.current = true
+      setFiltros((prev) => ({ ...prev, busqueda: provincia }))
+      window.history.replaceState({}, '', window.location.pathname)
     }
-  }, [areas, selectAreaBySlug])
+  }, [areas, selectAreaBySlug, setFiltros])
 
   // Caso 2: el chatbot está abierto SOBRE el propio mapa → evento directo
   useEffect(() => {
