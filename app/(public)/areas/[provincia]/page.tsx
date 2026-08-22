@@ -14,6 +14,7 @@ import {
   type ProvinciaES,
 } from '@/lib/areas/provincias'
 import { resolverCtaAlquiler } from '@/lib/areas/cta-comercial'
+import textosProvincias from '@/lib/areas/textos-provincias.json'
 
 export const revalidate = 3600
 
@@ -252,6 +253,11 @@ export default async function ProvinciaPage({ params }: PageProps) {
     .map((slug) => PROVINCIAS_ES.find((p) => p.slug === slug))
     .filter((p): p is ProvinciaES => Boolean(p))
 
+  // Texto editorial único por provincia (fase 1b del §15). Si no existe aún,
+  // la página vive del resumen dinámico; nunca párrafo clonado.
+  const textoEditorial: string[] | null =
+    (textosProvincias as Record<string, string[]>)[prov.slug] || null
+
   const cta = resolverCtaAlquiler({
     id: prov.slug,
     slug: `areas-${prov.slug}`,
@@ -420,6 +426,22 @@ export default async function ProvinciaPage({ params }: PageProps) {
                   >
                     {ciudad} ({n})
                   </span>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Texto editorial (fase 1b) */}
+          {textoEditorial && (
+            <section className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8">
+              <h2 className="text-2xl md:text-3xl font-bold text-[#0b3c74] mb-5">
+                Pernoctar en autocaravana en {prov.nombre}: lo que hay que saber
+              </h2>
+              <div className="space-y-4 max-w-3xl">
+                {textoEditorial.map((parrafo, i) => (
+                  <p key={i} className="text-gray-700 leading-relaxed">
+                    {parrafo}
+                  </p>
                 ))}
               </div>
             </section>

@@ -292,5 +292,8 @@ con teléfono. Mercado = WhatsApp/lead, no OTA.
   `con_descuento_furgocasa` arriba. Limpieza de `areas.provincia`
   (`scripts/fix-provincias.js`, dry-run + apply). Interlinking: ficha →
   provincia, landing España → provincias, sitemap. Quitadas keywords
-  ocultas de las landings país. Pendiente: fase 1b (texto editorial
-  único), fase 2 (zonas), fase 3 (ciudades ≥3).
+  ocultas de las landings país. Fase 1b en curso: texto editorial único
+  por provincia en `lib/areas/textos-provincias.json` (10/50 piloto:
+  Girona, Barcelona, Murcia, Cádiz, Asturias, Alicante, Málaga, Huesca,
+  Cantabria, Tarragona). Pendiente: completar las 40 restantes, fase 2
+  (zonas), fase 3 (ciudades ≥3).
