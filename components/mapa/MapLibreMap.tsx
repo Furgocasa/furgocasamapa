@@ -10,7 +10,7 @@ import { buildAreaPopupHTML } from './areaPopup'
 import { useLanguage } from '@/lib/i18n'
 import { getTipoAreaColor } from '@/lib/areas/tipo-area'
 import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
-import { applyBrandTheme } from '@/lib/map/brand-style'
+import { applyBrandTheme, applyMapLanguage } from '@/lib/map/brand-style'
 
 interface MapLibreMapProps {
   areas: Area[]
@@ -75,10 +75,10 @@ export function MapLibreMap({
   const getStyleUrl = () => {
     const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_API_KEY || 'get_your_own_key'
     switch (estilo) {
-      case 'waze': return `https://api.maptiler.com/maps/bright-v2/style.json?key=${MAPTILER_KEY}`
-      case 'satellite': return `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}`
-      case 'dark': return `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${MAPTILER_KEY}`
-      default: return `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`
+      case 'waze': return `https://api.maptiler.com/maps/bright-v2/style.json?key=${MAPTILER_KEY}&language=${locale}`
+      case 'satellite': return `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}&language=${locale}`
+      case 'dark': return `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${MAPTILER_KEY}&language=${locale}`
+      default: return `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}&language=${locale}`
     }
   }
 
@@ -129,6 +129,7 @@ export function MapLibreMap({
         if (estilo === 'default') {
           applyBrandTheme(mapInstance)
         }
+        applyMapLanguage(mapInstance, locale)
 
         // Vuelo de entrada Europa → España (MapLibre lo convierte en salto
         // instantáneo si el usuario tiene "reducir movimiento" activado)
@@ -161,6 +162,12 @@ export function MapLibreMap({
       setError('Error al cargar el mapa')
     }
   }, [estilo])
+
+  // Etiquetas del basemap (ciudades, regiones, países) en el idioma de la UI
+  useEffect(() => {
+    if (!map || !mapLoaded) return
+    applyMapLanguage(map, locale)
+  }, [map, mapLoaded, locale])
 
   // Actualizar mapa de áreas cuando cambian
   useEffect(() => {

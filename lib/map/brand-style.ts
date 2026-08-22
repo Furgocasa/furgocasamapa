@@ -29,6 +29,7 @@ const BRAND = {
 
 type AnyMap = {
   getStyle: () => { layers?: { id: string; type: string }[] } | undefined
+  getLayoutProperty?: (layerId: string, prop: string) => unknown
   setPaintProperty: (layerId: string, prop: string, value: unknown) => void
   setLayoutProperty: (layerId: string, prop: string, value: unknown) => void
 }
@@ -117,5 +118,82 @@ export function applyBrandTheme(map: AnyMap) {
         break
       }
     }
+  }
+}
+
+/**
+ * El estilo streets-v2 de MapTiler deja ciudades, regiones y países en
+ * `name:en` ("Valladolid city", "Castile-La Mancha", "Spain"). El parámetro
+ * `?language=` de la URL no lo cambia: hay que reescribir el text-field.
+ * Preferimos `name:{locale}` y, si falta, el nombre local (`name`).
+ */
+const NAME_LANG_PROP = /^name:[a-z]+$/
+const NAME_LANG_TOKEN = /\{name:[a-z]+\}/g
+
+function localizedNameExpr(locale: string) {
+  return ['coalesce', ['get', `name:${locale}`], ['get', 'name']]
+}
+
+function stripEnglishPlaceClass(nameExpr: unknown) {
+  return [
+    'let',
+    'n',
+    nameExpr,
+    [
+      'case',
+      ['==', ['slice', ['var', 'n'], -5], ' city'],
+      ['slice', ['var', 'n'], 0, -5],
+      ['==', ['slice', ['var', 'n'], -5], ' town'],
+      ['slice', ['var', 'n'], 0, -5],
+      ['var', 'n'],
+    ],
+  ]
+}
+
+function localizeTextField(field: unknown, locale: string): unknown {
+  if (typeof field === 'string') {
+    if (NAME_LANG_PROP.test(field)) return `name:${locale}`
+    if (/^\{name:[a-z]+\}$/.test(field)) return localizedNameExpr(locale)
+    if (field.includes('{name:')) {
+      return field.replace(NAME_LANG_TOKEN, `{name:${locale}}`)
+    }
+    return field
+  }
+  if (Array.isArray(field)) {
+    return field.map((item) => localizeTextField(item, locale))
+  }
+  if (field && typeof field === 'object') {
+    return Object.fromEntries(
+      Object.entries(field as Record<string, unknown>).map(([key, value]) => [
+        key,
+        localizeTextField(value, locale),
+      ])
+    )
+  }
+  return field
+}
+
+/** Alinea las etiquetas del basemap con el idioma de la UI. Idempotente. */
+export function applyMapLanguage(map: AnyMap, locale: string) {
+  const lang = /^[a-z]{2}$/.test(locale) ? locale : 'es'
+  const layers = map.getStyle()?.layers ?? []
+
+  for (const layer of layers) {
+    if (layer.type !== 'symbol') continue
+    const current =
+      map.getLayoutProperty?.(layer.id, 'text-field') ??
+      (layer as { layout?: { 'text-field'?: unknown } }).layout?.['text-field']
+    if (current == null) continue
+
+    let next = localizeTextField(current, lang)
+    if (
+      lang === 'en' &&
+      /city|town|capital/i.test(layer.id)
+    ) {
+      next = stripEnglishPlaceClass(localizedNameExpr('en'))
+    }
+
+    if (JSON.stringify(next) === JSON.stringify(current)) continue
+    safeLayout(map, layer.id, 'text-field', next)
   }
 }

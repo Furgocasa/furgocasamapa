@@ -77,9 +77,9 @@ export function LeafletMap({
   const getTileUrl = () => {
     const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_API_KEY || 'get_your_own_key'
     switch (estilo) {
-      case 'waze': return `https://api.maptiler.com/maps/bright-v2/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`
-      case 'satellite': return `https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=${MAPTILER_KEY}`
-      case 'dark': return `https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`
+      case 'waze': return `https://api.maptiler.com/maps/bright-v2/{z}/{x}/{y}.png?key=${MAPTILER_KEY}&language=${locale}`
+      case 'satellite': return `https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=${MAPTILER_KEY}&language=${locale}`
+      case 'dark': return `https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}.png?key=${MAPTILER_KEY}&language=${locale}`
       default: return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
     }
   }

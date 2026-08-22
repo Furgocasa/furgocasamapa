@@ -3,7 +3,8 @@
 import { useEffect, useRef } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { applyBrandTheme } from '@/lib/map/brand-style'
+import { applyBrandTheme, applyMapLanguage } from '@/lib/map/brand-style'
+import { useLanguage } from '@/lib/i18n'
 
 interface Props {
   latitud: number
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function MapaUbicacion({ latitud, longitud, nombre }: Props) {
+  const { locale } = useLanguage()
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
 
@@ -26,7 +28,7 @@ export function MapaUbicacion({ latitud, longitud, nombre }: Props) {
     try {
       const map = new maplibregl.Map({
         container: mapContainerRef.current,
-        style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`,
+        style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}&language=${locale}`,
         center: [longitud, latitud],
         zoom: 15,
         attributionControl: false
@@ -34,7 +36,10 @@ export function MapaUbicacion({ latitud, longitud, nombre }: Props) {
 
       map.addControl(new maplibregl.NavigationControl(), 'top-right')
 
-      map.on('load', () => applyBrandTheme(map))
+      map.on('load', () => {
+        applyBrandTheme(map)
+        applyMapLanguage(map, locale)
+      })
 
       // Crear marcador
       const el = document.createElement('div')
@@ -84,7 +89,7 @@ export function MapaUbicacion({ latitud, longitud, nombre }: Props) {
     } catch (error) {
       console.error('Error inicializando mapa de MapLibre:', error)
     }
-  }, [latitud, longitud, nombre, coordenadasValidas])
+  }, [latitud, longitud, nombre, coordenadasValidas, locale])
 
   const handleComoLlegar = () => {
     // Abrir en Google Maps
