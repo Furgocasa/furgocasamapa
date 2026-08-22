@@ -250,7 +250,7 @@ export function ListaResultados({
                             </span>
                           </div>
                           {(area.google_ratings_total ?? 0) > 0 && (
-                            <span className="font-bold text-sm text-gray-900">
+                            <span className="text-xs text-gray-500 font-normal">
                               {(area.google_ratings_total ?? 0).toLocaleString(locale)} {t('reviews')}
                             </span>
                           )}
