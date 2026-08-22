@@ -63,11 +63,18 @@ node scripts/translate-descriptions.js
 
 ## Herramientas de administración
 
+Todas viven en el grupo **Áreas** del menú lateral del admin (layout único en
+`app/admin/layout.tsx`, desde el remontado Admin 3.0 del 22 ago 2026):
+
 - `/admin/areas/edit/[id]`: revisión y corrección manual de una ficha.
 - `/admin/areas/enriquecer-textos`: investigación y reescritura individual.
 - `/admin/areas/actualizar-servicios`: servicios y datos estructurados.
 - `/admin/areas/revisar-imagenes`: revisión, borrado y generación de imágenes.
 - `/admin/areas`: filtros por país, estado y verificación.
+
+El dashboard `/admin` muestra en vivo el nº de áreas activas, inactivas y
+activas sin descripción: sirve de termómetro rápido antes y después de una
+oleada de revisión.
 
 ## Reglas de datos y costes
 

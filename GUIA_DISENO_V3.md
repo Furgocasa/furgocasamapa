@@ -203,7 +203,27 @@ Sin checkboxes de 16px: todo control es táctil, mínimo ~40px.
 
 ---
 
-## 9. Checklist al tocar la estética
+## 9. Admin 3.0 (22 ago 2026, commit `2bcc421`)
+
+El panel `/admin` tiene su propio marco visual, separado del front público:
+
+- **`app/admin/layout.tsx`** es la única pieza de chrome: sidebar oscuro
+  (`slate-900`) con grupos desplegables, barra superior blanca con el título de
+  la sección activa y «Ver web», usuario + logout al pie, hamburguesa en móvil.
+  Las páginas admin **no** montan `components/layout/Navbar`.
+- **Navegación**: array `NAV` dentro del layout (Dashboard + grupos Áreas /
+  IA y Chatbot / Datos y análisis / Sistema). Página nueva de admin = añadir su
+  entrada ahí; el resaltado activo es por prefijo más largo, así
+  `/admin/areas/edit/[id]` marca «Listado de áreas» solo.
+- **Colores**: layout y dashboard usan tokens (`primary-600` activo/hovers,
+  `accent-500` avatar). Las páginas interiores conservan `sky-*` legado; si se
+  retocan, migrar a tokens de paso.
+- **Auth**: el layout comprueba `is_admin` antes de pintar. No añadir páginas
+  admin fuera de `app/admin/` ni con chrome propio.
+
+---
+
+## 10. Checklist al tocar la estética
 
 - [ ] ¿Colores desde tokens (`primary`, `accent`, `tipo`) o `getTipoAreaColor()`?
 - [ ] ¿Radios y sombras del sistema (`rounded-2xl`/`xl`, `shadow-card`/`overlay`)?

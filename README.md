@@ -48,7 +48,7 @@ Sistema visual completo (tokens, basemap, móvil, filtros): **[GUIA_DISENO_V3.md
 Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMENT.md)**. Para revisar fichas, zonas, países o toda la base: **[GUIA_REVISION_AREAS.md](./GUIA_REVISION_AREAS.md)**.
 
 ### Para Administradores
-- ⚙️ **Panel de administración** completo (`/admin`)
+- ⚙️ **Panel Admin 3.0** (`/admin`): menú lateral oscuro con secciones agrupadas (Áreas / IA y Chatbot / Datos y análisis / Sistema), barra superior con «Ver web» y dashboard con contadores en vivo. Layout único en `app/admin/layout.tsx` (auth admin centralizada; la navegación se edita en su array `NAV`)
 - 📊 **Analytics por pestañas**: usuarios, áreas, rutas, engagement
 - 🤖 **Editor de prompts IA** configurable
 - 🧑‍⚖️ **Respuestas del Tío Viajero** (`/admin/chatbot-respuestas`): tabla + quesito de calidad (correcta / mejorable / incorrecta)
@@ -94,7 +94,7 @@ Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMEN
 │   │   ├── area/[slug]/   # Detalle de área
 │   │   ├── perfil/        # Dashboard usuario
 │   │   └── mis-autocaravanas/
-│   ├── admin/             # Panel administración
+│   ├── admin/             # Panel administración (layout propio con sidebar)
 │   └── api/               # API Routes (incl. /api/cron/digest-semanal)
 ├── components/
 │   ├── mapa/              # MapaInteractivoGoogle, MapLibreMap, LeafletMap
@@ -105,7 +105,7 @@ Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMEN
 │   ├── banners_furgocasa/ # Archivos HTML editables de banners
 │   └── banners_casicinco/ # Archivos HTML editables de banners
 ├── hooks/                 # useMapConfig, useToast, etc.
-├── lib/                   # Supabase, i18n, analytics, favoritos/local.ts
+├── lib/                   # Supabase, i18n, analytics, favoritos, areas/slug.ts
 ├── supabase/migrations/   # Migraciones SQL
 ├── types/                 # Tipos TypeScript
 ├── GUIA_DISENO_V3.md      # Sistema visual 3.0: tokens, basemap, móvil, filtros
@@ -376,6 +376,8 @@ Cada país se trata como mercado propio: **se busca con el nombre local**, no co
 
 | Versión | Fecha | Cambios principales |
 |---------|-------|---------------------|
+| v5.0 | 22 ago 2026 | **Admin 3.0**: panel con menú lateral agrupado, layout propio, auth centralizada y dashboard con contadores |
+| v4.10 | 22 ago 2026 | URLs de área limpias (`/area/{nombre}-{ciudad}`, sin país ni Place ID) + redirecciones 301 |
 | v4.9 | 22 ago 2026 | Buscadores del mapa insensibles a tildes (`rio` → Río) |
 | v4.8 | 22 ago 2026 | Splash del mapa: Ducato H2 L3 (sin raya suelta) y copy de +9.000 áreas en +25 países |
 | v4.7 | 21 ago 2026 | **Estética 3.0**: basemap propio, entrada cinematográfica, splash furgoneta, filtros táctiles, lupa plegable móvil, tokens de marca (ver `GUIA_DISENO_V3.md`) |

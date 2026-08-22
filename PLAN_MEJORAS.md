@@ -175,6 +175,27 @@ porque pedían login demasiado pronto o porque no se veían.
 
 ---
 
+## Mejora 9 — Admin 3.0 con sidebar (22 ago 2026)
+
+**Qué**: el panel `/admin` era una parrilla plana de 15 tarjetas y cada página
+montaba el Navbar público por su cuenta; funciones de áreas (nueva, búsqueda
+masiva, enriquecer…) aparecían sueltas al mismo nivel que Usuarios o Analíticas.
+
+**Cambios** (commit `2bcc421`; detalle en `CAMBIOS_CURSOR.md` → «Admin 3.0»):
+- [x] `app/admin/layout.tsx`: sidebar oscuro con grupos desplegables (Áreas /
+  IA y Chatbot / Datos y análisis / Sistema), topbar con «Ver web», usuario +
+  logout, hamburguesa móvil. Navegación en el array `NAV`.
+- [x] Auth admin centralizada en el layout (antes 4 páginas sin check de cliente)
+- [x] Las 17 páginas admin sin `Navbar` público
+- [x] Dashboard `/admin`: contadores en vivo (activas / inactivas / sin texto)
+  + accesos agrupados
+- [x] Tokens de marca (`primary`/`accent`) en layout y dashboard
+
+**Pendiente (cosmético, sin prisa)**: migrar el `sky-*` legado del interior de
+las páginas admin a tokens cuando se toquen por otro motivo.
+
+---
+
 ## Pasos manuales pendientes (Narciso)
 
 1. ~~**Supabase SQL Editor**: migraciones `chatbot_evaluacion_ia` y `google_ratings_total`~~ — **hechas** (verificado en BD). Backfill ratings casi completo (~4.9k con valor; residual opcional ~300 con `place_id` y total NULL).
@@ -224,3 +245,9 @@ porque pedían login demasiado pronto o porque no se veían.
 - **22 ago 2026 (splash)**: el van del modal de carga es un Ducato H2 L3
   camperizado (caja alta, sin raya suelta) y el texto avisa de más de 9.000
   áreas en más de 25 países, con frases rotatorias. Guía: `GUIA_DISENO_V3.md` §3.
+- **22 ago 2026 (URLs)**: slugs de área limpios (`/area/{nombre}-{ciudad}`, sin
+  país ni Place ID), `lib/areas/slug.ts` + redirects 301 en middleware, script
+  `npm run slugs:clean`. Regla: `.cursor/rules/url-slugs.mdc`.
+- **22 ago 2026 (Admin 3.0)**: panel `/admin` remontado con sidebar lateral
+  agrupado, layout propio, auth centralizada y dashboard con contadores.
+  Ver Mejora 9 y `GUIA_DISENO_V3.md` §9.

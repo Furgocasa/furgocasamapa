@@ -488,3 +488,40 @@
 - **Qué**: `rio` encuentra `Río`, `cordoba` encuentra `Córdoba`. Aplica al filtro «Buscar área, ciudad…», al buscador «¿A dónde ir?» y al buscador de país. Helper `sinTildes()` en `lib/areas/slug.ts` (NFD + quitar diacríticos).
 - **Archivos**: `lib/areas/slug.ts`, `app/(public)/mapa/page.tsx`, `components/mapa/BuscadorGeografico.tsx`, `components/mapa/FiltrosMapa.tsx`
 - **Verificar**: en `/mapa` escribir `rio` o `murcia rio` y ver «Área Camper Murcia Río» en Lugares y en el desplegable del mapa. `mexico` debe listar México en País / Región.
+
+---
+
+## BLOQUE — URLs de áreas limpias (22 ago 2026)
+
+> Regla: `.cursor/rules/url-slugs.mdc`. Commit `5769bd5`.
+
+### Slugs sin país ni Place ID + redirecciones 301
+- **Qué**: formato único `/area/{nombre}-{ciudad}` (sin `es`/`fr`/`mx` ni trozos del Place ID de Google). Helpers `baseAreaSlug()` + `uniqueAreaSlug()` centralizados; los slugs viejos redirigen con 301 vía `lib/areas/slug-redirects.json` (leído en `middleware.ts` y en la ficha).
+- **Archivos**: `lib/areas/slug.ts`, `lib/areas/slug-redirects.json`, `middleware.ts`, `app/(public)/area/[slug]/page.tsx`, `app/admin/areas/new/page.tsx`, `app/admin/areas/edit/[id]/page.tsx`, `app/admin/areas/busqueda-masiva/page.tsx`, importadores `scripts/scripts_empresas/import-*.ts`
+- **Script de limpieza**: `scripts/limpiar-slugs-importados.ts` — `npm run slugs:clean` (dry-run) / `npm run slugs:clean:apply` (renombra y alimenta el JSON de redirects).
+- **Verificar**: una URL vieja tipo `/area/camping-neo-es-0StzWzYY` responde 301 hacia el slug limpio; crear un área desde el admin o un importador nunca genera slug con sufijo de país/Place ID.
+
+---
+
+## BLOQUE — Admin 3.0 con sidebar (22 ago 2026)
+
+> Remontado del panel `/admin` al estilo del admin de alquileres de Furgocasa
+> (menú lateral oscuro + contenido a la derecha). Commit `2bcc421`.
+
+### Layout propio con menú lateral agrupado
+- **Qué**: nuevo `app/admin/layout.tsx` (client) que envuelve TODO `/admin`: sidebar oscuro (`slate-900`) con logo, grupos desplegables — **Áreas** (listado, nueva, búsqueda masiva, servicios, textos, imágenes, derechos), **IA y Chatbot**, **Datos y análisis**, **Sistema** — usuario con logout abajo, barra superior blanca con el título de la sección activa y enlace «Ver web», hamburguesa en móvil. El grupo de la ruta activa se abre y resalta solo. La navegación se edita en el array `NAV` del propio layout.
+- **Auth centralizada**: el layout comprueba `user_metadata.is_admin` antes de pintar nada (spinner mientras). Antes 4 páginas (enriquecer-textos, enriquecer-imagenes, revisar-imagenes, configuracion) no lo comprobaban en cliente.
+- **Verificar**: entrar a cualquier ruta `/admin/...` sin sesión admin redirige a `/mapa` sin flash de contenido; el sidebar marca la sección correcta incluso en `/admin/areas/edit/[id]` (resalta «Listado de áreas»).
+
+### Las 17 páginas ya no montan el Navbar público
+- **Qué**: se quitó `components/layout/Navbar` (import + render, incluidos estados de carga) de todas las páginas admin; el marco lo pone el layout.
+- **Verificar**: `grep -r "layout/Navbar" app/admin` → 0 resultados.
+
+### Dashboard `/admin` con contadores y accesos agrupados
+- **Qué**: la parrilla plana de 15 tarjetas pasa a: 3 contadores en vivo desde Supabase (áreas activas, inactivas, activas sin descripción — coherentes con `.cursor/rules/areas-activo.mdc`) + accesos compactos agrupados por las mismas 4 secciones del menú.
+- **Archivo**: `app/admin/page.tsx` (reescrito).
+- **Verificar**: los contadores cargan cifras reales (no «—») y cada tarjeta lleva a su ruta.
+
+### Colores con tokens de marca
+- **Qué**: el layout y el dashboard nuevos usan `primary-*` / `accent-500` (GUIA_DISENO_V3 §1), no `sky-*` hardcodeado.
+- **Verificar**: `grep "sky-" app/admin/layout.tsx app/admin/page.tsx` → 0. (El resto de páginas admin conservan su `sky-*` legado; migrarlas es cosmético y no urge.)

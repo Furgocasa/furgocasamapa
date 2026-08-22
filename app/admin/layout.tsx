@@ -160,7 +160,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!ready) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-sky-600" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600" />
       </div>
     )
   }
@@ -168,7 +168,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const linkClasses = (href: string, indented = false) =>
     `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${indented ? 'pl-10' : ''} ${
       activeHref === href
-        ? 'bg-sky-600 text-white font-semibold'
+        ? 'bg-primary-600 text-white font-semibold'
         : 'text-slate-300 hover:bg-slate-800 hover:text-white'
     }`
 
@@ -232,7 +232,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Usuario */}
       <div className="border-t border-slate-800 px-4 py-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-sky-600 flex items-center justify-center text-white font-bold shrink-0">
+          <div className="w-9 h-9 rounded-full bg-accent-500 flex items-center justify-center text-white font-bold shrink-0">
             {(userEmail[0] || 'A').toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
@@ -285,7 +285,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="ml-auto flex items-center gap-4">
             <Link
               href="/mapa"
-              className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-sky-600 transition-colors"
+              className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-primary-600 transition-colors"
             >
               <GlobeAltIcon className="w-5 h-5" />
               <span className="hidden sm:inline">Ver web</span>

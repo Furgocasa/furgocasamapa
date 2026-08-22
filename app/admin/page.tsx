@@ -39,7 +39,7 @@ type Grupo = {
 const GRUPOS: Grupo[] = [
   {
     label: 'Áreas',
-    color: 'text-sky-600 border-sky-200 bg-sky-50',
+    color: 'text-primary-600 border-primary-200 bg-primary-50',
     sections: [
       { title: 'Listado de áreas', description: 'Busca, edita, activa o desactiva áreas', icon: <MapPinIcon className="w-6 h-6" />, href: '/admin/areas' },
       { title: 'Nueva área', description: 'Añade una nueva área manualmente', icon: <PlusIcon className="w-6 h-6" />, href: '/admin/areas/new' },
@@ -160,12 +160,12 @@ export default function AdminDashboardPage() {
                 <Link
                   key={section.href}
                   href={section.href}
-                  className="group bg-white rounded-xl border border-gray-200 p-5 hover:border-sky-300 hover:shadow-md transition-all"
+                  className="group bg-white rounded-xl border border-gray-200 p-5 hover:border-primary-300 hover:shadow-md transition-all"
                 >
                   <div className={`inline-flex p-2.5 rounded-lg border ${grupo.color} mb-3`}>
                     {section.icon}
                   </div>
-                  <h3 className="font-semibold text-gray-900 group-hover:text-sky-600 transition-colors mb-1">
+                  <h3 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors mb-1">
                     {section.title}
                   </h3>
                   <p className="text-sm text-gray-500">{section.description}</p>
