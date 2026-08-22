@@ -27,6 +27,7 @@ import {
   XMarkIcon,
   GlobeAltIcon,
   ArrowRightOnRectangleIcon,
+  HandThumbUpIcon,
 } from '@heroicons/react/24/outline'
 
 type NavItem = {
@@ -62,6 +63,7 @@ const NAV: NavEntry[] = [
       { label: 'Enriquecer textos', href: '/admin/areas/enriquecer-textos', icon: <SparklesIcon className={iconClass} /> },
       { label: 'Enriquecer imágenes', href: '/admin/areas/enriquecer-imagenes', icon: <PhotoIcon className={iconClass} /> },
       { label: 'Derechos de imagen', href: '/admin/areas/revisar-imagenes', icon: <ShieldExclamationIcon className={iconClass} /> },
+      { label: 'Confirmaciones de viajeros', href: '/admin/areas/contribuciones', icon: <HandThumbUpIcon className={iconClass} /> },
     ],
   },
   {

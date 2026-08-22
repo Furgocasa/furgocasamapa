@@ -86,8 +86,8 @@ export async function GET(request: Request) {
         </p>
         <ul style="color:#334155;line-height:1.6;padding-left:20px;">${lista}</ul>
         <p style="color:#334155;line-height:1.6;">
-          ¿Has estado ya en alguna? Entra en la ficha y pulsa
-          <strong>“Estuve aquí”</strong>: tu valoración ayuda a miles de autocaravanistas.
+          ¿Has estado ya en alguna? Entra en la ficha y confirma servicios, precio y plazas:
+          así mantenemos los datos al día para miles de autocaravanistas.
         </p>
         <a href="https://www.mapafurgocasa.com/mapa"
            style="display:inline-block;background:#0b3c74;color:#ffffff;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none;margin-top:8px;">

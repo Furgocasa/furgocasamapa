@@ -8,7 +8,6 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { DashboardStats } from '@/components/perfil/DashboardStats'
 import { VisitasTab } from '@/components/perfil/VisitasTab'
-import { ValoracionesTab } from '@/components/perfil/ValoracionesTab'
 import { FavoritosTab } from '@/components/perfil/FavoritosTab'
 import { RutasTab } from '@/components/perfil/RutasTab'
 import { useLanguage } from '@/lib/i18n'
@@ -20,11 +19,10 @@ import {
   HeartIcon,
   ClockIcon,
   ArrowLeftIcon,
-  StarIcon,
   MapIcon
 } from '@heroicons/react/24/outline'
 
-type TabType = 'perfil' | 'visitas' | 'valoraciones' | 'favoritos' | 'rutas'
+type TabType = 'perfil' | 'visitas' | 'favoritos' | 'rutas'
 
 export default function PerfilPage() {
   const { t, locale } = useLanguage()
@@ -253,20 +251,6 @@ export default function PerfilPage() {
                   </span>
                 </button>
                 <button
-                  onClick={() => setActiveTab('valoraciones')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === 'valoraciones'
-                      ? 'bg-sky-50 text-sky-700 font-medium'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <StarIcon className="w-5 h-5" />
-                  {t('perfil_tab_ratings')}
-                  <span className="ml-auto text-xs bg-gray-200 px-2 py-1 rounded-full">
-                    {stats.totalValoraciones}
-                  </span>
-                </button>
-                <button
                   onClick={() => setActiveTab('favoritos')}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                     activeTab === 'favoritos'
@@ -463,7 +447,6 @@ export default function PerfilPage() {
               )}
 
               {activeTab === 'visitas' && <VisitasTab userId={user.id} />}
-              {activeTab === 'valoraciones' && <ValoracionesTab userId={user.id} />}
               {activeTab === 'favoritos' && <FavoritosTab userId={user.id} />}
               {activeTab === 'rutas' && <RutasTab userId={user.id} />}
             </div>

@@ -3,7 +3,6 @@
 import { 
   MapPinIcon, 
   HeartIcon, 
-  StarIcon, 
   MapIcon 
 } from '@heroicons/react/24/outline'
 import { useLanguage } from '@/lib/i18n'
@@ -30,14 +29,6 @@ export function DashboardStats({ stats }: Props) {
       bgColor: 'bg-blue-50',
     },
     {
-      title: t('perfil_tab_ratings'),
-      value: stats.totalValoraciones,
-      icon: StarIcon,
-      color: 'bg-yellow-100 text-yellow-600',
-      bgColor: 'bg-yellow-50',
-      subtitle: stats.promedioRating > 0 ? `${stats.promedioRating.toFixed(1)} ⭐` : null,
-    },
-    {
       title: t('perfil_tab_favs'),
       value: stats.totalFavoritos,
       icon: HeartIcon,
@@ -54,7 +45,7 @@ export function DashboardStats({ stats }: Props) {
   ]
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       {cards.map((card) => (
         <div
           key={card.title}

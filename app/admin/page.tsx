@@ -21,6 +21,7 @@ import {
   ShieldExclamationIcon,
   CheckCircleIcon,
   EyeSlashIcon,
+  HandThumbUpIcon,
 } from '@heroicons/react/24/outline'
 
 type Seccion = {
@@ -48,6 +49,7 @@ const GRUPOS: Grupo[] = [
       { title: 'Enriquecer textos', description: 'Genera descripciones automáticas', icon: <SparklesIcon className="w-6 h-6" />, href: '/admin/areas/enriquecer-textos' },
       { title: 'Enriquecer imágenes', description: 'Busca y añade imágenes automáticamente', icon: <PhotoIcon className="w-6 h-6" />, href: '/admin/areas/enriquecer-imagenes' },
       { title: 'Derechos de imagen', description: 'Revisa fotos de terceros y genera IA', icon: <ShieldExclamationIcon className="w-6 h-6" />, href: '/admin/areas/revisar-imagenes' },
+      { title: 'Confirmaciones de viajeros', description: 'Revisa y aplica servicios, precio y plazas', icon: <HandThumbUpIcon className="w-6 h-6" />, href: '/admin/areas/contribuciones' },
     ],
   },
   {
@@ -79,25 +81,33 @@ const GRUPOS: Grupo[] = [
 ]
 
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState<{ activas: number | null; inactivas: number | null; sinTexto: number | null }>({
+  const [stats, setStats] = useState<{
+    activas: number | null
+    inactivas: number | null
+    sinTexto: number | null
+    contribuciones: number | null
+  }>({
     activas: null,
     inactivas: null,
     sinTexto: null,
+    contribuciones: null,
   })
 
   useEffect(() => {
     const loadStats = async () => {
       try {
         const supabase = createClient()
-        const [activas, inactivas, sinTexto] = await Promise.all([
+        const [activas, inactivas, sinTexto, contribuciones] = await Promise.all([
           supabase.from('areas').select('id', { count: 'exact', head: true }).eq('activo', true),
           supabase.from('areas').select('id', { count: 'exact', head: true }).eq('activo', false),
           supabase.from('areas').select('id', { count: 'exact', head: true }).eq('activo', true).or('descripcion.is.null,descripcion.eq.'),
+          (supabase as any).from('area_contribuciones').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente'),
         ])
         setStats({
           activas: activas.count ?? null,
           inactivas: inactivas.count ?? null,
           sinTexto: sinTexto.count ?? null,
+          contribuciones: contribuciones.count ?? null,
         })
       } catch (err) {
         console.error('Error cargando estadísticas:', err)
@@ -122,6 +132,11 @@ export default function AdminDashboardPage() {
       value: stats.sinTexto,
       icon: <SparklesIcon className="w-8 h-8 text-purple-500" />,
     },
+    {
+      label: 'Confirmaciones pendientes',
+      value: stats.contribuciones,
+      icon: <HandThumbUpIcon className="w-8 h-8 text-sky-500" />,
+    },
   ]
 
   return (
@@ -133,7 +148,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Estadísticas rápidas */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         {statCards.map((stat) => (
           <div key={stat.label} className="bg-white rounded-xl border border-gray-200 p-5 flex items-center gap-4">
             {stat.icon}

@@ -9,7 +9,6 @@ import {
   hasLocalFavorite,
   addLocalFavorite,
   removeLocalFavorite,
-  setPendingAction,
 } from '@/lib/favoritos/local'
 import { track } from '@/lib/analytics/track'
 
@@ -119,11 +118,8 @@ function ensureAreaPopupActions(): void {
       if (!areaId) return
 
       if (action === 'visit') {
-        // Mismo flujo que "Estuve aquí" en la ficha: se guarda la intención
-        // y al llegar (o tras login) se abre el modal de visita+valoración.
-        setPendingAction({ type: 'estuve_aqui', areaId })
         const slug = target.getAttribute('data-area-slug') || ''
-        window.location.href = `/area/${slug}#valoraciones`
+        window.location.href = `/area/${slug}#confirmar-datos`
         return
       }
 

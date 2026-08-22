@@ -10,7 +10,6 @@ import { InformacionBasica } from '@/components/area/InformacionBasica'
 import { MapaUbicacion } from '@/components/area/MapaUbicacion'
 import { ContactoInfo } from '@/components/area/ContactoInfo'
 import { GaleriaFotos } from '@/components/area/GaleriaFotos'
-import { ValoracionesCompleto } from '@/components/area/ValoracionesCompleto'
 import { HerramientasVehiculo } from '@/components/ui/HerramientasVehiculo'
 import { AreasRelacionadas } from '@/components/area/AreasRelacionadas'
 import { ConfirmarDatosArea } from '@/components/area/ConfirmarDatosArea'
@@ -92,14 +91,6 @@ export default async function AreaPage({ params }: PageProps) {
       .maybeSingle()
     area = mergeAreaTranslation(areaRaw, trad, locale)
   }
-
-  // Obtener valoraciones del área
-  const { data: valoraciones } = await (supabase as any)
-    .from('valoraciones')
-    .select('*')
-    .eq('area_id', area.id)
-    .order('created_at', { ascending: false })
-    .limit(10)
 
   // Obtener áreas relacionadas (misma provincia)
   let areasRelacionadasQuery = (supabase as any)
@@ -235,15 +226,6 @@ export default async function AreaPage({ params }: PageProps) {
                 strategy="weighted"
                 priority={2}
               />
-
-              {/* Valoraciones */}
-              <div id="valoraciones" className="scroll-mt-24">
-                <ValoracionesCompleto
-                  areaId={area.id}
-                  areaNombre={area.nombre}
-                  valoraciones={valoraciones || []}
-                />
-              </div>
 
               {/* Vehículo / IA / QR: el tráfico real está aquí, no en la home */}
               <HerramientasVehiculo compact />
