@@ -290,7 +290,7 @@ export function LeafletMap({
           const marker = L.marker([lat, lng], { icon }).addTo(map)
 
           if (hasFinePointer()) {
-            marker.bindTooltip(buildMarkerTooltipHTML(area.nombre), {
+            marker.bindTooltip(buildMarkerTooltipHTML(area.nombre, area.google_rating, area.google_ratings_total), {
               direction: 'top',
               offset: [0, -14],
               opacity: 1,

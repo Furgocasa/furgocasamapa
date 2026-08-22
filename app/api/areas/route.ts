@@ -14,7 +14,7 @@ export const fetchCache = 'force-no-store'
 export const revalidate = 0
 
 const CAMPOS_MAPA =
-  'id, nombre, slug, latitud, longitud, ciudad, provincia, pais, tipo_area, precio_noche, foto_principal, servicios, plazas_totales, plazas_camper, acceso_24h, barrera_altura, google_rating, google_maps_url, verificado, con_descuento_furgocasa'
+  'id, nombre, slug, latitud, longitud, ciudad, provincia, pais, tipo_area, precio_noche, foto_principal, servicios, plazas_totales, plazas_camper, acceso_24h, barrera_altura, google_rating, google_ratings_total, google_maps_url, verificado, con_descuento_furgocasa'
 
 const CAMPOS_TRAD =
   'area_id, nombre, ciudad, provincia, pais'

@@ -213,6 +213,11 @@ export function ListaResultados({
                           <span className="text-sm font-bold text-gray-900">
                             {area.google_rating}
                           </span>
+                          {(area.google_ratings_total ?? 0) > 0 && (
+                            <span className="ml-1 text-xs font-medium text-gray-500">
+                              ({area.google_ratings_total})
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>

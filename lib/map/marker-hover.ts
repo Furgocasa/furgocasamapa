@@ -17,12 +17,39 @@ function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;')
 }
 
-export function buildMarkerTooltipHTML(nombre: string): string {
-  return `<div class="map-marker-hover-tooltip">${escapeHtml(nombre)}</div>`
+function formatRating(rating?: number | null): string | null {
+  const n = Number(rating)
+  if (!Number.isFinite(n) || n <= 0) return null
+  return n.toFixed(1)
+}
+
+function formatReviews(total?: number | null): string | null {
+  const n = Number(total)
+  if (!Number.isFinite(n) || n <= 0) return null
+  return Math.round(n).toLocaleString('es-ES')
+}
+
+export function buildMarkerTooltipHTML(
+  nombre: string,
+  rating?: number | null,
+  ratingsTotal?: number | null
+): string {
+  const ratingLabel = formatRating(rating)
+  const reviewsLabel = formatReviews(ratingsTotal)
+  const ratingHtml = ratingLabel
+    ? `<span class="map-marker-hover-tooltip-rating"><span class="map-marker-hover-tooltip-star">★</span>${ratingLabel}${
+        reviewsLabel ? `<span class="map-marker-hover-tooltip-reviews">(${reviewsLabel})</span>` : ''
+      }</span>`
+    : ''
+
+  return `<div class="map-marker-hover-tooltip"><span class="map-marker-hover-tooltip-name">${escapeHtml(nombre)}</span>${ratingHtml}</div>`
 }
 
 export const MARKER_TOOLTIP_CSS = `
   .map-marker-hover-tooltip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     padding: 6px 10px;
     font-size: 13px;
     font-weight: 600;
@@ -32,10 +59,31 @@ export const MARKER_TOOLTIP_CSS = `
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
     white-space: nowrap;
-    max-width: 260px;
+    max-width: 340px;
+    pointer-events: none;
+  }
+  .map-marker-hover-tooltip-name {
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
-    pointer-events: none;
+  }
+  .map-marker-hover-tooltip-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: #b45309;
+  }
+  .map-marker-hover-tooltip-star {
+    color: #f59e0b;
+    font-size: 12px;
+    line-height: 1;
+  }
+  .map-marker-hover-tooltip-reviews {
+    font-weight: 600;
+    color: #6b7280;
   }
   .maplibregl-popup.map-marker-tooltip-popup .maplibregl-popup-content {
     padding: 0 !important;

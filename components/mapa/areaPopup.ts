@@ -72,8 +72,12 @@ export function buildAreaPopupHTML(
 
   const chips: string[] = []
   if (area.google_rating) {
+    const reviews =
+      area.google_ratings_total && area.google_ratings_total > 0
+        ? ` <span style="font-weight:600;opacity:0.75;">(${esc(area.google_ratings_total.toLocaleString('es-ES'))})</span>`
+        : ''
     chips.push(
-      `<span style="display:inline-flex;align-items:center;gap:4px;background:#FEF9C3;color:#854D0E;border:1px solid #FDE68A;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:700;line-height:1;">⭐ ${area.google_rating}</span>`
+      `<span style="display:inline-flex;align-items:center;gap:4px;background:#FEF9C3;color:#854D0E;border:1px solid #FDE68A;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:700;line-height:1;">⭐ ${area.google_rating}${reviews}</span>`
     )
   }
   if (area.precio_noche !== null && area.precio_noche !== undefined) {

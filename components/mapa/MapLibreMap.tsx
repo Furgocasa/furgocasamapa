@@ -118,7 +118,8 @@ export function MapLibreMap({
 
       // Añadir controles
       mapInstance.addControl(new maplibregl.NavigationControl(), 'top-right')
-      mapInstance.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right')
+      // A la izquierda: a la derecha queda debajo del botón del Tío Viajero
+      mapInstance.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left')
 
       // Crear popup singleton (como InfoWindow de Google)
       popupRef.current = new maplibregl.Popup({
@@ -230,11 +231,11 @@ export function MapLibreMap({
 
     const hideHoverTooltip = () => hoverTooltipRef.current?.remove()
 
-    const showHoverTooltip = (lng: number, lat: number, nombre: string) => {
+    const showHoverTooltip = (lng: number, lat: number, area: Area) => {
       if (!hasFinePointer() || !map || !hoverTooltipRef.current) return
       hoverTooltipRef.current
         .setLngLat([lng, lat])
-        .setHTML(buildMarkerTooltipHTML(nombre))
+        .setHTML(buildMarkerTooltipHTML(area.nombre, area.google_rating, area.google_ratings_total))
         .addTo(map)
     }
 
@@ -356,7 +357,7 @@ export function MapLibreMap({
           inner.innerHTML = getTipoAreaIconSvg(area.tipo_area)
           el.appendChild(inner)
 
-          el.addEventListener('mouseenter', () => showHoverTooltip(lng, lat, area.nombre))
+          el.addEventListener('mouseenter', () => showHoverTooltip(lng, lat, area))
           el.addEventListener('mouseleave', hideHoverTooltip)
 
           // Click en área: mostrar popup

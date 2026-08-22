@@ -297,7 +297,7 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
       if (hasFinePointer()) {
         marker.addListener('mouseover', () => {
           if (!hoverInfoWindowRef.current || !map) return
-          hoverInfoWindowRef.current.setContent(buildMarkerTooltipHTML(area.nombre))
+          hoverInfoWindowRef.current.setContent(buildMarkerTooltipHTML(area.nombre, area.google_rating, area.google_ratings_total))
           hoverInfoWindowRef.current.open({ map, anchor: marker, shouldFocus: false })
         })
         marker.addListener('mouseout', () => {
