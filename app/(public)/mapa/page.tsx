@@ -622,16 +622,6 @@ export default function MapaPage() {
 
                   <div className="flex flex-col items-center mb-5">
                     <SplashFurgo />
-                    <div
-                      className="w-44 h-1.5 mt-0.5 rounded-full"
-                      style={{
-                        backgroundImage:
-                          'repeating-linear-gradient(90deg, #0b3c74 0 10px, transparent 10px 20px)',
-                        backgroundSize: '20px 100%',
-                        animation: 'fc-road-move 0.45s linear infinite',
-                        opacity: 0.35,
-                      }}
-                    />
                   </div>
 
                   <h2 className="text-[1.65rem] leading-tight font-bold text-gray-900 mb-2">
@@ -809,47 +799,65 @@ export default function MapaPage() {
   )
 }
 
-/** Camper de marca: el stripe naranja queda recortado al cuerpo, no se sale del morro. */
+/** Fiat Ducato H2 L3 camperizado: caja alta, batalla larga, morro corto. */
 function SplashFurgo() {
-  const rawId = useId()
-  const clipId = `fc-van-body-${rawId.replace(/:/g, '')}`
+  const rawId = useId().replace(/:/g, '')
+  const bodyClip = `fc-ducato-body-${rawId}`
+  const bodyPath =
+    'M32 76 V26 Q32 18 40 18 H148 C155 18 158 21 161 27 L182 52 C186 57 188 61 188 65 V72 Q188 76 184 76 H32 Z'
 
   return (
     <svg
-      viewBox="0 0 168 72"
-      className="w-44 h-[4.6rem] animate-[fc-van-bob_1.1s_ease-in-out_infinite]"
+      viewBox="0 0 220 104"
+      className="w-56 h-[6.5rem] animate-[fc-van-bob_1.1s_ease-in-out_infinite]"
       aria-hidden
     >
       <defs>
-        <clipPath id={clipId}>
-          <path d="M22 50 V24 a8 8 0 0 1 8-8 h62 a5 5 0 0 1 5 5 v2 h11 a8 8 0 0 1 6.5 3.4 L138 46.5 a5 5 0 0 1 1.5 3.5 V50 H22 Z" />
+        <clipPath id={bodyClip}>
+          <path d={bodyPath} />
         </clipPath>
       </defs>
 
-      <ellipse cx="82" cy="64" rx="46" ry="3.5" fill="#0b3c74" opacity="0.1" />
-
-      <path
-        d="M22 50 V24 a8 8 0 0 1 8-8 h62 a5 5 0 0 1 5 5 v2 h11 a8 8 0 0 1 6.5 3.4 L138 46.5 a5 5 0 0 1 1.5 3.5 V50 H22 Z"
-        fill="#0b3c74"
-      />
-
-      {/* Franja solo dentro del cuerpo: termina en la cabina, no en el parachoques */}
-      <g clipPath={`url(#${clipId})`}>
-        <rect x="24" y="36" width="80" height="6" fill="#FF6B35" />
+      <ellipse cx="110" cy="96" rx="58" ry="4" fill="#111827" opacity="0.1" />
+      <g fill="#cbd5e1">
+        <rect x="70" y="95" width="12" height="2" rx="1" />
+        <rect x="96" y="95" width="12" height="2" rx="1" />
+        <rect x="122" y="95" width="12" height="2" rx="1" />
+        <rect x="148" y="95" width="12" height="2" rx="1" />
       </g>
 
-      <rect x="34" y="21" width="20" height="11" rx="2" fill="#dbeafe" />
-      <rect x="58" y="21" width="20" height="11" rx="2" fill="#dbeafe" />
-      <path d="M109 25.5 h6 a6 6 0 0 1 4.8 2.6 L126 40 H109 Z" fill="#dbeafe" />
-      <rect x="82.5" y="28" width="1.4" height="14" rx="0.6" fill="#082a52" opacity="0.45" />
+      {/* Cassette del toldo sobre el techo, sin salirse de la caja */}
+      <rect x="46" y="15.5" width="70" height="3" rx="1.2" fill="#374151" />
 
-      <circle cx="132" cy="47.2" r="2.1" fill="#fde68a" />
+      <path d={bodyPath} fill="#0b3c74" />
+
+      <g clipPath={`url(#${bodyClip})`}>
+        <rect x="32" y="68" width="156" height="8" fill="#111827" />
+        <rect x="34" y="56" width="118" height="7" fill="#FF6B35" />
+      </g>
+
+      <rect x="42" y="26" width="30" height="20" rx="2.5" fill="#dbeafe" />
+      <rect x="80" y="26" width="30" height="20" rx="2.5" fill="#dbeafe" />
+      <rect x="116.5" y="24" width="2" height="44" rx="1" fill="#082a52" opacity="0.45" />
+      <rect x="122" y="46" width="7" height="2.2" rx="1" fill="#e5e7eb" />
+      <rect x="144" y="20" width="3.2" height="48" fill="#082a52" />
+      <rect x="150" y="28" width="12" height="26" rx="2.2" fill="#dbeafe" />
+      <path d="M163 30 L177 48 L163 48 Z" fill="#dbeafe" />
+
+      <path d="M161 41 h-8 v9 h6 a2 2 0 0 0 2-2 z" fill="#1f2937" />
+      <rect x="154.5" y="43.5" width="4" height="5" rx="0.8" fill="#93c5fd" />
+
+      <rect x="33.2" y="48" width="3" height="10" rx="1" fill="#ef4444" />
+      <rect x="180" y="61" width="6" height="8" rx="1.2" fill="#fde68a" />
+      <rect x="36" y="40" width="2.4" height="8" rx="1" fill="#9ca3af" />
 
       <g>
-        <circle cx="46" cy="52" r="8" fill="#1f2937" />
-        <circle cx="46" cy="52" r="3.2" fill="#e5e7eb" />
-        <circle cx="118" cy="52" r="8" fill="#1f2937" />
-        <circle cx="118" cy="52" r="3.2" fill="#e5e7eb" />
+        <circle cx="60" cy="80" r="13" fill="#111827" />
+        <circle cx="60" cy="80" r="7.5" fill="#4b5563" />
+        <circle cx="60" cy="80" r="3.2" fill="#e5e7eb" />
+        <circle cx="164" cy="80" r="13" fill="#111827" />
+        <circle cx="164" cy="80" r="7.5" fill="#4b5563" />
+        <circle cx="164" cy="80" r="3.2" fill="#e5e7eb" />
       </g>
     </svg>
   )
