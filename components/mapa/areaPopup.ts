@@ -79,7 +79,7 @@ export function buildAreaPopupHTML(
         </span>
         ${
           reviewsTotal > 0
-            ? `<span style="font-size:12px;font-weight:400;color:#6b7280;">${esc(
+            ? `<span style="font-weight:700;font-size:14px;color:#111827;">${esc(
                 reviewsTotal.toLocaleString(locale)
               )} ${esc(t(locale, 'reviews'))}</span>`
             : ''
