@@ -10,9 +10,14 @@ const FLAGS = /\/(spain|france|germany|italy|united-kingdom|portugal|nederland|b
 const PHOTO_EXT = /\.(jpe?g|png|webp)(\?|#|$)/i
 const EXTRA_PATHS = [
   '/galeria', '/galeria/', '/fotos', '/fotos/', '/gallery', '/instalaciones',
-  '/el-camping', '/camping', '/parcelas', '/el-recinto',
+  '/el-camping', '/camping', '/parcelas', '/el-recinto', '/servicios', '/sanitarios',
 ]
-const LUGAR = /parcela|piscina|bungalow|instalacion|camping|caravana|entrada|recepcion|grupo|autocaravana/i
+const SKIP_PATH = /entorno|surroundings|excursiones|turismo|actividades|snorkel|buceo/i
+const RECINTO_NOMBRE =
+  /instalacion|parcela|pitch|recepcion|reception|sanitari|ducha|aseo|lavander|stellplatz|sosta|camperpark|wohnmobil|autocaravana|motorhome|service-point|aire-de/i
+const ENTORNO_NOMBRE =
+  /landscape|monument|theatre|teatro|wrasse|underwater|snorkel|scuba|entorno|excursion|cityscape|skyline|castillo|catedral|bolnuevo|gredas|natural-monument|ornate-wrasse|roman-theatre|pez-|fish-|starfish|buceo/i
+const LUGAR = /parcela|piscina|bungalow|instalacion|caravana|entrada|recepcion|autocaravana|sanitari|ducha|lavander/i
 const MIN_BYTES = 35000
 const MIN_W = 480
 const MIN_H = 320
@@ -108,15 +113,38 @@ export function esFotoOficialUsable(url: string): boolean {
   return PHOTO_EXT.test(u) || cdn
 }
 
+function pathnameFoto(url: string): string {
+  try {
+    return decodificarUrl(new URL(url).pathname).toLowerCase()
+  } catch {
+    return url.toLowerCase()
+  }
+}
+
+/** Nombre de archivo / ruta: foto del recinto (parcelas, recepción, sanitarios). */
+export function esFotoRecintoPorNombre(url: string): boolean {
+  return RECINTO_NOMBRE.test(pathnameFoto(url))
+}
+
+/** Nombre de archivo / ruta: monumento, pueblo, pez, “landscape” de stock. */
+export function esFotoEntornoPorNombre(url: string): boolean {
+  const path = pathnameFoto(url)
+  if (esFotoRecintoPorNombre(url)) return false
+  return ENTORNO_NOMBRE.test(path)
+}
+
 function score(foto: FotoOk): number {
   let s = foto.w * foto.h / 80000
+  const path = pathnameFoto(foto.url)
   const u = foto.url.toLowerCase()
   if (u.includes('wp-content/uploads')) s += 12
   if (u.includes('wixstatic.com') && u.includes('mv2')) s += 8
-  if (LUGAR.test(u)) s += 10
+  if (esFotoRecintoPorNombre(foto.url)) s += 24
+  else if (LUGAR.test(path)) s += 10
+  if (esFotoEntornoPorNombre(foto.url)) s -= 40
   if (/\.jpe?g(\?|#|$)/i.test(u)) s += 6
   if (/\.png(\?|#|$)/i.test(u)) s -= 6
-  if (/concierto|fiesta|menu|carta|wasap|icon/.test(u)) s -= 8
+  if (/concierto|fiesta|menu|carta|wasap|icon/.test(path)) s -= 8
   if (foto.bytes < 50000) s -= 10
   if (foto.w >= 1000 && foto.h >= 600) s += 8
   const ratio = foto.w / foto.h
@@ -239,10 +267,53 @@ async function validarLote(urls: string[], referer?: string): Promise<FotoOk[]> 
 function extraUrls(home: string): string[] {
   try {
     const u = new URL(home)
-    return EXTRA_PATHS.map((p) => `${u.protocol}//${u.host}${p}`)
+    return EXTRA_PATHS
+      .filter((p) => !SKIP_PATH.test(p))
+      .map((p) => `${u.protocol}//${u.host}${p}`)
   } catch {
     return []
   }
+}
+
+async function pareceFotoDelRecinto(url: string): Promise<boolean> {
+  if (esFotoRecintoPorNombre(url)) return true
+  if (esFotoEntornoPorNombre(url)) return false
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) return false
+  try {
+    const { default: OpenAI } = await import('openai')
+    const openai = new OpenAI({ apiKey })
+    const resp = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      max_completion_tokens: 8,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Does this photo show the motorhome/camping FACILITY itself (pitches, reception, sanitary block, laundry, internal roads, parked campers on the site)? Reply only RECINTO or ENTORNO. Towns, monuments, generic beaches, fish, food and portraits are ENTORNO.',
+            },
+            { type: 'image_url', image_url: { url, detail: 'low' } },
+          ],
+        },
+      ],
+    })
+    return /RECINTO/i.test(resp.choices[0]?.message?.content || '')
+  } catch {
+    return false
+  }
+}
+
+async function quedarseSoloRecinto(fotos: FotoOk[]): Promise<FotoOk[]> {
+  const ok: FotoOk[] = []
+  for (const foto of fotos) {
+    if (esFotoEntornoPorNombre(foto.url)) continue
+    if (esFotoRecintoPorNombre(foto.url) || (await pareceFotoDelRecinto(foto.url))) {
+      ok.push(foto)
+    }
+  }
+  return ok
 }
 
 export async function scrapeFotosWebOficial(website: string, max = 7): Promise<string[]> {
@@ -250,15 +321,19 @@ export async function scrapeFotosWebOficial(website: string, max = 7): Promise<s
   const urls = new Set<string>()
 
   const first = await fetchHtml(home)
-  if (first) {
+  if (first && !SKIP_PATH.test(new URL(first.url).pathname)) {
     extraerFotosDeHtml(first.url, first.html).forEach((u) => urls.add(u))
     for (const page of extraUrls(first.url)) {
       const extra = await fetchHtml(page)
-      if (!extra) continue
+      if (!extra || SKIP_PATH.test(new URL(extra.url).pathname)) continue
       extraerFotosDeHtml(extra.url, extra.html).forEach((u) => urls.add(u))
     }
   }
 
-  const validadas = await validarLote([...urls], first?.url || home)
-  return validadas.slice(0, max).map((f) => f.url)
+  const validadas = await validarLote(
+    [...urls].filter((u) => !esFotoEntornoPorNombre(u)),
+    first?.url || home
+  )
+  const recinto = await quedarseSoloRecinto(validadas)
+  return recinto.slice(0, max).map((f) => f.url)
 }

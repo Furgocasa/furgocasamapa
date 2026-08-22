@@ -31,6 +31,7 @@ scripts/*-checkpoint.txt
 scripts/*checkpoint.txt
 scripts/*-ids.txt
 scripts/ai-pilot-previews/
+scripts/parazuelos-review/
 
 # local env files
 .env
