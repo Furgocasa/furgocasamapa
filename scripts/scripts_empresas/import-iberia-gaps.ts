@@ -38,6 +38,13 @@
  *   npm run import:campings:huelva
  *   npm run import:campings:cordoba
  *   npm run import:campings:jaen
+ *   npm run import:campings:albacete
+ *   npm run import:campings:ciudadreal
+ *   npm run import:campings:badajoz
+ *   npm run import:campings:cuenca
+ *   npm run import:campings:madrid
+ *   npm run import:campings:toledo
+ *   npm run import:campings:caceres
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -118,6 +125,20 @@ let REPORT_NAME =
           ? "cordoba-campings-dry-report.json"
         : REGION === "jaen"
           ? "jaen-campings-dry-report.json"
+        : REGION === "albacete"
+          ? "albacete-campings-dry-report.json"
+        : REGION === "ciudadreal"
+          ? "ciudadreal-campings-dry-report.json"
+        : REGION === "badajoz"
+          ? "badajoz-campings-dry-report.json"
+        : REGION === "cuenca"
+          ? "cuenca-campings-dry-report.json"
+        : REGION === "madrid"
+          ? "madrid-campings-dry-report.json"
+        : REGION === "toledo"
+          ? "toledo-campings-dry-report.json"
+        : REGION === "caceres"
+          ? "caceres-campings-dry-report.json"
         : "iberia-gaps-dry-report.json";
 if (SOLO_STOPOVER) {
   REPORT_NAME = REPORT_NAME.replace("-gaps-dry-report.json", "-stopover-dry-report.json");
@@ -574,6 +595,82 @@ const HUECOS_JAEN = [
   { id: 9, zona: "Baeza", lat: 37.99, lng: -3.47, pais: "España" },
 ];
 
+const HUECOS_ALBACETE = [
+  { id: 1, zona: "Albacete", lat: 38.99, lng: -1.86, pais: "España" },
+  { id: 2, zona: "Hellín", lat: 38.51, lng: -1.7, pais: "España" },
+  { id: 3, zona: "Almansa", lat: 38.87, lng: -1.1, pais: "España" },
+  { id: 4, zona: "Villarrobledo", lat: 39.27, lng: -2.6, pais: "España" },
+  { id: 5, zona: "Alcaraz", lat: 38.67, lng: -2.49, pais: "España" },
+  { id: 6, zona: "Yeste", lat: 38.37, lng: -2.32, pais: "España" },
+  { id: 7, zona: "La Roda", lat: 39.21, lng: -2.16, pais: "España" },
+  { id: 8, zona: "Caudete", lat: 38.7, lng: -0.99, pais: "España" },
+];
+
+const HUECOS_CIUDADREAL = [
+  { id: 1, zona: "Ciudad Real", lat: 38.99, lng: -3.93, pais: "España" },
+  { id: 2, zona: "Puertollano", lat: 38.69, lng: -4.11, pais: "España" },
+  { id: 3, zona: "Valdepeñas", lat: 38.76, lng: -3.39, pais: "España" },
+  { id: 4, zona: "Alcázar", lat: 39.39, lng: -3.21, pais: "España" },
+  { id: 5, zona: "Manzanares", lat: 38.99, lng: -3.37, pais: "España" },
+  { id: 6, zona: "Daimiel", lat: 39.07, lng: -3.61, pais: "España" },
+  { id: 7, zona: "Almagro", lat: 38.89, lng: -3.71, pais: "España" },
+  { id: 8, zona: "Tomelloso", lat: 39.16, lng: -3.02, pais: "España" },
+];
+
+const HUECOS_BADAJOZ = [
+  { id: 1, zona: "Badajoz", lat: 38.88, lng: -6.97, pais: "España" },
+  { id: 2, zona: "Mérida", lat: 38.92, lng: -6.34, pais: "España" },
+  { id: 3, zona: "Zafra", lat: 38.43, lng: -6.42, pais: "España" },
+  { id: 4, zona: "Don Benito", lat: 38.95, lng: -5.86, pais: "España" },
+  { id: 5, zona: "Almendralejo", lat: 38.68, lng: -6.41, pais: "España" },
+  { id: 6, zona: "Olivenza", lat: 38.68, lng: -7.1, pais: "España" },
+  { id: 7, zona: "Jerez de los Caballeros", lat: 38.32, lng: -6.77, pais: "España" },
+  { id: 8, zona: "Herrera del Duque", lat: 39.17, lng: -5.05, pais: "España" },
+];
+
+const HUECOS_CUENCA = [
+  { id: 1, zona: "Cuenca", lat: 40.07, lng: -2.13, pais: "España" },
+  { id: 2, zona: "Tarancón", lat: 40.01, lng: -3.0, pais: "España" },
+  { id: 3, zona: "Motilla", lat: 39.56, lng: -1.91, pais: "España" },
+  { id: 4, zona: "San Clemente", lat: 39.4, lng: -2.43, pais: "España" },
+  { id: 5, zona: "Huete", lat: 40.15, lng: -2.69, pais: "España" },
+  { id: 6, zona: "Cañete", lat: 40.04, lng: -1.65, pais: "España" },
+  { id: 7, zona: "Beteta", lat: 40.57, lng: -2.07, pais: "España" },
+];
+
+const HUECOS_MADRID = [
+  { id: 1, zona: "Madrid", lat: 40.42, lng: -3.7, pais: "España" },
+  { id: 2, zona: "Aranjuez", lat: 40.03, lng: -3.6, pais: "España" },
+  { id: 3, zona: "Alcalá", lat: 40.48, lng: -3.37, pais: "España" },
+  { id: 4, zona: "El Escorial", lat: 40.59, lng: -4.15, pais: "España" },
+  { id: 5, zona: "Rascafría", lat: 40.87, lng: -3.88, pais: "España" },
+  { id: 6, zona: "Navacerrada", lat: 40.73, lng: -4.02, pais: "España" },
+  { id: 7, zona: "Chinchón", lat: 40.14, lng: -3.42, pais: "España" },
+  { id: 8, zona: "Colmenar", lat: 40.66, lng: -3.77, pais: "España" },
+];
+
+const HUECOS_TOLEDO = [
+  { id: 1, zona: "Toledo", lat: 39.86, lng: -4.02, pais: "España" },
+  { id: 2, zona: "Talavera", lat: 39.96, lng: -4.83, pais: "España" },
+  { id: 3, zona: "Quintanar", lat: 39.59, lng: -3.04, pais: "España" },
+  { id: 4, zona: "Ocaña", lat: 39.96, lng: -3.5, pais: "España" },
+  { id: 5, zona: "Consuegra", lat: 39.46, lng: -3.61, pais: "España" },
+  { id: 6, zona: "Navalcán", lat: 40.07, lng: -5.09, pais: "España" },
+  { id: 7, zona: "Los Navalucillos", lat: 39.64, lng: -4.64, pais: "España" },
+  { id: 8, zona: "Madridejos", lat: 39.47, lng: -3.53, pais: "España" },
+];
+
+const HUECOS_CACERES = [
+  { id: 1, zona: "Cáceres", lat: 39.48, lng: -6.37, pais: "España" },
+  { id: 2, zona: "Plasencia", lat: 40.03, lng: -6.09, pais: "España" },
+  { id: 3, zona: "Trujillo", lat: 39.46, lng: -5.88, pais: "España" },
+  { id: 4, zona: "Navalmoral", lat: 39.89, lng: -5.54, pais: "España" },
+  { id: 5, zona: "Valencia de Alcántara", lat: 39.41, lng: -7.24, pais: "España" },
+  { id: 6, zona: "Coria", lat: 39.98, lng: -6.19, pais: "España" },
+  { id: 7, zona: "Hervás", lat: 40.27, lng: -5.87, pais: "España" },
+  { id: 8, zona: "Guadalupe", lat: 39.45, lng: -5.33, pais: "España" },
+];
+
 const CAMPING_ZONAS: Record<
   string,
   {
@@ -656,6 +753,48 @@ const CAMPING_ZONAS: Record<
     provinciaRe: /\bja[eé]n\b/i,
     isIn: (lat, lng) => lat >= 37.37 && lat <= 38.53 && lng >= -4.28 && lng <= -2.4,
     huecos: HUECOS_JAEN,
+  },
+  albacete: {
+    label: "Albacete",
+    provinciaRe: /\balbacete\b/i,
+    isIn: (lat, lng) => lat >= 38.0 && lat <= 39.45 && lng >= -2.9 && lng <= -0.83,
+    huecos: HUECOS_ALBACETE,
+  },
+  ciudadreal: {
+    label: "Ciudad Real",
+    provinciaRe: /\bciudad real\b/i,
+    isIn: (lat, lng) => lat >= 38.38 && lat <= 39.58 && lng >= -5.05 && lng <= -2.63,
+    huecos: HUECOS_CIUDADREAL,
+  },
+  badajoz: {
+    label: "Badajoz",
+    provinciaRe: /\bbadajoz\b/i,
+    isIn: (lat, lng) => lat >= 37.95 && lat <= 39.5 && lng >= -7.55 && lng <= -4.65,
+    huecos: HUECOS_BADAJOZ,
+  },
+  cuenca: {
+    label: "Cuenca",
+    provinciaRe: /\bcuenca\b/i,
+    isIn: (lat, lng) => lat >= 39.3 && lat <= 40.7 && lng >= -3.2 && lng <= -1.35,
+    huecos: HUECOS_CUENCA,
+  },
+  madrid: {
+    label: "Madrid",
+    provinciaRe: /\bmadrid\b/i,
+    isIn: (lat, lng) => lat >= 40.0 && lat <= 41.17 && lng >= -4.58 && lng <= -3.05,
+    huecos: HUECOS_MADRID,
+  },
+  toledo: {
+    label: "Toledo",
+    provinciaRe: /\btoledo\b/i,
+    isIn: (lat, lng) => lat >= 39.3 && lat <= 40.22 && lng >= -5.45 && lng <= -2.8,
+    huecos: HUECOS_TOLEDO,
+  },
+  caceres: {
+    label: "Cáceres",
+    provinciaRe: /\bc[aá]ceres\b/i,
+    isIn: (lat, lng) => lat >= 39.12 && lat <= 40.48 && lng >= -7.55 && lng <= -4.95,
+    huecos: HUECOS_CACERES,
   },
 };
 
