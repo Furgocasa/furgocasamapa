@@ -205,9 +205,13 @@ las páginas admin a tokens cuando se toquen por otro motivo.
 alquiler. La ficha SEO hoy sortea banners 50/50 con CasiCinco y empuja IA/QR.
 El CTA de dinero es `furgocasa.com/es` genérico.
 
-**Ficha (hecho, 22 ago 2026):** CTA de alquiler fijo y contextual solo en
-España; sin banners 50/50 ni IA/QR; Casi Cinco solo «cena cerca» al final,
-también solo España. Onboarding del que ya pagó: pendiente (email/WhatsApp).
+**Ficha (hecho, 22 ago 2026):** CTA de alquiler con banner de foto
+Furgocasa, solo España; Casi Cinco como banner de restaurantes al final,
+solo España. Onboarding del que ya pagó: pendiente.
+
+**Leads a dueños (documentado, no implementar aún):** §12 de
+`GUIA_MAPA_ALQUILER.md`. España tiene 850 privadas+campings activas, 772
+con teléfono. Mercado = WhatsApp/lead, no OTA.
 
 ---
 
@@ -272,3 +276,6 @@ también solo España. Onboarding del que ya pagó: pendiente (email/WhatsApp).
 - **22 ago 2026 (CTA ficha)**: `/area` sin banners 50/50 ni IA/QR. CTA de
   alquiler contextual solo en España; Casi Cinco solo «cena cerca» al final,
   solo España. `lib/areas/cta-comercial.ts`.
+- **22 ago 2026 (leads)**: documentado el tercer cliente (campings/privadas
+  ES, WhatsApp, no Booking). Inventario: 850 bookable, 772 con teléfono.
+  `GUIA_MAPA_ALQUILER.md` §12. Sin código de producto.

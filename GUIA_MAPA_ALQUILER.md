@@ -3,8 +3,9 @@
 Documento de criterio. Complementa `README.md` (visión), `GUIA_ENGAGEMENT.md`
 (embudo de favoritos/login) y `PLAN_MEJORAS.md` (seguimiento).
 
-Escrito el **22 agosto 2026**. No está implementado: es la brújula para
-los próximos 90 días. Si un cambio no encaja aquí, no se hace.
+Vivo desde el **22 agosto 2026**. La ficha SEO (CTA de alquiler + Casi Cinco
+abajo, solo España) ya está en producción. El resto es brújula. Si un
+cambio no encaja aquí, no se hace.
 
 ---
 
@@ -89,11 +90,15 @@ Ni base (Murcia / Madrid / Alicante / Valencia / Albacete), ni fechas, ni
 «esta ruta». Quien está mirando un área de Murcia recibe el mismo enlace
 que quien mira un Stellplatz en Baviera.
 
-### Lectura
+### Lectura (diagnóstico; ya no es el estado de la ficha)
 
-La ficha hace de **escaparate de un producto que nadie pidió**. El dinero
-se esconde en un banner intercambiable. Eso es lo que hay que invertir,
-antes que cualquier país nuevo o cualquier feature.
+La ficha hacía de **escaparate de un producto que nadie pidió**. El
+dinero se escondía en un banner intercambiable.
+
+**Hecho el 22 ago noche:** CTA de alquiler con el banner de foto
+Furgocasa (contextual, solo España); sin `BannerRotativo` ni IA/QR;
+Casi Cinco solo al final, como banner de restaurantes, solo España.
+Ver §4 y `lib/areas/cta-comercial.ts`.
 
 ---
 
@@ -115,8 +120,11 @@ antes que cualquier país nuevo o cualquier feature.
    se mantiene, no se riega.
 6. **Park4Night no es el enemigo.** El cliente puede usarlo y el nuestro.
    `/comparativa` es SEO; no es la estrategia de producto.
-7. **Todo lo que no lleve a un alquiler o a un cliente ya pagado, se
-   queda quieto.**
+7. **Todo lo que no lleve a un alquiler, a un cliente ya pagado o a un
+   lead de un dueño que cobra, se queda quieto.**
+8. **Leads, no Booking.** Si se abre un tercer cliente (camping / área
+   privada), se cobra el WhatsApp o el destacado. No se construye una
+   pasarela de reservas hasta que haya dueños pagando por leads. Ver §12.
 
 ---
 
@@ -317,6 +325,8 @@ pague su sitio.
 - [ ] CTA igual en `/mapa-autocaravanas-espana` (y PT si hay tracción).
 - [ ] Mirar los tres números de la §9. Decidir: seguir, ajustar CTA, o
       recortar más superficie (IA, LATAM, comparativa).
+- [ ] No abrir leads a dueños (§12) hasta que el CTA de alquiler se
+      mida. Entonces: WhatsApp + tracking, no motor de reservas.
 
 Si a los 90 días hay tráfico y **cero clics** al alquiler: el problema
 es la ficha, no el mercado. Si hay clics y **cero reservas**: el
@@ -346,6 +356,7 @@ Señal a 90 días:
 | Clics UTM / `cta_alquiler_click` | Tendencia clara vs «casi no se miraba» |
 | Reservas `utm_source=mapafurgocasa` | Aunque sean 3–5/mes, el activo se justifica |
 | % alquileres que abren mapa o ruta | 20–40 % |
+| (Luego) clics `cta=plaza` en privada/camping ES | Decenas/mes, no cientos |
 
 ---
 
@@ -364,12 +375,88 @@ No se implementa en este documento. Lista para no buscarlo otra vez:
 | Landings ES/PT | `app/(public)/mapa-autocaravanas-espana/page.tsx` (y PT) |
 | Tracking | `lib/analytics/track.ts` + evento `cta_alquiler_click` |
 
-Bases Furgocasa a mapear (confirmar URLs reales en `furgocasa.com`
-antes de hardcodear): Murcia, Madrid, Alicante, Valencia, Albacete.
+Bases Furgocasa (URLs reales): `/es/alquiler-autocaravanas-campervans/{murcia,alicante,valencia,albacete,madrid,almeria}` y `/es/reservar`.
+
+Archivos ya tocados (22 ago): `CtaAlquilerFurgocasa.tsx`, `CtaCenaCerca.tsx`,
+`lib/areas/cta-comercial.ts`, ficha sin `BannerRotativo` ni
+`HerramientasVehiculo`.
 
 ---
 
-## 11. Lo que este documento no pide
+## 12. Leads a campings y privadas (tercer cliente)
+
+Conversación del 22 ago 2026. No está implementado. Es la capa **después**
+del CTA de alquiler, no en su lugar.
+
+### Tesis
+
+El SEO de `/area/...` no solo posiciona Furgocasa. Posiciona **el
+camping y el área privada**. Hoy les regalamos el teléfono. Mañana, si
+el dueño cobra al viajero, puede pagar por ese clic.
+
+Hay mercado. **No el de “Booking de áreas de España”.** El que sí existe:
+llevar al camping o al camper park el WhatsApp de alguien que ya quiere
+ir. Pitchup / Booking / ACSI ya se comieron la reserva vacacional. El
+hueco es pernocta de camper, 1–2 noches, dueño que atiende por WhatsApp.
+
+### Quién paga y quién no
+
+| Tipo | ¿Reserva? | ¿Paga un lead? | Por qué |
+|------|-----------|----------------|---------|
+| Pública (ayuntamiento) | Casi nunca | Casi nunca | Gratis o barrera. No hay comercial. |
+| Privada (camper park, granja) | WhatsApp / teléfono | Sí, si el lead es bueno | Ocupación. Web floja. Park4Night no les manda clientes. |
+| Camping | Ya está en Pitchup / Booking | A veces | Ya pagan comisión. Os querrán si el lead es *autocaravana*. |
+
+En la ficha: 1) alquilar camper Furgocasa, 2) pedir plaza *en este
+sitio* solo si es `privada` o `camping` en España. Casi Cinco se queda
+abajo. Las públicas no se venden como bookable.
+
+### Inventario real (activas, 22 ago 2026)
+
+Consulta a `areas` con `activo = true`. País = España / Spain.
+
+| | N | Con teléfono | Con web o teléfono |
+|---|---:|---:|---:|
+| España activa | 1.819 | | |
+| Pública | 969 | 191 | 264 |
+| Privada | 117 | 69 | 76 |
+| Camping | 733 | 703 | 719 |
+| **Bookable (privada + camping)** | **850** | **772** | **795** |
+
+Hay inventario. Sobre todo campings con teléfono (703 de 733). Las
+privadas son pocas (117) pero son el hueco más limpio: menos Pitchup,
+más WhatsApp. El email en ficha está casi vacío (1 privada); el canal
+real es el teléfono.
+
+~4.800 sesiones/mes no dan para un OTA. Sí pueden dar **decenas de
+contactos/mes** si el CTA de plaza se mide. Eso sostiene un B2B chico
+(destacado 20–80 €/mes o 5–15 €/lead) si 80–150 dueños pagan. No un
+unicornio.
+
+### Cómo, si se abre (orden)
+
+1. Seguir midiendo el CTA de alquiler. Eso es caja conocida.
+2. Convertir el contacto que ya está (`telefono`, `website` en
+   `ContactoInfo`) en lead: WhatsApp, «¿Hay plaza esta noche?», evento
+   `click` con `cta=plaza`. Hoy el clic es un `console.log`.
+3. Cobrar solo a `privada` y `camping` en España. Destacado, “responde
+   en 1 h”.
+4. Pasarela de reservas / calendario **solo si** ya hay dueños pagando
+   leads y lo piden. Antes es el mismo pozo que la tasación IA.
+
+Señal de que no es relato: el dueño ve «esta ficha me trajo 4 WhatsApps
+esta semana».
+
+### Lo que mata la idea
+
+- Tratar las públicas como inventario bookable.
+- Competir con Pitchup al 15 % sin su volumen.
+- Vender “reservas” antes de tener dueños con teléfono y ganas.
+- Quitar o tapar el CTA de Furgocasa para poner el del camping.
+
+---
+
+## 13. Lo que este documento no pide
 
 - App nativa.
 - Ganar Europa.
@@ -377,5 +464,7 @@ antes de hardcodear): Murcia, Madrid, Alicante, Valencia, Albacete.
 - Borrar CasiCinco del grupo.
 - Apagar tasación IA, QR o gestión de flota: siguen para el negocio
   interno y para quien ya tiene cuenta. **No en la puerta de Google.**
+- Un Booking/Pitchup de áreas. El tercer cliente, si se abre, son
+  **leads** (§12), no una pasarela.
 
 Si hay duda, releer el §1.
