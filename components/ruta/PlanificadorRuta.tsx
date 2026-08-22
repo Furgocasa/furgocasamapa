@@ -1901,45 +1901,6 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
 
       {/* Mapa siempre visible: en móvil el planificador y la lista son hojas, como en /mapa */}
       <div className="flex-1 relative z-10 h-full">
-        <style jsx global>{`
-        .gm-style-iw-c {
-          padding: 0 !important;
-          border-radius: 16px !important;
-          overflow: hidden !important;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
-        }
-        .gm-style-iw-d {
-          overflow: hidden !important;
-          padding: 0 !important;
-          max-height: none !important;
-        }
-        .gm-style-iw-chr {
-          position: absolute !important;
-          top: 0 !important;
-          right: 0 !important;
-          z-index: 2 !important;
-          background: transparent !important;
-        }
-        .gm-style-iw-ch {
-          padding-top: 0 !important;
-        }
-        .gm-ui-hover-effect {
-          top: 8px !important;
-          right: 8px !important;
-          width: 28px !important;
-          height: 28px !important;
-          background: rgba(255, 255, 255, 0.95) !important;
-          border-radius: 50% !important;
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
-        }
-        .gm-ui-hover-effect > span {
-          margin: 0 !important;
-        }
-        .pac-container {
-          z-index: 10000 !important;
-        }
-        ${MARKER_TOOLTIP_CSS}
-        `}</style>
         <div ref={mapRef} className="w-full h-full" />
 
         {isLoading && (
@@ -2149,6 +2110,48 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
           <button onClick={hideToast} className="toast-close">×</button>
         </div>
       )}
+
+      {/* Estilos del InfoWindow de Google: styled-jsx no admite dos <style> anidados,
+          así que van al mismo nivel que las animaciones */}
+      <style jsx global>{`
+        .gm-style-iw-c {
+          padding: 0 !important;
+          border-radius: 16px !important;
+          overflow: hidden !important;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+        }
+        .gm-style-iw-d {
+          overflow: hidden !important;
+          padding: 0 !important;
+          max-height: none !important;
+        }
+        .gm-style-iw-chr {
+          position: absolute !important;
+          top: 0 !important;
+          right: 0 !important;
+          z-index: 2 !important;
+          background: transparent !important;
+        }
+        .gm-style-iw-ch {
+          padding-top: 0 !important;
+        }
+        .gm-ui-hover-effect {
+          top: 8px !important;
+          right: 8px !important;
+          width: 28px !important;
+          height: 28px !important;
+          background: rgba(255, 255, 255, 0.95) !important;
+          border-radius: 50% !important;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+        }
+        .gm-ui-hover-effect > span {
+          margin: 0 !important;
+        }
+        .pac-container {
+          z-index: 10000 !important;
+        }
+        ${MARKER_TOOLTIP_CSS}
+      `}</style>
 
       {/* Estilos para animaciones */}
       <style jsx>{`

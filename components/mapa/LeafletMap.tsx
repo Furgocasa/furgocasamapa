@@ -6,7 +6,7 @@ import { BuscadorGeografico } from './BuscadorGeografico'
 import { buildAreaPopupHTML, getAreaFocusCameraOffset } from './areaPopup'
 import Supercluster from 'supercluster'
 import { useLanguage } from '@/lib/i18n'
-import { getTipoAreaColor } from '@/lib/areas/tipo-area'
+import { getTipoAreaColor, getTipoAreaIconSvg } from '@/lib/areas/tipo-area'
 import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
 
 // Importar Leaflet solo en cliente
@@ -271,17 +271,20 @@ export function LeafletMap({
 
           const icon = L.divIcon({
             html: `<div style="
-              width: 20px;
-              height: 20px;
+              width: 26px;
+              height: 26px;
               border-radius: 50%;
               background-color: ${getTipoAreaColor(area.tipo_area)};
               border: 2px solid white;
               cursor: pointer;
               box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            "></div>`,
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">${getTipoAreaIconSvg(area.tipo_area)}</div>`,
             className: 'area-marker',
-            iconSize: [20, 20],
-            iconAnchor: [10, 10]
+            iconSize: [26, 26],
+            iconAnchor: [13, 13]
           })
 
           const marker = L.marker([lat, lng], { icon }).addTo(map)
@@ -289,7 +292,7 @@ export function LeafletMap({
           if (hasFinePointer()) {
             marker.bindTooltip(buildMarkerTooltipHTML(area.nombre), {
               direction: 'top',
-              offset: [0, -12],
+              offset: [0, -14],
               opacity: 1,
               className: 'map-marker-hover-tooltip-leaflet',
             })

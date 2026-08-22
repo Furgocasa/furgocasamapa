@@ -9,7 +9,7 @@ import { BuscadorGeografico } from './BuscadorGeografico'
 import { buildAreaPopupHTML, getAreaFocusCameraOffset } from './areaPopup'
 import { getMapStyle } from '@/lib/mapStyles'
 import { useLanguage } from '@/lib/i18n'
-import { getTipoAreaColor } from '@/lib/areas/tipo-area'
+import { getTipoAreaColor, getTipoAreaPinSvg } from '@/lib/areas/tipo-area'
 import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
 
 // Tipos simplificados para Google Maps (se cargan din├ímicamente)
@@ -260,8 +260,9 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
     console.log(`­ƒôì A├▒adiendo ${newAreas.length} markers nuevos (total: ${areas.length}, existentes: ${existingCount})`)
 
     const newMarkers = newAreas.map((area) => {
-      const pinColor = getTipoAreaColor(area.tipo_area)
-      
+      // Un Symbol de Google no admite glifo dentro: el pin va como imagen SVG
+      const pinSvg = getTipoAreaPinSvg(area.tipo_area)
+
       const marker = new google.maps.Marker({
         position: {
           lat: Number(area.latitud),
@@ -269,12 +270,9 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
         },
         title: area.nombre,
         icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 10,
-          fillColor: pinColor,
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 2,
+          url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(pinSvg)}`,
+          scaledSize: new google.maps.Size(26, 26),
+          anchor: new google.maps.Point(13, 13),
         },
         // Sin animaci├│n para evitar el rebote
       })

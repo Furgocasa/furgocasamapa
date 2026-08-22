@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { MagnifyingGlassIcon, XMarkIcon, ChevronRightIcon, CheckIcon, GlobeAltIcon } from '@heroicons/react/24/outline'
 import { useLanguage, getServicioLabel, getTipoAreaLabel, SERVICIO_ICONS } from '@/lib/i18n'
-import { TIPO_AREA_IDS, getTipoAreaColor, type TipoArea } from '@/lib/areas/tipo-area'
+import { TIPO_AREA_IDS, getTipoAreaColor, getTipoAreaIconPath, type TipoArea } from '@/lib/areas/tipo-area'
 import { sinTildes } from '@/lib/areas/slug'
 
 export interface Filtros {
@@ -366,10 +366,14 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
                   style={activo ? { borderColor: color, backgroundColor: `${color}14` } : undefined}
                 >
                   <span
-                    className="w-3 h-3 rounded-full shrink-0"
+                    className="w-[22px] h-[22px] shrink-0 rounded-full border-2 border-white shadow-sm flex items-center justify-center"
                     style={{ backgroundColor: color }}
                     aria-hidden
-                  />
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff">
+                      <path d={getTipoAreaIconPath(tipo)} />
+                    </svg>
+                  </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold text-gray-900">
                       {getTipoAreaLabel(tipo, locale)}

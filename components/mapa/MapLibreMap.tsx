@@ -8,7 +8,7 @@ import type { Area } from '@/types/database.types'
 import { BuscadorGeografico } from './BuscadorGeografico'
 import { buildAreaPopupHTML, getAreaFocusCameraOffset } from './areaPopup'
 import { useLanguage } from '@/lib/i18n'
-import { getTipoAreaColor } from '@/lib/areas/tipo-area'
+import { getTipoAreaColor, getTipoAreaIconSvg } from '@/lib/areas/tipo-area'
 import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
 import { applyBrandTheme, applyMapLanguage } from '@/lib/map/brand-style'
 
@@ -337,7 +337,7 @@ export function MapLibreMap({
           if (!area) return
 
           const el = document.createElement('div')
-          el.style.cssText = `width:20px;height:20px;cursor:pointer;`
+          el.style.cssText = `width:26px;height:26px;cursor:pointer;`
 
           const inner = document.createElement('div')
           inner.className = 'fc-marker-drop'
@@ -348,8 +348,12 @@ export function MapLibreMap({
             background-color: ${getTipoAreaColor(area.tipo_area)};
             border: 2px solid white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             animation-delay: ${Math.min(dropIndex++ * 35, 700)}ms;
           `
+          inner.innerHTML = getTipoAreaIconSvg(area.tipo_area)
           el.appendChild(inner)
 
           el.addEventListener('mouseenter', () => showHoverTooltip(lng, lat, area.nombre))

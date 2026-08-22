@@ -9,6 +9,21 @@ export const TIPO_AREA_COLORS: Record<TipoArea, string> = {
   camping: '#52B788',
 }
 
+/**
+ * Glifo blanco dentro del pin: bandera (pública), valla (privada), tienda (camping).
+ * Siluetas rellenas y sin detalle fino: tienen que leerse a 16 px. viewBox 0 0 24 24.
+ * Así el mapa no depende solo del color, que confunde naranja y verde en el daltonismo.
+ */
+export const TIPO_AREA_ICON_PATHS: Record<TipoArea, string> = {
+  publica: 'M5 2.5h3v19h-3z M8 4h13l-3.6 4.75L21 13.5H8z',
+  privada:
+    'M2.5 8.5l2.1-4 2.1 4V20H2.5z M9.9 8.5L12 4.5l2.1 4V20H9.9z M17.3 8.5l2.1-4 2.1 4V20H17.3z M1.5 11h21v3h-21z',
+  camping: 'M12 3L2.5 20.5h7L12 13l2.5 7.5h7z',
+}
+
+/** Proporción glifo/pin comprobada rasterizando a tamaño real: por debajo no se lee. */
+export const TIPO_AREA_GLYPH_RATIO = 0.62
+
 export const TIPO_AREA_BADGE_CLASSES: Record<TipoArea, string> = {
   publica: 'bg-sky-500/90 text-white backdrop-blur-md border border-sky-400/30',
   privada: 'bg-orange-500/90 text-white backdrop-blur-md border border-orange-400/30',
@@ -273,6 +288,27 @@ export function getTipoAreaColor(tipo?: string | null): string {
     return TIPO_AREA_COLORS[tipo as TipoArea]
   }
   return TIPO_AREA_COLORS.publica
+}
+
+export function getTipoAreaIconPath(tipo?: string | null): string {
+  if (tipo === 'parking') return TIPO_AREA_ICON_PATHS.privada
+  if (tipo && tipo in TIPO_AREA_ICON_PATHS) {
+    return TIPO_AREA_ICON_PATHS[tipo as TipoArea]
+  }
+  return TIPO_AREA_ICON_PATHS.publica
+}
+
+/** Glifo suelto para innerHTML: los marcadores de MapLibre y Leaflet son HTML. */
+export function getTipoAreaIconSvg(tipo?: string | null, size = 16): string {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="${getTipoAreaIconPath(tipo)}"/></svg>`
+}
+
+/** Pin circular completo. Google Maps solo acepta un símbolo o una imagen, no HTML. */
+export function getTipoAreaPinSvg(tipo?: string | null, size = 26): string {
+  const glyph = size * TIPO_AREA_GLYPH_RATIO
+  const offset = (size - glyph) / 2
+  const scale = glyph / 24
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 1.5}" fill="${getTipoAreaColor(tipo)}" stroke="#fff" stroke-width="2"/><g transform="translate(${offset} ${offset}) scale(${scale})" fill="#fff"><path d="${getTipoAreaIconPath(tipo)}"/></g></svg>`
 }
 
 export function getTipoAreaBadgeClass(tipo?: string | null): string {
