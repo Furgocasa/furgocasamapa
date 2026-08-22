@@ -82,6 +82,7 @@ const JUNK_URL = [
   'img_cache/streets',
   'streets-v2',
   'staticmap',
+  'editor-elements-library',
 ]
 
 const AREA_HOSTS = [
@@ -89,7 +90,7 @@ const AREA_HOSTS = [
   'pitchup.com', 'searchforsites.co.uk', 'camping.info', 'acsi.eu',
   'geniuscamping.com', 'aireparkreservation.com', 'caramaps.com',
   'meinwomo.net', 'reseauaireservices.com', 'campcation-prod-images',
-  'idylcar.fr', 'pleinairclub.it', 'where-e.com',
+  'idylcar.fr', 'pleinairclub.it', 'where-e.com', 'guiagps.com',
 ]
 
 const GOOGLE_HOSTS = [
@@ -142,7 +143,8 @@ export function riskOf(clasificacion: ClasificacionImagen, areasDistintas: numbe
 }
 
 export function isProhibidaParaEnriquecer(url: string): boolean {
-  return CLASES_ALTO.includes(classifyUrl(url))
+  const c = classifyUrl(url)
+  return CLASES_ALTO.includes(c) || c === 'directorio_area' || c === 'google_places'
 }
 
 export function isImagenIA(url?: string | null): boolean {
