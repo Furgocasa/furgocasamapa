@@ -16,6 +16,7 @@
 | 7 | Tío Viajero IA renovado | ✅ Hecho | Conversión/UX |
 | 8 | Embudo de engagement + visibilidad furgo | ✅ Hecho (21 ago 2026) | Retención / adopción |
 | 9 | Estética 3.0 (marca, basemap, móvil, filtros) | ✅ Hecho fase 1 (21 ago 2026) | Percepción de producto / UX |
+| 10 | Mapa al servicio del alquiler (CTA ficha, banners, onboarding cliente) | 📋 Guía lista (22 ago 2026) | Ingresos Furgocasa / marca |
 
 ---
 
@@ -196,6 +197,19 @@ las páginas admin a tokens cuando se toquen por otro motivo.
 
 ---
 
+## Mejora 10 — Mapa al servicio del alquiler (22 ago 2026)
+
+**Guía**: [GUIA_MAPA_ALQUILER.md](./GUIA_MAPA_ALQUILER.md)
+
+**Qué**: el mapa nació para el viajero de Furgocasa y para llevar tráfico al
+alquiler. La ficha SEO hoy sortea banners 50/50 con CasiCinco y empuja IA/QR.
+El CTA de dinero es `furgocasa.com/es` genérico.
+
+**Aún no implementado.** Criterio y plan 90 días en la guía. No importar
+países ni ampliar features hasta cerrar CTA + onboarding del que ya pagó.
+
+---
+
 ## Pasos manuales pendientes (Narciso)
 
 1. ~~**Supabase SQL Editor**: migraciones `chatbot_evaluacion_ia` y `google_ratings_total`~~ — **hechas** (verificado en BD). Backfill ratings casi completo (~4.9k con valor; residual opcional ~300 con `place_id` y total NULL).
@@ -251,3 +265,6 @@ las páginas admin a tokens cuando se toquen por otro motivo.
 - **22 ago 2026 (Admin 3.0)**: panel `/admin` remontado con sidebar lateral
   agrupado, layout propio, auth centralizada y dashboard con contadores.
   Ver Mejora 9 y `GUIA_DISENO_V3.md` §9.
+- **22 ago 2026 (alquiler)**: criterio escrito. El mapa vuelve al job original
+  (soporte al cliente Furgocasa + SEO hacia reserva). Guía:
+  `GUIA_MAPA_ALQUILER.md`. Aún sin código.

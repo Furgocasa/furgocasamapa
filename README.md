@@ -45,7 +45,7 @@ Sistema visual completo (tokens, basemap, móvil, filtros): **[GUIA_DISENO_V3.md
 - 🚨 **Sistema de alertas QR** para accidentes (visible en ficha, home y navbar)
 - ⬆️ **Botón Back to Top** en páginas de detalle
 
-Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMENT.md)**. Para revisar fichas, zonas, países o toda la base: **[GUIA_REVISION_AREAS.md](./GUIA_REVISION_AREAS.md)**.
+Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMENT.md)**. Para revisar fichas, zonas, países o toda la base: **[GUIA_REVISION_AREAS.md](./GUIA_REVISION_AREAS.md)**. El mapa existe para el alquiler de Furgocasa, no para competir con Park4Night: **[GUIA_MAPA_ALQUILER.md](./GUIA_MAPA_ALQUILER.md)**.
 
 ### Para Administradores
 - ⚙️ **Panel Admin 3.0** (`/admin`): menú lateral oscuro con secciones agrupadas (Áreas / IA y Chatbot / Datos y análisis / Sistema), barra superior con «Ver web» y dashboard con contadores en vivo. Layout único en `app/admin/layout.tsx` (auth admin centralizada; la navegación se edita en su array `NAV`)
@@ -110,6 +110,7 @@ Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMEN
 ├── types/                 # Tipos TypeScript
 ├── GUIA_DISENO_V3.md      # Sistema visual 3.0: tokens, basemap, móvil, filtros
 ├── GUIA_ENGAGEMENT.md     # Embudo: favoritos, auth, furgo, digest
+├── GUIA_MAPA_ALQUILER.md  # Criterio: el mapa al servicio del alquiler Furgocasa
 ├── GUIA_REVISION_AREAS.md # Ciclo de auditoría y corrección de fichas
 ├── PLAN_MEJORAS.md        # Seguimiento de producto
 ├── CAMBIOS_CURSOR.md      # Registro de cambios verificables
