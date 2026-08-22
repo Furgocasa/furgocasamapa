@@ -642,6 +642,8 @@ const HUECOS_CUENCA = [
   { id: 5, zona: "Huete", lat: 40.15, lng: -2.69, pais: "España" },
   { id: 6, zona: "Cañete", lat: 40.04, lng: -1.65, pais: "España" },
   { id: 7, zona: "Beteta", lat: 40.57, lng: -2.07, pais: "España" },
+  { id: 8, zona: "Minglanilla", lat: 39.42, lng: -1.59, pais: "España" },
+  { id: 9, zona: "El Herrumblar", lat: 39.4, lng: -1.62, pais: "España" },
 ];
 
 const HUECOS_MADRID = [
@@ -1191,7 +1193,14 @@ function isRelevant(name: string, types: string[], pais?: string): boolean {
   if (/\b(glamping|b[ií]blico|biblico)\b/i.test(name) && !/\b(autocaravana|camper|aire)\b/i.test(name)) {
     return false;
   }
-  if (NOISE_RE.test(name)) return false;
+  if (NOISE_RE.test(name)) {
+    const toponimoVenta =
+      /\bventa\b/i.test(name) &&
+      (/\bc[aà]mping\b/i.test(name) || types.includes("campground") || types.includes("rv_park"));
+    if (!toponimoVenta || NOISE_RE.test(name.replace(/\bventa\b/gi, " "))) {
+      return false;
+    }
+  }
   if (/\blocation (de )?(camping-car|fourgon|van|utilitaire)\b/i.test(name)) return false;
   if (/\b(ferienhof|ferienhaus|wassersportzentrum)\b/i.test(name) && !/\bstellplatz\b/i.test(name)) {
     return false;
