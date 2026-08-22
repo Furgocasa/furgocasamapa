@@ -70,16 +70,24 @@ export function buildAreaPopupHTML(
       accent ? 'border:1px solid #FFC9AD;' : ''
     }padding:5px 10px;border-radius:999px;font-size:12px;font-weight:600;line-height:1;">${html}</span>`
 
+  const reviewsTotal = area.google_ratings_total ?? 0
+  const ratingLine = area.google_rating
+    ? `<div style="display:flex;align-items:center;gap:8px;margin:0 0 8px 0;">
+        <span style="display:inline-flex;align-items:center;gap:4px;">
+          <span style="color:#facc15;font-size:15px;line-height:1;">★</span>
+          <span style="font-weight:700;font-size:14px;color:#111827;">${esc(area.google_rating)}</span>
+        </span>
+        ${
+          reviewsTotal > 0
+            ? `<span style="font-weight:700;font-size:14px;color:#111827;">${esc(
+                reviewsTotal.toLocaleString(locale)
+              )} ${esc(t(locale, 'reviews'))}</span>`
+            : ''
+        }
+      </div>`
+    : ''
+
   const chips: string[] = []
-  if (area.google_rating) {
-    const reviews =
-      area.google_ratings_total && area.google_ratings_total > 0
-        ? ` <span style="font-weight:600;opacity:0.75;">(${esc(area.google_ratings_total.toLocaleString('es-ES'))})</span>`
-        : ''
-    chips.push(
-      `<span style="display:inline-flex;align-items:center;gap:4px;background:#FEF9C3;color:#854D0E;border:1px solid #FDE68A;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:700;line-height:1;">⭐ ${area.google_rating}${reviews}</span>`
-    )
-  }
   if (area.precio_noche !== null && area.precio_noche !== undefined) {
     chips.push(
       area.precio_noche === 0
@@ -113,6 +121,7 @@ export function buildAreaPopupHTML(
       ${imageBlock}
       ${titleFallback}
       <div style="padding:12px 14px 12px 14px;">
+        ${ratingLine}
         ${
           ubicacion
             ? `<div style="display:flex;align-items:center;gap:5px;color:#6B7280;font-size:13px;margin-bottom:10px;">
