@@ -36,6 +36,8 @@
  *   npm run import:campings:malaga
  *   npm run import:campings:cadiz
  *   npm run import:campings:huelva
+ *   npm run import:campings:cordoba
+ *   npm run import:campings:jaen
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -112,6 +114,10 @@ let REPORT_NAME =
           ? "cadiz-campings-dry-report.json"
         : REGION === "huelva"
           ? "huelva-campings-dry-report.json"
+        : REGION === "cordoba"
+          ? "cordoba-campings-dry-report.json"
+        : REGION === "jaen"
+          ? "jaen-campings-dry-report.json"
         : "iberia-gaps-dry-report.json";
 if (SOLO_STOPOVER) {
   REPORT_NAME = REPORT_NAME.replace("-gaps-dry-report.json", "-stopover-dry-report.json");
@@ -544,6 +550,30 @@ const HUECOS_HUELVA = [
   { id: 8, zona: "Riotinto", lat: 37.69, lng: -6.55, pais: "España" },
 ];
 
+const HUECOS_CORDOBA = [
+  { id: 1, zona: "Córdoba", lat: 37.89, lng: -4.78, pais: "España" },
+  { id: 2, zona: "Lucena", lat: 37.41, lng: -4.49, pais: "España" },
+  { id: 3, zona: "Puente Genil", lat: 37.39, lng: -4.77, pais: "España" },
+  { id: 4, zona: "Priego", lat: 37.44, lng: -4.19, pais: "España" },
+  { id: 5, zona: "Pozoblanco", lat: 38.38, lng: -4.85, pais: "España" },
+  { id: 6, zona: "Palma del Río", lat: 37.7, lng: -5.28, pais: "España" },
+  { id: 7, zona: "Hornachuelos", lat: 37.83, lng: -5.24, pais: "España" },
+  { id: 8, zona: "Iznájar", lat: 37.26, lng: -4.31, pais: "España" },
+  { id: 9, zona: "Villanueva", lat: 38.32, lng: -4.63, pais: "España" },
+];
+
+const HUECOS_JAEN = [
+  { id: 1, zona: "Jaén", lat: 37.77, lng: -3.79, pais: "España" },
+  { id: 2, zona: "Úbeda", lat: 38.01, lng: -3.37, pais: "España" },
+  { id: 3, zona: "Linares", lat: 38.1, lng: -3.64, pais: "España" },
+  { id: 4, zona: "Andújar", lat: 38.04, lng: -4.05, pais: "España" },
+  { id: 5, zona: "Cazorla", lat: 37.91, lng: -3.0, pais: "España" },
+  { id: 6, zona: "La Carolina", lat: 38.27, lng: -3.62, pais: "España" },
+  { id: 7, zona: "Alcalá la Real", lat: 37.46, lng: -3.92, pais: "España" },
+  { id: 8, zona: "Segura", lat: 38.3, lng: -2.65, pais: "España" },
+  { id: 9, zona: "Baeza", lat: 37.99, lng: -3.47, pais: "España" },
+];
+
 const CAMPING_ZONAS: Record<
   string,
   {
@@ -614,6 +644,18 @@ const CAMPING_ZONAS: Record<
     provinciaRe: /\bhuelva\b/i,
     isIn: (lat, lng) => lat >= 36.95 && lat <= 38.05 && lng >= -7.52 && lng <= -6.35,
     huecos: HUECOS_HUELVA,
+  },
+  cordoba: {
+    label: "Córdoba",
+    provinciaRe: /\bc[oó]rdoba\b/i,
+    isIn: (lat, lng) => lat >= 37.18 && lat <= 38.73 && lng >= -5.58 && lng <= -3.84,
+    huecos: HUECOS_CORDOBA,
+  },
+  jaen: {
+    label: "Jaén",
+    provinciaRe: /\bja[eé]n\b/i,
+    isIn: (lat, lng) => lat >= 37.37 && lat <= 38.53 && lng >= -4.28 && lng <= -2.4,
+    huecos: HUECOS_JAEN,
   },
 };
 
@@ -1027,7 +1069,7 @@ function isRelevant(name: string, types: string[], pais?: string): boolean {
     }
   }
   if (CAMPING) {
-    if (/\b(tienda|articulos|campingaz|camping gas|outlet|alquiler|hire|rental|bar at)\b/i.test(name)) {
+    if (/\b(tienda|articulos|campingaz|camping gas|outlet|alquiler|hire|rental|bar at|cl[ií]nica|clinic)\b/i.test(name)) {
       return false;
     }
     if (/^\s*camping\s*$/i.test(name)) return false;
