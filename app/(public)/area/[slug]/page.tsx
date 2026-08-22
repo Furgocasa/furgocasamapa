@@ -237,11 +237,13 @@ export default async function AreaPage({ params }: PageProps) {
               />
 
               {/* Valoraciones */}
-              <ValoracionesCompleto
-                areaId={area.id}
-                areaNombre={area.nombre}
-                valoraciones={valoraciones || []}
-              />
+              <div id="valoraciones" className="scroll-mt-24">
+                <ValoracionesCompleto
+                  areaId={area.id}
+                  areaNombre={area.nombre}
+                  valoraciones={valoraciones || []}
+                />
+              </div>
 
               {/* Vehículo / IA / QR: el tráfico real está aquí, no en la home */}
               <HerramientasVehiculo compact />

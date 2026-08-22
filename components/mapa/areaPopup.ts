@@ -3,6 +3,15 @@ import type { Locale } from '@/lib/i18n/config'
 import { DEFAULT_LOCALE } from '@/lib/i18n/config'
 import { getServicioLabel, getTipoAreaLabel, SERVICIO_ICONS } from '@/lib/i18n/labels'
 import { t } from '@/lib/i18n/ui'
+import { getTipoAreaIconSvg } from '@/lib/areas/tipo-area'
+import { createClient } from '@/lib/supabase/client'
+import {
+  hasLocalFavorite,
+  addLocalFavorite,
+  removeLocalFavorite,
+  setPendingAction,
+} from '@/lib/favoritos/local'
+import { track } from '@/lib/analytics/track'
 
 const INVALID_COVER = /PhotoService\.GetPhoto|maps\.googleapis\.com\/maps\/api\/place\/js/i
 
@@ -26,6 +35,127 @@ export function getAreaCoverUrl(area: Pick<Area, 'foto_principal'> & { fotos_url
   return null
 }
 
+// ---------------------------------------------------------------------------
+// Acciones del popup (Favorito / Estuve aquí)
+// El contenido del popup es HTML plano, así que las acciones van por
+// delegación de eventos a nivel de documento (fase de captura, para que
+// Leaflet/MapLibre no se traguen el clic antes de que llegue aquí).
+// ---------------------------------------------------------------------------
+
+function paintFavButtons(areaId: string, isFav: boolean): void {
+  document
+    .querySelectorAll<HTMLElement>(`[data-popup-action="fav"][data-area-id="${areaId}"]`)
+    .forEach((btn) => {
+      btn.setAttribute('data-fav', isFav ? '1' : '0')
+      btn.style.background = isFav ? '#FDF2F8' : '#fff'
+      btn.style.borderColor = isFav ? '#F9A8D4' : '#D1D5DB'
+      btn.style.color = isFav ? '#BE185D' : '#374151'
+      const svg = btn.querySelector('svg')
+      if (svg) svg.setAttribute('fill', isFav ? '#EC4899' : 'none')
+      const label = btn.querySelector('[data-fav-label]')
+      if (label) {
+        label.textContent = isFav
+          ? btn.getAttribute('data-label-on') || ''
+          : btn.getAttribute('data-label-off') || ''
+      }
+    })
+}
+
+async function toggleFavorite(btn: HTMLElement, areaId: string): Promise<void> {
+  const wasFav = btn.getAttribute('data-fav') === '1'
+  try {
+    const supabase = createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (session?.user) {
+      if (wasFav) {
+        const { error } = await (supabase as any)
+          .from('favoritos')
+          .delete()
+          .eq('user_id', session.user.id)
+          .eq('area_id', areaId)
+        if (error) throw error
+        track('area_unfavorite', { area_id: areaId })
+      } else {
+        const { error } = await (supabase as any)
+          .from('favoritos')
+          .insert({ user_id: session.user.id, area_id: areaId })
+        if (error && error.code !== '23505') throw error
+        track('area_favorite', { area_id: areaId })
+      }
+    } else if (wasFav) {
+      removeLocalFavorite(areaId)
+      track('area_unfavorite', { area_id: areaId, event_data: { modo: 'local' } })
+    } else {
+      addLocalFavorite(areaId)
+      track('area_favorite', { area_id: areaId, event_data: { modo: 'local' } })
+    }
+
+    paintFavButtons(areaId, !wasFav)
+  } catch (error) {
+    console.error('Error al actualizar favorito desde el popup:', error)
+  }
+}
+
+let popupActionsBound = false
+
+function ensureAreaPopupActions(): void {
+  if (typeof window === 'undefined' || popupActionsBound) return
+  popupActionsBound = true
+
+  document.addEventListener(
+    'click',
+    (event) => {
+      const target = (event.target as HTMLElement | null)?.closest?.(
+        '[data-popup-action]'
+      ) as HTMLElement | null
+      if (!target) return
+
+      event.preventDefault()
+      event.stopPropagation()
+
+      const action = target.getAttribute('data-popup-action')
+      const areaId = target.getAttribute('data-area-id') || ''
+      if (!areaId) return
+
+      if (action === 'visit') {
+        // Mismo flujo que "Estuve aquí" en la ficha: se guarda la intención
+        // y al llegar (o tras login) se abre el modal de visita+valoración.
+        setPendingAction({ type: 'estuve_aqui', areaId })
+        const slug = target.getAttribute('data-area-slug') || ''
+        window.location.href = `/area/${slug}#valoraciones`
+        return
+      }
+
+      if (action === 'fav') {
+        void toggleFavorite(target, areaId)
+      }
+    },
+    true
+  )
+}
+
+/** Corrige el estado inicial del corazón para usuarios con cuenta (async). */
+function hydrateFavState(areaId: string): void {
+  if (typeof window === 'undefined') return
+  window.setTimeout(async () => {
+    try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) return
+      const { data } = await (supabase as any)
+        .from('favoritos')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .eq('area_id', areaId)
+        .maybeSingle()
+      if (data) paintFavButtons(areaId, true)
+    } catch {
+      /* sin red o sin sesión: se queda el estado local */
+    }
+  }, 150)
+}
+
 /**
  * Contenido HTML compartido del popup/InfoWindow que aparece al hacer clic
  * sobre un área en el mapa. Es la ÚNICA fuente de verdad para los 3 proveedores
@@ -37,6 +167,8 @@ export function buildAreaPopupHTML(
   imageMargin: number = 0,
   locale: Locale = DEFAULT_LOCALE
 ): string {
+  ensureAreaPopupActions()
+
   const esc = (value: unknown): string =>
     String(value ?? '')
       .replace(/&/g, '&amp;')
@@ -72,7 +204,7 @@ export function buildAreaPopupHTML(
 
   const reviewsTotal = area.google_ratings_total ?? 0
   const ratingLine = area.google_rating
-    ? `<div style="display:flex;align-items:center;gap:8px;margin:0 0 8px 0;">
+    ? `<div style="display:flex;align-items:center;gap:8px;">
         <span style="display:inline-flex;align-items:center;gap:4px;">
           <span style="color:#facc15;font-size:15px;line-height:1;">★</span>
           <span style="font-weight:700;font-size:14px;color:#111827;">${esc(area.google_rating)}</span>
@@ -87,7 +219,10 @@ export function buildAreaPopupHTML(
       </div>`
     : ''
 
-  const chips: string[] = []
+  // Píldora de tipo (como la card de la lista) + resto de chips
+  const chips: string[] = [
+    `<span style="display:inline-flex;align-items:center;background:${color}20;color:${color};padding:5px 10px;border-radius:999px;font-size:12px;font-weight:600;line-height:1;">${esc(tipo)}</span>`,
+  ]
   if (area.precio_noche !== null && area.precio_noche !== undefined) {
     chips.push(
       area.precio_noche === 0
@@ -102,26 +237,46 @@ export function buildAreaPopupHTML(
   const coverUrl = getAreaCoverUrl(area)
   const imageBlock = coverUrl
     ? `
-      <div style="position:relative;margin:${imageMargin}px ${imageMargin}px 0 ${imageMargin}px;height:168px;background:#e5e7eb;overflow:hidden;">
-        <img src="${esc(coverUrl)}" alt="${esc(area.nombre)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none';var f=this.parentElement.nextElementSibling;if(f)f.style.display='block';"/>
-        <div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.12) 42%, rgba(0,0,0,0) 62%);"></div>
-        <span style="position:absolute;bottom:38px;left:14px;background:${color};color:#fff;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.3px;box-shadow:0 2px 6px rgba(0,0,0,0.25);">${esc(tipo)}</span>
-        <h3 style="position:absolute;left:14px;right:14px;bottom:10px;margin:0;color:#fff;font-size:18px;font-weight:800;line-height:1.25;text-shadow:0 1px 4px rgba(0,0,0,0.6);">${esc(area.nombre)}</h3>
+      <div style="position:relative;margin:${imageMargin}px ${imageMargin}px 0 ${imageMargin}px;height:136px;background:#e5e7eb;overflow:hidden;">
+        <img src="${esc(coverUrl)}" alt="${esc(area.nombre)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none';"/>
       </div>`
     : ''
 
-  const titleFallback = `
-      <div class="area-popup-title" style="padding:12px 14px 0 14px;${coverUrl ? 'display:none;' : ''}">
-        <span style="display:inline-block;background:${color};color:#fff;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.3px;margin-bottom:6px;">${esc(tipo)}</span>
-        <h3 style="margin:0;font-size:18px;font-weight:800;color:#111827;line-height:1.25;padding-right:24px;">${esc(area.nombre)}</h3>
-      </div>`
+  // Icono redondo del tipo (misma leyenda que los pines y la lista)
+  const tipoIcon = `<span style="width:34px;height:34px;border-radius:999px;background:${color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,0.18);">${getTipoAreaIconSvg(area.tipo_area, 18)}</span>`
+
+  const isFavInicial = typeof window !== 'undefined' && hasLocalFavorite(area.id)
+  const favLabelOff = t(locale, 'favorite')
+  const favLabelOn = t(locale, 'favorite_saved')
+
+  const btnOutline =
+    'display:flex;align-items:center;justify-content:center;gap:6px;background:#fff;border:1px solid #D1D5DB;color:#374151;padding:10px;border-radius:12px;text-decoration:none;font-weight:600;font-size:13px;line-height:1;cursor:pointer;font-family:inherit;'
+
+  const favButton = `<button type="button" data-popup-action="fav" data-area-id="${esc(area.id)}" data-fav="${isFavInicial ? '1' : '0'}" data-label-on="${esc(favLabelOn)}" data-label-off="${esc(favLabelOff)}" style="${btnOutline}${
+    isFavInicial ? 'background:#FDF2F8;border-color:#F9A8D4;color:#BE185D;' : ''
+  }">
+      <svg style="width:15px;height:15px;flex-shrink:0;" fill="${isFavInicial ? '#EC4899' : 'none'}" stroke="#EC4899" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+      <span data-fav-label>${esc(isFavInicial ? favLabelOn : favLabelOff)}</span>
+    </button>`
+
+  const visitButton = `<button type="button" data-popup-action="visit" data-area-id="${esc(area.id)}" data-area-slug="${esc(area.slug)}" style="${btnOutline}">
+      <svg style="width:15px;height:15px;flex-shrink:0;" fill="none" stroke="#16a34a" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      <span>${esc(t(locale, 'been_here'))}</span>
+    </button>`
+
+  if (typeof window !== 'undefined') hydrateFavState(area.id)
 
   return `
     <div style="width:318px;max-width:88vw;font-family:inherit;color:#1f2937;">
       ${imageBlock}
-      ${titleFallback}
-      <div style="padding:12px 14px 12px 14px;">
-        ${ratingLine}
+      <div style="padding:12px 14px 14px 14px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;">
+          <div style="flex:1;min-width:0;">
+            <h3 style="margin:0 0 4px 0;font-size:16px;font-weight:600;color:#111827;line-height:1.3;${coverUrl ? '' : 'padding-right:24px;'}">${esc(area.nombre)}</h3>
+            ${ratingLine}
+          </div>
+          ${tipoIcon}
+        </div>
         ${
           ubicacion
             ? `<div style="display:flex;align-items:center;gap:5px;color:#6B7280;font-size:13px;margin-bottom:10px;">
@@ -160,15 +315,18 @@ export function buildAreaPopupHTML(
               </div>`
             : `<p style="margin:0 0 12px 0;font-size:12px;color:#9CA3AF;font-style:italic;">${esc(t(locale, 'services_none'))}</p>`
         }
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
-          <a href="/area/${esc(area.slug)}" style="display:flex;align-items:center;justify-content:center;gap:6px;background:#0b3c74;color:#fff;padding:11px;border-radius:12px;text-decoration:none;font-weight:700;font-size:13.5px;box-shadow:0 2px 6px rgba(11,60,116,0.35);">
-            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <a href="/area/${esc(area.slug)}" style="display:flex;align-items:center;justify-content:center;gap:6px;background:#0b3c74;color:#fff;padding:10px;border-radius:12px;text-decoration:none;font-weight:700;font-size:13px;line-height:1;box-shadow:0 2px 6px rgba(11,60,116,0.35);">
             ${esc(t(locale, 'view_details'))}
           </a>
-          <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:6px;background:#16a34a;color:#fff;padding:11px;border-radius:12px;text-decoration:none;font-weight:700;font-size:13.5px;box-shadow:0 2px 6px rgba(22,163,74,0.35);">
-            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+          <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="${btnOutline}">
+            <svg style="width:15px;height:15px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
             ${esc(t(locale, 'how_to_get'))}
           </a>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          ${favButton}
+          ${visitButton}
         </div>
       </div>
     </div>
