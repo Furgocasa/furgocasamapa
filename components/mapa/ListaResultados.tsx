@@ -5,7 +5,7 @@ import { MapPinIcon, PhoneIcon, StarIcon, XMarkIcon, AdjustmentsHorizontalIcon }
 import Link from 'next/link'
 import { useState, useMemo } from 'react'
 import { useLanguage, getServicioLabel, getTipoAreaLabel, SERVICIO_ICONS } from '@/lib/i18n'
-import { getTipoAreaColor } from '@/lib/areas/tipo-area'
+import { getTipoAreaColor, getTipoAreaIconPath } from '@/lib/areas/tipo-area'
 
 interface ListaResultadosProps {
   areas: Area[]
@@ -191,126 +191,167 @@ export function ListaResultados({
                     .map(([key]) => key)
                 : []
 
+              const distancia =
+                userLocation && area.latitud && area.longitud
+                  ? calcularDistancia(
+                      userLocation.lat,
+                      userLocation.lng,
+                      Number(area.latitud),
+                      Number(area.longitud)
+                    )
+                  : null
+              const distanciaTexto =
+                distancia === null
+                  ? null
+                  : distancia < 1
+                    ? `${Math.round(distancia * 1000)} m`
+                    : `${distancia.toFixed(1)} km`
+              const mapsUrl =
+                area.google_maps_url ||
+                `https://www.google.com/maps/search/?api=1&query=${area.latitud},${area.longitud}`
+
               return (
                 <div
                   key={area.id}
                   onClick={() => onAreaClick(area)}
-                  className="border border-gray-200 rounded-lg hover:border-primary-500 hover:shadow-md transition-all cursor-pointer overflow-hidden bg-white"
+                  className="border border-gray-200 rounded-lg p-4 hover:border-primary-400 hover:shadow-md transition cursor-pointer bg-white"
                 >
-                  {/* Imagen */}
+                  {/* Foto a sangre, con la distancia encima */}
                   {area.foto_principal && (
-                    <div className="relative">
+                    <div className="mb-3 -mx-4 -mt-4 relative">
                       <img
                         src={area.foto_principal}
                         alt={area.nombre}
-                        className="w-full h-40 object-cover"
+                        className="w-full h-32 object-cover rounded-t-lg"
+                        loading="lazy"
                         onError={(e) => { e.currentTarget.style.display = 'none' }}
                       />
-                      {/* Rating superpuesto */}
-                      {area.google_rating && (
-                        <div className="absolute top-3 right-3 flex items-center bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full shadow-lg">
-                          <StarIcon className="w-4 h-4 text-yellow-400 mr-1" />
-                          <span className="text-sm font-bold text-gray-900">
-                            {area.google_rating}
-                          </span>
-                          {(area.google_ratings_total ?? 0) > 0 && (
-                            <span className="ml-1 text-sm font-bold text-gray-900">
-                              {area.google_ratings_total.toLocaleString('es-ES')} reseñas
-                            </span>
-                          )}
+                      {distanciaTexto && (
+                        <div className="absolute top-2 right-2 bg-primary-600 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg flex items-center gap-1">
+                          <MapPinIcon className="w-3 h-3" />
+                          {distanciaTexto}
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* Contenido */}
-                  <div className="p-4 space-y-2">
-                    {/* Título */}
-                    <div className="flex items-start gap-2">
-                      <span
-                        className="mt-1.5 w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: getTipoAreaColor(area.tipo_area) }}
-                        aria-hidden
-                      />
-                      <h3 className="font-bold text-gray-900 text-base line-clamp-2">
+                  {/* Nombre, valoración y tipo */}
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-base text-gray-900 leading-tight mb-1 line-clamp-2">
                         {area.nombre}
                       </h3>
+                      {area.google_rating && (
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            <StarIcon className="w-4 h-4 text-yellow-400" />
+                            <span className="font-bold text-sm text-gray-900">
+                              {area.google_rating}
+                            </span>
+                          </div>
+                          {(area.google_ratings_total ?? 0) > 0 && (
+                            <span className="font-bold text-sm text-gray-900">
+                              {(area.google_ratings_total ?? 0).toLocaleString(locale)} {t('reviews')}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
+                    <span
+                      className="w-8 h-8 shrink-0 rounded-full border-2 border-white shadow-sm flex items-center justify-center"
+                      style={{ backgroundColor: getTipoAreaColor(area.tipo_area) }}
+                      title={getTipoAreaLabel(area.tipo_area, locale)}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" aria-hidden>
+                        <path d={getTipoAreaIconPath(area.tipo_area)} />
+                      </svg>
+                    </span>
+                  </div>
 
-                    {/* Ubicación */}
-                    <div className="flex items-center text-sm text-gray-600">
-                      <MapPinIcon className="w-4 h-4 mr-1 flex-shrink-0" />
-                      <span className="line-clamp-1">
-                        {[area.ciudad, area.provincia].filter(Boolean).join(', ')}
+                  {/* Ubicación, con la distancia aquí si la tarjeta no tiene foto */}
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <p className="text-xs text-gray-600 line-clamp-1 flex-1">
+                      {[area.ciudad, area.provincia].filter(Boolean).join(', ')}
+                    </p>
+                    {distanciaTexto && !area.foto_principal && (
+                      <span className="text-xs font-semibold text-primary-600 flex items-center gap-1 shrink-0">
+                        <MapPinIcon className="w-3 h-3" />
+                        {distanciaTexto}
                       </span>
-                    </div>
+                    )}
+                  </div>
 
-                    {/* Badges: Tipo + Precio + Verificado */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span
-                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                        style={{
-                          backgroundColor: `${getTipoAreaColor(area.tipo_area)}20`,
-                          color: getTipoAreaColor(area.tipo_area),
-                        }}
-                      >
-                        {getTipoAreaLabel(area.tipo_area, locale)}
+                  {/* Tipo, precio y verificado */}
+                  <div className="flex items-center gap-2 flex-wrap mb-3">
+                    <span
+                      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                      style={{
+                        backgroundColor: `${getTipoAreaColor(area.tipo_area)}20`,
+                        color: getTipoAreaColor(area.tipo_area),
+                      }}
+                    >
+                      {getTipoAreaLabel(area.tipo_area, locale)}
+                    </span>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      area.precio_noche === 0
+                        ? 'bg-green-100 text-green-800'
+                        : area.precio_noche === null || area.precio_noche === undefined
+                        ? 'bg-gray-100 text-gray-600'
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {area.precio_noche === 0
+                        ? `✨ ${t('free')}`
+                        : area.precio_noche === null || area.precio_noche === undefined
+                        ? `❓ ${t('price_unknown')}`
+                        : `💰 ${area.precio_noche}€${t('per_night')}`
+                      }
+                    </span>
+                    {area.verificado && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        ✓ {t('verified')}
                       </span>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                        area.precio_noche === 0
-                          ? 'bg-green-100 text-green-800'
-                          : area.precio_noche === null || area.precio_noche === undefined
-                          ? 'bg-gray-100 text-gray-600'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {area.precio_noche === 0
-                          ? `✨ ${t('free')}`
-                          : area.precio_noche === null || area.precio_noche === undefined
-                          ? `❓ ${t('price_unknown')}`
-                          : `💰 ${area.precio_noche}€${t('per_night')}`
-                        }
-                      </span>
-                      {area.verificado && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                          ✓ {t('verified')}
+                    )}
+                  </div>
+
+                  {/* Servicios en tira compacta: el dato sigue, sin alargar la tarjeta */}
+                  {serviciosDisponibles.length > 0 && (
+                    <div className="flex items-center gap-1 flex-wrap mb-3">
+                      {serviciosDisponibles.slice(0, 6).map((servicio: any) => (
+                        <span
+                          key={servicio}
+                          className="w-6 h-6 rounded bg-gray-50 border border-gray-200 flex items-center justify-center text-xs"
+                          title={getServicioLabel(servicio, locale)}
+                        >
+                          {getServicioIcon(servicio)}
+                        </span>
+                      ))}
+                      {serviciosDisponibles.length > 6 && (
+                        <span className="text-[11px] font-medium text-gray-500">
+                          +{serviciosDisponibles.length - 6}
                         </span>
                       )}
                     </div>
+                  )}
 
-                    {/* Servicios */}
-                    {serviciosDisponibles.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {serviciosDisponibles.slice(0, 4).map((servicio: any, idx: any) => (
-                          <div
-                            key={idx}
-                            className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded text-xs"
-                            title={getServicioLabel(servicio, locale)}
-                          >
-                            <span>{getServicioIcon(servicio)}</span>
-                            <span className="text-gray-700 font-medium hidden sm:inline">
-                              {getServicioLabel(servicio, locale)}
-                            </span>
-                          </div>
-                        ))}
-                        {serviciosDisponibles.length > 4 && (
-                          <div className="flex items-center bg-gray-100 px-2 py-1 rounded text-xs text-gray-600 font-medium">
-                            +{serviciosDisponibles.length - 4}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Botón de detalles */}
-                    <div className="pt-2 border-t">
-                      <Link
-                        href={`/area/${area.slug}`}
-                        target="_blank"
-                        className="text-sm text-primary-600 hover:text-primary-700 font-semibold"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {t('view_details')} →
-                      </Link>
-                    </div>
+                  {/* Acciones */}
+                  <div className="flex gap-2">
+                    <Link
+                      href={`/area/${area.slug}`}
+                      target="_blank"
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex-1 text-center text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg px-3 py-2 transition-colors"
+                    >
+                      {t('view_details')}
+                    </Link>
+                    <a
+                      href={mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex-1 text-center text-sm font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-lg px-3 py-2 transition-colors"
+                    >
+                      {t('how_to_get')}
+                    </a>
                   </div>
                 </div>
               )
