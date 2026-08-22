@@ -214,8 +214,8 @@ export function ListaResultados({
                             {area.google_rating}
                           </span>
                           {(area.google_ratings_total ?? 0) > 0 && (
-                            <span className="ml-1 text-xs font-medium text-gray-500">
-                              ({area.google_ratings_total})
+                            <span className="ml-1 text-sm font-bold text-gray-900">
+                              {area.google_ratings_total.toLocaleString('es-ES')} reseñas
                             </span>
                           )}
                         </div>
