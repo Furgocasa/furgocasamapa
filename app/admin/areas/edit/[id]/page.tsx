@@ -16,6 +16,7 @@ import {
   TrashIcon
 } from '@heroicons/react/24/outline'
 import type { Area } from '@/types/database.types'
+import { baseAreaSlug } from '@/lib/areas/slug'
 
 const GooglePlacesPicker = dynamic(
   () => import('@/components/admin/GooglePlacesPicker'),
@@ -114,14 +115,8 @@ export default function EditAreaPage() {
     }
   }
 
-  const generateSlug = (nombre: string) => {
-    return nombre
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-  }
+  const generateSlug = (nombre: string, ciudad?: string | null, provincia?: string | null) =>
+    baseAreaSlug(nombre, ciudad, provincia)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -132,7 +127,7 @@ export default function EditAreaPage() {
       const supabase = createClient()
       
       // Generar slug si el nombre cambió
-      const slug = area.slug || generateSlug(area.nombre || '')
+      const slug = area.slug || generateSlug(area.nombre || '', area.ciudad, area.provincia)
       
       console.log('💾 Guardando área...', {
         id: params.id,
@@ -185,7 +180,9 @@ export default function EditAreaPage() {
     setArea(prev => ({
       ...prev,
       nombre: placeData.nombre || prev.nombre,
-      slug: placeData.nombre ? generateSlug(placeData.nombre) : prev.slug,
+      slug: placeData.nombre
+        ? generateSlug(placeData.nombre, placeData.ciudad || prev.ciudad, placeData.provincia || prev.provincia)
+        : prev.slug,
       direccion: placeData.direccion || prev.direccion,
       ciudad: placeData.ciudad || prev.ciudad,
       provincia: placeData.provincia || prev.provincia,
@@ -279,7 +276,10 @@ export default function EditAreaPage() {
                   onChange={(e) => {
                     setArea({ ...area, nombre: e.target.value })
                     if (!area.slug) {
-                      setArea(prev => ({ ...prev, slug: generateSlug(e.target.value) }))
+                      setArea(prev => ({
+                        ...prev,
+                        slug: generateSlug(e.target.value, prev.ciudad, prev.provincia)
+                      }))
                     }
                   }}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"

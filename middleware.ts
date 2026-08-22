@@ -1,5 +1,8 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import slugRedirects from '@/lib/areas/slug-redirects.json'
+
+const SLUG_REDIRECTS = slugRedirects as Record<string, string>
 
 export async function middleware(request: NextRequest) {
   // CRÍTICO: Excluir rutas API ANTES DE CUALQUIER PROCESAMIENTO
@@ -8,6 +11,16 @@ export async function middleware(request: NextRequest) {
   // EXCLUSIÓN ABSOLUTA DE RUTAS API - RETORNAR INMEDIATAMENTE
   if (pathname.startsWith('/api/')) {
     return NextResponse.next()
+  }
+
+  if (pathname.startsWith('/area/')) {
+    const slug = pathname.slice('/area/'.length).replace(/\/$/, '')
+    const dest = slug && !slug.includes('/') ? SLUG_REDIRECTS[slug] : null
+    if (dest && dest !== slug) {
+      const url = request.nextUrl.clone()
+      url.pathname = `/area/${dest}`
+      return NextResponse.redirect(url, 301)
+    }
   }
 
   // Lista completa de otras rutas a excluir

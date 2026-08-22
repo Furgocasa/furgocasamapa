@@ -43,6 +43,7 @@ import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
 import { decidirUbicacion } from "../../lib/areas/tipo-area";
+import { baseAreaSlug, uniqueAreaSlug } from "../../lib/areas/slug";
 
 if (process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0") {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -1169,18 +1170,19 @@ async function placeDetails(placeId: string) {
 
 async function loadExisting() {
   const placeIds = new Set<string>();
+  const slugs = new Set<string>();
   const coords: Array<{ lat: number; lng: number }> = [];
   const pageSize = 1000;
   let page = 0;
   while (true) {
     const { data, error } = await supabase
       .from("areas")
-      .select("google_place_id,latitud,longitud")
-      .eq("activo", true)
+      .select("google_place_id,latitud,longitud,slug")
       .range(page * pageSize, (page + 1) * pageSize - 1);
     if (error) throw error;
     if (!data?.length) break;
     for (const row of data) {
+      if (row.slug) slugs.add(row.slug);
       if (row.google_place_id) placeIds.add(row.google_place_id);
       if (row.latitud != null && row.longitud != null) {
         coords.push({ lat: Number(row.latitud), lng: Number(row.longitud) });
@@ -1189,7 +1191,7 @@ async function loadExisting() {
     if (data.length < pageSize) break;
     page++;
   }
-  return { placeIds, coords };
+  return { placeIds, coords, slugs };
 }
 
 function tooCloseToExisting(
@@ -1202,6 +1204,7 @@ function tooCloseToExisting(
 }
 
 async function importUtiles(utiles: any[]) {
+  const { slugs: takenSlugs } = await loadExisting();
   let imported = 0;
   for (const hit of utiles) {
     const details = await placeDetails(hit.place_id);
@@ -1286,37 +1289,15 @@ async function importUtiles(utiles: any[]) {
           : cc === "PT"
             ? "Portugal"
             : "España";
-    const slugSuffix =
-      pais === "Alemania"
-        ? "de"
-        : pais === "Francia"
-          ? "fr"
-          : pais === "Italia"
-            ? "it"
-            : pais === "Suiza"
-              ? "ch"
-              : pais === "Austria"
-                ? "at"
-                : pais === "Bélgica"
-                  ? "be"
-                  : pais === "Luxemburgo"
-                    ? "lu"
-                    : pais === "Países Bajos"
-                      ? "nl"
-                    : pais === "Dinamarca"
-                      ? "dk"
-                      : pais === "Suecia"
-                        ? "se"
-                        : pais === "Noruega"
-                          ? "no"
-                        : pais === "Chile"
-                          ? "cl"
-                        : pais === "Argentina"
-                          ? "ar"
-                : pais === "Portugal"
-                  ? "pt"
-                  : "es";
-    const slug = `${normalizeText(hit.name).replace(/\s+/g, "-").slice(0, 80)}-${slugSuffix}-${hit.place_id.slice(-8)}`;
+    const slug = uniqueAreaSlug(
+      baseAreaSlug(
+        hit.name,
+        details?.ciudad,
+        details?.provincia || (onBalears ? "Illes Balears" : hit.hueco)
+      ),
+      takenSlugs
+    );
+    takenSlugs.add(slug);
     const decision = decidirUbicacion(hit.name, { types: hit.types || [], pais });
     if (!decision.admite || !decision.tipo) {
       console.log(`  ↷ fuera de las 4: ${hit.name} (${decision.motivo})`);

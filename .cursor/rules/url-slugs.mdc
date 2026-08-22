@@ -1,0 +1,18 @@
+---
+description: URLs de áreas limpias, sin país ni Place ID
+alwaysApply: true
+---
+
+# URLs de áreas
+
+Formato único: `/area/{nombre}-{ciudad}`. Si la ciudad ya va en el nombre, no se repite. Si el slug está pillado, `-2`, `-3`.
+
+Usar `baseAreaSlug()` + `uniqueAreaSlug()` de `lib/areas/slug.ts`. Nunca concatenar país (`es`, `fr`, `mx`) ni un trozo del Place ID de Google.
+
+```
+✅ /area/camper-park-casablanca-zeneta
+✅ /area/camping-neo-casablanca
+❌ /area/camping-neo-es-0StzWzYY
+```
+
+Si cambias un slug ya publicado, añade la URL vieja en `lib/areas/slug-redirects.json` (301). El middleware y la ficha redirigen; no dejes 404.

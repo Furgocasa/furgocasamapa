@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { MapaInteractivoAdmin } from '@/components/admin/MapaInteractivoAdmin'
 import { decidirUbicacion, type TipoArea } from '@/lib/areas/tipo-area'
+import { baseAreaSlug, slugify, uniqueAreaSlug } from '@/lib/areas/slug'
 
 interface PlaceResult {
   place_id: string
@@ -152,14 +153,7 @@ const toNumberOrNull = (value: number | string | null | undefined): number | nul
   return Number.isFinite(parsed) ? parsed : null
 }
 
-const generateSlug = (nombre: string) => {
-  return nombre
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
+const generateSlug = (nombre: string) => slugify(nombre)
 
 // Función para calcular distancia entre dos coordenadas (Haversine)
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -699,63 +693,17 @@ export default function BusquedaMasivaPage() {
             provincia = addressParts[addressParts.length - 2] || ''
           }
 
-          // Generar nombre único si el slug ya existe
-          let finalName = place.name
-          let slug = generateSlug(finalName)
-
-          // Verificar si ya existe el slug
-          let { data: existingSlug } = await (supabase as any)
+          const finalName = place.name
+          const taken = new Set(window.existingAreasData?.slugs || [])
+          let slug = uniqueAreaSlug(baseAreaSlug(place.name, ciudad, provincia), taken)
+          const { data: existingSlug } = await (supabase as any)
             .from('areas')
             .select('id')
             .eq('slug', slug)
-            .single()
-
+            .maybeSingle()
           if (existingSlug) {
-            // Si el nombre ya existe, añadir la ciudad para hacerlo único
-            if (ciudad) {
-              finalName = `${place.name} ${ciudad}`
-              slug = generateSlug(finalName)
-              console.log(`🔄 Nombre duplicado detectado. Renombrado: "${place.name}" → "${finalName}"`)
-
-              // Verificar de nuevo si el nuevo slug también existe
-              const { data: existingSlugWithCity } = await (supabase as any)
-                .from('areas')
-                .select('id')
-                .eq('slug', slug)
-                .single()
-
-              if (existingSlugWithCity) {
-                // Si aún existe, añadir un número
-                let counter = 2
-                let uniqueSlug = `${slug}-${counter}`
-                let uniqueName = `${finalName} ${counter}`
-
-                while (counter < 100) {
-                  const { data: exists } = await (supabase as any)
-                    .from('areas')
-                    .select('id')
-                    .eq('slug', uniqueSlug)
-                    .single()
-
-                  if (!exists) {
-                    finalName = uniqueName
-                    slug = uniqueSlug
-                    console.log(`🔄 Añadido sufijo numérico: "${finalName}"`)
-                    break
-                  }
-
-                  counter++
-                  uniqueSlug = `${slug}-${counter}`
-                  uniqueName = `${finalName} ${counter}`
-                }
-              }
-            } else {
-              // Si no hay ciudad, saltar
-              console.log(`⚠️ Ya existe un área con slug ${slug} y no hay ciudad disponible, saltando...`)
-              errorCount++
-              errors.push(`${place.name}: Ya existe`)
-              continue
-            }
+            taken.add(slug)
+            slug = uniqueAreaSlug(baseAreaSlug(place.name, ciudad, provincia), taken)
           }
 
           const decision = decidirUbicacion(place.name, {
@@ -944,59 +892,17 @@ export default function BusquedaMasivaPage() {
             provincia = addressParts[addressParts.length - 2] || ''
           }
 
-          // Generar nombre único si el slug ya existe
-          let finalName = place.name
-          let slug = generateSlug(finalName)
-
-          // Verificar si ya existe el slug
-          let { data: existingSlug } = await (supabase as any)
+          const finalName = place.name
+          const taken = new Set(window.existingAreasData?.slugs || [])
+          let slug = uniqueAreaSlug(baseAreaSlug(place.name, ciudad, provincia), taken)
+          const { data: existingSlug } = await (supabase as any)
             .from('areas')
             .select('id')
             .eq('slug', slug)
-            .single()
-
+            .maybeSingle()
           if (existingSlug) {
-            if (ciudad) {
-              finalName = `${place.name} ${ciudad}`
-              slug = generateSlug(finalName)
-              console.log(`🔄 Nombre duplicado detectado. Renombrado: "${place.name}" → "${finalName}"`)
-
-              const { data: existingSlugWithCity } = await (supabase as any)
-                .from('areas')
-                .select('id')
-                .eq('slug', slug)
-                .single()
-
-              if (existingSlugWithCity) {
-                let counter = 2
-                let uniqueSlug = `${slug}-${counter}`
-                let uniqueName = `${finalName} ${counter}`
-
-                while (counter < 100) {
-                  const { data: exists } = await (supabase as any)
-                    .from('areas')
-                    .select('id')
-                    .eq('slug', uniqueSlug)
-                    .single()
-
-                  if (!exists) {
-                    finalName = uniqueName
-                    slug = uniqueSlug
-                    console.log(`🔄 Añadido sufijo numérico: "${finalName}"`)
-                    break
-                  }
-
-                  counter++
-                  uniqueSlug = `${slug}-${counter}`
-                  uniqueName = `${finalName} ${counter}`
-                }
-              }
-            } else {
-              console.log(`⚠️ Ya existe un área con slug ${slug} y no hay ciudad disponible, saltando...`)
-              errorCount++
-              errors.push(`${place.name}: Ya existe`)
-              continue
-            }
+            taken.add(slug)
+            slug = uniqueAreaSlug(baseAreaSlug(place.name, ciudad, provincia), taken)
           }
 
           const decision = decidirUbicacion(place.name, {

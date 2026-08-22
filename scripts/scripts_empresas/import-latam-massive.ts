@@ -32,6 +32,7 @@
 import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
 import { decidirUbicacion } from "../../lib/areas/tipo-area";
+import { baseAreaSlug, slugify, uniqueAreaSlug } from "../../lib/areas/slug";
 
 // Cargar variables de entorno
 dotenv.config({ path: ".env.local" });
@@ -350,7 +351,7 @@ function normalizeText(text: string): string {
 }
 
 function generateSlug(text: string): string {
-  return normalizeText(text).replace(/\s+/g, "-");
+  return slugify(text);
 }
 
 function calculateDistance(
@@ -704,9 +705,9 @@ async function importArea(place: PlaceResult, pais: string): Promise<boolean> {
     const provincia = location?.province || null;
     const ciudad = location?.city || null;
 
-    // Generar slug
-    const slug = generateSlug(
-      `${place.name}-${ciudad || provincia || paisReal}`
+    const slug = uniqueAreaSlug(
+      baseAreaSlug(place.name, ciudad, provincia || paisReal),
+      slugsSet
     );
 
     // Verificar si ya existe (doble check)

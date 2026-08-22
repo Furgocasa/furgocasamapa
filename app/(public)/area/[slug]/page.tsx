@@ -1,6 +1,7 @@
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import slugRedirects from '@/lib/areas/slug-redirects.json'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { DetalleAreaHeader } from '@/components/area/DetalleAreaHeader'
@@ -27,8 +28,16 @@ interface PageProps {
   }
 }
 
+function redirectIfLegacySlug(slug: string) {
+  const dest = (slugRedirects as Record<string, string>)[slug]
+  if (dest && dest !== slug) {
+    permanentRedirect(`/area/${dest}`)
+  }
+}
+
 // Generar metadata dinámica para SEO
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  redirectIfLegacySlug(params.slug)
   const supabase = await createClient()
 
   const { data: area } = await (supabase as any)
@@ -56,6 +65,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function AreaPage({ params }: PageProps) {
+  redirectIfLegacySlug(params.slug)
   const supabase = await createClient()
   const cookieStore = await cookies()
   const locale = normalizeLocale(cookieStore.get(LANG_COOKIE)?.value)

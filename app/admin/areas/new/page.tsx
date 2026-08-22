@@ -11,6 +11,7 @@ import {
   PhotoIcon,
   MapPinIcon
 } from '@heroicons/react/24/outline'
+import { baseAreaSlug } from '@/lib/areas/slug'
 
 const GooglePlacesPicker = dynamic(() => import('@/components/admin/GooglePlacesPicker'), {
   ssr: false,
@@ -76,14 +77,8 @@ export default function NewAreaPage() {
     }
   }
 
-  const generateSlug = (nombre: string) => {
-    return nombre
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-  }
+  const generateSlug = (nombre: string, ciudad?: string, provincia?: string) =>
+    baseAreaSlug(nombre, ciudad, provincia)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,7 +89,7 @@ export default function NewAreaPage() {
       const supabase = createClient()
       
       // Generar slug si no existe
-      const slug = area.slug || generateSlug(area.nombre)
+      const slug = area.slug || generateSlug(area.nombre, area.ciudad, area.provincia)
       
       // Verificar que el slug no exista
       const { data: existingArea } = await (supabase as any)
@@ -147,7 +142,9 @@ export default function NewAreaPage() {
     setArea(prev => ({
       ...prev,
       nombre: placeData.nombre || prev.nombre,
-      slug: placeData.nombre ? generateSlug(placeData.nombre) : prev.slug,
+      slug: placeData.nombre
+        ? generateSlug(placeData.nombre, placeData.ciudad || prev.ciudad, placeData.provincia || prev.provincia)
+        : prev.slug,
       direccion: placeData.direccion || prev.direccion,
       ciudad: placeData.ciudad || prev.ciudad,
       provincia: placeData.provincia || prev.provincia,
@@ -218,7 +215,7 @@ export default function NewAreaPage() {
                   onChange={(e) => {
                     setArea({ ...area, nombre: e.target.value })
                     if (!area.slug) {
-                      setArea(prev => ({ ...prev, slug: generateSlug(e.target.value) }))
+                      setArea(prev => ({ ...prev, slug: generateSlug(e.target.value, prev.ciudad, prev.provincia) }))
                     }
                   }}
                   placeholder="Ej: Área de Autocaravanas El Mirador"

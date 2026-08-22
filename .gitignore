@@ -33,6 +33,8 @@ scripts/*-ids.txt
 scripts/ai-pilot-previews/
 scripts/parazuelos-review/
 scripts/el-greco-review/
+scripts/review-ia-campings/
+scripts/alannia-review/
 
 # local env files
 .env

@@ -19,6 +19,7 @@ import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
 import { decidirUbicacion } from "../../lib/areas/tipo-area";
+import { baseAreaSlug, uniqueAreaSlug } from "../../lib/areas/slug";
 
 // Windows / antivirus: interceptan TLS y rompen fetch a Google y Supabase
 if (process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0") {
@@ -370,9 +371,27 @@ async function loadExistingPlaceIds(): Promise<Set<string>> {
   return set;
 }
 
-function generateSlug(name: string, placeId: string): string {
-  const base = normalizeText(name).replace(/\s+/g, "-").slice(0, 80);
-  return `${base}-uk-${placeId.slice(-10)}`;
+let takenSlugs: Set<string> | null = null;
+
+async function ensureTakenSlugs(): Promise<Set<string>> {
+  if (takenSlugs) return takenSlugs;
+  takenSlugs = new Set<string>();
+  if (!supabase) return takenSlugs;
+  const pageSize = 1000;
+  let page = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from("areas")
+      .select("slug")
+      .range(page * pageSize, (page + 1) * pageSize - 1);
+    if (error || !data?.length) break;
+    for (const row of data) {
+      if (row.slug) takenSlugs.add(row.slug);
+    }
+    if (data.length < pageSize) break;
+    page++;
+  }
+  return takenSlugs;
 }
 
 function toHit(
@@ -424,7 +443,12 @@ async function importArea(hit: PlaceHit): Promise<boolean> {
     return false;
   }
 
-  const slug = generateSlug(hit.name, hit.place_id);
+  const taken = await ensureTakenSlugs();
+  const slug = uniqueAreaSlug(
+    baseAreaSlug(hit.name, details?.ciudad, details?.provincia || hit.region),
+    taken
+  );
+  taken.add(slug);
   const newArea = {
     nombre: hit.name,
     slug,
