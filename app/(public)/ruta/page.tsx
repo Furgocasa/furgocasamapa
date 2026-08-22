@@ -11,7 +11,7 @@ import { useLanguage } from '@/lib/i18n'
 type VistaRuta = 'ruta' | 'mapa' | 'lista'
 
 export default function RutaPage() {
-  const [vistaActual, setVistaActual] = useState<VistaRuta>('ruta')
+  const [vistaActual, setVistaActual] = useState<VistaRuta>('mapa')
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClientComponentClient()
@@ -35,16 +35,12 @@ export default function RutaPage() {
   }, [supabase])
 
   const handleRutaCalculada = () => {
-    // Cambiar a vista mapa en móvil cuando se calcula una ruta
-    if (window.innerWidth < 768) {
-      setVistaActual('mapa')
-    }
+    setVistaActual('mapa')
   }
 
-  // Mostrar loading mientras comprobamos autenticación
   if (loading) {
     return (
-      <div className="h-screen flex flex-col overflow-hidden">
+      <div className="h-[100dvh] flex flex-col overflow-hidden">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -57,64 +53,69 @@ export default function RutaPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden relative">
-      {/* Navbar - siempre visible */}
+    <div className="h-[100dvh] flex flex-col overflow-hidden relative">
       <Navbar />
-      
-      {/* Planificador - difuminado si no hay usuario */}
-      <main className={`flex-1 overflow-hidden min-h-0 ${!user ? 'blur-sm pointer-events-none select-none' : ''}`}>
+
+      <main className={`flex-1 relative flex overflow-hidden min-h-0 ${!user ? 'blur-sm pointer-events-none select-none' : ''}`}>
         <Suspense fallback={
-          <div className="flex items-center justify-center h-full">
+          <div className="flex items-center justify-center h-full w-full">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600 mx-auto mb-4"></div>
               <p className="text-gray-600">{t('ruta_loading_planner')}</p>
             </div>
           </div>
         }>
-          <PlanificadorRuta 
-            vistaMovil={vistaActual} 
+          <PlanificadorRuta
+            vistaMovil={vistaActual}
             onRutaCalculada={handleRutaCalculada}
           />
         </Suspense>
       </main>
 
-      {/* Modal de bloqueo si no hay usuario */}
       {!user && <LoginWall />}
 
-      {/* Bottom Bar (solo móvil) - Ruta, Mapa, Lista */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-bottom z-40">
-        <div className="flex items-center justify-around h-16 px-2">
-          {/* Ruta */}
-          <button
-            onClick={() => setVistaActual('ruta')}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-              vistaActual === 'ruta' ? 'text-primary-600' : 'text-gray-600'
-            }`}
-          >
-            <MapPinIcon className="w-6 h-6 mb-1" />
-            <span className="text-xs font-medium">{t('ruta_tab_route')}</span>
-          </button>
-
-          {/* Mapa */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-200/80 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] z-40 pb-[env(safe-area-inset-bottom)]">
+        <div className="flex items-center justify-around h-14 px-3">
           <button
             onClick={() => setVistaActual('mapa')}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-              vistaActual === 'mapa' ? 'text-primary-600' : 'text-gray-600'
+            className={`flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-200 active:scale-95 ${
+              vistaActual === 'mapa' ? 'text-accent-600' : 'text-gray-500'
             }`}
           >
-            <MapIcon className="w-6 h-6 mb-1" />
-            <span className="text-xs font-medium">{t('ruta_tab_map')}</span>
+            <span className={`px-4 py-1 rounded-full transition-colors duration-200 ${
+              vistaActual === 'mapa' ? 'bg-accent-50' : 'bg-transparent'
+            }`}>
+              <MapIcon className="w-6 h-6" />
+            </span>
+            <span className={`text-[11px] ${vistaActual === 'mapa' ? 'font-semibold' : 'font-medium'}`}>{t('nav_mapa')}</span>
           </button>
 
-          {/* Lista */}
           <button
-            onClick={() => setVistaActual('lista')}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-              vistaActual === 'lista' ? 'text-primary-600' : 'text-gray-600'
+            onClick={() => setVistaActual('ruta')}
+            className={`flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-200 active:scale-95 ${
+              vistaActual === 'ruta' ? 'text-accent-600' : 'text-gray-500'
             }`}
           >
-            <ListBulletIcon className="w-6 h-6 mb-1" />
-            <span className="text-xs font-medium">{t('ruta_tab_list')}</span>
+            <span className={`px-4 py-1 rounded-full transition-colors duration-200 ${
+              vistaActual === 'ruta' ? 'bg-accent-50' : 'bg-transparent'
+            }`}>
+              <MapPinIcon className="w-6 h-6" />
+            </span>
+            <span className={`text-[11px] ${vistaActual === 'ruta' ? 'font-semibold' : 'font-medium'}`}>{t('ruta_tab_route')}</span>
+          </button>
+
+          <button
+            onClick={() => setVistaActual('lista')}
+            className={`flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-200 active:scale-95 relative ${
+              vistaActual === 'lista' ? 'text-accent-600' : 'text-gray-500'
+            }`}
+          >
+            <span className={`px-4 py-1 rounded-full transition-colors duration-200 relative ${
+              vistaActual === 'lista' ? 'bg-accent-50' : 'bg-transparent'
+            }`}>
+              <ListBulletIcon className="w-6 h-6" />
+            </span>
+            <span className={`text-[11px] ${vistaActual === 'lista' ? 'font-semibold' : 'font-medium'}`}>{t('places')}</span>
           </button>
         </div>
       </nav>

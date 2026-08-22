@@ -4,7 +4,8 @@ import { Area } from '@/types/database.types'
 import { MapPinIcon, PhoneIcon, StarIcon, XMarkIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
 import { useState, useMemo } from 'react'
-import { useLanguage, getServicioLabel, SERVICIO_ICONS } from '@/lib/i18n'
+import { useLanguage, getServicioLabel, getTipoAreaLabel, SERVICIO_ICONS } from '@/lib/i18n'
+import { getTipoAreaColor } from '@/lib/areas/tipo-area'
 
 interface ListaResultadosProps {
   areas: Area[]
@@ -12,6 +13,8 @@ interface ListaResultadosProps {
   onClose?: () => void
   userLocation?: { lat: number; lng: number } | null
   gpsActive?: boolean
+  emptyTitle?: string
+  emptyHint?: string
 }
 
 type SortOption = 'relevancia' | 'valoracion' | 'precio' | 'proximidad' | 'nombre'
@@ -20,7 +23,15 @@ type SortDirection = 'asc' | 'desc'
 // Límite de 50 resultados en la lista (el mapa muestra todos los marcadores)
 const MAX_RESULTS = 50
 
-export function ListaResultados({ areas, onAreaClick, onClose, userLocation, gpsActive }: ListaResultadosProps) {
+export function ListaResultados({
+  areas,
+  onAreaClick,
+  onClose,
+  userLocation,
+  gpsActive,
+  emptyTitle,
+  emptyHint,
+}: ListaResultadosProps) {
   const { locale, t } = useLanguage()
   const [sortBy, setSortBy] = useState<SortOption>('nombre')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
@@ -151,10 +162,10 @@ export function ListaResultados({ areas, onAreaClick, onClose, userLocation, gps
           <div className="flex flex-col items-center justify-center h-full text-center py-12">
             <MapPinIcon className="w-16 h-16 text-gray-300 mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No se encontraron áreas
+              {emptyTitle || 'No se encontraron áreas'}
             </h3>
             <p className="text-gray-500 text-sm">
-              Intenta ajustar los filtros para ver más resultados
+              {emptyHint || 'Intenta ajustar los filtros para ver más resultados'}
             </p>
           </div>
         ) : (
@@ -210,9 +221,16 @@ export function ListaResultados({ areas, onAreaClick, onClose, userLocation, gps
                   {/* Contenido */}
                   <div className="p-4 space-y-2">
                     {/* Título */}
-                    <h3 className="font-bold text-gray-900 text-base line-clamp-2">
-                      {area.nombre}
-                    </h3>
+                    <div className="flex items-start gap-2">
+                      <span
+                        className="mt-1.5 w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: getTipoAreaColor(area.tipo_area) }}
+                        aria-hidden
+                      />
+                      <h3 className="font-bold text-gray-900 text-base line-clamp-2">
+                        {area.nombre}
+                      </h3>
+                    </div>
 
                     {/* Ubicación */}
                     <div className="flex items-center text-sm text-gray-600">
@@ -222,8 +240,17 @@ export function ListaResultados({ areas, onAreaClick, onClose, userLocation, gps
                       </span>
                     </div>
 
-                    {/* Badges: Precio + Verificado */}
+                    {/* Badges: Tipo + Precio + Verificado */}
                     <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                        style={{
+                          backgroundColor: `${getTipoAreaColor(area.tipo_area)}20`,
+                          color: getTipoAreaColor(area.tipo_area),
+                        }}
+                      >
+                        {getTipoAreaLabel(area.tipo_area, locale)}
+                      </span>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
                         area.precio_noche === 0
                           ? 'bg-green-100 text-green-800'

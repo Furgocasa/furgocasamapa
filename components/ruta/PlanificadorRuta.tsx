@@ -1,24 +1,31 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Loader } from '@googlemaps/js-api-loader'
 import { createClient } from '@/lib/supabase/client'
 import type { Area, Ruta } from '@/types/database.types'
 import { ListaResultados } from '@/components/mapa/ListaResultados'
+import { buildAreaPopupHTML } from '@/components/mapa/areaPopup'
+import BottomSheet from '@/components/mobile/BottomSheet'
 import {
   MagnifyingGlassIcon,
   MapPinIcon,
   ArrowPathIcon,
-  FunnelIcon,
   XMarkIcon,
   BookmarkIcon,
   ArrowDownTrayIcon,
-  Bars3Icon
+  Bars3Icon,
+  CheckIcon,
+  PlusIcon,
+  InformationCircleIcon,
+  ClockIcon,
+  MapIcon,
 } from '@heroicons/react/24/outline'
 import { useToast } from '@/hooks/useToast'
 import { generateGPX, downloadGPX, generateGPXFilename } from '@/lib/gpx/generate-gpx'
 import { getTipoAreaColor } from '@/lib/areas/tipo-area'
+import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
 import {
   DndContext,
   closestCenter,
@@ -36,7 +43,7 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { useLanguage, getServicioLabel, getTipoAreaLabel } from '@/lib/i18n'
+import { useLanguage } from '@/lib/i18n'
 import AuthModal from '@/components/ui/AuthModal'
 import { syncLocalFavoritesToAccount } from '@/lib/favoritos/local'
 import { track } from '@/lib/analytics/track'
@@ -112,23 +119,26 @@ function SortableWaypoint({ waypoint, index, onUpdate, onDelete, map, disabled }
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-2 ${isDragging ? 'z-50' : ''}`}
+      className={`flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-1.5 py-1 ${isDragging ? 'z-50 shadow-sm' : ''}`}
     >
-      {/* Handle de arrastre */}
       <button
         type="button"
-        className="cursor-grab active:cursor-grabbing p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+        className="cursor-grab active:cursor-grabbing p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
         {...attributes}
         {...listeners}
       >
         <Bars3Icon className="w-4 h-4" />
       </button>
 
+      <span className="w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-[10px] font-bold flex items-center justify-center shrink-0">
+        {index + 1}
+      </span>
+
       <input
         type="text"
         placeholder={`${stopLabel}${waypoint.name ? `: ${waypoint.name}` : '...'}`}
         defaultValue={waypoint.name}
-        className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+        className="flex-1 min-w-0 px-2 py-1.5 text-sm border-0 bg-transparent focus:ring-0 focus:outline-none"
         onChange={(e) => {
           if (!map) return
           const google = (window as any).google
@@ -154,7 +164,7 @@ function SortableWaypoint({ waypoint, index, onUpdate, onDelete, map, disabled }
       <button
         type="button"
         onClick={() => onDelete(index)}
-        className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
         title={t('ruta_remove_stop')}
       >
         <XMarkIcon className="w-4 h-4" />
@@ -163,10 +173,348 @@ function SortableWaypoint({ waypoint, index, onUpdate, onDelete, map, disabled }
   )
 }
 
-export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada }: PlanificadorRutaProps = {}) {
-  const mapRef = useRef<HTMLDivElement>(null)
+const AUTOCOMPLETE_COUNTRIES = ['es', 'fr', 'pt', 'it', 'de', 'ar']
+
+interface PanelPlanificadorProps {
+  map: GoogleMap | null
+  isLoading: boolean
+  isCalculating: boolean
+  showHeader: boolean
+  origen: RoutePoint | null
+  destino: RoutePoint | null
+  waypoints: RoutePoint[]
+  radio: number
+  rutaInfo: { distancia: string; duracion: string } | null
+  currentRoute: GoogleDirectionsRoute | null
+  rutaGuardada: boolean
+  areasCount: number
+  sensors: ReturnType<typeof useSensors>
+  onOrigenChange: (point: RoutePoint) => void
+  onDestinoChange: (point: RoutePoint) => void
+  onRadioChange: (radio: number) => void
+  onAddWaypoint: () => void
+  onUpdateWaypoint: (index: number, waypoint: RoutePoint) => void
+  onDeleteWaypoint: (index: number) => void
+  onDragEnd: (event: DragEndEvent) => void
+  onCalcular: () => void
+  onGuardar: () => void
+  onExportar: () => void
+  onLimpiar: () => void
+}
+
+function PanelPlanificador({
+  map,
+  isLoading,
+  isCalculating,
+  showHeader,
+  origen,
+  destino,
+  waypoints,
+  radio,
+  rutaInfo,
+  currentRoute,
+  rutaGuardada,
+  areasCount,
+  sensors,
+  onOrigenChange,
+  onDestinoChange,
+  onRadioChange,
+  onAddWaypoint,
+  onUpdateWaypoint,
+  onDeleteWaypoint,
+  onDragEnd,
+  onCalcular,
+  onGuardar,
+  onExportar,
+  onLimpiar,
+}: PanelPlanificadorProps) {
+  const { t } = useLanguage()
   const origenInputRef = useRef<HTMLInputElement>(null)
   const destinoInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!map || !origenInputRef.current) return
+    const google = (window as any).google
+    if (!google?.maps?.places) return
+    const autocomplete = new google.maps.places.Autocomplete(origenInputRef.current, {
+      types: ['(cities)'],
+      componentRestrictions: { country: AUTOCOMPLETE_COUNTRIES },
+    })
+    const listener = autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace()
+      if (place.geometry?.location) {
+        onOrigenChange({
+          name: place.name || place.formatted_address || t('origin'),
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+        })
+      }
+    })
+    return () => listener.remove()
+  }, [map, onOrigenChange, t])
+
+  useEffect(() => {
+    if (!map || !destinoInputRef.current) return
+    const google = (window as any).google
+    if (!google?.maps?.places) return
+    const autocomplete = new google.maps.places.Autocomplete(destinoInputRef.current, {
+      types: ['(cities)'],
+      componentRestrictions: { country: AUTOCOMPLETE_COUNTRIES },
+    })
+    const listener = autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace()
+      if (place.geometry?.location) {
+        onDestinoChange({
+          name: place.name || place.formatted_address || t('destination'),
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+        })
+      }
+    })
+    return () => listener.remove()
+  }, [map, onDestinoChange, t])
+
+  useEffect(() => {
+    if (!origenInputRef.current) return
+    origenInputRef.current.value = origen?.name || ''
+  }, [origen?.name, origen?.lat, origen?.lng])
+
+  useEffect(() => {
+    if (!destinoInputRef.current) return
+    destinoInputRef.current.value = destino?.name || ''
+  }, [destino?.name, destino?.lat, destino?.lng])
+
+  return (
+    <div className="h-full flex flex-col bg-white">
+      {showHeader && (
+        <div className="hidden md:flex items-center justify-between p-4 bg-gradient-to-r from-primary-50 to-blue-50 border-b border-primary-200">
+          <h2 className="text-lg font-bold text-primary-900">{t('ruta_title')}</h2>
+          {areasCount > 0 && (
+            <span className="text-xs font-bold bg-accent-500 text-white rounded-full px-2 py-0.5">
+              {areasCount}
+            </span>
+          )}
+        </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-3">
+        <p className="flex items-start gap-1.5 text-[11px] text-gray-500 leading-relaxed">
+          <InformationCircleIcon className="w-4 h-4 mt-0.5 shrink-0 text-gray-400" />
+          {t('ruta_hint')}
+        </p>
+
+        <div>
+          <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-primary-600 shrink-0" aria-hidden />
+            {t('ruta_origin')}
+          </label>
+          <div className="relative">
+            <input
+              ref={origenInputRef}
+              type="text"
+              placeholder={t('ruta_search_ph')}
+              className="w-full pl-8 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              disabled={isLoading}
+            />
+            <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            {origen && (
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-primary-600">
+                <CheckIcon className="w-4 h-4" />
+              </span>
+            )}
+          </div>
+          {origen && (
+            <p className="mt-1.5 text-[13px] font-medium text-primary-900 truncate">{origen.name}</p>
+          )}
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-medium text-gray-600">
+              {t('ruta_waypoints')} {waypoints.length > 0 && `(${waypoints.length})`}
+            </label>
+            <button
+              type="button"
+              onClick={onAddWaypoint}
+              className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg border border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors font-medium"
+              disabled={isLoading}
+            >
+              <PlusIcon className="w-3.5 h-3.5" />
+              {t('ruta_add')}
+            </button>
+          </div>
+
+          {waypoints.length > 0 && (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={onDragEnd}
+            >
+              <SortableContext
+                items={waypoints.map((wp: any, i: any) => wp.id || `waypoint-${i}`)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                  {waypoints.map((waypoint: RoutePoint, index: number) => (
+                    <SortableWaypoint
+                      key={waypoint.id || `waypoint-${index}`}
+                      waypoint={waypoint}
+                      index={index}
+                      onUpdate={onUpdateWaypoint}
+                      onDelete={onDeleteWaypoint}
+                      map={map}
+                      disabled={isLoading}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
+
+          {waypoints.length === 0 && (
+            <p className="text-[11px] text-gray-500">{t('ruta_add_hint')}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-accent-500 shrink-0" aria-hidden />
+            {t('ruta_dest')}
+          </label>
+          <div className="relative">
+            <input
+              ref={destinoInputRef}
+              type="text"
+              placeholder={t('ruta_search_ph')}
+              className="w-full pl-8 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              disabled={isLoading}
+            />
+            <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            {destino && (
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-accent-600">
+                <CheckIcon className="w-4 h-4" />
+              </span>
+            )}
+          </div>
+          {destino && (
+            <p className="mt-1.5 text-[13px] font-medium text-gray-900 truncate">{destino.name}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            {t('ruta_radius', { n: radio })}
+          </label>
+          <div className="grid grid-cols-4 gap-1.5">
+            {[5, 10, 20, 50].map((r: number) => {
+              const activo = radio === r
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => onRadioChange(r)}
+                  aria-pressed={activo}
+                  className={`rounded-xl border px-2.5 py-2 text-center text-[13px] transition-all active:scale-[0.98] ${
+                    activo
+                      ? 'border-primary-600 bg-primary-600 text-white font-semibold shadow-sm'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {r} km
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {rutaInfo && (
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-1.5">
+            <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+              {t('ruta_info')}
+            </h3>
+            <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-gray-100">
+              <span className="text-sm text-gray-600 flex items-center gap-2">
+                <MapIcon className="w-4 h-4 text-gray-400" />
+                {t('distance')}
+              </span>
+              <span className="text-sm font-bold text-primary-700">{rutaInfo.distancia}</span>
+            </div>
+            <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-gray-100">
+              <span className="text-sm text-gray-600 flex items-center gap-2">
+                <ClockIcon className="w-4 h-4 text-gray-400" />
+                {t('duration')}
+              </span>
+              <span className="text-sm font-bold text-primary-700">{rutaInfo.duracion}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="border-t px-3 py-3 space-y-2 bg-white">
+        <button
+          type="button"
+          onClick={onCalcular}
+          disabled={!origen || !destino || isCalculating}
+          className="w-full flex items-center justify-center gap-2 py-3 px-3 bg-primary-600 text-white rounded-xl text-sm font-bold shadow-sm hover:bg-primary-700 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isCalculating ? (
+            <>
+              <ArrowPathIcon className="w-5 h-5 animate-spin" />
+              {t('ruta_calculating')}
+            </>
+          ) : (
+            <>
+              <MapPinIcon className="w-5 h-5" />
+              {t('ruta_calc')}
+            </>
+          )}
+        </button>
+
+        {currentRoute && rutaInfo && (
+          <div className="grid grid-cols-2 gap-1.5">
+            {!rutaGuardada ? (
+              <button
+                type="button"
+                onClick={onGuardar}
+                className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border border-gray-200 text-[13px] font-semibold text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+              >
+                <BookmarkIcon className="w-4 h-4" />
+                {t('ruta_save')}
+              </button>
+            ) : (
+              <div className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border border-primary-200 bg-primary-50 text-[13px] font-semibold text-primary-800">
+                <CheckIcon className="w-4 h-4" />
+                {t('ruta_saved')}
+              </div>
+            )}
+            {origen && destino && (
+              <button
+                type="button"
+                onClick={onExportar}
+                className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border border-gray-200 text-[13px] font-semibold text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+                title={t('ruta_export_gpx')}
+              >
+                <ArrowDownTrayIcon className="w-4 h-4" />
+                GPX
+              </button>
+            )}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={onLimpiar}
+          className="w-full py-2 px-3 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-100 transition-colors font-medium"
+        >
+          {t('ruta_clear')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada }: PlanificadorRutaProps = {}) {
+  const mapRef = useRef<HTMLDivElement>(null)
   const { toast, showToast, hideToast } = useToast()
   const searchParams = useSearchParams()
   const { t, locale } = useLanguage()
@@ -186,6 +534,8 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
   const [infoWindow, setInfoWindow] = useState<GoogleInfoWindow | null>(null)
   const [rutaInfo, setRutaInfo] = useState<{ distancia: string; duracion: string } | null>(null)
   const userMarkerRef = useRef<GoogleMarker | null>(null)
+  const hoverInfoWindowRef = useRef<GoogleInfoWindow | null>(null)
+  const markersByAreaIdRef = useRef<Record<string, GoogleMarker>>({})
   const [gpsActive, setGpsActive] = useState(false) // Siempre false inicialmente para evitar hidratación
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const watchIdRef = useRef<number | null>(null)
@@ -328,44 +678,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
       // Crear InfoWindow
       const infoWindowInstance = new google.maps.InfoWindow()
       setInfoWindow(infoWindowInstance)
-
-      // Configurar autocomplete para origen
-      if (origenInputRef.current) {
-        const origenAutocomplete = new google.maps.places.Autocomplete(origenInputRef.current, {
-          types: ['(cities)'], // Solo ciudades, no calles ni direcciones
-          componentRestrictions: { country: ['es', 'fr', 'pt', 'it', 'de', 'ar'] } // Añadido Alemania y Argentina
-        })
-
-        origenAutocomplete.addListener('place_changed', () => {
-          const place = origenAutocomplete.getPlace()
-          if (place.geometry?.location) {
-            setOrigen({
-              name: place.name || place.formatted_address || t('origin'),
-              lat: place.geometry.location.lat(),
-              lng: place.geometry.location.lng()
-            })
-          }
-        })
-      }
-
-      // Configurar autocomplete para destino
-      if (destinoInputRef.current) {
-        const destinoAutocomplete = new google.maps.places.Autocomplete(destinoInputRef.current, {
-          types: ['(cities)'], // Solo ciudades, no calles ni direcciones
-          componentRestrictions: { country: ['es', 'fr', 'pt', 'it', 'de', 'ar'] } // Añadido Alemania y Argentina
-        })
-
-        destinoAutocomplete.addListener('place_changed', () => {
-          const place = destinoAutocomplete.getPlace()
-          if (place.geometry?.location) {
-            setDestino({
-              name: place.name || place.formatted_address || t('destination'),
-              lat: place.geometry.location.lat(),
-              lng: place.geometry.location.lng()
-            })
-          }
-        })
-      }
+      hoverInfoWindowRef.current = new google.maps.InfoWindow({ disableAutoPan: true })
 
       setIsLoading(false)
       console.log('✅ Planificador de rutas inicializado')
@@ -660,6 +973,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
       // Limpiar marcadores anteriores
       markers.forEach((marker: any) => marker.setMap(null))
       setMarkers([])
+      markersByAreaIdRef.current = {}
 
       // Obtener TODOS los puntos detallados de la ruta (no solo overview)
       // Esto incluye todos los steps de cada leg para rutas largas
@@ -799,174 +1113,8 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
     }
   }
 
-  const getServicioIcon = (servicio: string): string => {
-    const iconos: Record<string, string> = {
-      agua: '💧',
-      electricidad: '⚡',
-      vaciado_aguas_negras: '♻️',
-      vaciado_aguas_grises: '🚰',
-      wifi: '📶',
-      duchas: '🚿',
-      wc: '🚻',
-      lavanderia: '🧺',
-      restaurante: '🍽️',
-      supermercado: '🛒',
-      zona_mascotas: '🐕'
-    }
-    return iconos[servicio] || '✓'
-  }
-
   const createInfoWindowContent = (area: Area): string => {
-    const serviciosValidos = [
-      'agua',
-      'electricidad',
-      'vaciado_aguas_negras',
-      'vaciado_aguas_grises',
-      'wifi',
-      'duchas',
-      'wc',
-      'lavanderia',
-      'restaurante',
-      'supermercado',
-      'zona_mascotas'
-    ]
-
-    const serviciosDisponibles = area.servicios && typeof area.servicios === 'object'
-      ? Object.entries(area.servicios)
-          .filter(([key, value]) => value === true && serviciosValidos.includes(key))
-          .map(([key]: any) => ({
-            icon: getServicioIcon(key),
-            label: getServicioLabel(key, locale)
-          }))
-      : []
-
-    const mostrarServicios = serviciosDisponibles.slice(0, 6)
-    const serviciosRestantes = serviciosDisponibles.length - 6
-
-    return `
-      <div style="max-width: 360px; font-family: system-ui, -apple-system, sans-serif;">
-        ${area.foto_principal ? `
-          <div style="margin: -20px -20px 12px -20px; width: calc(100% + 40px); height: 180px; overflow: hidden; position: relative;">
-            <img
-              src="${area.foto_principal}"
-              alt="${area.nombre}"
-              style="width: 100%; height: 100%; object-fit: cover;"
-              onerror="this.style.display='none'"
-            />
-            ${area.google_rating ? `
-              <div style="position: absolute; top: 12px; right: 12px; display: flex; align-items: center; background: rgba(255, 255, 255, 0.95); padding: 6px 12px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); backdrop-filter: blur(4px);">
-                <span style="color: #F59E0B; font-size: 16px; margin-right: 4px;">★</span>
-                <span style="font-weight: 700; font-size: 15px; color: #111827;">${area.google_rating}</span>
-              </div>
-            ` : ''}
-          </div>
-        ` : ''}
-
-        <div style="padding: ${area.foto_principal ? '0' : '8px 0'};">
-          <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700; color: #111827; line-height: 1.3;">
-            ${area.nombre}
-          </h3>
-
-          ${area.ciudad || area.provincia ? `
-            <div style="display: flex; align-items: center; color: #6B7280; font-size: 14px; margin-bottom: 10px;">
-              <svg style="width: 16px; height: 16px; margin-right: 6px; flex-shrink: 0;" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
-              </svg>
-              <span>${[area.ciudad, area.provincia].filter(Boolean).join(', ')}</span>
-            </div>
-          ` : ''}
-
-          ${area.descripcion ? `
-            <p style="margin: 0 0 12px 0; color: #4B5563; font-size: 14px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-              ${area.descripcion.replace(/'/g, "&#39;")}
-            </p>
-          ` : ''}
-
-          <div style="display: flex; gap: 6px; margin: 12px 0; flex-wrap: wrap;">
-            <span style="background: ${getTipoAreaColor(area.tipo_area)}20; color: ${getTipoAreaColor(area.tipo_area)}; padding: 6px 12px; border-radius: 14px; font-size: 12px; font-weight: 600; border: 1px solid ${getTipoAreaColor(area.tipo_area)}30;">
-              ${getTipoAreaLabel(area.tipo_area, locale)}
-            </span>
-            ${area.precio_noche !== null && area.precio_noche !== undefined ? `
-              <span style="background: #F3F4F6; color: #374151; padding: 6px 12px; border-radius: 14px; font-size: 12px; font-weight: 600; border: 1px solid #E5E7EB;">
-                ${area.precio_noche === 0 ? `✨ ${t('free')}` : `💰 ${area.precio_noche}€${t('per_night')}`}
-              </span>
-            ` : ''}
-            ${area.verificado ? `
-              <span style="background: #D1FAE5; color: #059669; padding: 6px 12px; border-radius: 14px; font-size: 12px; font-weight: 600; border: 1px solid #A7F3D0;">
-                ✓ ${t('verified')}
-              </span>
-            ` : ''}
-          </div>
-
-          ${mostrarServicios.length > 0 ? `
-            <div style="background: #F9FAFB; border-radius: 12px; padding: 12px; margin: 12px 0;">
-              <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                <svg style="width: 16px; height: 16px; margin-right: 6px; color: #6B7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                <span style="font-size: 12px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.5px;">${t('services')}</span>
-              </div>
-              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
-                ${mostrarServicios.map((s: any) => `
-                  <div style="display: flex; align-items: center; font-size: 11px; color: #6B7280;">
-                    <span style="font-size: 16px; margin-right: 4px;">${s.icon}</span>
-                    <span>${s.label}</span>
-                  </div>
-                `).join('')}
-              </div>
-              ${serviciosRestantes > 0 ? `
-                <div style="margin-top: 8px; text-align: center; font-size: 11px; color: #0284c7; font-weight: 600;">
-                  +${serviciosRestantes} ${t('services').toLowerCase()}
-                </div>
-              ` : ''}
-            </div>
-          ` : ''}
-
-          ${area.plazas_camper ? `
-            <div style="display: flex; align-items: center; padding: 8px 12px; background: #EFF6FF; border-radius: 8px; margin: 12px 0;">
-              <svg style="width: 16px; height: 16px; margin-right: 6px; color: #2563EB;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-              </svg>
-              <span style="font-size: 13px; color: #1E40AF; font-weight: 500;">
-                <strong>${area.plazas_camper}</strong> ${t('spots')} ${t('available')}
-              </span>
-            </div>
-          ` : ''}
-
-          <!-- Botones de Acción -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px;">
-            <a
-              href="/area/${area.slug}"
-              style="text-align: center; background: #0284c7; color: white; padding: 12px 16px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(2, 132, 199, 0.3);"
-              onmouseover="this.style.background='#0369a1'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 6px rgba(2, 132, 199, 0.4)'"
-              onmouseout="this.style.background='#0284c7'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(2, 132, 199, 0.3)'"
-            >
-              <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-              </svg>
-              ${t('view_details')}
-            </a>
-
-            ${area.google_maps_url || (area.latitud && area.longitud) ? `
-              <a
-                href="${area.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${area.latitud},${area.longitud}`}"
-                target="_blank"
-                rel="noopener noreferrer"
-                style="text-align: center; background: #34A853; color: white; padding: 12px 16px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(52, 168, 83, 0.3);"
-                onmouseover="this.style.background='#2d8e47'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 6px rgba(52, 168, 83, 0.4)'"
-                onmouseout="this.style.background='#34A853'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(52, 168, 83, 0.3)'"
-              >
-                <svg style="width: 16px; height: 16px;" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
-                </svg>
-                Google Maps
-              </a>
-            ` : ''}
-          </div>
-        </div>
-      </div>
-    `
+    return buildAreaPopupHTML(area, getTipoAreaColor, 0, locale)
   }
 
   const mostrarAreasEnMapa = (areas: Area[]) => {
@@ -974,6 +1122,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
 
     const google = (window as any).google
     const nuevosMarkers: GoogleMarker[] = []
+    const byId: Record<string, GoogleMarker> = {}
 
     areas.forEach((area) => {
       const pinColor = getTipoAreaColor(area.tipo_area)
@@ -993,16 +1142,30 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
       })
 
       marker.addListener('click', () => {
-        const content = createInfoWindowContent(area)
-        infoWindow.setContent(content)
+        hoverInfoWindowRef.current?.close()
+        infoWindow.setContent(createInfoWindowContent(area))
         infoWindow.open(map, marker)
       })
 
+      if (hasFinePointer()) {
+        marker.addListener('mouseover', () => {
+          if (!hoverInfoWindowRef.current || !map) return
+          hoverInfoWindowRef.current.setContent(buildMarkerTooltipHTML(area.nombre))
+          hoverInfoWindowRef.current.open({ map, anchor: marker, shouldFocus: false })
+        })
+        marker.addListener('mouseout', () => {
+          hoverInfoWindowRef.current?.close()
+        })
+      }
+
       nuevosMarkers.push(marker)
+      byId[area.id] = marker
     })
 
+    markersByAreaIdRef.current = byId
     setMarkers(nuevosMarkers)
   }
+
 
   const agregarPuntoIntermedio = () => {
     const newId = `waypoint-${Date.now()}-${Math.random()}`
@@ -1077,14 +1240,6 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
 
       setOrigen(origenPoint)
       setDestino(destinoPoint)
-
-      // Establecer valores en los inputs
-      if (origenInputRef.current) {
-        origenInputRef.current.value = origenPoint.name
-      }
-      if (destinoInputRef.current) {
-        destinoInputRef.current.value = destinoPoint.name
-      }
 
       // Establecer waypoints si existen
       if (paradasData.length > 0) {
@@ -1261,6 +1416,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
     }
     markers.forEach((marker: any) => marker.setMap(null))
     setMarkers([])
+    markersByAreaIdRef.current = {}
     setAreasEnRuta([])
     setOrigen(null)
     setDestino(null)
@@ -1269,8 +1425,6 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
     setCurrentRoute(null)
     setLoadedRuta(null)
     setRutaGuardada(false) // Resetear estado de guardado
-    if (origenInputRef.current) origenInputRef.current.value = ''
-    if (destinoInputRef.current) destinoInputRef.current.value = ''
   }
 
   const handleSaveRuta = async () => {
@@ -1554,8 +1708,62 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
     }
   }
 
+  const handleOpenSave = () => {
+    if (!saveForm.nombre.trim() && origen && destino) {
+      setSaveForm({ ...saveForm, nombre: `De ${origen.name} a ${destino.name}` })
+    }
+    setShowSaveModal(true)
+  }
+
+  const handleOrigenChange = useCallback((point: RoutePoint) => {
+    setOrigen(point)
+  }, [])
+
+  const handleDestinoChange = useCallback((point: RoutePoint) => {
+    setDestino(point)
+  }, [])
+
+  const handleAreaListaClick = (area: Area) => {
+    if (!map) return
+    map.panTo({ lat: area.latitud, lng: area.longitud })
+    map.setZoom(15)
+    const marker = markersByAreaIdRef.current[area.id]
+    if (marker && infoWindow) {
+      hoverInfoWindowRef.current?.close()
+      infoWindow.setContent(createInfoWindowContent(area))
+      infoWindow.open(map, marker)
+    }
+    onRutaCalculada?.()
+  }
+
+  const panelProps = {
+    map,
+    isLoading,
+    isCalculating,
+    origen,
+    destino,
+    waypoints,
+    radio,
+    rutaInfo,
+    currentRoute,
+    rutaGuardada,
+    areasCount: areasEnRuta.length,
+    sensors,
+    onOrigenChange: handleOrigenChange,
+    onDestinoChange: handleDestinoChange,
+    onRadioChange: (r: number) => setRadio(r),
+    onAddWaypoint: agregarPuntoIntermedio,
+    onUpdateWaypoint: actualizarWaypoint,
+    onDeleteWaypoint: eliminarPuntoIntermedio,
+    onDragEnd: handleDragEnd,
+    onCalcular: calcularRuta,
+    onGuardar: handleOpenSave,
+    onExportar: handleExportarGPX,
+    onLimpiar: limpiarRuta,
+  }
+
   return (
-    <div className="h-full flex">
+    <div className="h-full relative flex overflow-hidden min-h-0">
       {/* Login inline para guardar la ruta sin perderla */}
       {showAuthModal && (
         <AuthModal
@@ -1683,253 +1891,55 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
         </div>
       )}
 
-      {/* Panel de Controles - Izquierda (Desktop/Tablet) o vista "ruta" (Móvil) */}
-      <aside className={`w-full md:w-72 lg:w-80 bg-white shadow-lg overflow-y-auto flex-shrink-0 z-30 flex flex-col h-full ${
-        vistaMovil === 'ruta' ? 'flex' : 'hidden md:flex'
-      }`}>
-        {/* Header Azulado */}
-        <div className="bg-gradient-to-r from-primary-50 to-blue-50 border-b border-primary-200 p-4 sticky top-0 z-10">
-          <h2 className="text-lg font-bold text-primary-900">{t('ruta_title')}</h2>
-          <p className="text-sm text-primary-700 mb-2">
-            {t('ruta_sub')}
-          </p>
-          {/* Mensaje informativo */}
-          <div className="mt-3 p-3 bg-blue-100 border border-blue-300 rounded-lg">
-            <p className="text-xs text-blue-900 leading-relaxed">
-              💡 {t('ruta_hint')}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {/* Origen */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              🚩 {t('ruta_origin')}
-            </label>
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                ref={origenInputRef}
-                type="text"
-                placeholder={t('ruta_search_ph')}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                disabled={isLoading}
-              />
-            </div>
-            {origen && (
-              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-800">
-                ✅ {origen.name}
-              </div>
-            )}
-          </div>
-
-          {/* Puntos Intermedios */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700">
-                📌 {t('ruta_waypoints')} {waypoints.length > 0 && `(${waypoints.length})`}
-              </label>
-              <button
-                onClick={agregarPuntoIntermedio}
-                className="text-xs px-2 py-1 bg-primary-100 text-primary-700 rounded hover:bg-primary-200 transition-colors font-medium"
-                disabled={isLoading}
-              >
-                {t('ruta_add')}
-              </button>
-            </div>
-
-            {waypoints.length > 0 && (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={waypoints.map((wp: any, i: any) => wp.id || `waypoint-${i}`)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {waypoints.map((waypoint: RoutePoint, index: number) => (
-                      <SortableWaypoint
-                        key={waypoint.id || `waypoint-${index}`}
-                        waypoint={waypoint}
-                        index={index}
-                        onUpdate={actualizarWaypoint}
-                        onDelete={eliminarPuntoIntermedio}
-                        map={map}
-                        disabled={isLoading}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            )}
-
-            {waypoints.length === 0 && (
-              <p className="text-xs text-gray-500 italic">
-                {t('ruta_add_hint')}
-              </p>
-            )}
-          </div>
-
-          {/* Destino */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              🏁 {t('ruta_dest')}
-            </label>
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                ref={destinoInputRef}
-                type="text"
-                placeholder={t('ruta_search_ph')}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                disabled={isLoading}
-              />
-            </div>
-            {destino && (
-              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-800">
-                ✅ {destino.name}
-              </div>
-            )}
-          </div>
-
-          {/* Radio de búsqueda */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              📏 {t('ruta_radius', { n: radio })}
-            </label>
-            <div className="grid grid-cols-4 gap-2">
-              {[5, 10, 20, 50].map((r: number) => (
-                <button
-                  key={r}
-                  onClick={() => setRadio(r)}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                    radio === r
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {r}km
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Botones de Acción */}
-          <div className="space-y-3">
-            <button
-              onClick={calcularRuta}
-              disabled={!origen || !destino || isCalculating}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isCalculating ? (
-                <>
-                  <ArrowPathIcon className="w-5 h-5 animate-spin" />
-                  {t('ruta_calculating')}
-                </>
-              ) : (
-                <>
-                  <MapPinIcon className="w-5 h-5" />
-                  {t('ruta_calc')}
-                </>
-              )}
-            </button>
-
-            {currentRoute && rutaInfo && (
-              <>
-                {!rutaGuardada ? (
-                  <button
-                    onClick={() => {
-                      // Generar nombre automático si no hay uno
-                      if (!saveForm.nombre.trim() && origen && destino) {
-                        const nombreAuto = `De ${origen.name} a ${destino.name}`
-                        setSaveForm({ ...saveForm, nombre: nombreAuto })
-                      }
-                      setShowSaveModal(true)
-                    }}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-lg shadow-green-500/30"
-                  >
-                    <BookmarkIcon className="w-5 h-5" />
-                    {t('ruta_save')}
-                  </button>
-                ) : (
-                  <div className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-600 rounded-lg font-semibold border-2 border-green-500">
-                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    {t('ruta_saved')}
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Botón Exportar GPX */}
-            {currentRoute && origen && destino && (
-              <button
-                onClick={handleExportarGPX}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30"
-                title={t('ruta_export_gpx')}
-              >
-                <ArrowDownTrayIcon className="w-5 h-5" />
-                {t('ruta_export_gpx')}
-              </button>
-            )}
-
-            <button
-              onClick={limpiarRuta}
-              className="w-full py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium"
-            >
-              {t('ruta_clear')}
-            </button>
-          </div>
-
-          {/* Información de la Ruta */}
-          {rutaInfo && (
-            <div className="bg-gradient-to-br from-primary-50 to-blue-50 rounded-lg p-4 border border-primary-200">
-              <h3 className="text-sm font-semibold text-primary-900 mb-3 flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-                {t('ruta_info')}
-              </h3>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2">
-                  <span className="text-sm text-gray-600 flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                    </svg>
-                    {t('distance')}
-                  </span>
-                  <span className="text-sm font-bold text-primary-700">{rutaInfo.distancia}</span>
-                </div>
-                <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2">
-                  <span className="text-sm text-gray-600 flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {t('duration')}
-                  </span>
-                  <span className="text-sm font-bold text-primary-700">{rutaInfo.duracion}</span>
-                </div>
-              </div>
-              <div className="mt-3 p-2 bg-primary-100 rounded text-xs text-primary-700 flex items-start gap-2">
-                <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-                <span>{t('ruta_add_hint2')}</span>
-              </div>
-            </div>
-          )}
-
-        </div>
+      {/* Panel de ruta - Desktop, mismo chrome que FiltrosMapa */}
+      <aside className="hidden md:flex md:w-72 lg:w-80 bg-white shadow-lg border-r overflow-y-auto overflow-x-hidden flex-shrink-0 z-30 flex-col h-full">
+        <PanelPlanificador
+          showHeader
+          {...panelProps}
+        />
       </aside>
 
-      {/* Mapa - Centro (Desktop siempre visible, Móvil solo en vista "mapa") */}
-      <div className={`flex-1 relative z-10 h-full md:block ${
-        vistaMovil === 'mapa' ? 'block' : 'hidden md:block'
-      }`}>
+      {/* Mapa siempre visible: en móvil el planificador y la lista son hojas, como en /mapa */}
+      <div className="flex-1 relative z-10 h-full">
+        <style jsx global>{`
+        .gm-style-iw-c {
+          padding: 0 !important;
+          border-radius: 16px !important;
+          overflow: hidden !important;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+        }
+        .gm-style-iw-d {
+          overflow: hidden !important;
+          padding: 0 !important;
+          max-height: none !important;
+        }
+        .gm-style-iw-chr {
+          position: absolute !important;
+          top: 0 !important;
+          right: 0 !important;
+          z-index: 2 !important;
+          background: transparent !important;
+        }
+        .gm-style-iw-ch {
+          padding-top: 0 !important;
+        }
+        .gm-ui-hover-effect {
+          top: 8px !important;
+          right: 8px !important;
+          width: 28px !important;
+          height: 28px !important;
+          background: rgba(255, 255, 255, 0.95) !important;
+          border-radius: 50% !important;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+        }
+        .gm-ui-hover-effect > span {
+          margin: 0 !important;
+        }
+        .pac-container {
+          z-index: 10000 !important;
+        }
+        ${MARKER_TOOLTIP_CSS}
+        `}</style>
         <div ref={mapRef} className="w-full h-full" />
 
         {isLoading && (
@@ -1941,13 +1951,18 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
           </div>
         )}
 
-        {/* Botón GPS - Arriba Centro */}
+        <div className="absolute top-3 left-3 max-w-[min(11rem,calc(100%-9rem))] bg-white/90 backdrop-blur-md rounded-full shadow-lg ring-1 ring-gray-900/5 px-3 py-1.5 z-10">
+          <p className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
+            <span className="text-primary-600 font-bold tabular-nums">{areasEnRuta.length}</span>
+            {areasEnRuta.length === 1 ? 'área' : 'áreas'}
+          </p>
+        </div>
+
         <button
           onClick={() => {
             if (!gpsActive) {
-              toggleGPS() // false = activación manual, SÍ centra el mapa
+              toggleGPS()
             } else {
-              // Desactivar GPS
               if (watchIdRef.current !== null) {
                 navigator.geolocation.clearWatch(watchIdRef.current)
                 watchIdRef.current = null
@@ -1960,20 +1975,20 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
               localStorage.setItem('gpsActive', 'false')
             }
           }}
-          className={`absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full shadow-lg font-semibold transition-all z-30 flex items-center gap-2 ${
+          className={`absolute left-3 bottom-[calc(8.25rem+env(safe-area-inset-bottom,0px))] md:left-1/2 md:-translate-x-1/2 md:bottom-20 p-3 md:px-4 md:py-2 rounded-full shadow-lg font-semibold transition-all z-30 flex items-center md:gap-2 ${
             gpsActive
               ? 'bg-orange-500 text-white hover:bg-orange-600'
               : 'bg-white text-gray-700 hover:bg-gray-50'
           }`}
+          aria-label={gpsActive ? t('ruta_gps_on') : t('ruta_see_location')}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          <span className="text-sm" suppressHydrationWarning>{gpsActive ? t('ruta_gps_on') : t('ruta_see_location')}</span>
+          <span className="hidden md:inline text-sm" suppressHydrationWarning>{gpsActive ? t('ruta_gps_on') : t('ruta_see_location')}</span>
         </button>
 
-        {/* Botón Restablecer Zoom - Abajo Centro (más arriba en móvil para evitar bottom bar) */}
         <button
           onClick={() => {
             if (map) {
@@ -1981,33 +1996,56 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
               map.setZoom(6)
             }
           }}
-          className="absolute bottom-6 md:bottom-6 left-1/2 -translate-x-1/2 bg-white px-4 py-2 rounded-full shadow-lg hover:bg-gray-50 active:scale-95 transition-all z-30 flex items-center gap-2 font-semibold text-gray-700 mb-16 md:mb-0"
+          className="absolute left-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:left-1/2 md:-translate-x-1/2 md:bottom-6 bg-white p-3 md:px-4 md:py-2 rounded-full shadow-lg hover:bg-gray-50 active:scale-95 transition-all z-30 flex items-center md:gap-2 font-semibold text-gray-700"
+          aria-label={t('ruta_reset_zoom')}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
           </svg>
-          <span className="text-sm">{t('ruta_reset_zoom')}</span>
+          <span className="hidden md:inline text-sm">{t('ruta_reset_zoom')}</span>
         </button>
       </div>
 
-      {/* Lista de Resultados - Derecha (Desktop/Tablet siempre visible, Móvil solo en vista "lista") */}
-      <aside className={`w-full md:w-80 lg:w-96 bg-white shadow-lg overflow-y-auto flex-shrink-0 z-30 h-full md:block ${
-        vistaMovil === 'lista' ? 'block' : 'hidden md:block'
-      }`}>
+      <aside className="hidden md:block md:w-80 lg:w-96 bg-white shadow-lg border-l overflow-y-auto flex-shrink-0 z-30 h-full">
         <ListaResultados
           areas={areasEnRuta}
-          onAreaClick={(area) => {
-            if (map) {
-              map.panTo({ lat: area.latitud, lng: area.longitud })
-              map.setZoom(15)
-            }
-          }}
+          onAreaClick={handleAreaListaClick}
           userLocation={userLocation}
           gpsActive={gpsActive}
+          emptyTitle={t('ruta_empty_title')}
+          emptyHint={t('ruta_empty_hint')}
         />
       </aside>
 
+      <BottomSheet
+        isOpen={vistaMovil === 'ruta'}
+        onClose={() => onRutaCalculada?.()}
+        title={t('ruta_title')}
+        snapPoints={['full']}
+      >
+        <PanelPlanificador
+          showHeader={false}
+          {...panelProps}
+        />
+      </BottomSheet>
+
+      <BottomSheet
+        isOpen={vistaMovil === 'lista'}
+        onClose={() => onRutaCalculada?.()}
+        title={`${areasEnRuta.length} ${t('places')}`}
+        snapPoints={['full', 'half']}
+      >
+        <ListaResultados
+          areas={areasEnRuta}
+          onAreaClick={handleAreaListaClick}
+          onClose={() => onRutaCalculada?.()}
+          userLocation={userLocation}
+          gpsActive={gpsActive}
+          emptyTitle={t('ruta_empty_title')}
+          emptyHint={t('ruta_empty_hint')}
+        />
+      </BottomSheet>
       {/* Modal de Progreso del Cálculo */}
       {calculandoRuta && (
         <div
