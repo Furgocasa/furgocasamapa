@@ -17,6 +17,10 @@ const RECINTO_NOMBRE =
   /instalacion|parcela|pitch|recepcion|reception|sanitari|ducha|aseo|lavander|stellplatz|sosta|camperpark|wohnmobil|autocaravana|motorhome|service-point|aire-de/i
 const ENTORNO_NOMBRE =
   /landscape|monument|theatre|teatro|wrasse|underwater|snorkel|scuba|entorno|excursion|cityscape|skyline|castillo|catedral|bolnuevo|gredas|natural-monument|ornate-wrasse|roman-theatre|pez-|fish-|starfish|buceo/i
+const MAPA_NOMBRE =
+  /streets-v2|img_cache\/streets|staticmap|maps\.googleapis|openstreetmap|maptiler|mapa-de-situacion|plano-de-acceso|location-map|map-pin|street-map/i
+const PORTADA_NOMBRE =
+  /aerea|aéreo|aerial|drone|panoram|vista-general|vista-aerea|resumen|overview|bird.?eye/i
 const LUGAR = /parcela|piscina|bungalow|instalacion|caravana|entrada|recepcion|autocaravana|sanitari|ducha|lavander/i
 const MIN_BYTES = 35000
 const MIN_W = 480
@@ -96,10 +100,14 @@ export function claveFoto(url: string): string {
   }
 }
 
+export function esFotoMapa(url: string): boolean {
+  return MAPA_NOMBRE.test(url.toLowerCase()) || MAPA_NOMBRE.test(pathnameFoto(url))
+}
+
 export function esFotoOficialUsable(url: string): boolean {
   if (!url || isProhibidaParaEnriquecer(url)) return false
   const u = url.toLowerCase()
-  if (JUNK.test(u) || FLAGS.test(u)) return false
+  if (JUNK.test(u) || FLAGS.test(u) || esFotoMapa(url)) return false
   if (u.includes('.svg') || u.includes('.gif')) return false
   const w = widthHint(url)
   if (w && w < 300) return false
@@ -128,9 +136,15 @@ export function esFotoRecintoPorNombre(url: string): boolean {
 
 /** Nombre de archivo / ruta: monumento, pueblo, pez, “landscape” de stock. */
 export function esFotoEntornoPorNombre(url: string): boolean {
+  if (esFotoMapa(url)) return true
   const path = pathnameFoto(url)
   if (esFotoRecintoPorNombre(url)) return false
   return ENTORNO_NOMBRE.test(path)
+}
+
+export function esFotoPortadaPorNombre(url: string): boolean {
+  if (esFotoMapa(url) || esFotoEntornoPorNombre(url)) return false
+  return PORTADA_NOMBRE.test(pathnameFoto(url))
 }
 
 function score(foto: FotoOk): number {
@@ -139,9 +153,11 @@ function score(foto: FotoOk): number {
   const u = foto.url.toLowerCase()
   if (u.includes('wp-content/uploads')) s += 12
   if (u.includes('wixstatic.com') && u.includes('mv2')) s += 8
+  if (esFotoPortadaPorNombre(foto.url)) s += 36
   if (esFotoRecintoPorNombre(foto.url)) s += 24
   else if (LUGAR.test(path)) s += 10
-  if (esFotoEntornoPorNombre(foto.url)) s -= 40
+  if (esFotoEntornoPorNombre(foto.url) || esFotoMapa(foto.url)) s -= 40
+  if (foto.w >= 1400 && foto.w / Math.max(foto.h, 1) >= 1.35) s += 10
   if (/\.jpe?g(\?|#|$)/i.test(u)) s += 6
   if (/\.png(\?|#|$)/i.test(u)) s -= 6
   if (/concierto|fiesta|menu|carta|wasap|icon/.test(path)) s -= 8

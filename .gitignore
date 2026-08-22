@@ -32,6 +32,7 @@ scripts/*checkpoint.txt
 scripts/*-ids.txt
 scripts/ai-pilot-previews/
 scripts/parazuelos-review/
+scripts/el-greco-review/
 
 # local env files
 .env

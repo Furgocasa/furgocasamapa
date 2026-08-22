@@ -79,6 +79,9 @@ const JUNK_URL = [
   'registrationmodal',
   'placeholder',
   'data:image',
+  'img_cache/streets',
+  'streets-v2',
+  'staticmap',
 ]
 
 const AREA_HOSTS = [
