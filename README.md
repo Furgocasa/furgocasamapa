@@ -365,6 +365,7 @@ Cada país se trata como mercado propio: **se busca con el nombre local**, no co
 | Campings Andalucía oeste | **camping** (Almería, Málaga, Cádiz, Huelva) | `--region=almeria|malaga|cadiz|huelva` | `npm run import:campings:almeria` (y el resto) |
 | Campings Córdoba y Jaén | **camping** | `--region=cordoba|jaen` | `npm run import:campings:cordoba` / `import:campings:jaen` |
 | Campings interior SE–NO | **camping** (Albacete→Cáceres) | `--region=albacete|ciudadreal|badajoz|cuenca|madrid|toledo|caceres` | `npm run import:campings:albacete` (y el resto) |
+| Campings Teruel–Guadalajara | **camping** | `--region=teruel|guadalajara` | `npm run import:campings:teruel` / `import:campings:guadalajara` |
 
 **Huecos (península):** rejilla ~22 km; celda vacía = ninguna área a 25 km; celdas vecinas = un hueco; el centroide es el disparo. No incluye islas. **Baleares:** 0 áreas previas → 13 disparos; Formentera no devolvió ficha útil. En Windows, si falla TLS: `$env:NODE_TLS_REJECT_UNAUTHORIZED="0"`.
 

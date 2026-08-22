@@ -45,6 +45,8 @@
  *   npm run import:campings:madrid
  *   npm run import:campings:toledo
  *   npm run import:campings:caceres
+ *   npm run import:campings:teruel
+ *   npm run import:campings:guadalajara
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -139,6 +141,10 @@ let REPORT_NAME =
           ? "toledo-campings-dry-report.json"
         : REGION === "caceres"
           ? "caceres-campings-dry-report.json"
+        : REGION === "teruel"
+          ? "teruel-campings-dry-report.json"
+        : REGION === "guadalajara"
+          ? "guadalajara-campings-dry-report.json"
         : "iberia-gaps-dry-report.json";
 if (SOLO_STOPOVER) {
   REPORT_NAME = REPORT_NAME.replace("-gaps-dry-report.json", "-stopover-dry-report.json");
@@ -671,6 +677,28 @@ const HUECOS_CACERES = [
   { id: 8, zona: "Guadalupe", lat: 39.45, lng: -5.33, pais: "España" },
 ];
 
+const HUECOS_TERUEL = [
+  { id: 1, zona: "Teruel", lat: 40.34, lng: -1.11, pais: "España" },
+  { id: 2, zona: "Alcañiz", lat: 41.05, lng: -0.13, pais: "España" },
+  { id: 3, zona: "Calamocha", lat: 40.92, lng: -1.3, pais: "España" },
+  { id: 4, zona: "Albarracín", lat: 40.41, lng: -1.44, pais: "España" },
+  { id: 5, zona: "Valderrobres", lat: 40.87, lng: 0.15, pais: "España" },
+  { id: 6, zona: "Mora de Rubielos", lat: 40.25, lng: -0.75, pais: "España" },
+  { id: 7, zona: "Andorra", lat: 40.98, lng: -0.44, pais: "España" },
+  { id: 8, zona: "Cantavieja", lat: 40.52, lng: -0.4, pais: "España" },
+];
+
+const HUECOS_GUADALAJARA = [
+  { id: 1, zona: "Guadalajara", lat: 40.63, lng: -3.16, pais: "España" },
+  { id: 2, zona: "Sigüenza", lat: 41.07, lng: -2.64, pais: "España" },
+  { id: 3, zona: "Molina", lat: 40.84, lng: -1.89, pais: "España" },
+  { id: 4, zona: "Cifuentes", lat: 40.79, lng: -2.62, pais: "España" },
+  { id: 5, zona: "Pastrana", lat: 40.42, lng: -2.92, pais: "España" },
+  { id: 6, zona: "Cogolludo", lat: 40.95, lng: -3.09, pais: "España" },
+  { id: 7, zona: "Azuqueca", lat: 40.56, lng: -3.26, pais: "España" },
+  { id: 8, zona: "Orea", lat: 40.55, lng: -1.73, pais: "España" },
+];
+
 const CAMPING_ZONAS: Record<
   string,
   {
@@ -795,6 +823,18 @@ const CAMPING_ZONAS: Record<
     provinciaRe: /\bc[aá]ceres\b/i,
     isIn: (lat, lng) => lat >= 39.12 && lat <= 40.48 && lng >= -7.55 && lng <= -4.95,
     huecos: HUECOS_CACERES,
+  },
+  teruel: {
+    label: "Teruel",
+    provinciaRe: /\bteruel\b/i,
+    isIn: (lat, lng) => lat >= 39.85 && lat <= 41.15 && lng >= -1.78 && lng <= 0.5,
+    huecos: HUECOS_TERUEL,
+  },
+  guadalajara: {
+    label: "Guadalajara",
+    provinciaRe: /\bguadalajara\b/i,
+    isIn: (lat, lng) => lat >= 40.25 && lat <= 41.32 && lng >= -3.5 && lng <= -1.7,
+    huecos: HUECOS_GUADALAJARA,
   },
 };
 
