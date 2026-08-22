@@ -8,13 +8,21 @@
 const IMPORT_COUNTRY_SUFFIX_RE =
   /-(es|pt|fr|de|it|nl|be|lu|ch|at|dk|se|no|uk|gb|mx|cl|ar|uy|ec|cr|co|pa|si|ad|pr)-[A-Za-z0-9_-]{6,14}$/
 
-export function slugify(text: string): string {
+/** Minúsculas sin tildes ni diacríticos. `rio` encuentra `Río`. */
+export function sinTildes(text: string | null | undefined): string {
   return (text || '')
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+}
+
+export function slugify(text: string): string {
+  let value = sinTildes(text)
+  // N.E.O. / B.V. → neo / bv; no juntar www.ejemplo
+  while (/\b([a-z])\.(?=[a-z]\.|\b)/.test(value)) {
+    value = value.replace(/\b([a-z])\.(?=[a-z]\.|\b)/g, '$1')
+  }
+  return value.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 }
 
 function cleanLocality(value?: string | null): string {

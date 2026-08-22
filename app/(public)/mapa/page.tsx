@@ -15,6 +15,7 @@ import { reverseGeocode } from '@/lib/google/geocoding'
 import { track } from '@/lib/analytics/track'
 import { useLanguage } from '@/lib/i18n'
 import { TIPO_AREA_IDS } from '@/lib/areas/tipo-area'
+import { sinTildes } from '@/lib/areas/slug'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const SPLASH_JOKES = ['splash_joke_1', 'splash_joke_2', 'splash_joke_3'] as const
@@ -380,13 +381,13 @@ export default function MapaPage() {
     return areas.filter((area: any) => {
       // Filtro de búsqueda
       if (filtros.busqueda) {
-        const busqueda = filtros.busqueda.toLowerCase()
+        const busqueda = sinTildes(filtros.busqueda)
         // Nota: la descripción NO se carga en el SELECT (sería muy pesado para
         // ~5.000 áreas), por lo que la búsqueda es por nombre, ciudad y provincia.
         const coincide =
-          area.nombre.toLowerCase().includes(busqueda) ||
-          area.ciudad?.toLowerCase().includes(busqueda) ||
-          area.provincia?.toLowerCase().includes(busqueda)
+          sinTildes(area.nombre).includes(busqueda) ||
+          sinTildes(area.ciudad).includes(busqueda) ||
+          sinTildes(area.provincia).includes(busqueda)
 
         if (!coincide) return false
       }

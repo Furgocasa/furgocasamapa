@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { MagnifyingGlassIcon, XMarkIcon, ChevronRightIcon, CheckIcon, GlobeAltIcon } from '@heroicons/react/24/outline'
 import { useLanguage, getServicioLabel, getTipoAreaLabel, SERVICIO_ICONS } from '@/lib/i18n'
 import { TIPO_AREA_IDS, getTipoAreaColor, type TipoArea } from '@/lib/areas/tipo-area'
+import { sinTildes } from '@/lib/areas/slug'
 
 export interface Filtros {
   busqueda: string
@@ -266,9 +267,9 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
 
   // Filtrar países por búsqueda
   const paisesFiltrados = useMemo(() => {
-    const term = paisSearch.trim().toLowerCase()
+    const term = sinTildes(paisSearch).trim()
     if (!term) return paisesDisponibles
-    return paisesDisponibles.filter((pais) => pais.toLowerCase().includes(term))
+    return paisesDisponibles.filter((pais) => sinTildes(pais).includes(term))
   }, [paisesDisponibles, paisSearch])
 
   const filtrosActivos =

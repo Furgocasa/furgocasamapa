@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { MagnifyingGlassIcon, XMarkIcon, MapPinIcon } from '@heroicons/react/24/outline'
 import { track } from '@/lib/analytics/track'
+import { sinTildes } from '@/lib/areas/slug'
 import type { Area } from '@/types/database.types'
 
 interface BuscadorGeograficoProps {
@@ -18,20 +19,20 @@ interface BuscadorGeograficoProps {
 }
 
 function filterAreas(areas: Area[], query: string): Area[] {
-  const q = query.toLowerCase().trim()
+  const q = sinTildes(query).trim()
   if (q.length < 2) return []
 
   return areas
     .filter(
       (area) =>
-        area.nombre.toLowerCase().includes(q) ||
-        area.ciudad?.toLowerCase().includes(q) ||
-        area.provincia?.toLowerCase().includes(q) ||
-        area.pais?.toLowerCase().includes(q)
+        sinTildes(area.nombre).includes(q) ||
+        sinTildes(area.ciudad).includes(q) ||
+        sinTildes(area.provincia).includes(q) ||
+        sinTildes(area.pais).includes(q)
     )
     .sort((a, b) => {
-      const aName = a.nombre.toLowerCase()
-      const bName = b.nombre.toLowerCase()
+      const aName = sinTildes(a.nombre)
+      const bName = sinTildes(b.nombre)
       const score = (name: string) => {
         if (name === q) return 0
         if (name.startsWith(q)) return 1
