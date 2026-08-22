@@ -55,9 +55,6 @@ export function DashboardStats({ stats }: Props) {
             <div>
               <p className="text-sm font-medium text-gray-600">{card.title}</p>
               <p className="text-3xl font-bold text-gray-900 mt-2">{card.value}</p>
-              {card.subtitle && (
-                <p className="text-xs text-gray-500 mt-1">{card.subtitle}</p>
-              )}
             </div>
             <div className={`${card.color} p-3 rounded-lg`}>
               <card.icon className="w-6 h-6" />

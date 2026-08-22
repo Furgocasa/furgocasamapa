@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Loader } from '@googlemaps/js-api-loader'
 import { createClient } from '@/lib/supabase/client'
@@ -24,7 +24,12 @@ import {
 } from '@heroicons/react/24/outline'
 import { useToast } from '@/hooks/useToast'
 import { generateGPX, downloadGPX, generateGPXFilename } from '@/lib/gpx/generate-gpx'
-import { getTipoAreaColor } from '@/lib/areas/tipo-area'
+import {
+  TIPO_AREA_IDS,
+  getTipoAreaColor,
+  getTipoAreaIconPath,
+  type TipoArea,
+} from '@/lib/areas/tipo-area'
 import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
 import {
   DndContext,
@@ -43,7 +48,7 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { useLanguage } from '@/lib/i18n'
+import { useLanguage, getTipoAreaLabel } from '@/lib/i18n'
 import AuthModal from '@/components/ui/AuthModal'
 import { syncLocalFavoritesToAccount } from '@/lib/favoritos/local'
 import { track } from '@/lib/analytics/track'
@@ -184,6 +189,7 @@ interface PanelPlanificadorProps {
   destino: RoutePoint | null
   waypoints: RoutePoint[]
   radio: number
+  tipos: TipoArea[]
   rutaInfo: { distancia: string; duracion: string } | null
   currentRoute: GoogleDirectionsRoute | null
   rutaGuardada: boolean
@@ -192,6 +198,7 @@ interface PanelPlanificadorProps {
   onOrigenChange: (point: RoutePoint) => void
   onDestinoChange: (point: RoutePoint) => void
   onRadioChange: (radio: number) => void
+  onTipoToggle: (tipo: TipoArea) => void
   onAddWaypoint: () => void
   onUpdateWaypoint: (index: number, waypoint: RoutePoint) => void
   onDeleteWaypoint: (index: number) => void
@@ -211,6 +218,7 @@ function PanelPlanificador({
   destino,
   waypoints,
   radio,
+  tipos,
   rutaInfo,
   currentRoute,
   rutaGuardada,
@@ -219,6 +227,7 @@ function PanelPlanificador({
   onOrigenChange,
   onDestinoChange,
   onRadioChange,
+  onTipoToggle,
   onAddWaypoint,
   onUpdateWaypoint,
   onDeleteWaypoint,
@@ -228,7 +237,7 @@ function PanelPlanificador({
   onExportar,
   onLimpiar,
 }: PanelPlanificadorProps) {
-  const { t } = useLanguage()
+  const { t, locale } = useLanguage()
   const origenInputRef = useRef<HTMLInputElement>(null)
   const destinoInputRef = useRef<HTMLInputElement>(null)
 
@@ -427,6 +436,55 @@ function PanelPlanificador({
           </div>
         </div>
 
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            {t('type_filter')}
+          </label>
+          <div className="space-y-2">
+            {TIPO_AREA_IDS.map((tipo) => {
+              const hintKey =
+                tipo === 'publica'
+                  ? 'type_public_hint'
+                  : tipo === 'privada'
+                    ? 'type_private_hint'
+                    : 'type_camping_hint'
+              const activo = tipos.includes(tipo)
+              const color = getTipoAreaColor(tipo)
+              return (
+                <button
+                  key={tipo}
+                  type="button"
+                  onClick={() => onTipoToggle(tipo)}
+                  aria-pressed={activo}
+                  className={`w-full flex items-center gap-3 rounded-xl border-2 px-3 py-2.5 text-left transition-all active:scale-[0.99] ${
+                    activo ? 'shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                  style={activo ? { borderColor: color, backgroundColor: `${color}14` } : undefined}
+                >
+                  <span
+                    className="w-[22px] h-[22px] shrink-0 rounded-full border-2 border-white shadow-sm flex items-center justify-center"
+                    style={{ backgroundColor: color }}
+                    aria-hidden
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff">
+                      <path d={getTipoAreaIconPath(tipo)} />
+                    </svg>
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold text-gray-900">
+                      {getTipoAreaLabel(tipo, locale)}
+                    </span>
+                    <span className="block text-[11px] text-gray-500 leading-tight">
+                      {t(hintKey)}
+                    </span>
+                  </span>
+                  {activo && <CheckIcon className="w-5 h-5 shrink-0" style={{ color }} />}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         {rutaInfo && (
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-1.5">
             <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
@@ -529,8 +587,10 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
   const [destino, setDestino] = useState<RoutePoint | null>(null)
   const [waypoints, setWaypoints] = useState<RoutePoint[]>([])
   const [radio, setRadio] = useState<number>(10) // km
-  const [areasEnRuta, setAreasEnRuta] = useState<Area[]>([])
-  const [markers, setMarkers] = useState<GoogleMarker[]>([])
+  // Resultado bruto de la búsqueda: el filtro de tipo recorta la vista sin recalcular la ruta
+  const [areasEncontradas, setAreasEncontradas] = useState<Area[]>([])
+  const [tiposArea, setTiposArea] = useState<TipoArea[]>([])
+  const markersRef = useRef<GoogleMarker[]>([])
   const [infoWindow, setInfoWindow] = useState<GoogleInfoWindow | null>(null)
   const [rutaInfo, setRutaInfo] = useState<{ distancia: string; duracion: string } | null>(null)
   const userMarkerRef = useRef<GoogleMarker | null>(null)
@@ -539,6 +599,22 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
   const [gpsActive, setGpsActive] = useState(false) // Siempre false inicialmente para evitar hidratación
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const watchIdRef = useRef<number | null>(null)
+
+  const areasEnRuta = useMemo(
+    () =>
+      tiposArea.length === 0
+        ? areasEncontradas
+        : areasEncontradas.filter((area) =>
+            tiposArea.includes((area.tipo_area || 'publica') as TipoArea)
+          ),
+    [areasEncontradas, tiposArea]
+  )
+
+  const handleTipoToggle = (tipo: TipoArea) => {
+    setTiposArea((actuales) =>
+      actuales.includes(tipo) ? actuales.filter((t) => t !== tipo) : [...actuales, tipo]
+    )
+  }
 
   // Estados para guardar ruta
   const [showSaveModal, setShowSaveModal] = useState(false)
@@ -976,11 +1052,6 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
     const google = (window as any).google
 
     try {
-      // Limpiar marcadores anteriores
-      markers.forEach((marker: any) => marker.setMap(null))
-      setMarkers([])
-      markersByAreaIdRef.current = {}
-
       // Obtener TODOS los puntos detallados de la ruta (no solo overview)
       // Esto incluye todos los steps de cada leg para rutas largas
       const allPoints: any[] = []
@@ -1046,7 +1117,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
       }
 
       if (todasLasAreas.length === 0) {
-        setAreasEnRuta([])
+        setAreasEncontradas([])
         return
       }
 
@@ -1109,8 +1180,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
       setProgreso(92)
       setMensajeProgreso(`Colocando ${areasCercanas.length} áreas en el mapa...`)
 
-      setAreasEnRuta(areasCercanas)
-      mostrarAreasEnMapa(areasCercanas)
+      setAreasEncontradas(areasCercanas)
 
       // Pequeña pausa para que el usuario vea el mensaje final
       await new Promise(resolve => setTimeout(resolve, 300))
@@ -1123,8 +1193,19 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
     return buildAreaPopupHTML(area, getTipoAreaColor, 0, locale)
   }
 
+  const limpiarMarcadores = () => {
+    // El globo abierto puede pertenecer a un pin que va a desaparecer
+    hoverInfoWindowRef.current?.close()
+    infoWindow?.close()
+    markersRef.current.forEach((marker: any) => marker.setMap(null))
+    markersRef.current = []
+    markersByAreaIdRef.current = {}
+  }
+
   const mostrarAreasEnMapa = (areas: Area[]) => {
     if (!map || !infoWindow) return
+
+    limpiarMarcadores()
 
     const google = (window as any).google
     const nuevosMarkers: GoogleMarker[] = []
@@ -1169,8 +1250,15 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
     })
 
     markersByAreaIdRef.current = byId
-    setMarkers(nuevosMarkers)
+    markersRef.current = nuevosMarkers
   }
+
+  // Los pines siguen a lo que se ve: búsqueda nueva o cambio del filtro de tipo
+  useEffect(() => {
+    if (!map || !infoWindow) return
+    mostrarAreasEnMapa(areasEnRuta)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [areasEnRuta, map, infoWindow])
 
 
   const agregarPuntoIntermedio = () => {
@@ -1335,8 +1423,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
         // Cargar áreas encontradas desde caché si existen
         if (areasEncontradasData && areasEncontradasData.length > 0) {
           console.log(`📦 Cargando ${areasEncontradasData.length} áreas desde caché`)
-          setAreasEnRuta(areasEncontradasData as Area[])
-          mostrarAreasEnMapa(areasEncontradasData as Area[])
+          setAreasEncontradas(areasEncontradasData as Area[])
           showToast(`Ruta cargada desde caché con ${areasEncontradasData.length} áreas`, 'success')
         } else {
           // Si no hay áreas guardadas, buscarlas (para rutas antiguas)
@@ -1351,8 +1438,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
           // Si hay áreas encontradas guardadas, cargarlas directamente
           if (areasEncontradasData && areasEncontradasData.length > 0) {
             console.log(`📦 Cargando ${areasEncontradasData.length} áreas desde caché (ruta antigua)`)
-            setAreasEnRuta(areasEncontradasData as Area[])
-            mostrarAreasEnMapa(areasEncontradasData as Area[])
+            setAreasEncontradas(areasEncontradasData as Area[])
           }
 
           setTimeout(() => {
@@ -1420,10 +1506,9 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
     if (directionsRenderer) {
       directionsRenderer.setDirections({ routes: [] } as any)
     }
-    markers.forEach((marker: any) => marker.setMap(null))
-    setMarkers([])
-    markersByAreaIdRef.current = {}
-    setAreasEnRuta([])
+    limpiarMarcadores()
+    setAreasEncontradas([])
+    setTiposArea([])
     setOrigen(null)
     setDestino(null)
     setWaypoints([])
@@ -1750,6 +1835,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
     destino,
     waypoints,
     radio,
+    tipos: tiposArea,
     rutaInfo,
     currentRoute,
     rutaGuardada,
@@ -1758,6 +1844,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
     onOrigenChange: handleOrigenChange,
     onDestinoChange: handleDestinoChange,
     onRadioChange: (r: number) => setRadio(r),
+    onTipoToggle: handleTipoToggle,
     onAddWaypoint: agregarPuntoIntermedio,
     onUpdateWaypoint: actualizarWaypoint,
     onDeleteWaypoint: eliminarPuntoIntermedio,
