@@ -1208,7 +1208,7 @@ function isRelevant(name: string, types: string[], pais?: string): boolean {
     }
   }
   if (CAMPING) {
-    if (/\b(tienda|articulos|campingaz|camping gas|outlet|alquiler|hire|rental|bar at|cl[ií]nica|clinic)\b/i.test(name)) {
+    if (/\b(tienda|articulos|campingaz|camping gas|outlet|alquiler|hire|rental|bar at|cl[ií]nica|clinic|supermercado|parque acu[aá]tico)\b/i.test(name)) {
       return false;
     }
     if (/^\s*camping\s*$/i.test(name)) return false;
