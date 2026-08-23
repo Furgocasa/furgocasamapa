@@ -1,0 +1,34 @@
+[
+  {
+    "slug": "area-autocaravanas-tortuga-mora-calabardina",
+    "precio_noche": 14,
+    "telefono": "667 72 59 71",
+    "verificado": true,
+    "fuente": "Tarifas propias del área en stellplatz.info (sept 2025-mar 2026): <6 días 14 €, >5 días 11 €; elec 3,50 €/día; duchas 1 €/3min. Tel. web oficial autocaravanastortugamora.com"
+  },
+  {
+    "slug": "area-autocaravanas-los-narejos-los-alcazares",
+    "precio_noche": 11.9,
+    "plazas_totales": 85,
+    "telefono": "968 076 185",
+    "website": "https://campersclick.com/reserva/camping-car-area-narejos/",
+    "servicios_true": ["agua", "electricidad", "wc", "duchas", "lavanderia", "wifi", "restaurante", "zona_mascotas", "vaciado_aguas_grises", "vaciado_aguas_negras"],
+    "verificado": true,
+    "fuente": "Tarifas oficiales campersclick: parcela 48m² 11,90 €/noche (2 adultos, duchas y aguas incl.); areasAC (fuente Narejos): 85 plazas, mascotas sí, lavadoras; park4night: restaurante y bar en el recinto"
+  },
+  {
+    "slug": "camper-park-casablanca-zeneta",
+    "plazas_totales": 100,
+    "telefono": "684 454 822",
+    "website": "https://campercasablanca.com/",
+    "verificado": true,
+    "fuente": "areasAC (fuente Casablanca): 100 plazas, pernocta+servicios 20 €/día (coincide con precio actual); tel. y web oficiales campercasablanca.com"
+  },
+  {
+    "slug": "area-de-autocaravanas-de-ceuti",
+    "precio_noche": 0,
+    "plazas_totales": 10,
+    "verificado": true,
+    "fuente": "areasAC (fuente Ayto./Acmur): gratuita, 10 plazas, estancia máx 48h, aseo adaptado con llave del Ayuntamiento; bookingcaravaning confirma estancia gratuita"
+  }
+]
