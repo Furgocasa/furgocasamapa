@@ -1,0 +1,93 @@
+[
+  {
+    "slug": "camping-playa-de-mazarron",
+    "precio_noche": 29.4,
+    "servicios_true": ["zona_mascotas"],
+    "verificado": true,
+    "fuente": "Tarifas oficiales 2026 playamazarron.com (tarifa básica 29,40 € autocaravana+2 pax); lavadero de perros"
+  },
+  {
+    "slug": "camping-la-fuente-los-banos-de-fortuna",
+    "precio_noche": 17,
+    "plazas_totales": 117,
+    "plazas_camper": 24,
+    "servicios_true": ["zona_mascotas"],
+    "verificado": true,
+    "fuente": "Campercontact 2026 (17 €/noche 2 pax); ACSI: 117 parcelas + 24 camper, elec 6kWh incluida; pet friendly web oficial"
+  },
+  {
+    "slug": "area-camping-mazarron",
+    "precio_noche": 12,
+    "plazas_totales": 100,
+    "servicios_true": ["agua", "electricidad", "duchas", "wc", "wifi", "lavanderia", "vaciado_aguas_grises", "vaciado_aguas_negras", "zona_mascotas"],
+    "verificado": true,
+    "fuente": "Web oficial areacampingmazarron.com (+100 plazas ≥90m², agua y luz en todas, duchas, wifi, pet friendly, lavandería); stellplatz.info: 12-16 € invierno, 20 € verano"
+  },
+  {
+    "slug": "camper-park-la-ribera",
+    "precio_noche": 10,
+    "plazas_totales": 210,
+    "telefono": "968 19 19 11",
+    "website": "https://camperparklaribera.com/",
+    "servicios_true": ["agua", "electricidad", "duchas", "wc", "wifi", "lavanderia", "vaciado_aguas_grises", "vaciado_aguas_negras", "zona_mascotas"],
+    "verificado": true,
+    "fuente": "Web oficial camperparklaribera.com: parcela STD 10 €/noche (2 pax, aguas incluidas); 210 plazas (La Opinión de Murcia, inauguración)"
+  },
+  {
+    "slug": "camping-los-delfines-isla-plana",
+    "precio_noche": 27.5,
+    "servicios_true": ["zona_mascotas"],
+    "verificado": true,
+    "fuente": "Web oficial campinglosdelfines.com: temporada baja 2026 27,50 €/día (2 pax, agua+3kW incl.); admite mascotas"
+  },
+  {
+    "slug": "camping-san-javier",
+    "servicios_true": ["zona_mascotas"],
+    "fuente": "Web oficial campingsanjavier.com: no publica tarifa fija (según temporada); 190 parcelas 70-80 m² confirmadas; mascotas sí. Sin precio verificable."
+  },
+  {
+    "slug": "camping-la-rafa-bullas",
+    "precio_noche": 13.6,
+    "verificado": true,
+    "fuente": "Tarifas oficiales 2026 larafabullas.es: autocaravana 5,50 + 2 adultos 8,10 (T. baja, sin luz) ≈ 13,60 €"
+  },
+  {
+    "slug": "camping-los-madriles-isla-plana",
+    "precio_noche": 44,
+    "plazas_totales": 307,
+    "verificado": true,
+    "fuente": "Web oficial campinglosmadriles.es: zona azul 44 €/día 2 pax; ACSI: 307 parcelas rotación. No admite perros."
+  },
+  {
+    "slug": "area-camping-camper-park-caravanas-home",
+    "precio_noche": 12,
+    "plazas_totales": 50,
+    "telefono": "623 485 892",
+    "servicios_true": ["agua", "electricidad", "duchas", "wc", "wifi", "lavanderia", "vaciado_aguas_grises", "vaciado_aguas_negras", "zona_mascotas"],
+    "verificado": true,
+    "fuente": "areasAC (fuente: Caravanas Home): 12 €/día invierno, 15 € verano, 2 pax + aguas; 50 plazas; elec 5 €/día; duchas, lavandería, wifi; pitchup: admite perros"
+  },
+  {
+    "slug": "area-de-descanso-para-autocaravanas-los-alcazares",
+    "precio_noche": 0,
+    "plazas_totales": 30,
+    "servicios_true": ["agua", "vaciado_aguas_grises", "vaciado_aguas_negras"],
+    "verificado": true,
+    "fuente": "Ayuntamiento de Los Alcázares (losalcazares.es): gratuita, máx 72h, 30 plazas, agua potable y vaciado de grises y negras"
+  },
+  {
+    "slug": "camping-mar-menor-los-alcazares",
+    "plazas_totales": 140,
+    "verificado": true,
+    "fuente": "camping.info / web oficial campingmarmenor.com: 140 parcelas totales"
+  },
+  {
+    "slug": "area-de-autocaravanas-finca-caravana",
+    "tipo_area": "privada",
+    "precio_noche": 9.9,
+    "plazas_totales": 10,
+    "servicios_true": ["agua", "vaciado_aguas_grises", "vaciado_aguas_negras", "zona_mascotas"],
+    "verificado": true,
+    "fuente": "Web oficial finca-caravana.de + meinwomo (10/2025): 9,90 €/24h 2 pax, agua y vaciado incluidos, sin electricidad, 10 plazas, perros sí. Es finca privada de pago, no área pública."
+  }
+]
