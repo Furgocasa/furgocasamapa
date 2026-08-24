@@ -62,6 +62,7 @@ interface ConversacionRow {
   user_id: string | null
   ip_hash?: string | null
   funciones?: Array<{ name: string; args: any }> | null
+  agrupacion?: 'cuenta' | 'huella' | 'hilo' | 'rato'
   usuario: UsuarioLog | null
   locale: string | null
   respuestas: number
@@ -516,6 +517,8 @@ export default function ChatbotRespuestasPage() {
                       const fecha = formatFecha(c.ultimo_mensaje_at || c.created_at || new Date().toISOString())
                       const huella = huellaAnonimo(c as any)
                       const nombre = c.usuario?.nombre || c.usuario?.email?.split('@')[0] || (c.user_id ? 'Usuario' : (huella ? `Anónimo · ${huella}` : 'Anónimo'))
+                      const sub = c.usuario?.email
+                        || (c.agrupacion === 'rato' && c.respuestas > 1 ? `${c.respuestas} preguntas del mismo rato` : '')
                       return (
                         <tr
                           key={c.id}
@@ -528,7 +531,7 @@ export default function ChatbotRespuestasPage() {
                           </td>
                           <td className="px-2.5 py-2 align-top overflow-hidden">
                             <div className="text-sm font-medium text-gray-900 truncate">{nombre}</div>
-                            {c.usuario?.email && <div className="text-xs text-gray-500 truncate">{c.usuario.email}</div>}
+                            {sub ? <div className="text-xs text-gray-500 truncate">{sub}</div> : null}
                           </td>
                           <td className="px-2.5 py-2 align-top overflow-hidden">
                             <p className={`text-sm truncate ${textoUbicacion(c) === 'Ubicación desconocida' ? 'text-gray-400' : 'text-gray-800'}`}>

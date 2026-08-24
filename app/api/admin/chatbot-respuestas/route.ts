@@ -274,16 +274,19 @@ async function usuariosDeIds(admin: any, userIds: string[]) {
 }
 
 const GAP_SESION_MS = 60 * 60 * 1000
+/** Anónimos viejos sin hilo ni huella: si van seguidos, es el mismo rato. */
+const GAP_HUERFANOS_MS = 20 * 60 * 1000
+
+function huellaDeLog(log: any): string | null {
+  return log.ip_hash || (log.funciones || []).find((f: any) => f?.name === '_cliente')?.args?.huella || null
+}
 
 function claveAgrupacion(log: any): string {
   if (log.user_id) return `user:${log.user_id}`
-  const huella = log.ip_hash || (log.funciones || []).find((f: any) => f?.name === '_cliente')?.args?.huella
+  const huella = huellaDeLog(log)
   if (huella) return `anon:${huella}`
   if (log.conversacion_id) return `conv:${log.conversacion_id}`
-  const meta = (log.funciones || []).find((f: any) => f?.name === '_ubicacion')?.args || {}
-  const sitio = String(log.ciudad || meta.ciudad || '').trim().toLowerCase()
-  if (sitio) return `anon:${sitio}:${log.locale || 'es'}`
-  return `log:${log.id}`
+  return 'huerfano'
 }
 
 function agruparEnSesiones(logs: any[]): Array<{ id: string; logs: any[] }> {
@@ -298,12 +301,13 @@ function agruparEnSesiones(logs: any[]): Array<{ id: string; logs: any[] }> {
 
   const grupos: Array<{ id: string; logs: any[] }> = []
   for (const [clave, lista] of porClave) {
+    const gap = clave === 'huerfano' ? GAP_HUERFANOS_MS : GAP_SESION_MS
     let cubo: any[] = []
     let inicio = ''
     let ultimo = 0
     for (const log of lista) {
       const t = new Date(log.created_at).getTime()
-      if (cubo.length && Number.isFinite(t) && t - ultimo > GAP_SESION_MS) {
+      if (cubo.length && Number.isFinite(t) && t - ultimo > gap) {
         grupos.push({ id: `grupo:${clave}:${inicio}`, logs: cubo })
         cubo = []
       }
@@ -457,8 +461,15 @@ async function cargarConversaciones(
     const userId = conv?.user_id || lastLog?.user_id || firstLog?.user_id || null
     const ubi = ubicacionDeFila(lastLog || firstLog || {}, conv)
     const nota = notaInteraccion(logs)
-    const ip_hash = lastLog?.ip_hash || firstLog?.ip_hash || null
+    const ip_hash = lastLog?.ip_hash || firstLog?.ip_hash || huellaDeLog(lastLog) || huellaDeLog(firstLog) || null
     const funcionesCliente = (lastLog?.funciones || firstLog?.funciones || []).filter((f: any) => f?.name === '_cliente')
+    const agrupacion = userId
+      ? 'cuenta'
+      : huellaDeLog(lastLog) || huellaDeLog(firstLog)
+        ? 'huella'
+        : firstLog?.conversacion_id
+          ? 'hilo'
+          : 'rato'
     return {
       id: g.id,
       created_at: firstLog?.created_at || conv?.created_at || null,
@@ -467,6 +478,7 @@ async function cargarConversaciones(
       user_id: userId,
       ip_hash,
       funciones: funcionesCliente,
+      agrupacion,
       usuario: (userId && usuarios[userId]) || null,
       locale: lastLog?.locale || firstLog?.locale || null,
       respuestas: logs.length,
