@@ -41,6 +41,7 @@ interface RespuestaLog {
   ciudad?: string | null
   pais?: string | null
   ubicacion?: string | null
+  ip_hash?: string | null
 }
 
 const BADGE_IA: Record<string, { label: string; clase: string }> = {
@@ -59,6 +60,8 @@ interface ConversacionRow {
   ultimo_mensaje_at: string | null
   titulo: string
   user_id: string | null
+  ip_hash?: string | null
+  funciones?: Array<{ name: string; args: any }> | null
   usuario: UsuarioLog | null
   locale: string | null
   respuestas: number
@@ -133,8 +136,17 @@ function formatFecha(iso: string) {
   }
 }
 
+function huellaAnonimo(row: { funciones?: Array<{ name: string; args: any }> | null; ip_hash?: string | null }) {
+  if (row.ip_hash) return String(row.ip_hash).slice(0, 6)
+  const h = (row.funciones || []).find((f) => f?.name === '_cliente')?.args?.huella
+  return h ? String(h).slice(0, 6) : null
+}
+
 function nombreUsuario(log: RespuestaLog) {
-  if (!log.user_id) return '—'
+  if (!log.user_id) {
+    const h = huellaAnonimo(log)
+    return h ? `Anónimo · ${h}` : 'Anónimo'
+  }
   const nombre = log.usuario?.nombre?.trim()
   if (nombre) return nombre
   if (log.usuario?.email) return log.usuario.email.split('@')[0]
@@ -502,7 +514,8 @@ export default function ChatbotRespuestasPage() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {conversaciones.map((c) => {
                       const fecha = formatFecha(c.ultimo_mensaje_at || c.created_at || new Date().toISOString())
-                      const nombre = c.usuario?.nombre || c.usuario?.email?.split('@')[0] || (c.user_id ? 'Usuario' : 'Anónimo')
+                      const huella = huellaAnonimo(c as any)
+                      const nombre = c.usuario?.nombre || c.usuario?.email?.split('@')[0] || (c.user_id ? 'Usuario' : (huella ? `Anónimo · ${huella}` : 'Anónimo'))
                       return (
                         <tr
                           key={c.id}
@@ -687,8 +700,8 @@ export default function ChatbotRespuestasPage() {
                                     {textoUbicacion(log)}
                                   </span>
                                   {log.locale && <span className="uppercase font-semibold">{log.locale}</span>}
-                                  {log.funciones && log.funciones.length > 0 && (
-                                    <span>{log.funciones.map((f) => f.name).join(', ')}</span>
+                                  {log.funciones && log.funciones.filter((f) => !f.name.startsWith('_')).length > 0 && (
+                                    <span>{log.funciones.filter((f) => !f.name.startsWith('_')).map((f) => f.name).join(', ')}</span>
                                   )}
                                   <span>{log.tokens ?? '—'} tokens</span>
                                   <span>{log.duracion_ms ? `${(log.duracion_ms / 1000).toFixed(1)} s` : '—'}</span>

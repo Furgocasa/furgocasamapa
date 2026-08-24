@@ -277,6 +277,8 @@ const GAP_SESION_MS = 60 * 60 * 1000
 
 function claveAgrupacion(log: any): string {
   if (log.user_id) return `user:${log.user_id}`
+  const huella = log.ip_hash || (log.funciones || []).find((f: any) => f?.name === '_cliente')?.args?.huella
+  if (huella) return `anon:${huella}`
   if (log.conversacion_id) return `conv:${log.conversacion_id}`
   const meta = (log.funciones || []).find((f: any) => f?.name === '_ubicacion')?.args || {}
   const sitio = String(log.ciudad || meta.ciudad || '').trim().toLowerCase()
@@ -455,12 +457,16 @@ async function cargarConversaciones(
     const userId = conv?.user_id || lastLog?.user_id || firstLog?.user_id || null
     const ubi = ubicacionDeFila(lastLog || firstLog || {}, conv)
     const nota = notaInteraccion(logs)
+    const ip_hash = lastLog?.ip_hash || firstLog?.ip_hash || null
+    const funcionesCliente = (lastLog?.funciones || firstLog?.funciones || []).filter((f: any) => f?.name === '_cliente')
     return {
       id: g.id,
       created_at: firstLog?.created_at || conv?.created_at || null,
       ultimo_mensaje_at: lastLog?.created_at || conv?.ultimo_mensaje_at || null,
       titulo: firstLog?.pregunta || conv?.titulo || 'Conversación',
       user_id: userId,
+      ip_hash,
+      funciones: funcionesCliente,
       usuario: (userId && usuarios[userId]) || null,
       locale: lastLog?.locale || firstLog?.locale || null,
       respuestas: logs.length,

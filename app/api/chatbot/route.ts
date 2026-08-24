@@ -38,6 +38,8 @@ import { getCached, CACHE_TTL } from '@/lib/cache/redis'
 // Logger
 import { logger } from '@/lib/logger'
 import { validateOpenAIModel, buildTokensParam, buildReasoningForTools, buildTemperatureParam } from '@/lib/openai/model-validation'
+import { createClient as createServerClient } from '@/lib/supabase/server'
+import { clientIp, consumeGuestQuestion, huellaDeIp, GUEST_QUESTION_LIMIT } from '@/lib/chatbot/guest-quota'
 
 // ============================================
 // CONFIGURACIÓN
@@ -484,17 +486,81 @@ export async function POST(req: NextRequest) {
     
     // Parsear body primero
     const body: ChatbotRequest = await req.json()
-    let { messages, conversacionId, ubicacionUsuario, userId, locale } = body
+    let { messages, conversacionId, ubicacionUsuario, locale } = body
     if (ubicacionUsuario && !esGpsValido(ubicacionUsuario.lat, ubicacionUsuario.lng)) {
       logger.warn('GPS inválido o Null Island; se ignora', ubicacionUsuario)
       ubicacionUsuario = undefined
     }
+
+    // La sesión de cookies manda. El userId del body se ignora (se puede falsificar).
+    let userId: string | undefined
+    try {
+      const auth = await createServerClient()
+      const { data: { user } } = await auth.auth.getUser()
+      userId = user?.id
+    } catch (e: any) {
+      logger.warn('No se pudo leer la sesión del chatbot', { error: e?.message })
+    }
+
+    const ip = clientIp(req)
+    const huella = huellaDeIp(ip)
+    let guest: { used: number; limit: number; remaining: number } | undefined
     
     // ============================================
-    // RATE LIMITING
+    // VALIDACIONES
+    // ============================================
+    logger.debug('Verificando OPENAI_API_KEY')
+    
+    // Validar variables de entorno
+    const apiKey = process.env.OPENAI_API_KEY
+    if (!apiKey) {
+      logger.error('OPENAI_API_KEY no configurada')
+      return NextResponse.json(
+        { error: 'Chatbot no configurado: falta OPENAI_API_KEY' },
+        { status: 500 }
+      )
+    }
+    
+    logger.debug('OPENAI_API_KEY encontrada')
+    
+    logger.info('Procesando petición', {
+      messageCount: messages.length,
+      hasLocation: !!ubicacionUsuario,
+      userId: userId || 'anonymous',
+      huella: userId ? undefined : huella,
+    })
+    
+    // Validar mensajes
+    if (!messages || messages.length === 0) {
+      return NextResponse.json(
+        { error: 'Se requiere al menos un mensaje' },
+        { status: 400 }
+      )
+    }
+
+    const supabase = getSupabaseClient()
+
+    if (!userId) {
+      const quota = await consumeGuestQuestion(supabase, huella)
+      guest = { used: quota.used, limit: quota.limit, remaining: quota.remaining }
+      if (!quota.allowed) {
+        logger.warn('Cupo anónimo del chatbot agotado', { huella, used: quota.used })
+        return NextResponse.json({
+          error: 'LOGIN_REQUIRED',
+          errorType: 'LOGIN_REQUIRED',
+          message: `Has usado tus ${GUEST_QUESTION_LIMIT} preguntas gratis. Entra o crea una cuenta para seguir.`,
+          loginUrl: '/auth/login',
+          registerUrl: '/auth/register',
+          guest,
+        }, { status: 403 })
+      }
+    }
+
+    // ============================================
+    // RATE LIMITING (por cuenta o IP real, no por userId del body)
     // ============================================
     if (ratelimit) {
-      const identifier = userId || req.headers.get('x-forwarded-for') || 'anonymous'
+      const identifier = userId || ip || 'anonymous'
       
       logger.debug('Verificando rate limit', { identifier })
       
@@ -522,39 +588,6 @@ export async function POST(req: NextRequest) {
       
       logger.debug(`Rate limit OK. Restantes: ${remaining}/${limit}`)
     }
-    
-    // ============================================
-    // VALIDACIONES
-    // ============================================
-    logger.debug('Verificando OPENAI_API_KEY')
-    
-    // Validar variables de entorno
-    const apiKey = process.env.OPENAI_API_KEY
-    if (!apiKey) {
-      logger.error('OPENAI_API_KEY no configurada')
-      return NextResponse.json(
-        { error: 'Chatbot no configurado: falta OPENAI_API_KEY' },
-        { status: 500 }
-      )
-    }
-    
-    logger.debug('OPENAI_API_KEY encontrada')
-    
-    logger.info('Procesando petición', {
-      messageCount: messages.length,
-      hasLocation: !!ubicacionUsuario,
-      userId: userId || 'anonymous'
-    })
-    
-    // Validar mensajes
-    if (!messages || messages.length === 0) {
-      return NextResponse.json(
-        { error: 'Se requiere al menos un mensaje' },
-        { status: 400 }
-      )
-    }
-    
-    const supabase = getSupabaseClient()
     
     // Crear hilo para registrados y anónimos (el admin agrupa por conversacion_id)
     if (!conversacionId) {
@@ -806,6 +839,9 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
     let firstFunctionArgs: any = null
     let lastFunctionResult: any = null
     const funcionesEjecutadas: Array<{ name: string; args: any }> = []
+    if (!userId && huella) {
+      funcionesEjecutadas.push({ name: '_cliente', args: { huella } })
+    }
     const conversation: OpenAI.Chat.ChatCompletionMessageParam[] = [...fullMessages]
     let finalResponse: string | null = null
 
@@ -1065,14 +1101,15 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 
       return NextResponse.json({
         message: finalResponse,
-        conversacionId: conversacionId, // Retornar conversacionId para que el frontend lo guarde
+        conversacionId: conversacionId,
         logId,
         functionCalled: functionName,
         functionArgs: functionArgs,
         areas: areasEncontradas,
         tokensUsados: totalTokens,
         modelo: config.modelo,
-        duration: duration
+        duration: duration,
+        guest,
       })
     }
     
@@ -1117,7 +1154,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       locale: locale || 'es',
       pregunta: messages[messages.length - 1]?.content || null,
       respuesta: finalResponse,
-      funciones: [],
+      funciones: funcionesEjecutadas,
       areas_ids: [],
       tokens: totalTokens,
       modelo: config.modelo,
@@ -1130,11 +1167,12 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 
     return NextResponse.json({
       message: finalResponse,
-      conversacionId: conversacionId, // Retornar conversacionId
+      conversacionId: conversacionId,
       logId,
       tokensUsados: totalTokens,
       modelo: config.modelo,
-      duration: duration
+      duration: duration,
+      guest,
     })
     
   } catch (error: any) {

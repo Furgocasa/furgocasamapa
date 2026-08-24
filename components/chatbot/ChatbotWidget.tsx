@@ -32,6 +32,10 @@ const TEXTOS: Record<string, {
   votoPregunta: string
   votoBien: string
   votoMal: string
+  loginWall: string
+  loginCta: string
+  registerCta: string
+  guestHint: string
 }> = {
   es: {
     bienvenida: '¡Hola! 👋 Soy el Tío Viajero IA. Pregúntame por áreas, rutas… o por valorar tu furgo y el QR anti-golpes. ¿Por dónde empezamos?',
@@ -47,7 +51,11 @@ const TEXTOS: Record<string, {
     ubicacionDetectada: '📍 Ubicación detectada · Las búsquedas serán más precisas',
     votoPregunta: '¿Qué te ha parecido esta respuesta?',
     votoBien: 'Bien',
-    votoMal: 'Mal'
+    votoMal: 'Mal',
+    loginWall: 'Has usado tus 2 preguntas gratis. Entra o crea una cuenta para seguir preguntando.',
+    loginCta: 'Entrar',
+    registerCta: 'Crear cuenta',
+    guestHint: 'Te quedan {n} preguntas sin cuenta'
   },
   en: {
     bienvenida: "Hi! 👋 I'm Tío Viajero AI. Ask me about motorhome areas, services, prices or route stops. Where shall we start?",
@@ -63,7 +71,11 @@ const TEXTOS: Record<string, {
     ubicacionDetectada: '📍 Location detected · Searches will be more accurate',
     votoPregunta: 'How was this reply?',
     votoBien: 'Good',
-    votoMal: 'Bad'
+    votoMal: 'Bad',
+    loginWall: 'You’ve used your 2 free questions. Sign in or create an account to keep asking.',
+    loginCta: 'Sign in',
+    registerCta: 'Create account',
+    guestHint: '{n} free questions left'
   },
   fr: {
     bienvenida: "Salut ! 👋 Je suis Tío Viajero IA. Demandez-moi des aires, services, prix ou étapes d'itinéraire. On commence ?",
@@ -79,7 +91,11 @@ const TEXTOS: Record<string, {
     ubicacionDetectada: '📍 Position détectée · Recherches plus précises',
     votoPregunta: 'Cette réponse vous a convenu ?',
     votoBien: 'Bien',
-    votoMal: 'Mal'
+    votoMal: 'Mal',
+    loginWall: 'Vous avez utilisé vos 2 questions gratuites. Connectez-vous ou créez un compte pour continuer.',
+    loginCta: 'Connexion',
+    registerCta: 'Créer un compte',
+    guestHint: 'Il vous reste {n} questions sans compte'
   },
   de: {
     bienvenida: 'Hallo! 👋 Ich bin Tío Viajero KI. Frag mich nach Stellplätzen, Services, Preisen oder Routenstopps. Womit fangen wir an?',
@@ -95,7 +111,11 @@ const TEXTOS: Record<string, {
     ubicacionDetectada: '📍 Standort erkannt · Genauere Suche',
     votoPregunta: 'Wie war diese Antwort?',
     votoBien: 'Gut',
-    votoMal: 'Schlecht'
+    votoMal: 'Schlecht',
+    loginWall: 'Du hast deine 2 kostenlosen Fragen verbraucht. Melde dich an oder erstelle ein Konto, um weiterzufragen.',
+    loginCta: 'Anmelden',
+    registerCta: 'Konto erstellen',
+    guestHint: 'Noch {n} Fragen ohne Konto'
   },
   it: {
     bienvenida: 'Ciao! 👋 Sono Tío Viajero IA. Chiedimi aree, servizi, prezzi o soste lungo il percorso. Da dove iniziamo?',
@@ -111,7 +131,11 @@ const TEXTOS: Record<string, {
     ubicacionDetectada: '📍 Posizione rilevata · Ricerche più precise',
     votoPregunta: 'Che ne pensi di questa risposta?',
     votoBien: 'Bene',
-    votoMal: 'Male'
+    votoMal: 'Male',
+    loginWall: 'Hai usato le 2 domande gratis. Accedi o crea un account per continuare.',
+    loginCta: 'Accedi',
+    registerCta: 'Crea account',
+    guestHint: 'Ti restano {n} domande senza account'
   }
 }
 
@@ -130,6 +154,8 @@ export default function ChatbotWidget() {
   const [sending, setSending] = useState(false)
   const [conversacionId, setConversacionId] = useState<string | null>(null)
   const [ubicacion, setUbicacion] = useState<{lat: number, lng: number} | null>(null)
+  const [loginRequired, setLoginRequired] = useState(false)
+  const [guestRemaining, setGuestRemaining] = useState<number | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const restauradoRef = useRef(false)
 
@@ -195,10 +221,19 @@ export default function ChatbotWidget() {
       setLoading(false)
     }
     
+    try {
+      if (localStorage.getItem('fc_chat_guest_done') === '1') setLoginRequired(true)
+    } catch {}
+
     getUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+        setLoginRequired(false)
+        setGuestRemaining(null)
+        try { localStorage.removeItem('fc_chat_guest_done') } catch {}
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -465,7 +500,7 @@ export default function ChatbotWidget() {
   // Enviar mensaje (texto opcional para los mensajes prefijados)
   const enviarMensaje = async (textoPrefijado?: string) => {
     const texto = (textoPrefijado ?? input).trim()
-    if (!texto || sending) return
+    if (!texto || sending || (loginRequired && !user)) return
 
     const userMessage: Message = { rol: 'user', contenido: texto }
     setMessages(prev => [...prev, userMessage])
@@ -502,10 +537,23 @@ export default function ChatbotWidget() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         console.error('Error API:', errorData)
+        if (response.status === 403 && errorData.errorType === 'LOGIN_REQUIRED') {
+          setLoginRequired(true)
+          setGuestRemaining(0)
+          try { localStorage.setItem('fc_chat_guest_done', '1') } catch {}
+          return
+        }
         throw new Error(errorData.error || 'Error en la respuesta')
       }
       
       const data = await response.json()
+      if (!user && data.guest) {
+        setGuestRemaining(data.guest.remaining)
+        if (data.guest.remaining <= 0) {
+          setLoginRequired(true)
+          try { localStorage.setItem('fc_chat_guest_done', '1') } catch {}
+        }
+      }
       
       // Si es el primer mensaje y retorna conversacionId, guardarlo
       if (data.conversacionId && !conversacionId) {
@@ -569,8 +617,10 @@ export default function ChatbotWidget() {
     ? 'fixed z-[11000] right-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:right-6 md:bottom-6'
     : 'fixed z-[11000] right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))] md:right-6 md:bottom-6'
 
-  // El Tío Viajero es PÚBLICO: sin cuenta también funciona (rate limit por IP).
-  // Con cuenta, además, se guarda el historial de conversaciones.
+  // Sin cuenta: 2 preguntas. Luego hay que entrar.
+  const nextAuth = `/auth/login?next=${encodeURIComponent(pathname || '/mapa')}`
+  const nextRegister = `/auth/register?next=${encodeURIComponent(pathname || '/mapa')}`
+  const bloqueadoInvitado = loginRequired && !user
 
   return (
     <>
@@ -837,7 +887,7 @@ export default function ChatbotWidget() {
             ))}
             
             {/* Mensajes prefijados (solo al inicio de la conversación) */}
-            {!sending && messages.length <= 1 && (
+            {!sending && !bloqueadoInvitado && messages.length <= 1 && (
               <div className="flex flex-wrap gap-2 pt-1">
                 {txt.sugerencias.map((sugerencia) => (
                   <button
@@ -884,6 +934,26 @@ export default function ChatbotWidget() {
           
           {/* Input */}
           <div className="p-4 border-t bg-white md:rounded-b-2xl">
+            {bloqueadoInvitado ? (
+              <div className="rounded-xl border border-sky-200 bg-sky-50 p-3 text-center">
+                <p className="text-sm text-gray-800 mb-3">{txt.loginWall}</p>
+                <div className="flex gap-2 justify-center">
+                  <Link
+                    href={nextAuth}
+                    className="rounded-full bg-gradient-to-r from-blue-600 to-gray-700 text-white text-sm font-semibold px-4 py-2"
+                  >
+                    {txt.loginCta}
+                  </Link>
+                  <Link
+                    href={nextRegister}
+                    className="rounded-full border border-sky-300 bg-white text-sky-800 text-sm font-semibold px-4 py-2"
+                  >
+                    {txt.registerCta}
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -902,10 +972,17 @@ export default function ChatbotWidget() {
                 {sending ? '...' : txt.enviar}
               </button>
             </div>
+            {!user && guestRemaining != null && guestRemaining > 0 && (
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                {txt.guestHint.replace('{n}', String(guestRemaining))}
+              </p>
+            )}
             {ubicacion && (
               <p className="text-xs text-gray-500 mt-2 text-center">
                 {txt.ubicacionDetectada}
               </p>
+            )}
+              </>
             )}
           </div>
         </div>
