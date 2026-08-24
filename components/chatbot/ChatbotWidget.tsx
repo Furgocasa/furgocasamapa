@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, type ReactNode } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
@@ -19,6 +19,7 @@ import {
   pedirAceptarCookies,
   setCookieConsent,
 } from '@/components/CookieConsentBar'
+import { ChatMensajeTexto } from '@/components/chatbot/ChatMensajeTexto'
 
 interface Message {
   rol: 'user' | 'assistant'
@@ -282,74 +283,6 @@ export default function ChatbotWidget() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
-  
-  // Links clicables: markdown [texto](url), /area/slug, /ruta y "Ver en Google Maps:"
-  const renderMessageWithLinks = (text: string) => {
-    // Quitar imágenes markdown ![alt](url) — las tarjetas ya muestran foto
-    const sinImagenes = text.replace(/!\[[^\]]*\]\([^)]+\)/g, '')
-    const tokenRegex =
-      /(\[[^\]]+\]\([^)]+\))|(Ver en Google Maps:\s*https?:\/\/[^\s)]+)|(\/area\/[a-z0-9\-]+)|(\/ruta(?:\?[^\s]*)?)|(https?:\/\/[^\s)]+)/gi
-
-    const nodes: ReactNode[] = []
-    let lastIndex = 0
-    let match: RegExpExecArray | null
-    let key = 0
-
-    while ((match = tokenRegex.exec(sinImagenes)) !== null) {
-      if (match.index > lastIndex) {
-        nodes.push(<span key={key++}>{sinImagenes.slice(lastIndex, match.index)}</span>)
-      }
-
-      const token = match[0]
-      const md = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
-      if (md) {
-        const [, label, href] = md
-        if (href.startsWith('/')) {
-          nodes.push(
-            <Link key={key++} href={href} target="_blank" className="text-sky-700 hover:text-sky-900 underline font-medium">
-              {label}
-            </Link>
-          )
-        } else {
-          nodes.push(
-            <a key={key++} href={href} target="_blank" rel="noopener noreferrer" className="text-sky-700 hover:text-sky-900 underline font-medium">
-              {label}
-            </a>
-          )
-        }
-      } else if (/^Ver en Google Maps:/i.test(token)) {
-        const url = token.replace(/^Ver en Google Maps:\s*/i, '')
-        nodes.push(
-          <a key={key++} href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sky-700 hover:text-sky-900 underline font-medium">
-            🗺️ Ver en Google Maps
-          </a>
-        )
-      } else if (/^\/area\//i.test(token) || /^\/ruta/i.test(token)) {
-        nodes.push(
-          <Link key={key++} href={token} target="_blank" className="text-sky-700 hover:text-sky-900 underline font-medium">
-            {token.startsWith('/area/') ? 'Ver área →' : 'Planificador de rutas →'}
-          </Link>
-        )
-      } else if (/^https?:\/\//i.test(token)) {
-        const esMaps = /google\.com\/maps|maps\.google\.com/i.test(token)
-        nodes.push(
-          <a key={key++} href={token} target="_blank" rel="noopener noreferrer" className="text-sky-700 hover:text-sky-900 underline font-medium break-all">
-            {esMaps ? '🗺️ Google Maps' : token}
-          </a>
-        )
-      } else {
-        nodes.push(<span key={key++}>{token}</span>)
-      }
-
-      lastIndex = match.index + token.length
-    }
-
-    if (lastIndex < sinImagenes.length) {
-      nodes.push(<span key={key++}>{sinImagenes.slice(lastIndex)}</span>)
-    }
-
-    return <span className="whitespace-pre-wrap">{nodes.length ? nodes : sinImagenes}</span>
-  }
   
   const pedirUbicacion = () => {
     if (!navigator.geolocation) {
@@ -820,7 +753,7 @@ export default function ChatbotWidget() {
                     : 'bg-white text-gray-900 shadow-md border border-blue-100'
                 }`}>
                   <div className="text-sm leading-relaxed">
-                    {renderMessageWithLinks(msg.contenido)}
+                    <ChatMensajeTexto texto={msg.contenido} />
                   </div>
                   
                   {/* Tarjetas de áreas encontradas */}
