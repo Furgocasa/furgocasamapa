@@ -446,7 +446,7 @@ export function rankMejoresAreas<T extends AreaResumen>(areas: T[], limit: numbe
  * texto ya formateado (servicios legibles, slug interno) + campos clave.
  * Evita que el LLM invente formatos tipo "[agua: no, electricidad: sí]".
  */
-export function serializeToolResultForModel(result: any, locale: ChatLocale = 'es'): string {
+export function serializeToolResultForModel(result: any, locale: ChatLocale = 'es', maxAreas = 3): string {
   if (result == null) return JSON.stringify({ error: 'Sin resultado' })
   if (result.error) return JSON.stringify(result)
 
@@ -463,21 +463,23 @@ export function serializeToolResultForModel(result: any, locale: ChatLocale = 'e
   })
 
   if (Array.isArray(result)) {
+    const mostradas = result.slice(0, maxAreas)
     return JSON.stringify({
-      total: result.length,
+      total: mostradas.length,
       instrucciones:
-        'El campo "resumen" YA está en el idioma de respuesta: pégalo TAL CUAL (servicios, rating, /area/{slug}). Si el precio es desconocido el resumen lo dice: NUNCA lo conviertas en Gratis. No inventes servicios ni pegues Google Maps / imágenes.',
-      areas: result.map(mapArea),
+        `Muestra SOLO estas ${mostradas.length} (no digas un número mayor). El campo "resumen" YA está en el idioma de respuesta: pégalo TAL CUAL (servicios, rating, /area/{slug}). Si el precio es desconocido el resumen lo dice: NUNCA lo conviertas en Gratis. No inventes servicios ni pegues Google Maps / imágenes.`,
+      areas: mostradas.map(mapArea),
     })
   }
 
   if (Array.isArray(result.areas)) {
+    const mostradas = result.areas.slice(0, maxAreas)
     return JSON.stringify({
-      total: result.areas.length,
+      total: mostradas.length,
       aviso: result.aviso || undefined,
       instrucciones:
-        'El "resumen" YA está en el idioma de respuesta: pégalo TAL CUAL. Máximo 4 paradas, NO las del origen. Menciona desvío si existe. Tras listar puedes mencionar /ruta como complemento, nunca como única respuesta. Enlace interno: /area/{slug}.',
-      areas: result.areas.map(mapArea),
+        `El "resumen" YA está en el idioma de respuesta: pégalo TAL CUAL. Muestra SOLO estas ${mostradas.length} paradas (no digas un número mayor), NO las del origen. Menciona desvío si existe. Tras listar puedes mencionar /ruta como complemento, nunca como única respuesta. Enlace interno: /area/{slug}.`,
+      areas: mostradas.map(mapArea),
     })
   }
 
@@ -1052,6 +1054,7 @@ function diversificarParadas<T extends { ciudad?: string; _t: number }>(areas: T
 export type FiltrosRuta = {
   tramo?: 'mitad' | 'cerca_destino' | 'todo'
   tipo_area?: 'publica' | 'privada' | 'camping'
+  servicios?: string[]
   incluir_origen?: boolean
 }
 
@@ -1113,6 +1116,12 @@ export async function searchAreasAlongRoute(
 
   if (filtros.tipo_area) {
     candidatas = candidatas.filter((a: any) => a.tipo_area === filtros.tipo_area)
+  }
+
+  if (filtros.servicios && filtros.servicios.length) {
+    candidatas = candidatas.filter((a: any) =>
+      filtros.servicios!.every((s) => a.servicios && a.servicios[s] === true)
+    )
   }
 
   if (tramo === 'mitad') {

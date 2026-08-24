@@ -247,6 +247,14 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
           enum: ['publica', 'privada', 'camping'],
           description: 'Si pidieron camping o un tipo de área concreto'
         },
+        servicios: {
+          type: 'array',
+          description: 'Servicios OBLIGATORIOS en la parada (filtro AND). Ej: llenado de agua = "agua"; vaciado de aguas = "vaciado_aguas_grises" y "vaciado_aguas_negras".',
+          items: {
+            type: 'string',
+            enum: ['agua', 'electricidad', 'vaciado_aguas_negras', 'vaciado_aguas_grises', 'wifi', 'duchas', 'wc', 'lavanderia', 'restaurante', 'supermercado']
+          }
+        },
         incluir_origen: {
           type: 'boolean',
           description: 'true SOLO si piden parar al salir / en la ciudad de origen'
@@ -443,6 +451,20 @@ function ciudadesDelHilo(hilo: Array<{ role: string; content: string }>): string
     }
   }
   return [...new Set(found)].slice(-6)
+}
+
+/** Infiere servicios obligatorios de una frase ("vaciado y llenado de aguas"). */
+function serviciosDeTexto(texto: string): string[] {
+  const t = (texto || '').toLowerCase()
+  const s = new Set<string>()
+  if (/\b(agua|llenado|water|rellen)/.test(t)) s.add('agua')
+  if (/(vaciado|vaciar).*(gris|todas|aguas)|aguas grises|grey water/.test(t)) s.add('vaciado_aguas_grises')
+  if (/(vaciado|vaciar).*(negr|todas|aguas)|aguas negras|black water|wc\s*qu[ií]mico/.test(t)) s.add('vaciado_aguas_negras')
+  if (/\belectricidad|enchufe|luz|corriente|electric/.test(t)) s.add('electricidad')
+  if (/\bduchas?\b|shower/.test(t)) s.add('duchas')
+  if (/\bwifi\b/.test(t)) s.add('wifi')
+  if (/\blavander[ií]a|washing/.test(t)) s.add('lavanderia')
+  return [...s]
 }
 
 function sanitizarArgsBusqueda(fnArgs: any, ultimoMensaje: string) {
@@ -936,6 +958,7 @@ ${hiloModelo.slice(-8).map((m) => `- ${m.role === 'user' ? 'Usuario' : 'Tío'}: 
 - "aquí / cerca de mí / donde estoy" → GPS (${ciudadGpsTxt}).
 - "esta / esa / la del mapa / recomiéndame un área" con pin abierto → ESA área, una ficha.
 - "allí / la de antes" → el hilo (${ciudadHilo || ciudadGpsTxt}).
+- SEGUIMIENTO: si acabas de listar áreas y el usuario dice "amplía", "más", "y con duchas", "y gratis" o corrige ("esas no son gratis"), MANTÉN los filtros de antes (gratis, servicios, tipo) y la misma ubicación/GPS. No preguntes "¿dónde?" otra vez ni pierdas el filtro. Si dijiste "gratis", que TODAS sean precio 0; si una no lo es, no la incluyas ni la llames gratuita.
 GPS, pin y memoria se complementan. No dispares el corredor entero si preguntan por una.`
     
     // Añadir estadísticas de la plataforma
@@ -1180,9 +1203,15 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
                 if (!fnArgs.destino && rutaHilo) fnArgs.destino = rutaHilo.destino
                 fnArgs.origen = resolverLugarRelativo(fnArgs.origen, ciudadGps, ciudadHilo)
                 fnArgs.destino = resolverLugarRelativo(fnArgs.destino, ciudadGps, ciudadHilo)
-                const delHilo = inferirFiltrosRuta(
-                  [ultimoMensajeUsuario, ...hiloModelo.map((m) => m.content)].join('\n')
-                )
+                const hiloRutaTexto = [ultimoMensajeUsuario, ...hiloModelo.map((m) => m.content)].join('\n')
+                const soloUsuarioRuta = [
+                  ultimoMensajeUsuario,
+                  ...hiloModelo.filter((m) => m.role === 'user').map((m) => m.content),
+                ].join('\n')
+                const delHilo = inferirFiltrosRuta(hiloRutaTexto)
+                const serviciosRuta = Array.isArray(fnArgs.servicios) && fnArgs.servicios.length
+                  ? fnArgs.servicios
+                  : serviciosDeTexto(soloUsuarioRuta)
                 functionResult = await searchAreasAlongRoute(
                   fnArgs.origen,
                   fnArgs.destino,
@@ -1190,6 +1219,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
                   {
                     tramo: fnArgs.tramo || delHilo.tramo,
                     tipo_area: fnArgs.tipo_area || delHilo.tipo_area,
+                    servicios: serviciosRuta,
                     incluir_origen: Boolean(fnArgs.incluir_origen || delHilo.incluir_origen),
                   }
                 )

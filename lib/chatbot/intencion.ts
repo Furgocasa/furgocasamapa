@@ -193,6 +193,11 @@ export function esFiltroSinSitio(mensaje: string): boolean {
 
 export type AtajoIntencion = 'ambigua' | 'guia' | 'gas_sin_sitio' | 'ruta_sin_intencion' | 'filtro_sin_sitio'
 
+/** El asistente ya listó áreas: lo siguiente es un seguimiento, no una pregunta nueva. */
+export function asistenteListoAreas(texto: string | null | undefined): boolean {
+  return /🚐|\/area\//.test(texto || '')
+}
+
 export function clasificarIntencion(opts: {
   ultimo: string
   previosUsuario?: string[]
@@ -205,8 +210,12 @@ export function clasificarIntencion(opts: {
   if (asistentePidioClarificar(opts.ultimoAsistente)) return null
   if (esPreguntaAreaConcreta(ultimo) || esDeixisMapa(ultimo)) return null
   if (esRutaSinIntencion(ultimo)) return 'ruta_sin_intencion'
-  if (esFiltroSinSitio(ultimo)) return 'filtro_sin_sitio'
+  // Si el asistente acaba de listar áreas, "amplía", "esas no son gratis" o
+  // "y con duchas" son seguimientos: el modelo debe usar el hilo, no preguntar dónde.
+  const hiloConAreas = asistenteListoAreas(opts.ultimoAsistente)
+  if (esFiltroSinSitio(ultimo)) return hiloConAreas ? null : 'filtro_sin_sitio'
   if (!esSitioSinIntencion(ultimo)) return null
+  if (hiloConAreas) return null
   const hiloUtil = (opts.previosUsuario || []).some((t) => pideUtilCamper(t))
   if (hiloUtil) return null
   return 'ambigua'
