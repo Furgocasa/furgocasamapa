@@ -933,8 +933,16 @@ export async function buscarAreasPorNombre(nombre: string, limit: number = 3): P
       console.error('❌ Error buscando por nombre:', error)
       throw error
     }
+
+    const palabra = new RegExp(
+      `(^|[^A-Za-zÀ-ÿ])${termino.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^A-Za-zÀ-ÿ]|$)`,
+      'i'
+    )
+    const ajustadas = (data || []).filter(
+      (a: any) => palabra.test(a.nombre || '') || palabra.test(a.ciudad || '')
+    )
     
-    const ranked = rankMejoresAreas(data || [], limit)
+    const ranked = rankMejoresAreas(ajustadas, limit)
     console.log(`✅ Encontradas ${data?.length || 0} → top ${ranked.length} por nombre`)
     if (ranked.length > 0) return ranked
 

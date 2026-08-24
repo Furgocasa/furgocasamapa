@@ -17,7 +17,8 @@ export function pideUtilCamper(mensaje: string): boolean {
 export function esGuiaTuristicaPura(mensaje: string): boolean {
   if (!mensaje) return false
   if (!GUIA_RE.test(mensaje)) return false
-  return !pideUtilCamper(mensaje)
+  if (pideUtilCamper(mensaje) || extraerRutaNombrada(mensaje) || parecePreguntaRuta(mensaje)) return false
+  return true
 }
 
 /** "Huesca", "En Cádiz", "Ciudad de Lourdes" — sin decir qué quieren. */
@@ -80,9 +81,19 @@ export function esDeixisMapa(mensaje: string): boolean {
  * Pregunta por UN sitio/área concreto. No es "dónde paro en la ruta".
  * Evita reabrir el corredor entero (metralleta de fichas).
  */
+export function extraerCiudadNombrada(mensaje: string): string {
+  const t = (mensaje || '').replace(/[\u{1F300}-\u{1FAFF}]/gu, '').replace(/\s+/g, ' ').trim()
+  const m = t.match(
+    /\b(?:en|in|à|bei)\s+([A-ZÁÉÍÓÚÑ][A-Za-zÀ-ÿ''\-]{2,40}(?:\s+(?:de|del|la|el)\s+[A-ZÁÉÍÓÚÑ][A-Za-zÀ-ÿ''\-]{2,30})?)/
+  )
+  if (m) return m[1].trim()
+  return extraerSitioNombrado(t)
+}
+
 export function esPreguntaAreaConcreta(mensaje: string): boolean {
   const t = (mensaje || '').replace(/[\u{1F300}-\u{1FAFF}]/gu, '').trim()
   if (!t) return false
+  if (pideCercaDeMi(t)) return false
   if (parecePreguntaRuta(t) && !/castillo|[aá]rea de|la de |esta no te suena/i.test(t)) return false
   return (
     esDeixisMapa(t) ||
@@ -92,12 +103,15 @@ export function esPreguntaAreaConcreta(mensaje: string): boolean {
 
 export function extraerNombreAreaConcreta(mensaje: string): string {
   const t = (mensaje || '').replace(/[\u{1F300}-\u{1FAFF}]/gu, '').replace(/[¿?¡!]/g, ' ').replace(/\s+/g, ' ').trim()
+  if (pideCercaDeMi(t)) return ''
   const m =
     t.match(/castillo de\s+([A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9\s'-]{2,40})/i) ||
     t.match(/(?:[aá]rea(?: de autocaravanas)?|camping)\s+(?:de\s+)?([A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9\s'-]{2,40})/i) ||
     t.match(/(?:la de|el de|la del|el del)\s+([A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9\s'-]{2,40})/i)
-  if (m) return m[1].replace(/\s+(de )?(cuenca|espa[nñ]a|murcia).*$/i, '').trim()
-  return ''
+  if (!m) return ''
+  const nombre = m[1].replace(/\s+(de )?(cuenca|espa[nñ]a|murcia).*$/i, '').trim()
+  if (/^(p[uú]blica|privada|camping|gratis|gratuita|cerca|con|de|del|la|el)\b/i.test(nombre)) return ''
+  return nombre
 }
 
 /** "Voy de Madrid a Valencia, dónde paro" — pregunta de ruta, no de un sitio suelto. */
@@ -171,7 +185,7 @@ export function esRutaSinIntencion(mensaje: string): boolean {
   if (!mensaje) return false
   if (/(gasolinera|gasolineras|gasolina|di[eé]sel|petrol|tankstelle|taller)/i.test(mensaje)) return false
   if (esPreguntaAreaConcreta(mensaje) || esDeixisMapa(mensaje)) return false
-  if (/paradas? en (una )?ruta|etapas de (ruta|itinerario)|stops? on (a |the )?route/i.test(mensaje)) {
+  if (/paradas? en (una )?ruta|etapas de (ruta|itinerario)|stops? on (a |the )?route|pernoctar a mitad|mitad de ruta/i.test(mensaje)) {
     return true
   }
   return parecePreguntaRuta(mensaje)
@@ -199,7 +213,7 @@ function tieneSitioOCerca(mensaje: string): boolean {
 export function esFiltroSinSitio(mensaje: string): boolean {
   const t = (mensaje || '').replace(/[\u{1F300}-\u{1FAFF}]/gu, '').trim()
   if (!t) return false
-  if (tieneSitioOCerca(t) || extraerRutaNombrada(t) || parecePreguntaRuta(t)) return false
+  if (tieneSitioOCerca(t) || extraerRutaNombrada(t) || parecePreguntaRuta(t) || extraerCiudadNombrada(t)) return false
   if (esGuiaTuristicaPura(t) || esGasolineraSinSitio(t)) return false
   return pideUtilCamper(t) || /mascotas|pets|animales|haustier|animaux|water|electricity|[eé]lectricit[eé]|strom|acqua|elettricit/i.test(t)
 }

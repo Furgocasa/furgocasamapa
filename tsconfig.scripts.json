@@ -8,7 +8,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true
   },
-  "include": ["scripts/**/*", "lib/areas/**/*"],
+  "include": ["scripts/**/*", "lib/areas/**/*", "lib/chatbot/**/*"],
   "exclude": ["node_modules"]
 }
 

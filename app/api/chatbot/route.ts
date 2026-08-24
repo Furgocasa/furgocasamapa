@@ -43,6 +43,7 @@ import { clientIp, consumeGuestQuestion, huellaDeIp, GUEST_QUESTION_LIMIT } from
 import {
   clasificarIntencion,
   extraerSitioNombrado,
+  extraerCiudadNombrada,
   extraerRutaNombrada,
   textoAtajoIntencion,
   etiquetaFiltro,
@@ -1127,6 +1128,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         // Si nombran un pueblo/ruta, no vuelques la ubicación del usuario.
         const nombraOtroSitio =
           Boolean(extraerSitioNombrado(ultimoMensajeUsuario)) ||
+          Boolean(extraerCiudadNombrada(ultimoMensajeUsuario)) ||
           Boolean(extraerRutaNombrada(ultimoMensajeUsuario)) ||
           Boolean(extraerNombreAreaConcreta(ultimoMensajeUsuario))
         if (
