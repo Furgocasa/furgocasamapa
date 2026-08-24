@@ -313,20 +313,7 @@ export default function RevisarImagenesPage() {
                   >
                     <label className="block cursor-pointer">
                       <div className="relative h-36 bg-gray-100">
-                        {f.clasificacion === 'basura' || f.clasificacion === 'invalid' ? (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs p-3 text-center">
-                            <PhotoIcon className="w-8 h-8 mb-1" />
-                          </div>
-                        ) : (
-                          <img
-                            src={f.url}
-                            alt=""
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none'
-                            }}
-                          />
-                        )}
+                        <ReviewThumb url={f.url} />
                         <input
                           type="checkbox"
                           checked={checked}
@@ -410,6 +397,27 @@ export default function RevisarImagenesPage() {
         )}
       </main>
     </div>
+  )
+}
+
+function ReviewThumb({ url }: { url: string }) {
+  const [failed, setFailed] = useState(false)
+  if (!url || failed) {
+    return (
+      <div className="w-full h-full flex items-center justify-center text-gray-400">
+        <PhotoIcon className="w-8 h-8" />
+      </div>
+    )
+  }
+  return (
+    <img
+      src={url}
+      alt=""
+      className="w-full h-full object-cover"
+      loading="lazy"
+      referrerPolicy="no-referrer"
+      onError={() => setFailed(true)}
+    />
   )
 }
 
