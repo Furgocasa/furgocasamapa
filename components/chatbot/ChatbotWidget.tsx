@@ -758,8 +758,12 @@ export default function ChatbotWidget() {
                               </div>
                               <p className="text-[11px] text-gray-500 truncate">📍 {area.ciudad}, {area.pais}</p>
                               <div className="flex items-center gap-2 mt-1 text-[11px]">
-                                <span className={`font-bold ${(!area.precio_noche || area.precio_noche === 0) ? 'text-green-600' : 'text-gray-800'}`}>
-                                  {(!area.precio_noche || area.precio_noche === 0) ? 'Gratis' : `${area.precio_noche}€/noche`}
+                                <span className={`font-bold ${area.precio_noche === 0 ? 'text-green-600' : 'text-gray-800'}`}>
+                                  {area.precio_noche === 0
+                                    ? 'Gratis'
+                                    : area.precio_noche != null
+                                      ? `${area.precio_noche}€/noche`
+                                      : 'Precio no disponible'}
                                 </span>
                                 {area.google_rating && (
                                   <span className="text-amber-500 font-medium">

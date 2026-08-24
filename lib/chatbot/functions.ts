@@ -29,6 +29,8 @@ export interface BusquedaAreasParams {
     lng?: number
     nombre?: string
     radio_km?: number
+    /** Origen de distancia_km: "desde tu ubicación" o "desde el centro de Cuenca". */
+    etiqueta_distancia?: string
   }
   servicios?: string[]
   precio_max?: number
@@ -48,6 +50,8 @@ export interface AreaResumen {
   latitud: number
   longitud: number
   distancia_km?: number
+  /** Texto de la distancia: "desde tu ubicación" / "desde el centro de Cuenca". */
+  distancia_desde?: string
   precio_noche: number | null
   servicios: Record<string, boolean>
   tipo_area: string
@@ -362,8 +366,8 @@ export async function searchAreas(params: BusquedaAreasParams): Promise<AreaResu
         filtered = filtered.filter((area: any) => esPrecioGratis(area.precio_noche))
       } else if (params.precio_max) {
         console.log(`💰 Filtrando precio máximo: ${params.precio_max}€`)
-        filtered = filtered.filter((area: any) => 
-          !area.precio_noche || area.precio_noche <= params.precio_max!
+        filtered = filtered.filter((area: any) =>
+          area.precio_noche != null && area.precio_noche <= params.precio_max!
         )
       }
       
@@ -383,8 +387,12 @@ export async function searchAreas(params: BusquedaAreasParams): Promise<AreaResu
       }
 
       const limpias = limpiarAreasBasura(filtered)
-      console.log(`✅ Resultado final: ${limpias.length} áreas después de filtros`)
-      return limpias.slice(0, 10)
+      const etiqueta = ubiGps.etiqueta_distancia || 'desde tu ubicación'
+      const conOrigen = limpias.slice(0, 10).map((a: any) =>
+        a.distancia_km != null ? { ...a, distancia_desde: a.distancia_desde || etiqueta } : a
+      )
+      console.log(`✅ Resultado final: ${conOrigen.length} áreas después de filtros`)
+      return conOrigen
     }
     
     // CASO 2: Búsqueda por nombre de ciudad/provincia/país
@@ -399,12 +407,14 @@ export async function searchAreas(params: BusquedaAreasParams): Promise<AreaResu
       const radioGeo = radioParaTipo(geo?.tipo)
       if (geo && esGpsValido(geo.lat, geo.lng) && radioGeo != null) {
         console.log(`📍 Nombre "${nombreUbicacion}" geocodificado → radio ${radioGeo}km`)
+        const ciudadCorta = nombreUbicacion.split(',')[0].trim()
         return searchAreas({
           ...params,
           ubicacion: {
             lat: geo.lat,
             lng: geo.lng,
             radio_km: params.ubicacion?.radio_km || radioGeo,
+            etiqueta_distancia: `desde el centro de ${ciudadCorta}`,
           },
         })
       }
@@ -824,12 +834,38 @@ export function sanitizarRespuestaChat(texto: string, areas: AreaResumen[] = [])
   return out.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n')
 }
 
+/**
+ * El modelo no reescribe fichas: se queda la intro y se pegan los
+ * resúmenes oficiales (precio, servicios, /area/{slug}, distancias).
+ */
+export function componerRespuestaConFichas(textoModelo: string, areas: AreaResumen[] = []): string {
+  const limpio = sanitizarRespuestaChat(textoModelo || '', areas)
+  if (!areas.length) return limpio
+
+  const corte = limpio.search(/(?:🚐\s*\*\*|\n\s*\d+\.\s+\*\*|\n\s*\*\*[^*\n]{6,}\*\*\s*\n\s*📍)/)
+  let intro = (corte >= 0 ? limpio.slice(0, corte) : limpio).trim()
+  intro = intro.replace(/https?:\/\/\S+/g, '').replace(/[ \t]+\n/g, '\n').trim()
+  const lineasIntro = intro.split('\n').filter((linea) => {
+    const l = linea.trim()
+    if (!l) return false
+    if (/autocaravanas\.com|example\.com|maps\.google/i.test(l)) return false
+    if (/💰|✨ Servicios:|🔗 \/area\//.test(l)) return false
+    return true
+  })
+  intro = lineasIntro.join('\n').trim()
+  if (intro.length > 360) intro = `${intro.slice(0, 300).replace(/\s+\S*$/, '')}…`
+
+  const fichas = areas.slice(0, 6).map((a) => formatAreaParaChat(a)).join('\n')
+  return [intro, fichas].filter(Boolean).join('\n\n')
+}
+
 export function formatAreaParaChat(area: AreaResumen): string {
   let texto = `🚐 **${area.nombre}**\n`
   texto += `📍 ${formatUbicacionArea(area)}\n`
   
   if (area.distancia_km !== undefined) {
-    texto += `📏 ${area.distancia_km.toFixed(1)} km de distancia\n`
+    const desde = area.distancia_desde || 'de distancia'
+    texto += `📏 ${area.distancia_km.toFixed(1)} km ${desde}\n`
   }
   if ((area as any).desvio_km !== undefined) {
     texto += `↔ ${(area as any).desvio_km} km de desvío\n`

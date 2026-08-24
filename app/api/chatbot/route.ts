@@ -20,6 +20,7 @@ import {
   serializeToolResultForModel,
   esGpsValido,
   sanitizarRespuestaChat,
+  componerRespuestaConFichas,
   BusquedaAreasParams,
   AreaResumen
 } from '@/lib/chatbot/functions'
@@ -34,7 +35,7 @@ import { getCached, CACHE_TTL } from '@/lib/cache/redis'
 
 // Logger
 import { logger } from '@/lib/logger'
-import { validateOpenAIModel, buildTokensParam, buildReasoningForTools } from '@/lib/openai/model-validation'
+import { validateOpenAIModel, buildTokensParam, buildReasoningForTools, buildTemperatureParam } from '@/lib/openai/model-validation'
 
 // ============================================
 // CONFIGURACIÓN
@@ -677,6 +678,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 ✅ CALIDAD DE DATOS (OBLIGATORIO)
 ═══════════════════════════════════════
 - PRECIO: Solo di "Gratis" si el resumen o precio_noche es 0. Si dice "Precio no disponible" o precio_noche es null, escribe exactamente eso. NUNCA conviertas un precio desconocido en gratis.
+- FICHAS: pega el campo "resumen" de cada área TAL CUAL. No reescribas precio, servicios ni enlaces. Prohibido autocaravanas.com, example.com y Google Maps.
 - FILTROS: Si el usuario solo nombra una ciudad o país ("Murcia", "Viseu", "Cádiz", "En Tecolutla"), busca SIN heredar servicios, tipo_area ni solo_gratuitas del turno anterior.
 - TIPO: solo tres. publica = ayuntamiento/organismo. privada = empresa/particular (camper park, granja, Weingut, CL, Brit Stop). camping = recinto. No existe la categoría stopover. En cada país la gente usa otro nombre (aire, sosta, Stellplatz, camperplaats, motorhome aire, trailer park): eso es etiqueta. Un "parking autocaravanas" del pueblo es pública. UK: touring park = camping; CL/aire de anfitrión = privada; Arosfan = pública.
 - CERCA DE MÍ: si no hay GPS válido en este mensaje, pide la ciudad. No busques en todo el mundo ni inventes una ubicación.
@@ -753,7 +755,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         messages: conversation,
         tools,
         tool_choice: toolChoice,
-        temperature: config.temperature,
+        ...buildTemperatureParam(config.modelo, config.temperature),
         ...buildTokensParam(config.max_tokens),
         ...buildReasoningForTools(config.modelo)
       })
@@ -853,7 +855,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       const closing = await openai.chat.completions.create({
         model: config.modelo,
         messages: conversation,
-        temperature: config.temperature,
+        ...buildTemperatureParam(config.modelo, config.temperature),
         ...buildTokensParam(config.max_tokens),
         ...buildReasoningForTools(config.modelo)
       })
@@ -872,7 +874,9 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
     }
 
     if (finalResponse) {
-      finalResponse = sanitizarRespuestaChat(finalResponse, areasEncontradas)
+      finalResponse = areasEncontradas.length
+        ? componerRespuestaConFichas(finalResponse, areasEncontradas)
+        : sanitizarRespuestaChat(finalResponse, areasEncontradas)
     }
 
     const functionName = firstFunctionName

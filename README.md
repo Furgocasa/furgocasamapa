@@ -248,7 +248,7 @@ El modelo de texto por defecto es **`gpt-5.6-terra`** ([docs OpenAI](https://dev
 
 | Agente | Origen de la config | Modelo actual |
 |--------|---------------------|---------------|
-| Chatbot **Tío Viajero** | `chatbot_config.modelo` | `gpt-4o-mini` |
+| Chatbot **Tío Viajero** | `chatbot_config.modelo` | `gpt-5.6-terra` |
 | Valoración de vehículos | `ia_config.valoracion_vehiculos` | `gpt-5.6-terra` |
 | Enriquecer descripciones | `ia_config.enrich_description` | `gpt-5.6-terra` |
 | Auditar servicios de áreas | `ia_config.scrape_services` | `gpt-5.6-terra` |
@@ -258,7 +258,7 @@ El modelo de texto por defecto es **`gpt-5.6-terra`** ([docs OpenAI](https://dev
 
 Terra cubre Chat Completions, Responses, function calling y `web_search`. Las fotos **no** usan Terra.
 
-> 💰 El Tío Viajero es el agente de más volumen. Usa `gpt-4o-mini`: más rápido y económico para búsquedas con function calling. Los demás agentes de texto mantienen `gpt-5.6-terra`.
+> El Tío Viajero usa **gpt-5.6-terra** con function calling contra la base de áreas (no `web_search`: el catálogo es la fuente de verdad). Con tools el reasoning va a `none` para evitar 400. GPT-5 no admite temperature custom.
 
 ### Tío Viajero: calidad y revisión
 

@@ -55,6 +55,19 @@ export function buildTokensParam(maxTokens: number): { max_completion_tokens: nu
  */
 type ReasoningEffortParam = OpenAI.Chat.ChatCompletionCreateParams['reasoning_effort']
 
+/** GPT-5.x no acepta temperature custom; 4.x sí. */
+export function buildTemperatureParam(
+  model: string,
+  temperature?: number | null
+): { temperature?: number } {
+  const id = (model || '').toLowerCase()
+  if (id.includes('gpt-5') || id.startsWith('o1') || id.startsWith('o3') || id.startsWith('o4')) {
+    return {}
+  }
+  if (temperature == null || Number.isNaN(Number(temperature))) return {}
+  return { temperature: Number(temperature) }
+}
+
 export function buildReasoningForTools(model: string): { reasoning_effort?: ReasoningEffortParam } {
   const id = (model || '').toLowerCase()
   if (id.includes('terra') || id.includes('gpt-5.6') || id.includes('gpt-5.5')) {
