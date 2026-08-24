@@ -36,6 +36,8 @@ interface RespuestaLog {
   motivo_ia: string | null
   sugerencia_ia: string | null
   evaluado_at: string | null
+  voto_usuario: 'up' | 'down' | null
+  votado_at: string | null
 }
 
 const BADGE_IA: Record<string, { label: string; clase: string }> = {
@@ -45,6 +47,7 @@ const BADGE_IA: Record<string, { label: string; clase: string }> = {
 }
 
 type FiltroIA = 'todas' | 'correcta' | 'mejorable' | 'incorrecta' | 'sin_evaluar'
+type FiltroVoto = 'todas' | 'up' | 'down' | 'sin_voto'
 
 interface StatsIA {
   correcta: number
@@ -52,6 +55,9 @@ interface StatsIA {
   incorrecta: number
   sin_evaluar: number
   total: number
+  voto_up: number
+  voto_down: number
+  sin_voto: number
 }
 
 const CATEGORIAS_PIE: Array<{
@@ -71,6 +77,15 @@ const STATS_VACIOS: StatsIA = {
   incorrecta: 0,
   sin_evaluar: 0,
   total: 0,
+  voto_up: 0,
+  voto_down: 0,
+  sin_voto: 0,
+}
+
+function etiquetaVoto(voto: RespuestaLog['voto_usuario']) {
+  if (voto === 'up') return { label: '👍 Bien', clase: 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-200' }
+  if (voto === 'down') return { label: '👎 Mal', clase: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-200' }
+  return { label: '—', clase: 'bg-gray-100 text-gray-500' }
 }
 
 const PAGE_SIZE = 25
@@ -98,6 +113,7 @@ export default function ChatbotRespuestasPage() {
   const [loading, setLoading] = useState(true)
   const [filtro, setFiltro] = useState<'pendientes' | 'revisadas' | 'todas'>('todas')
   const [filtroIA, setFiltroIA] = useState<FiltroIA>('todas')
+  const [filtroVoto, setFiltroVoto] = useState<FiltroVoto>('todas')
   const [pagina, setPagina] = useState(0)
   const [total, setTotal] = useState(0)
   const [stats, setStats] = useState<StatsIA>(STATS_VACIOS)
@@ -126,6 +142,7 @@ export default function ChatbotRespuestasPage() {
       const params = new URLSearchParams({
         filtro,
         filtroIA,
+        filtroVoto,
         pagina: String(pagina),
       })
       const res = await fetch(`/api/admin/chatbot-respuestas?${params}`, { cache: 'no-store' })
@@ -143,7 +160,7 @@ export default function ChatbotRespuestasPage() {
     } finally {
       setLoading(false)
     }
-  }, [authorized, filtro, filtroIA, pagina])
+  }, [authorized, filtro, filtroIA, filtroVoto, pagina])
 
   useEffect(() => {
     cargar()
@@ -320,6 +337,26 @@ export default function ChatbotRespuestasPage() {
           ))}
         </div>
 
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <span className="text-xs font-semibold text-gray-500 uppercase">Voto usuario</span>
+          {([
+            ['todas', `Todos (${stats.voto_up + stats.voto_down + stats.sin_voto || stats.total})`],
+            ['up', `👍 ${stats.voto_up}`],
+            ['down', `👎 ${stats.voto_down}`],
+            ['sin_voto', `Sin voto (${stats.sin_voto})`],
+          ] as const).map(([valor, etiqueta]) => (
+            <button
+              key={valor}
+              onClick={() => { setFiltroVoto(valor); setPagina(0); setExpandido(null) }}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                filtroVoto === valor ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400'
+              }`}
+            >
+              {etiqueta}
+            </button>
+          ))}
+        </div>
+
         {loading ? (
           <div className="flex justify-center py-16">
             <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-sky-200 border-t-sky-600"></div>
@@ -340,12 +377,13 @@ export default function ChatbotRespuestasPage() {
                 <table className="w-full table-fixed divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">Fecha</th>
-                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[16%]">Usuario</th>
-                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">Tipo</th>
-                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[27%]">Mensaje del usuario</th>
-                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[26%]">Respuesta</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[9%]">Fecha</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[14%]">Usuario</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[9%]">Tipo</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[24%]">Mensaje del usuario</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[23%]">Respuesta</th>
                       <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[11%]">Categorización</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">Voto</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -353,6 +391,7 @@ export default function ChatbotRespuestasPage() {
                       const fecha = formatFecha(log.created_at)
                       const abierto = expandido === log.id
                       const categoria = log.valoracion_ia ? BADGE_IA[log.valoracion_ia] : null
+                      const voto = etiquetaVoto(log.voto_usuario)
                       return (
                         <Fragment key={log.id}>
                           <tr
@@ -401,10 +440,15 @@ export default function ChatbotRespuestasPage() {
                                 </span>
                               )}
                             </td>
+                            <td className="px-2.5 py-2 align-top overflow-hidden">
+                              <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${voto.clase}`}>
+                                {voto.label}
+                              </span>
+                            </td>
                           </tr>
                           {abierto && (
                             <tr className="bg-gray-50">
-                              <td colSpan={6} className="px-4 py-4">
+                              <td colSpan={7} className="px-4 py-4">
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                   <div>
                                     <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Mensaje del usuario</p>
@@ -447,7 +491,20 @@ export default function ChatbotRespuestasPage() {
                                     </p>
                                     {log.motivo_ia && <p className="text-sm text-gray-800"><strong>Motivo:</strong> {log.motivo_ia}</p>}
                                     {log.sugerencia_ia && <p className="text-sm text-gray-800 mt-1"><strong>Sugerencia:</strong> {log.sugerencia_ia}</p>}
+                                    {log.voto_usuario && (
+                                      <p className="text-sm text-gray-800 mt-1">
+                                        <strong>Voto usuario:</strong>{' '}
+                                        {log.voto_usuario === 'up' ? '👍 le gustó' : '👎 no le gustó'}
+                                        {log.valoracion_ia && log.valoracion_ia === 'incorrecta' && log.voto_usuario === 'up' && ' · gustó aunque la IA la marca incorrecta'}
+                                        {log.valoracion_ia && log.valoracion_ia === 'correcta' && log.voto_usuario === 'down' && ' · no gustó aunque la IA la marca correcta'}
+                                      </p>
+                                    )}
                                   </div>
+                                )}
+                                {!log.valoracion_ia && log.voto_usuario && (
+                                  <p className="mt-3 text-sm text-gray-700">
+                                    Voto del usuario: {log.voto_usuario === 'up' ? '👍 le gustó' : '👎 no le gustó'}
+                                  </p>
                                 )}
 
                                 <div className="flex items-end gap-2 mt-3" onClick={(e) => e.stopPropagation()}>

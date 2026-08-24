@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl
     const filtro = searchParams.get('filtro') || 'pendientes'
     const filtroIA = searchParams.get('filtroIA') || 'todas'
+    const filtroVoto = searchParams.get('filtroVoto') || 'todas'
     const pagina = Math.max(0, parseInt(searchParams.get('pagina') || '0', 10) || 0)
 
     const admin = createServiceClient()
@@ -60,6 +61,9 @@ export async function GET(request: NextRequest) {
     if (filtroIA === 'sin_evaluar') query = query.is('evaluado_at', null)
     else if (filtroIA !== 'todas') query = query.eq('valoracion_ia', filtroIA)
 
+    if (filtroVoto === 'sin_voto') query = query.is('voto_usuario', null)
+    else if (filtroVoto === 'up' || filtroVoto === 'down') query = query.eq('voto_usuario', filtroVoto)
+
     const [{ data, error, count }, stats] = await Promise.all([
       query,
       Promise.all([
@@ -68,12 +72,18 @@ export async function GET(request: NextRequest) {
         countCat((q) => q.eq('valoracion_ia', 'incorrecta')),
         countCat((q) => q.is('evaluado_at', null)),
         countCat(),
-      ]).then(([correcta, mejorable, incorrecta, sin_evaluar, total]) => ({
+        countCat((q) => q.eq('voto_usuario', 'up')),
+        countCat((q) => q.eq('voto_usuario', 'down')),
+        countCat((q) => q.is('voto_usuario', null)),
+      ]).then(([correcta, mejorable, incorrecta, sin_evaluar, total, voto_up, voto_down, sin_voto]) => ({
         correcta,
         mejorable,
         incorrecta,
         sin_evaluar,
         total,
+        voto_up,
+        voto_down,
+        sin_voto,
       })),
     ])
     if (error) {

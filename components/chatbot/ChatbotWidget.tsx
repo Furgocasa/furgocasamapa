@@ -18,6 +18,8 @@ interface Message {
   rol: 'user' | 'assistant'
   contenido: string
   areas?: any[]
+  logId?: string
+  voto?: 'up' | 'down' | null
 }
 
 // Textos del widget y mensajes prefijados por idioma
@@ -27,6 +29,9 @@ const TEXTOS: Record<string, {
   placeholder: string
   enviar: string
   ubicacionDetectada: string
+  votoPregunta: string
+  votoBien: string
+  votoMal: string
 }> = {
   es: {
     bienvenida: '¡Hola! 👋 Soy el Tío Viajero IA. Pregúntame por áreas, rutas… o por valorar tu furgo y el QR anti-golpes. ¿Por dónde empezamos?',
@@ -39,7 +44,10 @@ const TEXTOS: Record<string, {
     ],
     placeholder: 'Pregunta al Tío Viajero...',
     enviar: 'Enviar',
-    ubicacionDetectada: '📍 Ubicación detectada · Las búsquedas serán más precisas'
+    ubicacionDetectada: '📍 Ubicación detectada · Las búsquedas serán más precisas',
+    votoPregunta: '¿Qué te ha parecido esta respuesta?',
+    votoBien: 'Bien',
+    votoMal: 'Mal'
   },
   en: {
     bienvenida: "Hi! 👋 I'm Tío Viajero AI. Ask me about motorhome areas, services, prices or route stops. Where shall we start?",
@@ -52,7 +60,10 @@ const TEXTOS: Record<string, {
     ],
     placeholder: 'Ask Tío Viajero...',
     enviar: 'Send',
-    ubicacionDetectada: '📍 Location detected · Searches will be more accurate'
+    ubicacionDetectada: '📍 Location detected · Searches will be more accurate',
+    votoPregunta: 'How was this reply?',
+    votoBien: 'Good',
+    votoMal: 'Bad'
   },
   fr: {
     bienvenida: "Salut ! 👋 Je suis Tío Viajero IA. Demandez-moi des aires, services, prix ou étapes d'itinéraire. On commence ?",
@@ -65,7 +76,10 @@ const TEXTOS: Record<string, {
     ],
     placeholder: 'Demandez à Tío Viajero...',
     enviar: 'Envoyer',
-    ubicacionDetectada: '📍 Position détectée · Recherches plus précises'
+    ubicacionDetectada: '📍 Position détectée · Recherches plus précises',
+    votoPregunta: 'Cette réponse vous a convenu ?',
+    votoBien: 'Bien',
+    votoMal: 'Mal'
   },
   de: {
     bienvenida: 'Hallo! 👋 Ich bin Tío Viajero KI. Frag mich nach Stellplätzen, Services, Preisen oder Routenstopps. Womit fangen wir an?',
@@ -78,7 +92,10 @@ const TEXTOS: Record<string, {
     ],
     placeholder: 'Frag Tío Viajero...',
     enviar: 'Senden',
-    ubicacionDetectada: '📍 Standort erkannt · Genauere Suche'
+    ubicacionDetectada: '📍 Standort erkannt · Genauere Suche',
+    votoPregunta: 'Wie war diese Antwort?',
+    votoBien: 'Gut',
+    votoMal: 'Schlecht'
   },
   it: {
     bienvenida: 'Ciao! 👋 Sono Tío Viajero IA. Chiedimi aree, servizi, prezzi o soste lungo il percorso. Da dove iniziamo?',
@@ -91,7 +108,10 @@ const TEXTOS: Record<string, {
     ],
     placeholder: 'Chiedi a Tío Viajero...',
     enviar: 'Invia',
-    ubicacionDetectada: '📍 Posizione rilevata · Ricerche più precise'
+    ubicacionDetectada: '📍 Posizione rilevata · Ricerche più precise',
+    votoPregunta: 'Che ne pensi di questa risposta?',
+    votoBien: 'Bene',
+    votoMal: 'Male'
   }
 }
 
@@ -495,7 +515,9 @@ export default function ChatbotWidget() {
       setMessages(prev => [...prev, {
         rol: 'assistant',
         contenido: data.message,
-        areas: data.areas
+        areas: data.areas,
+        logId: data.logId || undefined,
+        voto: null
       }])
     } catch (error: any) {
       console.error('Error:', error)
@@ -509,6 +531,26 @@ export default function ChatbotWidget() {
       }])
     } finally {
       setSending(false)
+    }
+  }
+
+  const votarRespuesta = async (index: number, voto: 'up' | 'down') => {
+    const msg = messages[index]
+    if (!msg?.logId || msg.rol !== 'assistant') return
+    const siguiente = msg.voto === voto ? null : voto
+    setMessages((prev) => prev.map((m, i) => (i === index ? { ...m, voto: siguiente } : m)))
+    track('chatbot_voto', { event_data: { voto: siguiente || 'quitar', log_id: msg.logId } })
+    try {
+      const res = await fetch('/api/chatbot', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logId: msg.logId, voto: siguiente }),
+      })
+      if (!res.ok) {
+        setMessages((prev) => prev.map((m, i) => (i === index ? { ...m, voto: msg.voto ?? null } : m)))
+      }
+    } catch {
+      setMessages((prev) => prev.map((m, i) => (i === index ? { ...m, voto: msg.voto ?? null } : m)))
     }
   }
   
@@ -650,7 +692,8 @@ export default function ChatbotWidget() {
                   />
                 )}
                 
-                <div className={`max-w-[80%] rounded-2xl p-3 ${
+                <div className="max-w-[80%] min-w-0">
+                <div className={`rounded-2xl p-3 ${
                   msg.rol === 'user' 
                     ? 'bg-gradient-to-r from-blue-600 to-gray-700 text-white' 
                     : 'bg-white text-gray-900 shadow-md border border-blue-100'
@@ -751,6 +794,40 @@ export default function ChatbotWidget() {
                       )}
                     </div>
                   )}
+                </div>
+                {msg.rol === 'assistant' && msg.logId && (
+                  <div className="mt-1.5 flex items-center gap-2 px-1">
+                    <span className="text-[11px] text-gray-500">{txt.votoPregunta}</span>
+                    <button
+                      type="button"
+                      onClick={() => votarRespuesta(i, 'up')}
+                      aria-pressed={msg.voto === 'up'}
+                      aria-label={txt.votoBien}
+                      title={txt.votoBien}
+                      className={`rounded-full px-2 py-0.5 text-sm leading-none transition-colors ${
+                        msg.voto === 'up'
+                          ? 'bg-green-100 text-green-700 ring-1 ring-green-300'
+                          : 'text-gray-400 hover:bg-gray-100 hover:text-gray-700'
+                      }`}
+                    >
+                      👍
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => votarRespuesta(i, 'down')}
+                      aria-pressed={msg.voto === 'down'}
+                      aria-label={txt.votoMal}
+                      title={txt.votoMal}
+                      className={`rounded-full px-2 py-0.5 text-sm leading-none transition-colors ${
+                        msg.voto === 'down'
+                          ? 'bg-red-100 text-red-700 ring-1 ring-red-300'
+                          : 'text-gray-400 hover:bg-gray-100 hover:text-gray-700'
+                      }`}
+                    >
+                      👎
+                    </button>
+                  </div>
+                )}
                 </div>
               </div>
             ))}

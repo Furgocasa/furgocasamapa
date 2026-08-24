@@ -397,12 +397,21 @@ async function getEstadisticasBD(supabase: any): Promise<EstadisticasBD> {
  * chatbot_respuestas_log para revisión manual desde el admin.
  * Best-effort: nunca rompe la respuesta al usuario.
  */
-async function logRespuesta(supabase: any, datos: Record<string, any>) {
+async function logRespuesta(supabase: any, datos: Record<string, any>): Promise<string | null> {
   try {
-    const { error } = await supabase.from('chatbot_respuestas_log').insert(datos)
-    if (error) logger.warn('No se pudo registrar en chatbot_respuestas_log', { error: error.message })
+    const { data, error } = await supabase
+      .from('chatbot_respuestas_log')
+      .insert(datos)
+      .select('id')
+      .single()
+    if (error) {
+      logger.warn('No se pudo registrar en chatbot_respuestas_log', { error: error.message })
+      return null
+    }
+    return data?.id || null
   } catch (e: any) {
     logger.warn('No se pudo registrar en chatbot_respuestas_log', { error: e?.message })
+    return null
   }
 }
 
@@ -931,7 +940,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       console.log(`⏱️ Duración total: ${duration}ms`)
 
       // Registro para revisión (TODAS las respuestas, también anónimas)
-      await logRespuesta(supabase, {
+      const logId = await logRespuesta(supabase, {
         conversacion_id: conversacionId || null,
         user_id: userId || null,
         locale: locale || 'es',
@@ -947,6 +956,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       return NextResponse.json({
         message: finalResponse,
         conversacionId: conversacionId, // Retornar conversacionId para que el frontend lo guarde
+        logId,
         functionCalled: functionName,
         functionArgs: functionArgs,
         areas: areasEncontradas,
@@ -991,7 +1001,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
     console.log(`⏱️ Duración total: ${duration}ms`)
 
     // Registro para revisión (TODAS las respuestas, también anónimas)
-    await logRespuesta(supabase, {
+    const logId = await logRespuesta(supabase, {
       conversacion_id: conversacionId || null,
       user_id: userId || null,
       locale: locale || 'es',
@@ -1007,6 +1017,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
     return NextResponse.json({
       message: finalResponse,
       conversacionId: conversacionId, // Retornar conversacionId
+      logId,
       tokensUsados: totalTokens,
       modelo: config.modelo,
       duration: duration
@@ -1074,12 +1085,51 @@ export async function GET() {
     openai_configured: hasOpenAI,
     supabase_configured: hasSupabase,
     endpoints: {
-      POST: '/api/chatbot - Enviar mensaje al chatbot'
+      POST: '/api/chatbot - Enviar mensaje al chatbot',
+      PATCH: '/api/chatbot - Voto 👍/👎 de una respuesta (logId)'
     },
     functions: AVAILABLE_FUNCTIONS.map((f: any) => ({
       name: f.name,
       description: f.description
     }))
   })
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+/** Voto del usuario sobre una respuesta ya entregada. Anónimos también. */
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json().catch(() => ({}))
+    const logId = typeof body.logId === 'string' ? body.logId.trim() : ''
+    const voto = body.voto === 'up' || body.voto === 'down' ? body.voto : body.voto === null ? null : undefined
+
+    if (!UUID_RE.test(logId) || voto === undefined) {
+      return NextResponse.json({ error: 'logId y voto (up|down|null) son requeridos' }, { status: 400 })
+    }
+
+    const supabase = getSupabaseClient()
+    const { data, error } = await (supabase as any)
+      .from('chatbot_respuestas_log')
+      .update({
+        voto_usuario: voto,
+        votado_at: voto ? new Date().toISOString() : null,
+      })
+      .eq('id', logId)
+      .select('id, voto_usuario')
+      .maybeSingle()
+
+    if (error) {
+      logger.warn('No se pudo guardar voto del chatbot', { error: error.message })
+      return NextResponse.json({ error: 'No se pudo guardar el voto' }, { status: 500 })
+    }
+    if (!data) {
+      return NextResponse.json({ error: 'Respuesta no encontrada' }, { status: 404 })
+    }
+
+    return NextResponse.json({ success: true, voto: data.voto_usuario })
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || 'No se pudo guardar el voto' }, { status: 500 })
+  }
 }
 

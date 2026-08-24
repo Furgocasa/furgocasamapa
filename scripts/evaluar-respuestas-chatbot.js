@@ -147,7 +147,7 @@ async function fetchSystemPrompt(supa) {
   return (data?.system_prompt || '').slice(0, 4000)
 }
 
-function buildEvaluationUserContent({ priorContext, userQuestion, assistantAnswer, funciones, locale }) {
+function buildEvaluationUserContent({ priorContext, userQuestion, assistantAnswer, funciones, locale, votoUsuario }) {
   return `${
     priorContext
       ? `CONTEXTO PREVIO DE LA CONVERSACION (memoria que tuvo el Tio Viajero al responder):
@@ -159,6 +159,8 @@ ${priorContext}
 ${userQuestion || '(sin pregunta previa clara)'}
 
 IDIOMA DE LA INTERFAZ: ${locale || 'es'}
+
+VOTO DEL USUARIO: ${votoUsuario || '(sin voto)'}
 
 BUSQUEDAS EJECUTADAS (function calling):
 ${JSON.stringify(funciones || [], null, 2)}
@@ -213,6 +215,7 @@ Verificaciones obligatorias antes de puntuar:
 12. Enlaces: solo /area/{slug}. Google Maps o URLs inventadas → INCORRECTA.
 13. Valoracion: no digas "5 estrellas" sin volumen. Si hay google_ratings_total, debe mencionarse. Omitirlo es MEJORABLE, no incorrecta.
 14. POI turisticos (grutas, catedrales, playas): debe buscar areas CERCA de esa ciudad, no un area con ese nombre. Si busca el nombre del monumento como si fuera un area y no hay, es MEJORABLE.
+15. Voto del usuario (up/down): es una senal extra, NO sustituye los datos. Incorrecta + up sigue siendo INCORRECTA (gusto != verdad). Correcta + down puede ser MEJORABLE si el tono, el orden o la utilidad fallaron. Cita el voto en notes solo si discrepa de la calidad factual.
 
 Criterios:
 - correcta: responde a lo preguntado, coherente con DATOS REALES y reglas, sin errores. No falta info obligatoria del tema concreto.
@@ -254,6 +257,7 @@ async function evaluateMessage(openai, log, areasReales, systemPromptAsistente, 
             assistantAnswer: log.respuesta,
             funciones: log.funciones,
             locale: log.locale,
+            votoUsuario: log.voto_usuario === 'up' ? 'up (le gusto)' : log.voto_usuario === 'down' ? 'down (no le gusto)' : '',
           }),
         },
       ],
@@ -352,7 +356,7 @@ async function main() {
 
   let query = supa
     .from('chatbot_respuestas_log')
-    .select('id,pregunta,respuesta,locale,funciones,areas_ids,conversacion_id,created_at,valoracion_ia,evaluado_at')
+    .select('id,pregunta,respuesta,locale,funciones,areas_ids,conversacion_id,created_at,valoracion_ia,evaluado_at,voto_usuario')
     .not('respuesta', 'is', null)
     .order('created_at', { ascending: false })
 
@@ -360,7 +364,18 @@ async function main() {
   else if (!all) query = query.is('evaluado_at', null)
   if (!id && limit > 0) query = query.limit(limit)
 
-  const { data: pendientes, error } = await query
+  let { data: pendientes, error } = await query
+  if (error && /voto_usuario/i.test(error.message || '')) {
+    query = supa
+      .from('chatbot_respuestas_log')
+      .select('id,pregunta,respuesta,locale,funciones,areas_ids,conversacion_id,created_at,valoracion_ia,evaluado_at')
+      .not('respuesta', 'is', null)
+      .order('created_at', { ascending: false })
+    if (id) query = query.eq('id', id)
+    else if (!all) query = query.is('evaluado_at', null)
+    if (!id && limit > 0) query = query.limit(limit)
+    ;({ data: pendientes, error } = await query)
+  }
   if (error) {
     console.error('❌ Error leyendo chatbot_respuestas_log (¿migración de evaluación ejecutada?):', error.message)
     process.exit(1)
