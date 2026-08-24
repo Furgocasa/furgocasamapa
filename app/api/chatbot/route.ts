@@ -442,16 +442,29 @@ async function getEstadisticasBD(supabase: any): Promise<EstadisticasBD> {
  */
 async function logRespuesta(supabase: any, datos: Record<string, any>): Promise<string | null> {
   try {
-    const { data, error } = await supabase
+    const intento = await supabase
       .from('chatbot_respuestas_log')
       .insert(datos)
       .select('id')
       .single()
-    if (error) {
-      logger.warn('No se pudo registrar en chatbot_respuestas_log', { error: error.message })
+    if (intento.error && /ciudad|pais|lat|lng/i.test(intento.error.message || '')) {
+      const { ciudad, pais, lat, lng, ...sinUbicacion } = datos
+      const retry = await supabase
+        .from('chatbot_respuestas_log')
+        .insert(sinUbicacion)
+        .select('id')
+        .single()
+      if (retry.error) {
+        logger.warn('No se pudo registrar en chatbot_respuestas_log', { error: retry.error.message })
+        return null
+      }
+      return retry.data?.id || null
+    }
+    if (intento.error) {
+      logger.warn('No se pudo registrar en chatbot_respuestas_log', { error: intento.error.message })
       return null
     }
-    return data?.id || null
+    return intento.data?.id || null
   } catch (e: any) {
     logger.warn('No se pudo registrar en chatbot_respuestas_log', { error: e?.message })
     return null
@@ -551,6 +564,7 @@ export async function POST(req: NextRequest) {
         titulo: String(primerMensaje).trim().slice(0, 80) || 'Nueva conversación',
         ubicacion_usuario: ubicacionUsuario || null,
         total_mensajes: 0,
+        preferencias_detectadas: {},
       }
       if (userId) fila.user_id = userId
 
@@ -653,6 +667,28 @@ export async function POST(req: NextRequest) {
     })
     
     const historialPrevio: Array<{ rol: string, contenido: string }> = historialData.data || []
+
+    const ciudadGps = ubicacionDetectada?.city && ubicacionDetectada.city !== 'Desconocida'
+      ? ubicacionDetectada.city
+      : null
+    const paisGps = ubicacionDetectada?.country && ubicacionDetectada.country !== 'Desconocida'
+      ? ubicacionDetectada.country
+      : null
+    const ubicacionLog = {
+      ciudad: ciudadGps,
+      pais: paisGps,
+      lat: ubicacionUsuario?.lat ?? null,
+      lng: ubicacionUsuario?.lng ?? null,
+    }
+    if (conversacionId && (ubicacionLog.ciudad || ubicacionLog.lat != null)) {
+      await (supabase as any)
+        .from('chatbot_conversaciones')
+        .update({
+          ubicacion_usuario: ubicacionUsuario || undefined,
+          preferencias_detectadas: { ubicacion: ubicacionLog },
+        })
+        .eq('id', conversacionId)
+    }
     
     // 4. CONSTRUIR SYSTEM PROMPT ENRIQUECIDO
     let systemPromptEnriquecido = config.system_prompt
@@ -1020,7 +1056,11 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         areas_ids: areasEncontradas.map((a: any) => a.id),
         tokens: totalTokens,
         modelo: config.modelo,
-        duracion_ms: duration
+        duracion_ms: duration,
+        ciudad: ubicacionLog.ciudad,
+        pais: ubicacionLog.pais,
+        lat: ubicacionLog.lat,
+        lng: ubicacionLog.lng,
       })
 
       return NextResponse.json({
@@ -1081,7 +1121,11 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       areas_ids: [],
       tokens: totalTokens,
       modelo: config.modelo,
-      duracion_ms: duration
+      duracion_ms: duration,
+      ciudad: ubicacionLog.ciudad,
+      pais: ubicacionLog.pais,
+      lat: ubicacionLog.lat,
+      lng: ubicacionLog.lng,
     })
 
     return NextResponse.json({

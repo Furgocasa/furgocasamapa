@@ -129,10 +129,10 @@ export async function GET(request: NextRequest) {
       })
     )
 
-    const enriched = rows.map((r: any) => ({
+    const enriched = await adjuntarUbicacion(admin, rows.map((r: any) => ({
       ...r,
       usuario: r.user_id ? usuarios[r.user_id] || null : null,
-    }))
+    })))
 
     return NextResponse.json({ data: enriched, total: count || 0, stats })
   } catch (error: any) {
@@ -186,6 +186,39 @@ export async function PATCH(request: NextRequest) {
 }
 
 const QUALITY_SCORE: Record<string, number> = { correcta: 10, mejorable: 5, incorrecta: 0 }
+
+export function textoUbicacion(u?: { ciudad?: string | null; pais?: string | null } | null): string {
+  const ciudad = String(u?.ciudad || '').trim()
+  const pais = String(u?.pais || '').trim()
+  if (ciudad && pais && ciudad.toLowerCase() !== pais.toLowerCase()) return `${ciudad}, ${pais}`
+  if (ciudad) return ciudad
+  if (pais) return pais
+  return 'Ubicación desconocida'
+}
+
+function ubicacionDeFila(row: any, conv?: any): { ciudad: string | null; pais: string | null; ubicacion: string } {
+  const pref = conv?.preferencias_detectadas?.ubicacion || {}
+  const meta = (row.funciones || []).find((f: any) => f?.name === '_ubicacion')?.args || {}
+  const ciudad = row.ciudad || pref.ciudad || meta.ciudad || null
+  const pais = row.pais || pref.pais || meta.pais || null
+  return { ciudad, pais, ubicacion: textoUbicacion({ ciudad, pais }) }
+}
+
+async function adjuntarUbicacion(admin: any, rows: any[]) {
+  const ids = [...new Set(rows.map((r) => r.conversacion_id).filter(Boolean))]
+  const convMap = new Map<string, any>()
+  if (ids.length) {
+    const { data } = await admin
+      .from('chatbot_conversaciones')
+      .select('id, ubicacion_usuario, preferencias_detectadas')
+      .in('id', ids)
+    for (const c of data || []) convMap.set(c.id, c)
+  }
+  return rows.map((r) => {
+    const extra = ubicacionDeFila(r, r.conversacion_id ? convMap.get(r.conversacion_id) : null)
+    return { ...r, ...extra }
+  })
+}
 
 function applyRevision(q: any, filtro: string) {
   if (filtro === 'pendientes') return q.eq('revisado', false)
@@ -275,7 +308,8 @@ async function cargarHilo(admin: any, id: string) {
     usuario = map[conv.user_id] || null
   }
 
-  return { conversacion: conv ? { ...conv, usuario } : { id }, hilo }
+  const ubi = ubicacionDeFila(logs?.[0] || {}, conv)
+  return { conversacion: conv ? { ...conv, usuario, ...ubi } : { id, ...ubi }, hilo }
 }
 
 async function cargarConversaciones(
@@ -362,6 +396,7 @@ async function cargarConversaciones(
     }
     const lastLog = logs[logs.length - 1]
     const firstLog = logs[0]
+    const ubi = ubicacionDeFila(lastLog || firstLog || {}, conv)
     return {
       id,
       created_at: conv?.created_at || firstLog?.created_at || lastMsgAt.get(id) || null,
@@ -379,6 +414,9 @@ async function cargarConversaciones(
       incorrecta,
       sin_evaluar: unclassified,
       quality_score: classified > 0 ? Math.round((scoreSum / classified) * 10) / 10 : null,
+      ciudad: ubi.ciudad,
+      pais: ubi.pais,
+      ubicacion: ubi.ubicacion,
     }
   })
 

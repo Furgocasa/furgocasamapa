@@ -38,6 +38,9 @@ interface RespuestaLog {
   evaluado_at: string | null
   voto_usuario: 'up' | 'down' | null
   votado_at: string | null
+  ciudad?: string | null
+  pais?: string | null
+  ubicacion?: string | null
 }
 
 const BADGE_IA: Record<string, { label: string; clase: string }> = {
@@ -67,6 +70,9 @@ interface ConversacionRow {
   incorrecta: number
   sin_evaluar: number
   quality_score: number | null
+  ciudad?: string | null
+  pais?: string | null
+  ubicacion?: string | null
 }
 
 interface HiloMensaje {
@@ -131,6 +137,15 @@ function nombreUsuario(log: RespuestaLog) {
   if (nombre) return nombre
   if (log.usuario?.email) return log.usuario.email.split('@')[0]
   return 'Usuario'
+}
+
+function textoUbicacion(row: { ubicacion?: string | null; ciudad?: string | null; pais?: string | null }) {
+  if (row.ubicacion) return row.ubicacion
+  const ciudad = (row.ciudad || '').trim()
+  const pais = (row.pais || '').trim()
+  if (ciudad && pais && ciudad !== pais) return `${ciudad}, ${pais}`
+  if (ciudad || pais) return ciudad || pais
+  return 'Ubicación desconocida'
 }
 
 export default function ChatbotRespuestasPage() {
@@ -457,9 +472,10 @@ export default function ChatbotRespuestasPage() {
                 <table className="w-full table-fixed divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[14%]">Fecha</th>
-                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[14%]">Usuario</th>
-                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[36%]">Primer mensaje</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[12%]">Fecha</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[12%]">Usuario</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[16%]">Ubicación</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[30%]">Primer mensaje</th>
                       <th className="px-2.5 py-2.5 text-center text-xs font-medium text-gray-500 uppercase w-[10%]">Resp.</th>
                       <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[16%]">Calidad</th>
                       <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[10%]">Idioma</th>
@@ -482,6 +498,11 @@ export default function ChatbotRespuestasPage() {
                           <td className="px-2.5 py-2 align-top overflow-hidden">
                             <div className="text-sm font-medium text-gray-900 truncate">{nombre}</div>
                             {c.usuario?.email && <div className="text-xs text-gray-500 truncate">{c.usuario.email}</div>}
+                          </td>
+                          <td className="px-2.5 py-2 align-top overflow-hidden">
+                            <p className={`text-sm truncate ${textoUbicacion(c) === 'Ubicación desconocida' ? 'text-gray-400' : 'text-gray-800'}`}>
+                              {textoUbicacion(c)}
+                            </p>
                           </td>
                           <td className="px-2.5 py-2 align-top overflow-hidden">
                             <p className="text-sm text-gray-900 line-clamp-2">{c.first_user_message || c.titulo || '—'}</p>
@@ -539,11 +560,12 @@ export default function ChatbotRespuestasPage() {
                 <table className="w-full table-fixed divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[9%]">Fecha</th>
-                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[14%]">Usuario</th>
-                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[9%]">Tipo</th>
-                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[24%]">Mensaje del usuario</th>
-                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[23%]">Respuesta</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">Fecha</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[11%]">Usuario</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[13%]">Ubicación</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">Tipo</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[20%]">Mensaje del usuario</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[19%]">Respuesta</th>
                       <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[11%]">Categorización</th>
                       <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">Voto</th>
                     </tr>
@@ -573,6 +595,14 @@ export default function ChatbotRespuestasPage() {
                                   {log.usuario.email}
                                 </div>
                               )}
+                            </td>
+                            <td className="px-2.5 py-2 align-top overflow-hidden">
+                              <p
+                                className={`text-sm truncate ${textoUbicacion(log) === 'Ubicación desconocida' ? 'text-gray-400' : 'text-gray-800'}`}
+                                title={textoUbicacion(log)}
+                              >
+                                {textoUbicacion(log)}
+                              </p>
                             </td>
                             <td className="px-2.5 py-2 align-top overflow-hidden">
                               <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -610,7 +640,7 @@ export default function ChatbotRespuestasPage() {
                           </tr>
                           {abierto && (
                             <tr className="bg-gray-50">
-                              <td colSpan={7} className="px-4 py-4">
+                              <td colSpan={8} className="px-4 py-4">
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                   <div>
                                     <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Mensaje del usuario</p>
@@ -636,6 +666,9 @@ export default function ChatbotRespuestasPage() {
                                       Ver hilo
                                     </button>
                                   )}
+                                  <span className={textoUbicacion(log) === 'Ubicación desconocida' ? 'text-gray-400' : ''}>
+                                    {textoUbicacion(log)}
+                                  </span>
                                   {log.locale && <span className="uppercase font-semibold">{log.locale}</span>}
                                   {log.funciones && log.funciones.length > 0 && (
                                     <span>{log.funciones.map((f) => f.name).join(', ')}</span>
