@@ -191,7 +191,7 @@ export default function ChatbotRespuestasPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="p-6 max-w-[1500px] mx-auto">
+      <div className="p-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Respuestas del Tío Viajero</h1>
           <p className="text-gray-500 text-sm mt-1">
@@ -337,15 +337,15 @@ export default function ChatbotRespuestasPage() {
           <>
             <div className="bg-white rounded-lg shadow overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="w-full table-fixed divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Fecha</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-44">Usuario</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Tipo</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[220px]">Mensaje del usuario</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[280px]">Respuesta</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-36">Categorización</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">Fecha</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[16%]">Usuario</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">Tipo</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[27%]">Mensaje del usuario</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[26%]">Respuesta</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[11%]">Categorización</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -359,38 +359,38 @@ export default function ChatbotRespuestasPage() {
                             onClick={() => setExpandido(abierto ? null : log.id)}
                             className={`cursor-pointer hover:bg-gray-50 ${abierto ? 'bg-sky-50/60' : ''} ${log.revisado ? 'bg-green-50/40' : ''}`}
                           >
-                            <td className="px-4 py-3 whitespace-nowrap align-top">
+                            <td className="px-2.5 py-2 align-top overflow-hidden">
                               <div className="text-sm font-medium text-gray-900">{fecha.dia}</div>
                               <div className="text-xs text-gray-500">{fecha.hora}</div>
                             </td>
-                            <td className="px-4 py-3 align-top">
-                              <div className="text-sm font-medium text-gray-900 truncate max-w-[180px]" title={nombreUsuario(log)}>
+                            <td className="px-2.5 py-2 align-top overflow-hidden">
+                              <div className="text-sm font-medium text-gray-900 truncate" title={nombreUsuario(log)}>
                                 {nombreUsuario(log)}
                               </div>
                               {log.usuario?.email && (
-                                <div className="text-xs text-gray-500 truncate max-w-[180px]" title={log.usuario.email}>
+                                <div className="text-xs text-gray-500 truncate" title={log.usuario.email}>
                                   {log.usuario.email}
                                 </div>
                               )}
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap align-top">
+                            <td className="px-2.5 py-2 align-top overflow-hidden">
                               <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
                                 log.user_id ? 'bg-sky-50 text-sky-700' : 'bg-gray-100 text-gray-600'
                               }`}>
                                 {log.user_id ? 'Registrado' : 'Anónimo'}
                               </span>
                             </td>
-                            <td className="px-4 py-3 align-top">
+                            <td className="px-2.5 py-2 align-top overflow-hidden">
                               <p className="text-sm text-gray-900 line-clamp-2" title={log.pregunta || ''}>
                                 {log.pregunta || '—'}
                               </p>
                             </td>
-                            <td className="px-4 py-3 align-top">
+                            <td className="px-2.5 py-2 align-top overflow-hidden">
                               <p className="text-sm text-gray-600 line-clamp-2" title={log.respuesta || ''}>
                                 {log.respuesta || '—'}
                               </p>
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap align-top">
+                            <td className="px-2.5 py-2 align-top overflow-hidden">
                               {categoria ? (
                                 <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${categoria.clase}`}>
                                   {categoria.label}

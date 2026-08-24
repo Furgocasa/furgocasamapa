@@ -180,6 +180,7 @@ export default function EnriquecerTextosPage() {
       title: '',
       sortable: false,
       searchable: false,
+      className: 'w-[5%]',
       render: (area) => (
         <input
           type="checkbox"
@@ -195,14 +196,18 @@ export default function EnriquecerTextosPage() {
       key: 'nombre',
       title: 'Área',
       sortable: true,
+      className: 'w-[30%]',
+      nowrap: false,
       render: (area) => (
-        <div className="text-sm font-medium text-gray-900">{area.nombre}</div>
+        <div className="text-sm font-medium text-gray-900 truncate" title={area.nombre}>{area.nombre}</div>
       )
     },
     {
       key: 'ciudad',
       title: 'Ubicación',
       sortable: true,
+      className: 'w-[30%]',
+      nowrap: false,
       render: (area) => (
         <div className="text-sm text-gray-600">
           {area.ciudad}, {area.provincia} • {area.pais}
@@ -214,6 +219,7 @@ export default function EnriquecerTextosPage() {
       key: 'descripcion',
       title: 'Estado',
       sortable: true,
+      className: 'w-[35%]',
       render: (area) => {
         const desc = area.descripcion?.trim() || ''
         const isPlaceholder = desc.includes('Requiere verificación y enriquecimiento')
@@ -421,7 +427,7 @@ export default function EnriquecerTextosPage() {
       {/* Banner de advertencia de configuración */}
       {configStatus && !configStatus.ready && (
         <div className="bg-red-50 border-b-4 border-red-400">
-          <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="px-4 sm:px-6 py-5">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 mt-1">
                 <svg className="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -462,7 +468,7 @@ export default function EnriquecerTextosPage() {
         </div>
       )}
       
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="px-4 sm:px-6 py-6">
         {/* Header */}
         <div className="mb-8">
           <button

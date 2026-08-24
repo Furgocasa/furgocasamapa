@@ -280,6 +280,7 @@ export default function ActualizarServiciosPage() {
       title: '',
       sortable: false,
       searchable: false,
+      className: 'w-[5%]',
       render: (area) => (
         <input
           type="checkbox"
@@ -295,9 +296,11 @@ export default function ActualizarServiciosPage() {
       key: 'nombre',
       title: 'Área',
       sortable: true,
+      className: 'w-[28%]',
+      nowrap: false,
       render: (area) => (
         <div>
-          <div className="text-sm font-medium text-gray-900">{area.nombre}</div>
+          <div className="text-sm font-medium text-gray-900 truncate" title={area.nombre}>{area.nombre}</div>
           <div className="text-sm text-gray-500">
             {area.ciudad}, {area.provincia} • {area.pais}
           </div>
@@ -309,6 +312,7 @@ export default function ActualizarServiciosPage() {
       key: 'website',
       title: 'Web',
       sortable: false,
+      className: 'w-[10%]',
       searchable: false,
       render: (area) => (
         area.website ? (
@@ -325,6 +329,8 @@ export default function ActualizarServiciosPage() {
       key: 'servicios',
       title: 'Servicios Actuales',
       sortable: false,
+      className: 'w-[40%]',
+      nowrap: false,
       searchable: false,
       render: (area) => (
         <div className="flex flex-wrap gap-1">
@@ -355,6 +361,7 @@ export default function ActualizarServiciosPage() {
       key: 'estado',
       title: 'Estado',
       sortable: false,
+      className: 'w-[17%]',
       searchable: false,
       render: (area) => (
         <>
@@ -582,7 +589,7 @@ export default function ActualizarServiciosPage() {
       {/* Banner de advertencia de configuración */}
       {configStatus && !configStatus.ready && (
         <div className="bg-red-50 border-b-4 border-red-400">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="px-4 sm:px-6 py-5">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 mt-1">
                 <svg className="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -637,7 +644,7 @@ export default function ActualizarServiciosPage() {
       )}
       
       <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="px-4 sm:px-6 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link
@@ -657,7 +664,7 @@ export default function ActualizarServiciosPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="px-4 sm:px-6 py-6">
         {/* Filtros y Controles */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">

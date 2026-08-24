@@ -123,6 +123,8 @@ export default function AdminReportesPage() {
       key: 'vehiculo',
       title: 'Vehículo',
       sortable: true,
+      className: 'w-[16%]',
+      nowrap: false,
       searchable: true,
       render: (reporte: ReporteAccidente) => (
         <div>
@@ -137,6 +139,8 @@ export default function AdminReportesPage() {
       key: 'propietario',
       title: 'Propietario',
       sortable: true,
+      className: 'w-[16%]',
+      nowrap: false,
       searchable: true,
       render: (reporte: ReporteAccidente) => (
         <div>
@@ -151,6 +155,8 @@ export default function AdminReportesPage() {
       key: 'testigo',
       title: 'Testigo',
       sortable: true,
+      className: 'w-[16%]',
+      nowrap: false,
       searchable: true,
       render: (reporte: ReporteAccidente) => (
         <div>
@@ -165,6 +171,7 @@ export default function AdminReportesPage() {
       key: 'tipo_dano',
       title: 'Tipo de Daño',
       sortable: true,
+      className: 'w-[13%]',
       searchable: true,
       render: (reporte: ReporteAccidente) => (
         <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded">
@@ -177,6 +184,7 @@ export default function AdminReportesPage() {
       key: 'fecha_accidente',
       title: 'Fecha Accidente',
       sortable: true,
+      className: 'w-[12%]',
       render: (reporte: ReporteAccidente) => (
         <span className="text-sm">
           {new Date(reporte.fecha_accidente).toLocaleDateString('es-ES')}
@@ -189,6 +197,7 @@ export default function AdminReportesPage() {
       key: 'estado',
       title: 'Estado',
       sortable: true,
+      className: 'w-[15%]',
       render: (reporte: ReporteAccidente) => (
         <div className="flex flex-col gap-1">
           {!reporte.leido && (
@@ -213,6 +222,7 @@ export default function AdminReportesPage() {
     {
       key: 'ubicacion',
       title: 'Ubicación',
+      className: 'w-[12%]',
       render: (reporte: ReporteAccidente) => (
         <a
           href={`https://www.google.com/maps?q=${reporte.ubicacion_lat},${reporte.ubicacion_lng}`}
@@ -241,7 +251,7 @@ export default function AdminReportesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="px-4 sm:px-6 py-6">
         {/* Header */}
         <div className="mb-8">
           <Link

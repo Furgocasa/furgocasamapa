@@ -163,6 +163,7 @@ export default function EnriquecerImagenesPage() {
       title: '',
       sortable: false,
       searchable: false,
+      className: 'w-[5%]',
       render: (area) => (
         <input
           type="checkbox"
@@ -183,9 +184,11 @@ export default function EnriquecerImagenesPage() {
       key: 'nombre',
       title: 'Área',
       sortable: true,
+      className: 'w-[40%]',
+      nowrap: false,
       render: (area) => (
         <div>
-          <div className="font-medium text-gray-900">{area.nombre}</div>
+          <div className="font-medium text-gray-900 truncate" title={area.nombre}>{area.nombre}</div>
           <div className="text-sm text-gray-500">
             {area.ciudad}, {area.provincia} • {area.pais}
           </div>
@@ -197,6 +200,7 @@ export default function EnriquecerImagenesPage() {
       key: 'foto_principal',
       title: 'Imágenes',
       sortable: false,
+      className: 'w-[30%]',
       searchable: false,
       render: (area) => (
         area.foto_principal ? (
@@ -216,6 +220,7 @@ export default function EnriquecerImagenesPage() {
       key: 'estado',
       title: 'Estado',
       sortable: true,
+      className: 'w-[25%]',
       searchable: false,
       render: (area) => (
         area.foto_principal ? (
@@ -237,7 +242,7 @@ export default function EnriquecerImagenesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="px-4 sm:px-6 py-6">
         {/* Header */}
         <div className="mb-8">
           <Link href="/admin/areas" className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-4">

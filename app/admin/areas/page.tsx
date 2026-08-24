@@ -632,7 +632,7 @@ export default function AdminAreasPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="px-4 sm:px-6 py-5">
           <Link
             href="/admin"
             className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 mb-4"
@@ -688,7 +688,7 @@ export default function AdminAreasPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="px-4 sm:px-6 py-6">
         {/* Filtros */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
@@ -852,10 +852,10 @@ export default function AdminAreasPage() {
         {/* Tabla mejorada de áreas */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="overflow-x-auto" style={containerStyle} {...handlers}>
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="w-full table-fixed divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left w-12">
+                  <th className="px-2.5 py-2.5 text-left w-[3%]">
                     <input
                       type="checkbox"
                       checked={selectAll}
@@ -864,7 +864,7 @@ export default function AdminAreasPage() {
                     />
                   </th>
                   <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-64 cursor-pointer hover:bg-gray-100"
+                    className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[20%] cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('nombre')}
                   >
                     <div className="flex items-center gap-2">
@@ -875,7 +875,7 @@ export default function AdminAreasPage() {
                     </div>
                   </th>
                   <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40 cursor-pointer hover:bg-gray-100"
+                    className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[12%] cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('ciudad')}
                   >
                     <div className="flex items-center gap-2">
@@ -886,7 +886,7 @@ export default function AdminAreasPage() {
                     </div>
                   </th>
                   <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32 cursor-pointer hover:bg-gray-100"
+                    className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%] cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('pais')}
                   >
                     <div className="flex items-center gap-2">
@@ -897,7 +897,7 @@ export default function AdminAreasPage() {
                     </div>
                   </th>
                   <th 
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24 cursor-pointer hover:bg-gray-100"
+                    className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%] cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('tipo_area')}
                   >
                     <div className="flex items-center gap-2">
@@ -908,7 +908,7 @@ export default function AdminAreasPage() {
                     </div>
                   </th>
                   <th 
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32 cursor-pointer hover:bg-gray-100"
+                    className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%] cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('google_types')}
                   >
                     <div className="flex items-center gap-2">
@@ -919,7 +919,7 @@ export default function AdminAreasPage() {
                     </div>
                   </th>
                   <th 
-                    className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20 cursor-pointer hover:bg-gray-100"
+                    className="px-2.5 py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[7%] cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('precio_noche')}
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -929,13 +929,13 @@ export default function AdminAreasPage() {
                       )}
                     </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                  <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">
                     Servicios
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                  <th className="px-2.5 py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[11%]">
                     Estado
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                  <th className="px-2.5 py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[11%]">
                     Acciones
                   </th>
                 </tr>
@@ -951,7 +951,7 @@ export default function AdminAreasPage() {
 
                   return (
                     <tr key={area.id} className={`hover:bg-gray-50 ${selectedAreas.has(area.id) ? 'bg-blue-50' : ''}`}>
-                      <td className="px-4 py-3">
+                      <td className="px-2.5 py-2 overflow-hidden">
                         <input
                           type="checkbox"
                           checked={selectedAreas.has(area.id)}
@@ -959,13 +959,13 @@ export default function AdminAreasPage() {
                           className="w-4 h-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500 cursor-pointer"
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2.5 py-2 overflow-hidden">
                         <div className="flex items-center gap-3">
                           {area.foto_principal && (
                             <img
                               src={area.foto_principal}
                               alt={area.nombre}
-                              className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+                              className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
                             />
                           )}
                           <div className="min-w-0">
@@ -974,19 +974,19 @@ export default function AdminAreasPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2.5 py-2 overflow-hidden">
                         <div className="text-sm text-gray-900">{area.ciudad}</div>
                         <div className="text-xs text-gray-500">{area.provincia}</div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2.5 py-2 overflow-hidden">
                         <div className="text-sm font-medium text-gray-900">{area.pais || 'N/A'}</div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2.5 py-2 overflow-hidden">
                         <span className="px-2 py-1 text-xs font-semibold rounded-full bg-sky-100 text-sky-800">
                           {area.tipo_area}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2.5 py-2 overflow-hidden">
                         <div className="flex flex-col gap-1">
                           <span className="text-xs font-medium text-gray-900" title={area.google_types?.join(', ') || 'Sin tipos'}>
                             {getPrimaryGoogleType(area.google_types)}
@@ -998,14 +998,14 @@ export default function AdminAreasPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 text-center">
+                      <td className="px-2.5 py-2 overflow-hidden text-sm text-gray-900 text-center">
                         {area.precio_noche !== null && area.precio_noche !== undefined
                           ? area.precio_noche === 0
                             ? <span className="text-green-600 font-semibold">Gratis</span>
                             : <span className="font-semibold">{area.precio_noche}€</span>
                           : 'N/A'}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2.5 py-2 overflow-hidden">
                         <div className="flex flex-wrap gap-1">
                           {serviciosActivos.length > 0 ? (
                             serviciosActivos.map((servicio: any, idx: any) => (
@@ -1018,7 +1018,7 @@ export default function AdminAreasPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2.5 py-2 overflow-hidden">
                         <div className="flex flex-col gap-1 items-center">
                           <button
                             onClick={() => toggleVerificado(area.id, area.verificado || false)}
@@ -1052,7 +1052,7 @@ export default function AdminAreasPage() {
                           </button>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2.5 py-2 overflow-hidden">
                         <div className="flex justify-center gap-2">
                           <Link
                             href={`/area/${area.slug}`}

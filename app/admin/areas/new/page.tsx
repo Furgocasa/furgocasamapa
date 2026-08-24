@@ -162,7 +162,7 @@ export default function NewAreaPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="px-4 sm:px-6 py-5">
           <div className="flex items-center gap-4">
             <Link
               href="/admin/areas"
@@ -178,7 +178,7 @@ export default function NewAreaPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="px-4 sm:px-6 py-6">
         {/* Mensaje */}
         {message && (
           <div className={`mb-6 p-4 rounded-lg ${

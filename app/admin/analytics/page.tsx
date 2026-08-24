@@ -1821,7 +1821,7 @@ export default function AdminAnalyticsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="px-4 sm:px-6 py-5">
           <Link
             href="/admin"
             className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 mb-4"
@@ -1842,7 +1842,7 @@ export default function AdminAnalyticsPage() {
       </header>
 
       {/* Sistema de Tabs - Similar al perfil de usuario */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="px-4 sm:px-6 py-5">
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden sticky top-0 z-20">
           <div className="overflow-x-auto" style={containerStyle} {...handlers}>
             <div className="flex border-b border-gray-200">
@@ -1921,7 +1921,7 @@ export default function AdminAnalyticsPage() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="px-4 sm:px-6 py-6">
         {/* Tab: GENERAL */}
         {activeTab === 'general' && (
           <div>

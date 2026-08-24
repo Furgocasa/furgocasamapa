@@ -386,6 +386,8 @@ export default function AdminVehiculosPage() {
       key: "marca",
       title: "Marca",
       sortable: true,
+      className: "w-[16%]",
+      nowrap: false,
       searchable: true,
       render: (item) => (
         <div className="flex items-center">
@@ -404,6 +406,7 @@ export default function AdminVehiculosPage() {
       key: "cantidad",
       title: "Cantidad",
       sortable: true,
+      className: "w-[8%]",
       render: (item) => (
         <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
           {item.cantidad}
@@ -414,6 +417,7 @@ export default function AdminVehiculosPage() {
       key: "cantidad_vendidos",
       title: "Vendidos",
       sortable: true,
+      className: "w-[8%]",
       render: (item) =>
         item.cantidad_vendidos > 0 ? (
           <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
@@ -427,6 +431,7 @@ export default function AdminVehiculosPage() {
       key: "año_promedio",
       title: "Año Prom.",
       sortable: true,
+      className: "w-[9%]",
       render: (item) => (
         <span className="text-sm text-gray-900">
           {formatNumber(item.año_promedio)}
@@ -437,6 +442,7 @@ export default function AdminVehiculosPage() {
       key: "km_promedio",
       title: "Km Prom.",
       sortable: true,
+      className: "w-[10%]",
       render: (item) => (
         <span className="text-sm text-gray-900">
           {formatNumber(item.km_promedio)} km
@@ -447,6 +453,7 @@ export default function AdminVehiculosPage() {
       key: "precio_compra_promedio",
       title: "Precio Compra",
       sortable: true,
+      className: "w-[11%]",
       render: (item) => (
         <span className="text-sm text-gray-900">
           {formatCurrency(item.precio_compra_promedio)}
@@ -457,6 +464,7 @@ export default function AdminVehiculosPage() {
       key: "valor_actual_promedio",
       title: "Valor Actual",
       sortable: true,
+      className: "w-[11%]",
       render: (item) => (
         <span className="text-sm font-medium text-green-600">
           {formatCurrency(item.valor_actual_promedio)}
@@ -467,6 +475,7 @@ export default function AdminVehiculosPage() {
       key: "depreciacion_media",
       title: "Depreciación",
       sortable: true,
+      className: "w-[10%]",
       render: (item) =>
         item.depreciacion_media !== null ? (
           <span
@@ -490,6 +499,7 @@ export default function AdminVehiculosPage() {
       key: "coste_mantenimiento_anual",
       title: "Mant./Año",
       sortable: true,
+      className: "w-[9%]",
       render: (item) => (
         <span className="text-sm text-gray-900">
           {formatCurrency(item.coste_mantenimiento_anual)}
@@ -500,6 +510,7 @@ export default function AdminVehiculosPage() {
       key: "num_reportes_accidentes",
       title: "Accidentes",
       sortable: true,
+      className: "w-[8%]",
       render: (item) =>
         item.num_reportes_accidentes > 0 ? (
           <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
@@ -539,7 +550,7 @@ export default function AdminVehiculosPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="px-4 sm:px-6 py-6">
         {/* Header */}
         <div className="mb-8">
           <Link

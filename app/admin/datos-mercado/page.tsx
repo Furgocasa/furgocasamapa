@@ -412,7 +412,7 @@ export default function DatosMercadoPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="px-4 sm:px-6 py-6">
         {/* Header */}
         <div className="mb-6">
           <Link
@@ -561,13 +561,13 @@ export default function DatosMercadoPage() {
             onMouseUp={handleMouseUp}
             onMouseMove={handleMouseMove}
           >
-            <table className="divide-y divide-gray-200" style={{ width: '100%', minWidth: '1600px', tableLayout: 'fixed' }}>
+            <table className="w-full table-fixed divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
                 <tr>
                   {/* Vehículo */}
                   <th
                     onClick={() => handleSort("marca")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none w-56 bg-gray-50"
+                    className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none w-[18%] bg-gray-50"
                   >
                     <div className="flex items-center gap-1">
                       Vehículo
@@ -583,7 +583,7 @@ export default function DatosMercadoPage() {
                   {/* Chasis */}
                   <th
                     onClick={() => handleSort("chasis")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none w-40 bg-gray-50"
+                    className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none w-[12%] bg-gray-50"
                   >
                     <div className="flex items-center gap-1">
                       Chasis
@@ -599,7 +599,7 @@ export default function DatosMercadoPage() {
                   {/* Precio */}
                   <th
                     onClick={() => handleSort("precio")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none w-32 bg-gray-50"
+                    className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none w-[10%] bg-gray-50"
                   >
                     <div className="flex items-center gap-1">
                       Precio
@@ -615,7 +615,7 @@ export default function DatosMercadoPage() {
                   {/* KM */}
                   <th
                     onClick={() => handleSort("kilometros")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none w-32 bg-gray-50"
+                    className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none w-[10%] bg-gray-50"
                   >
                     <div className="flex items-center gap-1">
                       KM
@@ -631,7 +631,7 @@ export default function DatosMercadoPage() {
                   {/* Año */}
                   <th
                     onClick={() => handleSort("año")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none w-24 bg-gray-50"
+                    className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none w-[7%] bg-gray-50"
                   >
                     <div className="flex items-center gap-1">
                       Año
@@ -647,7 +647,7 @@ export default function DatosMercadoPage() {
                   {/* Origen */}
                   <th
                     onClick={() => handleSort("origen")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none w-40 bg-gray-50"
+                    className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none w-[12%] bg-gray-50"
                   >
                     <div className="flex items-center gap-1">
                       Origen
@@ -663,7 +663,7 @@ export default function DatosMercadoPage() {
                   {/* Estado */}
                   <th
                     onClick={() => handleSort("estado")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none w-48 bg-gray-50"
+                    className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none w-[14%] bg-gray-50"
                   >
                     <div className="flex items-center gap-1">
                       Estado
@@ -679,7 +679,7 @@ export default function DatosMercadoPage() {
                   {/* Fecha */}
                   <th
                     onClick={() => handleSort("created_at")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none w-32 bg-gray-50"
+                    className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none w-[10%] bg-gray-50"
                   >
                     <div className="flex items-center gap-1">
                       Fecha
@@ -693,7 +693,7 @@ export default function DatosMercadoPage() {
                     </div>
                   </th>
                   {/* Acciones */}
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24 bg-gray-50">
+                  <th className="px-2.5 py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[9%] bg-gray-50">
                     Acciones
                   </th>
                 </tr>
@@ -705,7 +705,7 @@ export default function DatosMercadoPage() {
                     <tr>
                       <td
                         colSpan={9}
-                        className="px-6 py-12 text-center text-gray-500"
+                        className="px-3 py-12 text-center text-gray-500"
                       >
                         {busqueda || filtroVerificado !== "todos"
                           ? "No se encontraron resultados"
@@ -715,7 +715,7 @@ export default function DatosMercadoPage() {
                   ) : (
                     paginatedData.map((dato) => (
                       <tr key={dato.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
+                        <td className="px-2.5 py-2 overflow-hidden">
                           <div className="flex items-center">
                             {dato.verificado ? (
                               <CheckCircleIcon className="w-5 h-5 text-green-500 mr-2 flex-shrink-0" />
@@ -729,12 +729,12 @@ export default function DatosMercadoPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-2.5 py-2 overflow-hidden">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 max-w-full truncate" title={dato.chasis || "No especificado"}>
                             {dato.chasis || "-"}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-2.5 py-2 overflow-hidden whitespace-nowrap text-sm text-gray-900">
                           {dato.precio
                             ? new Intl.NumberFormat("es-ES", {
                                 style: "currency",
@@ -743,34 +743,34 @@ export default function DatosMercadoPage() {
                               }).format(dato.precio)
                             : "-"}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-2.5 py-2 overflow-hidden whitespace-nowrap text-sm text-gray-900">
                           {dato.kilometros
                             ? `${new Intl.NumberFormat("es-ES").format(
                                 dato.kilometros
                               )} km`
                             : "-"}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-2.5 py-2 overflow-hidden whitespace-nowrap text-sm text-gray-900">
                           {dato.año || "-"}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-2.5 py-2 overflow-hidden">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 max-w-full truncate" title={dato.origen || "Desconocido"}>
                             {dato.origen || "Desconocido"}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-2.5 py-2 overflow-hidden">
                           <div className="text-sm text-gray-900 truncate" title={dato.estado || "-"}>
                             {dato.estado || "-"}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-2.5 py-2 overflow-hidden whitespace-nowrap text-sm text-gray-500">
                           {dato.fecha_transaccion
                             ? new Date(dato.fecha_transaccion).toLocaleDateString(
                                 "es-ES"
                               )
                             : new Date(dato.created_at).toLocaleDateString("es-ES")}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <td className="px-2.5 py-2 overflow-hidden whitespace-nowrap text-center">
                           <button
                             onClick={() => handleDeleteDato(dato.id)}
                             className="text-red-600 hover:text-red-900 transition-colors"

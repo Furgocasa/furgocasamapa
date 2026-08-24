@@ -996,7 +996,7 @@ export default function BusquedaMasivaPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="px-4 sm:px-6 py-5">
           <div className="flex items-center gap-4">
             <Link
               href="/admin/areas"
@@ -1014,7 +1014,7 @@ export default function BusquedaMasivaPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="px-4 sm:px-6 py-6">
         {/* Mensaje */}
         {message && (
           <div className={`mb-6 p-4 rounded-lg ${
@@ -1224,22 +1224,22 @@ export default function BusquedaMasivaPage() {
             {/* Lista de resultados del mapa */}
             <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
               <div className="overflow-x-auto" style={containerStyle} {...handlers}>
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="w-full table-fixed divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
                         Seleccionar
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[28%]">
                         Nombre
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[36%]">
                         Dirección
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                      <th className="px-2.5 py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[14%]">
                         Valoración
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                      <th className="px-2.5 py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[14%]">
                         Estado
                       </th>
                     </tr>
@@ -1274,13 +1274,13 @@ export default function BusquedaMasivaPage() {
                           <div className="flex items-center gap-3">
                             <MapPinIcon className="w-5 h-5 text-primary-600 flex-shrink-0" />
                             <div>
-                              <div className="text-sm font-semibold text-gray-900">{place.name}</div>
+                              <div className="text-sm font-semibold text-gray-900 truncate">{place.name}</div>
                               <div className="text-xs text-gray-500">{place.types?.[0]?.replace(/_/g, ' ')}</div>
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="text-sm text-gray-900">{place.formatted_address}</div>
+                          <div className="text-sm text-gray-900 truncate" title={place.formatted_address}>{place.formatted_address}</div>
                           <div className="text-xs text-gray-500">
                             {place.geometry.location.lat.toFixed(6)}, {place.geometry.location.lng.toFixed(6)}
                           </div>
@@ -1369,22 +1369,22 @@ export default function BusquedaMasivaPage() {
             {/* Lista de resultados */}
             <div className="bg-white rounded-lg shadow overflow-hidden">
               <div className="overflow-x-auto" style={containerStyle} {...handlers}>
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="w-full table-fixed divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
                         Seleccionar
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[28%]">
                         Nombre
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[36%]">
                         Dirección
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                      <th className="px-2.5 py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[14%]">
                         Valoración
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                      <th className="px-2.5 py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[14%]">
                         Estado
                       </th>
                     </tr>
@@ -1419,13 +1419,13 @@ export default function BusquedaMasivaPage() {
                           <div className="flex items-center gap-3">
                             <MapPinIcon className="w-5 h-5 text-primary-600 flex-shrink-0" />
                             <div>
-                              <div className="text-sm font-semibold text-gray-900">{place.name}</div>
+                              <div className="text-sm font-semibold text-gray-900 truncate">{place.name}</div>
                               <div className="text-xs text-gray-500">{place.types?.[0]?.replace(/_/g, ' ')}</div>
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="text-sm text-gray-900">{place.formatted_address}</div>
+                          <div className="text-sm text-gray-900 truncate" title={place.formatted_address}>{place.formatted_address}</div>
                           <div className="text-xs text-gray-500">
                             {place.geometry.location.lat.toFixed(6)}, {place.geometry.location.lng.toFixed(6)}
                           </div>

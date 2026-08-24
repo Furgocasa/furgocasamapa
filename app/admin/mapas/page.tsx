@@ -131,7 +131,7 @@ export default function AdminMapasPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <div className="px-4 sm:px-6 py-6">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">

@@ -36,7 +36,7 @@ interface AdminTableProps<T> {
   className?: string
   initialSortColumn?: string | null
   initialSortDirection?: 'asc' | 'desc'
-  /** fixed reparte el 100% del contenedor y evita el scroll lateral innecesario */
+  /** fixed (por defecto) reparte el 100% del contenedor y evita el scroll lateral */
   layout?: 'auto' | 'fixed'
   minWidth?: string
 }
@@ -51,7 +51,7 @@ export function AdminTable<T extends Record<string, any>>({
   className = '',
   initialSortColumn,
   initialSortDirection = 'asc',
-  layout = 'auto',
+  layout = 'fixed',
   minWidth
 }: AdminTableProps<T>) {
   const [searchTerm, setSearchTerm] = useState('')

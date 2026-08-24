@@ -170,7 +170,7 @@ export default function AdminContribucionesPage() {
   }
 
   return (
-    <div className="p-6 lg:p-8 max-w-6xl mx-auto">
+    <div className="p-6 lg:p-8">
       <Link href="/admin" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 mb-4">
         <ArrowLeftIcon className="w-4 h-4" />
         Panel
