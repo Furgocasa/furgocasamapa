@@ -249,7 +249,7 @@ con teléfono. Mercado = WhatsApp/lead, no OTA.
   huecos Italia (914 → 1170 soste/campeggi);
   caché `/api/areas` a 30 s (`s-maxage=30`, sin SWR) para que los lotes
   salgan en el mapa al hacer Ctrl+F5. Landing `/mapa-autocaravanas-reino-unido`.
-- **24 ago 2026 (noche)**: `/ruta` en móvil abre el planificador (aviso si cierran la hoja). El atajo de ruta ya guarda GPS (`_ubicacion`) para que el admin no salga «desconocida». El revisor trata `/ruta` como Correcta. Borrado el historial de prueba del chat de `info@furgocasa.com` (cuenta intacta). Ver `CAMBIOS_CURSOR.md` §7.12.
+- **24 ago 2026 (noche)**: `/ruta` en móvil abre el planificador (aviso si cierran la hoja). El atajo de ruta ya guarda GPS (`_ubicacion`) para que el admin no salga «desconocida». El revisor trata `/ruta` como Correcta. Chip «Planificar una ruta» = enlace, no pregunta de chat (el cálculo va a `route_calculate`). Borrado el historial de prueba del chat de `info@furgocasa.com` (cuenta intacta). Ver `CAMBIOS_CURSOR.md` §7.12.
 - **24 ago 2026 (Tío Viajero)**: GPS mapa+chat unificado (sin ubicación el chat se sombrea); anónimo 2 preguntas; paradas en ruta → `/ruta` (también logueado; `/ruta` sigue pidiendo cuenta); pastillas solo locales + enlace al planificador; admin sin check «Revisada»; ↻ limpia la vista y F5 no revive el hilo (`fc_chat_fresh`); votar no hace scroll al final. Ver `README.md` y `CAMBIOS_CURSOR.md` §7.11.
 - **21 ago 2026 (Tío Viajero)**: admin tabla + quesito; primera evaluación
   (~53% incorrectas, casi todas por “Gratis” con precio null); parches de

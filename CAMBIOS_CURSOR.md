@@ -219,6 +219,7 @@
 - El tab central **Ruta** es un círculo naranja que sobresale de la barra.
 - Tras calcular, `onRutaCalculada` sigue pasando al mapa.
 - Chips del chat **Planificar ruta / tasación / QR**: al pulsarlos el chat se minimiza. Si no, en móvil la ventana a pantalla completa tapa la página y parece que no ha pasado nada. (`minimizarParaVerPagina` en `ChatbotWidget.tsx`).
+- **Decisión:** «Planificar una ruta» se queda como enlace, no como frase prefijada. No crea turno de chat ni fila en el admin (evitarías cientos de «usa el planificador» iguales, sin origen/destino). Quien escribe un trayecto sí se registra (atajo). Quien calcula, en analytics (`route_calculate` / `route_save`). No convertir el chip en pregunta+respuesta+link: en móvil sería un paso de más.
 - **Archivos**: `app/(public)/ruta/page.tsx`, `components/ruta/PlanificadorRuta.tsx`.
 - **Verificar** (móvil o DevTools): `/ruta` → se ve origen/destino al primer vistazo. Cerrar la hoja → aviso «Calcular Ruta». Calcular → mapa con el trazado.
 

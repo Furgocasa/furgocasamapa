@@ -267,7 +267,7 @@ Terra cubre Chat Completions, Responses, function calling y `web_search`. Las fo
 - **Cerca / un área / un filtro en un sitio**: el chat busca y enseña fichas (máx. 3).
 - **Paradas en una ruta** (logueado o no): no lista áreas. Deriva a `/ruta` (con `?origen=&destino=` si los tiene). Eso es **Correcta** en el revisor. `/ruta` exige login para calcular.
 - **Ubicación en el admin**: el atajo (y el resto de respuestas) geocodifica el GPS y guarda `_ubicacion` en `funciones`. El admin muestra ciudad/país o, si el geocoding falla, `GPS lat, lng`. La tabla `chatbot_respuestas_log` **no tiene** columnas `ciudad`/`pais`/`lat`/`lng`: no fiarse de ellas.
-- **Pastillas**: solo búsquedas locales (gratis, pública, agua/luz, mascotas). «Planificar una ruta», tasación y QR son enlaces, no gastan pregunta.
+- **Pastillas**: solo búsquedas locales (gratis, pública, agua/luz, mascotas). «Planificar una ruta», tasación y QR son **enlaces**, no mensajes: no gastan pregunta, no llaman al modelo y **no se registran** en `chatbot_respuestas_log`. Decisión de producto (24 ago noche): el chip es un atajo a `/ruta`, no una pregunta. El admin del chat solo guarda trayectos escritos («Murcia → Madrid», «paradas en una ruta»). El dato útil de uso es calcular (`user_interactions.route_calculate`) y guardar (`route_save`). Si hiciera falta contar clics del chip, un `track('click')`, no una fila de chat.
 - **↻ Nueva conversación**: limpia la vista; el historial sigue en BD/admin. Tras ↻, F5 también sale limpio (`fc_chat_fresh`). F5 a mitad de hilo conserva lo que se ve.
 
 ### Tío Viajero: calidad y revisión
