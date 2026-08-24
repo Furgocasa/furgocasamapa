@@ -40,7 +40,15 @@ import { logger } from '@/lib/logger'
 import { validateOpenAIModel, buildTokensParam, buildReasoningForTools, buildTemperatureParam } from '@/lib/openai/model-validation'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { clientIp, consumeGuestQuestion, huellaDeIp, GUEST_QUESTION_LIMIT } from '@/lib/chatbot/guest-quota'
-import { clasificarIntencion, extraerSitioNombrado, textoAtajoIntencion } from '@/lib/chatbot/intencion'
+import {
+  clasificarIntencion,
+  extraerSitioNombrado,
+  extraerRutaNombrada,
+  inferirFiltrosRuta,
+  parecePreguntaRuta,
+  textoAtajoIntencion,
+  tieneDetalleParadaRuta,
+} from '@/lib/chatbot/intencion'
 
 // ============================================
 // CONFIGURACIÓN
@@ -201,7 +209,11 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
   },
   {
     name: 'search_areas_along_route',
-    description: 'OBLIGATORIA para cualquier pregunta de ruta/paradas entre dos ciudades (ES/EN/FR/DE/IT). Ej: "voy de Madrid a Valencia", "Driving X to Y, where to stop?", "dónde paro de A a B". NUNCA respondas solo redirigiendo a /ruta: primero llama a esta función y lista paradas concretas.',
+    description:
+      'Paradas ÚTILES entre dos ciudades, NO las del origen. ' +
+      'Solo cuando el usuario ya dijo qué quiere: pernoctar / parada técnica, camping o área, mitad o cerca del destino. ' +
+      'Si solo dice "dónde paro de A a B", NO llames: pregunta primero. ' +
+      'Nunca listes 5 campings de la ciudad de salida.',
     parameters: {
       type: 'object',
       properties: {
@@ -217,6 +229,20 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
           type: 'number',
           description: 'Desvío máximo de la ruta en km',
           default: 15
+        },
+        tramo: {
+          type: 'string',
+          enum: ['mitad', 'cerca_destino', 'todo'],
+          description: 'mitad = centro del trayecto. cerca_destino = último tramo. todo = cualquier punto excepto el origen.'
+        },
+        tipo_area: {
+          type: 'string',
+          enum: ['publica', 'privada', 'camping'],
+          description: 'Si pidieron camping o un tipo de área concreto'
+        },
+        incluir_origen: {
+          type: 'boolean',
+          description: 'true SOLO si piden parar al salir / en la ciudad de origen'
         }
       },
       required: ['origen', 'destino']
@@ -430,15 +456,7 @@ function pideAreasEnMensaje(mensaje: string): boolean {
 function detectarPreguntaRuta(mensaje: string): boolean {
   if (!mensaje || typeof mensaje !== 'string') return false
   if (esPreguntaFueraCatalogo(mensaje) && !pideAreasEnMensaje(mensaje)) return false
-  const t = mensaje.trim()
-  // "Driving Madrid to Valencia, where to stop?" / "voy de X a Y" / "de X a Y dónde paro"
-  const patrones = [
-    /\b(?:driving|drive|voy|vamos|ir|ruta|route|trayecto)\b.+\b(?:to|a|hacia|→|->)\b.+/i,
-    /\b(?:from|de|desde)\s+(?:aqu[ií]|aca|acá|here|hier|qui|[A-Za-zÀ-ÿ][\wÀ-ÿ\s.'-]{1,40})\s+(?:to|a|hacia)\s+[A-Za-zÀ-ÿ][\wÀ-ÿ\s.'-]{1,40}/i,
-    /\b(?:where to stop|d[oó]nde paro|donde parar|paradas?\s+entre|stop(?:s)?\s+along|áreas?\s+de\s+camino)\b/i,
-    /\b[A-Za-zÀ-ÿ][\wÀ-ÿ.'-]{2,30}\s+(?:to|→|->|–|-)\s+[A-Za-zÀ-ÿ][\wÀ-ÿ.'-]{2,30}.{0,40}\b(?:stop|paro|parar|paradas?)\b/i,
-  ]
-  return patrones.some((re) => re.test(t))
+  return parecePreguntaRuta(mensaje)
 }
 
 /**
@@ -670,11 +688,14 @@ export async function POST(req: NextRequest) {
       ultimoAsistente: [...messages].reverse().find((m: any) => m.role === 'assistant')?.content || null,
     })
     if (atajo) {
-      const message = textoAtajoIntencion(
-        atajo,
-        idiomaAtajo,
-        atajo === 'ambigua' ? extraerSitioNombrado(ultimoMensajeUsuario) : undefined
-      )
+      const ruta = extraerRutaNombrada(ultimoMensajeUsuario)
+      const etiqueta =
+        atajo === 'ambigua'
+          ? extraerSitioNombrado(ultimoMensajeUsuario)
+          : atajo === 'ruta_sin_intencion' && ruta
+            ? `${ruta.origen} → ${ruta.destino}`
+            : undefined
+      const message = textoAtajoIntencion(atajo, idiomaAtajo, etiqueta)
       logger.info('Respuesta corta sin modelo', { atajo, pregunta: ultimoMensajeUsuario.slice(0, 80) })
       const logId = await logRespuesta(supabase, {
         conversacion_id: conversacionId || null,
@@ -929,7 +950,8 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
     systemPromptEnriquecido += `\n\n═══════════════════════════════════════
 🛣️ RUTAS Y FORMATO (RECORDATORIO)
 ═══════════════════════════════════════
-- Si el usuario pregunta paradas/ruta entre dos ciudades → llama SIEMPRE a search_areas_along_route.
+- Si dice solo "voy de A a B, dónde paro" SIN decir si duerme, camping/área o tramo: PREGUNTA eso. No listes áreas (sobre todo no las del origen).
+- Cuando YA ha dicho pernocta / tipo / tramo → search_areas_along_route. Máximo 3-4 paradas, repartidas, NUNCA un racimo en la ciudad de salida.
 - /ruta es complemento OPCIONAL después de listar paradas, NUNCA la única respuesta.
 - Servicios: SOLO los que estén en true (ej: "Agua, Electricidad"). NUNCA "[agua: no, ...]".
 - Valoración: "⭐ 4.7/5 (128 valoraciones)" si hay nº de reseñas. No digas "5 estrellas" sin volumen.
@@ -998,7 +1020,12 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         ...messages.filter((m: any) => m.role === 'user').slice(0, -1).map((m: any) => m.content),
       ],
     })
-    const parecePreguntaRuta = detectarPreguntaRuta(ultimoMensajeUsuario)
+    const hiloTieneRuta = hiloModelo.some((m) => m.role === 'user' && detectarPreguntaRuta(m.content))
+    const detalleParadaRuta =
+      tieneDetalleParadaRuta(ultimoMensajeUsuario) ||
+      hiloModelo.some((m) => m.role === 'user' && tieneDetalleParadaRuta(m.content))
+    const forzarBusquedaRuta =
+      detalleParadaRuta && (detectarPreguntaRuta(ultimoMensajeUsuario) || hiloTieneRuta)
     const pareceFueraCatalogo =
       esPreguntaFueraCatalogo(ultimoMensajeUsuario) && !pideAreasEnMensaje(ultimoMensajeUsuario)
 
@@ -1007,7 +1034,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       console.log(`🔮 Llamando a OpenAI (ronda ${rounds})...`)
 
       const toolChoice: OpenAI.Chat.ChatCompletionToolChoiceOption =
-        rounds === 1 && parecePreguntaRuta && !firstFunctionName
+        rounds === 1 && forzarBusquedaRuta && !firstFunctionName
           ? { type: 'function', function: { name: 'search_areas_along_route' } }
           : rounds === 1 && pareceFueraCatalogo && !firstFunctionName
             ? { type: 'function', function: { name: 'buscar_info_viaje' } }
@@ -1015,8 +1042,8 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 
       if (toolChoice !== 'auto') {
         console.log(
-          parecePreguntaRuta
-            ? '🛣️ Forzando search_areas_along_route por detección de ruta'
+          forzarBusquedaRuta
+            ? '🛣️ Forzando search_areas_along_route (ruta con intención)'
             : '🌐 Forzando buscar_info_viaje (fuera de catálogo)'
         )
       }
@@ -1101,10 +1128,28 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
               if (Array.isArray(functionResult)) todasLasAreas.push(...functionResult)
               break
             case 'search_areas_along_route':
-              fnArgs.origen = resolverLugarRelativo(fnArgs.origen, ciudadGps, ciudadHilo)
-              fnArgs.destino = resolverLugarRelativo(fnArgs.destino, ciudadGps, ciudadHilo)
-              functionResult = await searchAreasAlongRoute(fnArgs.origen, fnArgs.destino, fnArgs.corredor_km || 15)
-              if (functionResult?.areas) todasLasAreas.push(...functionResult.areas)
+              {
+                const rutaHilo = extraerRutaNombrada(ultimoMensajeUsuario)
+                  || [...hiloModelo].reverse().map((m) => extraerRutaNombrada(m.content)).find(Boolean)
+                if (!fnArgs.origen && rutaHilo) fnArgs.origen = rutaHilo.origen
+                if (!fnArgs.destino && rutaHilo) fnArgs.destino = rutaHilo.destino
+                fnArgs.origen = resolverLugarRelativo(fnArgs.origen, ciudadGps, ciudadHilo)
+                fnArgs.destino = resolverLugarRelativo(fnArgs.destino, ciudadGps, ciudadHilo)
+                const delHilo = inferirFiltrosRuta(
+                  [ultimoMensajeUsuario, ...hiloModelo.map((m) => m.content)].join('\n')
+                )
+                functionResult = await searchAreasAlongRoute(
+                  fnArgs.origen,
+                  fnArgs.destino,
+                  fnArgs.corredor_km || 15,
+                  {
+                    tramo: fnArgs.tramo || delHilo.tramo,
+                    tipo_area: fnArgs.tipo_area || delHilo.tipo_area,
+                    incluir_origen: Boolean(fnArgs.incluir_origen || delHilo.incluir_origen),
+                  }
+                )
+                if (functionResult?.areas) todasLasAreas.push(...functionResult.areas)
+              }
               break
             case 'buscar_info_viaje':
               functionResult = await buscarInfoViajeWeb({

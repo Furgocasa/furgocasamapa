@@ -473,8 +473,9 @@ export function serializeToolResultForModel(result: any, locale: ChatLocale = 'e
   if (Array.isArray(result.areas)) {
     return JSON.stringify({
       total: result.areas.length,
+      aviso: result.aviso || undefined,
       instrucciones:
-        'El "resumen" YA está en el idioma de respuesta: pégalo TAL CUAL. Menciona desvío si existe. Tras listar paradas puedes mencionar /ruta como complemento, nunca como única respuesta. Enlace interno: /area/{slug}.',
+        'El "resumen" YA está en el idioma de respuesta: pégalo TAL CUAL. Máximo 4 paradas, NO las del origen. Menciona desvío si existe. Tras listar puedes mencionar /ruta como complemento, nunca como única respuesta. Enlace interno: /area/{slug}.',
       areas: result.areas.map(mapArea),
     })
   }
@@ -968,12 +969,48 @@ function distanciaAlSegmentoKm(
  * Busca áreas dentro de un corredor a lo largo de la ruta entre dos ciudades.
  * Devuelve las áreas ordenadas por su posición en la ruta (origen → destino).
  */
+function kmEntre(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const KM_LAT = 111.32
+  const latMedia = ((a.lat + b.lat) / 2) * (Math.PI / 180)
+  const dx = (b.lng - a.lng) * KM_LAT * Math.cos(latMedia)
+  const dy = (b.lat - a.lat) * KM_LAT
+  return Math.hypot(dx, dy)
+}
+
+function mismaCiudad(a: string | null | undefined, b: string | null | undefined): boolean {
+  const na = normalizarClave(a || '')
+  const nb = normalizarClave(b || '')
+  return Boolean(na && nb && (na === nb || na.includes(nb) || nb.includes(na)))
+}
+
+/** Reparto a lo largo de la ruta: como mucho 1 por ciudad, no un racimo al origen. */
+function diversificarParadas<T extends { ciudad?: string; _t: number }>(areas: T[], limit: number): T[] {
+  const picked: T[] = []
+  const ciudades = new Set<string>()
+  for (const a of areas) {
+    const c = normalizarClave(a.ciudad || '')
+    if (c && ciudades.has(c)) continue
+    if (picked.length && Math.abs(a._t - picked[picked.length - 1]._t) < 0.06) continue
+    picked.push(a)
+    if (c) ciudades.add(c)
+    if (picked.length >= limit) break
+  }
+  return picked.length ? picked : areas.slice(0, limit)
+}
+
+export type FiltrosRuta = {
+  tramo?: 'mitad' | 'cerca_destino' | 'todo'
+  tipo_area?: 'publica' | 'privada' | 'camping'
+  incluir_origen?: boolean
+}
+
 export async function searchAreasAlongRoute(
   origen: string,
   destino: string,
-  corredorKm: number = 15
-): Promise<{ error?: string; areas?: (AreaResumen & { desvio_km: number })[] }> {
-  console.log(`🛣️ [searchAreasAlongRoute] ${origen} → ${destino} (corredor ${corredorKm}km)`)
+  corredorKm: number = 15,
+  filtros: FiltrosRuta = {}
+): Promise<{ error?: string; areas?: (AreaResumen & { desvio_km: number })[]; aviso?: string }> {
+  console.log(`🛣️ [searchAreasAlongRoute] ${origen} → ${destino} (corredor ${corredorKm}km)`, filtros)
 
   const [coordsOrigen, coordsDestino] = await Promise.all([
     geocodeCity(origen),
@@ -1005,22 +1042,52 @@ export async function searchAreasAlongRoute(
     throw error
   }
 
-  const enCorredor = limpiarAreasBasura(data || [])
+  const excluirOrigenKm = filtros.incluir_origen ? 0 : 40
+  const tramo = filtros.tramo
+  let candidatas = limpiarAreasBasura(data || [])
     .map((area: any) => {
       const { distKm, t } = distanciaAlSegmentoKm(
         { lat: area.latitud, lng: area.longitud },
         coordsOrigen,
         coordsDestino
       )
-      return { ...area, desvio_km: Math.round(distKm * 10) / 10, _t: t }
+      return {
+        ...area,
+        desvio_km: Math.round(distKm * 10) / 10,
+        _t: t,
+        _kmOrigen: kmEntre({ lat: area.latitud, lng: area.longitud }, coordsOrigen),
+      }
     })
     .filter((a: any) => a.desvio_km <= corredorKm)
-    .sort((a: any, b: any) => a._t - b._t) // orden origen → destino
-    .slice(0, 15)
-    .map(({ _t, ...rest }: any) => rest)
 
-  console.log(`✅ ${enCorredor.length} áreas en el corredor`)
-  return { areas: enCorredor }
+  if (filtros.tipo_area) {
+    candidatas = candidatas.filter((a: any) => a.tipo_area === filtros.tipo_area)
+  }
+
+  if (tramo === 'mitad') {
+    candidatas = candidatas.filter((a: any) => a._t >= 0.28 && a._t <= 0.72)
+  } else if (tramo === 'cerca_destino') {
+    candidatas = candidatas.filter((a: any) => a._t >= 0.55 && a._t <= 0.95)
+  }
+
+  if (excluirOrigenKm > 0) {
+    candidatas = candidatas.filter(
+      (a: any) =>
+        a._kmOrigen >= excluirOrigenKm &&
+        a._t >= 0.16 &&
+        !mismaCiudad(a.ciudad, origen)
+    )
+  }
+
+  candidatas.sort((a: any, b: any) => a._t - b._t)
+  const elegidas = diversificarParadas(candidatas, 5).map(({ _t, _kmOrigen, ...rest }: any) => rest)
+
+  console.log(`✅ ${elegidas.length} áreas útiles en el corredor (de ${candidatas.length} tras filtros)`)
+  return {
+    areas: elegidas,
+    aviso:
+      'Estas NO son áreas del origen. Si el usuario no pidió salir de la ciudad de partida, no listes campings/áreas de esa ciudad. Máximo 4 fichas, repartidas por el trayecto.',
+  }
 }
 
 // ============================================
