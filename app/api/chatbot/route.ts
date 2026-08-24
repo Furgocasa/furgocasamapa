@@ -207,7 +207,7 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
       properties: {
         origen: {
           type: 'string',
-          description: 'Ciudad de origen. Ejemplo: "Madrid"'
+          description: 'Ciudad de origen. Si dicen "aquí", "desde aquí" o "de donde estoy", usa la ciudad del GPS del usuario, no la palabra "aquí". Ejemplo: "Murcia"'
         },
         destino: {
           type: 'string',
@@ -338,6 +338,16 @@ function esMensajeSoloUbicacion(mensaje: string): boolean {
   return /^(en\s+)?[A-Za-zÀ-ÿ0-9\s,'-]{2,48}$/i.test(t)
 }
 
+const LUGAR_AQUI_RE =
+  /^(aqu[ií]|aca|acá|here|from here|desde aqu[ií]|de aqu[ií]|mi (ubicaci[oó]n|posici[oó]n)|donde estoy|d[oó]nde estoy|near me|pr[eè]s de moi|hier|qui)$/i
+
+function resolverLugarRelativo(valor: string | undefined, ciudadGps: string | null): string | undefined {
+  const t = String(valor || '').trim()
+  if (!t) return ciudadGps || undefined
+  if (ciudadGps && LUGAR_AQUI_RE.test(t)) return ciudadGps
+  return t
+}
+
 function sanitizarArgsBusqueda(fnArgs: any, ultimoMensaje: string) {
   if (fnArgs?.tipo_area && !TIPOS_AREA_VALIDOS.includes(fnArgs.tipo_area)) {
     delete fnArgs.tipo_area
@@ -366,8 +376,8 @@ function detectarPreguntaRuta(mensaje: string): boolean {
   const t = mensaje.trim()
   // "Driving Madrid to Valencia, where to stop?" / "voy de X a Y" / "de X a Y dónde paro"
   const patrones = [
-    /\b(?:driving|drive|voy|vamos|ruta|route|trayecto)\b.+\b(?:to|a|hacia|→|->)\b.+/i,
-    /\b(?:from|de)\s+[A-Za-zÀ-ÿ][\wÀ-ÿ\s.'-]{1,40}\s+(?:to|a|hacia)\s+[A-Za-zÀ-ÿ][\wÀ-ÿ\s.'-]{1,40}/i,
+    /\b(?:driving|drive|voy|vamos|ir|ruta|route|trayecto)\b.+\b(?:to|a|hacia|→|->)\b.+/i,
+    /\b(?:from|de|desde)\s+(?:aqu[ií]|aca|acá|here|hier|qui|[A-Za-zÀ-ÿ][\wÀ-ÿ\s.'-]{1,40})\s+(?:to|a|hacia)\s+[A-Za-zÀ-ÿ][\wÀ-ÿ\s.'-]{1,40}/i,
     /\b(?:where to stop|d[oó]nde paro|donde parar|paradas?\s+entre|stop(?:s)?\s+along|áreas?\s+de\s+camino)\b/i,
     /\b[A-Za-zÀ-ÿ][\wÀ-ÿ.'-]{2,30}\s+(?:to|→|->|–|-)\s+[A-Za-zÀ-ÿ][\wÀ-ÿ.'-]{2,30}.{0,40}\b(?:stop|paro|parar|paradas?)\b/i,
   ]
@@ -800,9 +810,11 @@ export async function POST(req: NextRequest) {
 
 REGLAS DE UBICACIÓN:
 1. Cuando el usuario pregunte por "áreas cerca", "áreas aquí", "cerca de mí", o no mencione ciudad específica → USA su ubicación GPS (${ubicacionDetectada.city})
-2. Si el usuario menciona EXPLÍCITAMENTE otra ciudad ("áreas en Barcelona"), IGNORA su GPS y busca en esa ciudad
-3. Siempre incluye las distancias cuando uses búsqueda por GPS (el campo "distancia_km" estará disponible)
-4. Radio de búsqueda:
+2. "De aquí a X", "desde aquí", "from here to X": el origen ES ${ubicacionDetectada.city}. NUNCA pases origen="aquí".
+3. Recuerda el hilo: si ya hablasteis de un área o una ciudad, "esa", "la de antes" y "desde aquí" apuntan a eso o al GPS.
+4. Si el usuario menciona EXPLÍCITAMENTE otra ciudad ("áreas en Barcelona"), IGNORA su GPS y busca en esa ciudad
+5. Siempre incluye las distancias cuando uses búsqueda por GPS (el campo "distancia_km" estará disponible)
+6. Radio de búsqueda:
    - Si dice "cerca", "aquí", "cerca de mí" → Radio 10-20km
    - Si es genérico ("áreas", "buscar") → Radio 50km
    - Si menciona ciudad específica → Búsqueda por nombre de ciudad (sin radio)`
@@ -974,6 +986,9 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         }
         if (fnName === 'search_areas') {
           sanitizarArgsBusqueda(fnArgs, ultimoMensajeUsuario)
+          if (fnArgs.ubicacion?.nombre) {
+            fnArgs.ubicacion.nombre = resolverLugarRelativo(fnArgs.ubicacion.nombre, ciudadGps)
+          }
         }
         funcionesEjecutadas.push({ name: fnName, args: fnArgs })
 
@@ -1014,6 +1029,8 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
               if (Array.isArray(functionResult)) todasLasAreas.push(...functionResult)
               break
             case 'search_areas_along_route':
+              fnArgs.origen = resolverLugarRelativo(fnArgs.origen, ciudadGps)
+              fnArgs.destino = resolverLugarRelativo(fnArgs.destino, ciudadGps)
               functionResult = await searchAreasAlongRoute(fnArgs.origen, fnArgs.destino, fnArgs.corredor_km || 15)
               if (functionResult?.areas) todasLasAreas.push(...functionResult.areas)
               break
