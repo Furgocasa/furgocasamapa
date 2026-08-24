@@ -164,6 +164,11 @@ export function esFotoSeguraEnFicha(url?: string | null): boolean {
   return !isProhibidaParaEnriquecer(url)
 }
 
+/** En nuestro sitio HTTPS una foto http:// se ve rota (contenido mixto). */
+export function esFotoMostrable(url?: string | null): boolean {
+  return !!url && /^https:\/\//i.test(url) && esFotoSeguraEnFicha(url)
+}
+
 export function esWebDirectorio(website?: string | null): boolean {
   if (!website) return false
   const raw = website.startsWith('http') ? website : `https://${website}`

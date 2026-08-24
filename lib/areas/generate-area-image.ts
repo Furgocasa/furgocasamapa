@@ -216,6 +216,42 @@ async function fetchLocationMapSnapshot(lat: number, lng: number): Promise<Buffe
   return null
 }
 
+export async function alojarFotoOficial(
+  supabase: SupabaseClient,
+  areaId: string,
+  url: string,
+  index = 0
+): Promise<string | null> {
+  if (!url) return null
+  if (/^https:\/\//i.test(url)) return url
+
+  const httpsUrl = url.replace(/^http:\/\//i, 'https://')
+  try {
+    const probe = await fetch(httpsUrl, { method: 'HEAD', redirect: 'follow', signal: AbortSignal.timeout(10000) })
+    const ctype = probe.headers.get('content-type') || ''
+    if (probe.ok && /image\//i.test(ctype)) return httpsUrl
+  } catch {
+    /* el recinto solo sirve HTTP */
+  }
+
+  const resp = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; MapaFurgocasa/1.0)', Accept: 'image/*' },
+    redirect: 'follow',
+    signal: AbortSignal.timeout(20000),
+  })
+  if (!resp.ok) return null
+  const raw = Buffer.from(await resp.arrayBuffer())
+  if (raw.length < 4000) return null
+  const jpeg = await sharp(raw).jpeg({ quality: 86 }).toBuffer()
+  await ensureAreasBucket(supabase)
+  const path = `oficial/${areaId}-${index}-${Date.now()}.jpg`
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, jpeg, { contentType: 'image/jpeg', upsert: true })
+  if (error) throw error
+  return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl
+}
+
 async function ensureAreasBucket(supabase: SupabaseClient) {
   const { data: buckets, error } = await supabase.storage.listBuckets()
   if (error) throw error

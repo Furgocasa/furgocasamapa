@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { scrapeFotosWebOficial } from '@/lib/areas/scrape-official-images'
-import { generateAndStoreAreaImage } from '@/lib/areas/generate-area-image'
+import { alojarFotoOficial, generateAndStoreAreaImage } from '@/lib/areas/generate-area-image'
 import {
+  esFotoMostrable,
   esFotoSeguraEnFicha,
   esWebDirectorio,
   uniqueUrlsOf,
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'El área está inactiva' }, { status: 400 })
     }
 
-    const propias = uniqueUrlsOf(area).filter((url) => esFotoSeguraEnFicha(url))
+    const propias = uniqueUrlsOf(area).filter((url) => esFotoMostrable(url))
     if (propias.length > 0) {
       return NextResponse.json({
         success: true,
@@ -85,8 +86,30 @@ export async function POST(request: NextRequest) {
 
     if (web) {
       const scrap = await scrapeFotosWebOficial(web, 7)
-      fotos_urls = scrap.filter((url) => esFotoSeguraEnFicha(url) && !ocupadas.has(url))
+      const candidatas = scrap.filter((url) => esFotoSeguraEnFicha(url) && !ocupadas.has(url))
+      const alojadas: string[] = []
+      for (let i = 0; i < candidatas.length; i++) {
+        const hosted = await alojarFotoOficial(supabase, areaId, candidatas[i], i)
+        if (hosted && !ocupadas.has(hosted)) alojadas.push(hosted)
+      }
+      fotos_urls = alojadas
       foto_principal = fotos_urls[0] || null
+    }
+
+    if (!foto_principal) {
+      const httpPropias = uniqueUrlsOf(area).filter(
+        (url) => esFotoSeguraEnFicha(url) && /^http:\/\//i.test(url) && !ocupadas.has(url)
+      )
+      const alojadas: string[] = []
+      for (let i = 0; i < httpPropias.length; i++) {
+        const hosted = await alojarFotoOficial(supabase, areaId, httpPropias[i], i)
+        if (hosted && !ocupadas.has(hosted)) alojadas.push(hosted)
+      }
+      if (alojadas.length) {
+        fotos_urls = alojadas
+        foto_principal = alojadas[0]
+        fuente = 'Web oficial (alojada)'
+      }
     }
 
     if (foto_principal) {

@@ -6,10 +6,10 @@ import { ArrowLeftIcon, PhotoIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import type { Area } from '@/types/database.types'
 import { createClient } from '@/lib/supabase/client'
-import { esFotoSeguraEnFicha, uniqueUrlsOf } from '@/lib/areas/image-copyright'
+import { esFotoMostrable, uniqueUrlsOf } from '@/lib/areas/image-copyright'
 
 function tieneFotoUsable(area: { foto_principal?: string | null; fotos_urls?: string[] | null }) {
-  return uniqueUrlsOf(area).some((url) => esFotoSeguraEnFicha(url))
+  return uniqueUrlsOf(area).some((url) => esFotoMostrable(url))
 }
 export default function EnriquecerImagenesPage() {
   const [areas, setAreas] = useState<Area[]>([])
