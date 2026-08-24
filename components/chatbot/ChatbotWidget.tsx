@@ -226,9 +226,10 @@ export default function ChatbotWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const restauradoRef = useRef(false)
 
-  // ✅ RESTAURAR CONVERSACIÓN al montar (no se resetea al refrescar):
-  // 1º localStorage (funciona para todos, también anónimos)
-  // 2º si no hay nada local y el usuario está logueado, última conversación de BD
+  // Restaurar al montar:
+  // 1º localStorage (hilo que el usuario todavía ve; sobrevive a F5)
+  // 2º si pulsó ↻, se queda limpio (fc_chat_fresh) aunque en BD siga el historial
+  // 3º si no hay nada local ni ↻, logueado: última conversación de BD
   useEffect(() => {
     if (loading || restauradoRef.current) return
     restauradoRef.current = true
@@ -244,11 +245,12 @@ export default function ChatbotWidget() {
           return
         }
       }
+      if (localStorage.getItem('fc_chat_fresh') === '1') return
     } catch {
       // localStorage corrupto: seguimos al plan B
     }
 
-    // Plan B: recuperar de BD la última conversación (solo logueados)
+    // Plan B: recuperar de BD la última conversación (solo logueados, y no tras ↻)
     if (user) {
       fetch('/api/chatbot/historial')
         .then((r) => (r.ok ? r.json() : null))
@@ -269,6 +271,7 @@ export default function ChatbotWidget() {
       const hayConversacion = messages.some((m) => m.rol === 'user')
       if (hayConversacion) {
         localStorage.setItem('fc_chat_msgs', JSON.stringify(messages.slice(-30)))
+        localStorage.removeItem('fc_chat_fresh')
       }
       if (conversacionId) {
         localStorage.setItem('fc_chat_conv_id', conversacionId)
@@ -404,6 +407,7 @@ export default function ChatbotWidget() {
     try {
       localStorage.removeItem('fc_chat_msgs')
       localStorage.removeItem('fc_chat_conv_id')
+      localStorage.setItem('fc_chat_fresh', '1')
     } catch {}
     setConversacionId(null)
     setMessages([{ rol: 'assistant', contenido: txt.bienvenida }])
