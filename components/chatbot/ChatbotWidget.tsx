@@ -77,8 +77,8 @@ const TEXTOS: Record<string, {
     bienvenida: '¡Hola! 👋 Soy el Tío Viajero IA. Pregúntame por áreas cerca, un sitio concreto o servicios. Para paradas en un trayecto, usa el planificador de rutas.',
     sugerencias: [
       '🆓 Áreas gratis cerca de mí',
-      '⭐ Las mejores áreas de España',
-      '💧 Áreas con agua y electricidad',
+      '🅿️ Área pública cerca de mí',
+      '💧 Áreas con agua y electricidad cerca de mí',
       '🐕 Áreas cerca de mí (mascotas bienvenidas)'
     ],
     placeholder: 'Pregunta al Tío Viajero...',
@@ -102,8 +102,8 @@ const TEXTOS: Record<string, {
     bienvenida: "Hi! 👋 I'm Tío Viajero AI. Ask me about areas nearby, a specific spot or services. For stops on a drive, use the route planner.",
     sugerencias: [
       '🆓 Free areas near me',
-      '⭐ Best areas in Spain',
-      '💧 Areas with water and electricity',
+      '🅿️ Public aire near me',
+      '💧 Areas with water and electricity near me',
       '🐕 Areas near me (pets welcome)'
     ],
     placeholder: 'Ask Tío Viajero...',
@@ -127,8 +127,8 @@ const TEXTOS: Record<string, {
     bienvenida: "Salut ! 👋 Je suis Tío Viajero IA. Demande-moi des aires près de toi, un lieu précis ou des services. Pour les haltes sur un trajet, utilise le planificateur.",
     sugerencias: [
       '🆓 Aires gratuites près de moi',
-      '⭐ Meilleures aires en Espagne',
-      '💧 Aires avec eau et électricité',
+      '🅿️ Aire publique près de moi',
+      '💧 Aires avec eau et électricité près de moi',
       '🐕 Aires près de moi (animaux)'
     ],
     placeholder: 'Demandez à Tío Viajero...',
@@ -152,8 +152,8 @@ const TEXTOS: Record<string, {
     bienvenida: 'Hallo! 👋 Ich bin Tío Viajero KI. Frag mich nach Plätzen in der Nähe, einem konkreten Ort oder Services. Für Stopps auf der Strecke nimm den Routenplaner.',
     sugerencias: [
       '🆓 Kostenlose Stellplätze in meiner Nähe',
-      '⭐ Beste Stellplätze in Spanien',
-      '💧 Stellplätze mit Wasser und Strom',
+      '🅿️ Öffentlicher Stellplatz in meiner Nähe',
+      '💧 Stellplätze mit Wasser und Strom in meiner Nähe',
       '🐕 Stellplätze in meiner Nähe (Haustiere)'
     ],
     placeholder: 'Frag Tío Viajero...',
@@ -177,8 +177,8 @@ const TEXTOS: Record<string, {
     bienvenida: 'Ciao! 👋 Sono Tío Viajero IA. Chiedimi aree vicine, un posto concreto o servizi. Per le soste su un tragitto usa il pianificatore.',
     sugerencias: [
       '🆓 Aree gratuite vicino a me',
-      '⭐ Le migliori aree in Spagna',
-      '💧 Aree con acqua ed elettricità',
+      '🅿️ Area pubblica vicino a me',
+      '💧 Aree con acqua ed elettricità vicino a me',
       '🐕 Aree vicino a me (animali)'
     ],
     placeholder: 'Chiedi a Tío Viajero...',
