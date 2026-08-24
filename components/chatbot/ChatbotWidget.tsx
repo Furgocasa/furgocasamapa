@@ -74,7 +74,7 @@ const TEXTOS: Record<string, {
   planificarRuta: string
 }> = {
   es: {
-    bienvenida: '¡Hola! 👋 Soy el Tío Viajero IA. Pregúntame por áreas cerca, un sitio concreto o servicios. Para paradas en un trayecto, usa el planificador de rutas.',
+    bienvenida: '¡Hola! 👋 Soy el Tío Viajero. Empieza tocando una pastilla: gratis, pública, agua y luz o mascotas, cerca de ti. También puedes escribir un pueblo o un área. Si vas de un sitio a otro, usa Planificar una ruta.',
     sugerencias: [
       '🆓 Áreas gratis cerca de mí',
       '🅿️ Área pública cerca de mí',
@@ -99,7 +99,7 @@ const TEXTOS: Record<string, {
     planificarRuta: '🛣️ Planificar una ruta'
   },
   en: {
-    bienvenida: "Hi! 👋 I'm Tío Viajero AI. Ask me about areas nearby, a specific spot or services. For stops on a drive, use the route planner.",
+    bienvenida: "Hi! 👋 I'm Tío Viajero. Start by tapping a chip: free, public, water and power, or pet-friendly spots near you. You can also type a town or a place. Going from A to B? Use Plan a route.",
     sugerencias: [
       '🆓 Free areas near me',
       '🅿️ Public aire near me',
@@ -124,7 +124,7 @@ const TEXTOS: Record<string, {
     planificarRuta: '🛣️ Plan a route'
   },
   fr: {
-    bienvenida: "Salut ! 👋 Je suis Tío Viajero IA. Demande-moi des aires près de toi, un lieu précis ou des services. Pour les haltes sur un trajet, utilise le planificateur.",
+    bienvenida: "Salut ! 👋 Je suis Tío Viajero. Commence par un bouton : gratuit, publique, eau et électricité ou animaux, près de toi. Tu peux aussi écrire un village ou une aire. Trajet ? Utilise Planifier un trajet.",
     sugerencias: [
       '🆓 Aires gratuites près de moi',
       '🅿️ Aire publique près de moi',
@@ -149,7 +149,7 @@ const TEXTOS: Record<string, {
     planificarRuta: '🛣️ Planifier un trajet'
   },
   de: {
-    bienvenida: 'Hallo! 👋 Ich bin Tío Viajero KI. Frag mich nach Plätzen in der Nähe, einem konkreten Ort oder Services. Für Stopps auf der Strecke nimm den Routenplaner.',
+    bienvenida: 'Hallo! 👋 Ich bin Tío Viajero. Tippe zuerst eine Pille: kostenlos, öffentlich, Wasser und Strom oder mit Hund, in deiner Nähe. Du kannst auch einen Ort schreiben. Von A nach B? Route planen.',
     sugerencias: [
       '🆓 Kostenlose Stellplätze in meiner Nähe',
       '🅿️ Öffentlicher Stellplatz in meiner Nähe',
@@ -174,7 +174,7 @@ const TEXTOS: Record<string, {
     planificarRuta: '🛣️ Route planen'
   },
   it: {
-    bienvenida: 'Ciao! 👋 Sono Tío Viajero IA. Chiedimi aree vicine, un posto concreto o servizi. Per le soste su un tragitto usa il pianificatore.',
+    bienvenida: 'Ciao! 👋 Sono Tío Viajero. Inizia toccando una pastiglia: gratis, pubblica, acqua e luce o animali, vicino a te. Puoi anche scrivere un paese o un’area. Vai da A a B? Usa Pianifica un percorso.',
     sugerencias: [
       '🆓 Aree gratuite vicino a me',
       '🅿️ Area pubblica vicino a me',
