@@ -1059,6 +1059,7 @@ export function sanitizarRespuestaChat(texto: string, areas: AreaResumen[] = [])
 
   let out = texto
   out = out.replace(/\[([^\]]*)\]\(([^)]+)\)/g, (_all, label: string, url: string) => {
+    if (/furgocasa\.com/i.test(url)) return `[${label}](${url})`
     const slug = slugDeUrl(url) || slugPorNombre(label)
     return slug ? `/area/${slug}` : (label || '').trim()
   })
@@ -1190,8 +1191,8 @@ export interface InfoViajeWebParams {
 }
 
 /**
- * Web search de Terra SOLO para lo que no está en el catálogo
- * (gasolineras, qué ver, restaurantes, talleres). Nunca para listar áreas.
+ * Web search de Terra SOLO para lo práctico del camino
+ * (gasolineras, diésel, taller). Nunca para listar áreas ni para guías turísticas.
  */
 export async function buscarInfoViajeWeb(params: InfoViajeWebParams): Promise<{
   texto: string
@@ -1221,9 +1222,9 @@ export async function buscarInfoViajeWeb(params: InfoViajeWebParams): Promise<{
     max_output_tokens: 700,
     reasoning: { effort: 'low' },
     instructions:
-      'Información práctica de viaje (gasolineras, qué ver, restaurantes, talleres). ' +
+      'Información práctica de camino: SOLO gasolineras, diésel o taller de emergencia. ' +
       `Responde ENTERA en el idioma del cliente (${params.idioma || 'el de la pregunta'}). ` +
-      'Sitios reales, breve. ' +
+      'Sitios reales, breve. Nada de qué ver, pueblos, restaurantes ni guía turística. ' +
       'NO inventes áreas de autocaravanas ni enlaces /area/. ' +
       'Si no hay dato fiable, dilo.',
     input: detalle,

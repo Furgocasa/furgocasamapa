@@ -40,6 +40,7 @@ import { logger } from '@/lib/logger'
 import { validateOpenAIModel, buildTokensParam, buildReasoningForTools, buildTemperatureParam } from '@/lib/openai/model-validation'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { clientIp, consumeGuestQuestion, huellaDeIp, GUEST_QUESTION_LIMIT } from '@/lib/chatbot/guest-quota'
+import { clasificarIntencion, extraerSitioNombrado, textoAtajoIntencion } from '@/lib/chatbot/intencion'
 
 // ============================================
 // CONFIGURACIÓN
@@ -258,10 +259,10 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
   {
     name: 'buscar_info_viaje',
     description:
-      'Búsqueda web (GPT-5.6 Terra) SOLO para lo que NO está en el catálogo: gasolineras, qué ver / monumentos, restaurantes, talleres, hoteles. ' +
-      'Ej: "hay gasolinera entre Pepito y Manolo", "qué ver en Cuenca". ' +
-      'NUNCA para listar áreas de autocaravanas (usa search_areas). ' +
-      'Si preguntan áreas Y qué ver, llama también a search_areas.',
+      'Búsqueda web SOLO para lo práctico del camino que NO está en el catálogo: gasolineras / diésel / taller de emergencia. ' +
+      'Ej: "hay gasolinera entre Madrid y Valencia". ' +
+      'NUNCA para qué ver, pueblos, monumentos, restaurantes, hoteles ni guías turísticas. ' +
+      'NUNCA para listar áreas (usa search_areas).',
     parameters: {
       type: 'object',
       properties: {
@@ -352,7 +353,7 @@ function sanitizarArgsBusqueda(fnArgs: any, ultimoMensaje: string) {
 
 function esPreguntaFueraCatalogo(mensaje: string): boolean {
   if (!mensaje) return false
-  return /\b(gasolinera|gasolineras|gasolina|di[eé]sel|petrol|tankstelle|station.?service|qu[eé] ver|qu[eé] visitar|visitar en|monumentos?|museos?|catedral|restaurantes?|talleres?\b|hoteles?\b|farmacia)/i.test(mensaje)
+  return /\b(gasolinera|gasolineras|gasolina|di[eé]sel|petrol|tankstelle|station.?service|talleres?\b)/i.test(mensaje)
 }
 
 function pideAreasEnMensaje(mensaje: string): boolean {
@@ -539,6 +540,57 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = getSupabaseClient()
+
+    const ultimoMensajeUsuario = [...messages]
+      .reverse()
+      .find((m: any) => m.role === 'user')?.content || ''
+    const idiomaAtajo = resolveChatLocale({
+      pageLocale: locale,
+      lastUserText: ultimoMensajeUsuario,
+      previousUserTexts: messages
+        .filter((m: any) => m.role === 'user')
+        .slice(0, -1)
+        .map((m: any) => m.content),
+    })
+    const atajo = clasificarIntencion({
+      ultimo: ultimoMensajeUsuario,
+      previosUsuario: messages
+        .filter((m: any) => m.role === 'user')
+        .slice(0, -1)
+        .map((m: any) => m.content),
+      ultimoAsistente: [...messages].reverse().find((m: any) => m.role === 'assistant')?.content || null,
+    })
+    if (atajo) {
+      const message = textoAtajoIntencion(
+        atajo,
+        idiomaAtajo,
+        atajo === 'ambigua' ? extraerSitioNombrado(ultimoMensajeUsuario) : undefined
+      )
+      logger.info('Respuesta corta sin modelo', { atajo, pregunta: ultimoMensajeUsuario.slice(0, 80) })
+      const logId = await logRespuesta(supabase, {
+        conversacion_id: conversacionId || null,
+        user_id: userId || null,
+        locale: idiomaAtajo,
+        pregunta: ultimoMensajeUsuario,
+        respuesta: message,
+        funciones: [
+          ...(userId ? [] : [{ name: '_cliente', args: { huella } }]),
+          { name: '_intencion', args: { tipo: atajo } },
+        ],
+        areas_ids: [],
+        tokens: 0,
+        modelo: 'atajo',
+        duracion_ms: Date.now() - startTime,
+      })
+      return NextResponse.json({
+        message,
+        conversacionId: conversacionId || null,
+        logId,
+        modelo: 'atajo',
+        duration: Date.now() - startTime,
+        guest,
+      })
+    }
 
     if (!userId) {
       const quota = await consumeGuestQuestion(supabase, huella)
@@ -790,11 +842,12 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 ═══════════════════════════════════════
 - PRECIO: Solo di "Gratis" si el resumen o precio_noche es 0. Si dice "Precio no disponible" o precio_noche es null, escribe exactamente eso. NUNCA conviertas un precio desconocido en gratis.
 - FICHAS: pega el campo "resumen" de cada área TAL CUAL. No reescribas precio, servicios ni enlaces. Prohibido autocaravanas.com, example.com y Google Maps.
-- FILTROS: Si el usuario solo nombra una ciudad o país ("Murcia", "Viseu", "Cádiz", "En Tecolutla"), busca SIN heredar servicios, tipo_area ni solo_gratuitas del turno anterior.
+- FILTROS: Si el usuario nombra solo una ciudad DESPUÉS de haber pedido áreas/servicios, busca ahí SIN heredar filtros viejos.
 - TIPO: solo tres. publica = ayuntamiento/organismo. privada = empresa/particular (camper park, granja, Weingut, CL, Brit Stop). camping = recinto. No existe la categoría stopover. En cada país la gente usa otro nombre (aire, sosta, Stellplatz, camperplaats, motorhome aire, trailer park): eso es etiqueta. Un "parking autocaravanas" del pueblo es pública. UK: touring park = camping; CL/aire de anfitrión = privada; Arosfan = pública.
 - CERCA DE MÍ: si no hay GPS válido en este mensaje, pide la ciudad. No busques en todo el mundo ni inventes una ubicación.
-- POI turísticos: si preguntan "qué ver" / monumentos → buscar_info_viaje. Si también quieren pernoctar, llama TAMBIÉN a search_areas en esa ciudad (áreas cerca, no un área con el nombre del monumento).
-- Gasolineras, talleres, restaurantes, hoteles: NO están en el catálogo. Usa buscar_info_viaje. No llames a search_areas con supermercado. Di que esa info es de la web, no una ficha /area/.
+- NO eres una guía turística. Si piden qué ver, pueblos, planes o itinerarios, NO inventes una guía y NO uses buscar_info_viaje. Di que no cubres eso y enlaza https://www.furgocasa.com/es/blog?category=rutas
+- Si piden áreas/gasolinera Y además turismo: responde SOLO la parte de áreas/gasolinera y manda el turismo al blog de Furgocasa.
+- Gasolinera o taller de emergencia: buscar_info_viaje. Di que es info de la web, no una ficha /area/. Prohibido restaurantes, hoteles, monumentos y "qué ver".
 - example.com u otras URLs inventadas: prohibido. Solo /area/{slug}.
 - Idioma: último mensaje del cliente. TODO en ese idioma (intro y etiquetas). Las fichas "resumen" ya están traducidas.`
     
@@ -845,9 +898,6 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
     const conversation: OpenAI.Chat.ChatCompletionMessageParam[] = [...fullMessages]
     let finalResponse: string | null = null
 
-    const ultimoMensajeUsuario = [...messages]
-      .reverse()
-      .find((m: any) => m.role === 'user')?.content || ''
     const idiomaRespuesta = resolveChatLocale({
       pageLocale: locale,
       lastUserText: ultimoMensajeUsuario,
