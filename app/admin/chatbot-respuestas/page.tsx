@@ -108,7 +108,7 @@ const CATEGORIAS_PIE: Array<{
   { key: 'correcta', name: 'Correctas', color: '#16a34a' },
   { key: 'mejorable', name: 'Mejorables', color: '#d97706' },
   { key: 'incorrecta', name: 'Incorrectas', color: '#dc2626' },
-  { key: 'sin_evaluar', name: 'Sin evaluar', color: '#9ca3af' },
+  { key: 'sin_evaluar', name: 'Sin revisar', color: '#9ca3af' },
 ]
 
 const STATS_VACIOS: StatsIA = {
@@ -187,7 +187,6 @@ export default function ChatbotRespuestasPage() {
   const [hiloMeta, setHiloMeta] = useState<ConversacionRow | null>(null)
   const [hiloId, setHiloId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [filtro, setFiltro] = useState<'pendientes' | 'revisadas' | 'todas'>('todas')
   const [filtroIA, setFiltroIA] = useState<FiltroIA>('todas')
   const [filtroVoto, setFiltroVoto] = useState<FiltroVoto>('todas')
   const [pagina, setPagina] = useState(0)
@@ -195,7 +194,6 @@ export default function ChatbotRespuestasPage() {
   const [totalConversaciones, setTotalConversaciones] = useState(0)
   const [stats, setStats] = useState<StatsIA>(STATS_VACIOS)
   const [expandido, setExpandido] = useState<string | null>(null)
-  const [notas, setNotas] = useState<Record<string, string>>({})
   const [errorCarga, setErrorCarga] = useState<string | null>(null)
 
   useEffect(() => {
@@ -218,7 +216,6 @@ export default function ChatbotRespuestasPage() {
     try {
       const params = new URLSearchParams({
         vista,
-        filtro,
         filtroIA,
         filtroVoto,
         pagina: String(pagina),
@@ -245,7 +242,7 @@ export default function ChatbotRespuestasPage() {
     } finally {
       setLoading(false)
     }
-  }, [authorized, vista, filtro, filtroIA, filtroVoto, pagina])
+  }, [authorized, vista, filtroIA, filtroVoto, pagina])
 
   useEffect(() => {
     cargar()
@@ -287,26 +284,6 @@ export default function ChatbotRespuestasPage() {
     } catch (e) {
       console.error(e)
       setHilo([])
-    }
-  }
-
-  const marcarRevisado = async (id: string, revisado: boolean) => {
-    try {
-      const res = await fetch('/api/admin/chatbot-respuestas', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id,
-          revisado,
-          nota_revision: notas[id]?.trim() || null,
-        }),
-      })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.details || json.error || 'No se pudo actualizar')
-      setLogs((prev) => prev.map((l) => (l.id === id ? { ...l, revisado, nota_revision: notas[id]?.trim() || null } : l)))
-    } catch (e) {
-      console.error('Error actualizando:', e)
-      alert('No se pudo actualizar la revisión. Inténtalo de nuevo.')
     }
   }
 
@@ -367,9 +344,7 @@ export default function ChatbotRespuestasPage() {
           <div className="px-5 py-3 border-b border-gray-100">
             <h2 className="text-sm font-semibold text-gray-900">Distribución por categorización</h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              {totalGrafico} respuestas
-              {filtro !== 'todas' ? ` · filtro ${filtro}` : ''}
-              . Pulsa un quesito para filtrar la tabla.
+              {totalGrafico} respuestas. Pulsa un quesito para filtrar la tabla.
             </p>
           </div>
           {totalGrafico === 0 ? (
@@ -448,31 +423,14 @@ export default function ChatbotRespuestasPage() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 mb-3 flex-wrap">
-          {(['todas', 'pendientes', 'revisadas'] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => { setFiltro(f); setPagina(0); setExpandido(null) }}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                filtro === f ? 'bg-sky-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-sky-300'
-              }`}
-            >
-              {f === 'pendientes' ? 'Pendientes' : f === 'revisadas' ? 'Revisadas' : 'Todas'}
-            </button>
-          ))}
-          <span className="ml-auto text-sm text-gray-500">
-            {vista === 'conversaciones' ? `${totalConversaciones} conversaciones` : `${total} respuestas`}
-          </span>
-        </div>
-
         <div className="flex items-center gap-2 mb-4 flex-wrap">
-          <span className="text-xs font-semibold text-gray-500 uppercase">Categorización</span>
+          <span className="text-xs font-semibold text-gray-500 uppercase">Estado</span>
           {([
             ['todas', 'Todas'],
+            ['sin_evaluar', 'Sin revisar'],
             ['correcta', 'Correctas'],
             ['mejorable', 'Mejorables'],
             ['incorrecta', 'Incorrectas'],
-            ['sin_evaluar', 'Sin evaluar'],
           ] as const).map(([valor, etiqueta]) => (
             <button
               key={valor}
@@ -484,6 +442,9 @@ export default function ChatbotRespuestasPage() {
               {etiqueta}
             </button>
           ))}
+          <span className="ml-auto text-sm text-gray-500">
+            {vista === 'conversaciones' ? `${totalConversaciones} conversaciones` : `${total} respuestas`}
+          </span>
         </div>
 
         <div className="flex items-center gap-2 mb-4 flex-wrap">
@@ -519,7 +480,7 @@ export default function ChatbotRespuestasPage() {
           <div className="bg-white rounded-lg shadow p-12 text-center text-gray-500">
             {vista === 'conversaciones'
               ? 'No hay interacciones con este filtro.'
-              : `No hay respuestas ${filtro === 'pendientes' ? 'pendientes de revisar' : filtro === 'revisadas' ? 'revisadas' : 'registradas'} todavía.`}
+              : 'No hay respuestas con este filtro.'}
           </div>
         ) : vista === 'conversaciones' ? (
           <>
@@ -577,7 +538,7 @@ export default function ChatbotRespuestasPage() {
                                   </span>
                                   <div className="text-[10px] text-gray-400 mt-0.5">
                                     {c.correcta} correctas · {c.mejorable} mejorables · {c.incorrecta} incorrectas
-                                    {c.sin_evaluar > 0 ? ` · ${c.sin_evaluar} sin evaluar` : ''}
+                                    {c.sin_evaluar > 0 ? ` · ${c.sin_evaluar} sin revisar` : ''}
                                   </div>
                                 </>
                               )
@@ -638,7 +599,7 @@ export default function ChatbotRespuestasPage() {
                           <tr
                             key={log.id}
                             onClick={() => abrirDetalle(log.id)}
-                            className={`cursor-pointer hover:bg-gray-50 ${abierto ? 'bg-sky-50/60' : ''} ${log.revisado && !abierto ? 'bg-green-50/40' : ''}`}
+                            className={`cursor-pointer hover:bg-gray-50 ${abierto ? 'bg-sky-50/60' : ''}`}
                           >
                             <td className="px-2.5 py-2 align-top overflow-hidden">
                               <div className="text-sm font-medium text-gray-900">{fecha.dia}</div>
@@ -686,7 +647,7 @@ export default function ChatbotRespuestasPage() {
                                 </span>
                               ) : (
                                 <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
-                                  Sin evaluar
+                                  Sin revisar
                                 </span>
                               )}
                             </td>
@@ -833,7 +794,6 @@ export default function ChatbotRespuestasPage() {
                       )}
                       <span>{logAbierto.tokens ?? '—'} tokens</span>
                       <span>{logAbierto.duracion_ms ? `${(logAbierto.duracion_ms / 1000).toFixed(1)} s` : '—'}</span>
-                      {logAbierto.revisado && <span className="text-green-700 font-medium">Revisada</span>}
                     </div>
                     {logAbierto.funciones && logAbierto.funciones.length > 0 && (
                       <pre className="text-xs bg-gray-900 text-green-300 rounded-lg p-3 overflow-x-auto">
@@ -864,33 +824,6 @@ export default function ChatbotRespuestasPage() {
                         Voto del usuario: {logAbierto.voto_usuario === 'up' ? '👍 le gustó' : '👎 no le gustó'}
                       </p>
                     )}
-                    <div className="flex items-end gap-2">
-                      <div className="flex-1">
-                        <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Nota de revisión</label>
-                        <input
-                          type="text"
-                          value={notas[logAbierto.id] ?? logAbierto.nota_revision ?? ''}
-                          onChange={(e) => setNotas((prev) => ({ ...prev, [logAbierto.id]: e.target.value }))}
-                          placeholder="p.ej. respuesta inventada, faltó buscar, OK..."
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
-                        />
-                      </div>
-                      {logAbierto.revisado ? (
-                        <button
-                          onClick={() => marcarRevisado(logAbierto.id, false)}
-                          className="px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors whitespace-nowrap"
-                        >
-                          Desmarcar
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => marcarRevisado(logAbierto.id, true)}
-                          className="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors whitespace-nowrap"
-                        >
-                          Marcar revisada
-                        </button>
-                      )}
-                    </div>
                   </div>
                 </>
               ) : null}
