@@ -116,8 +116,12 @@ export function formatServiciosLegibles(servicios: Record<string, boolean> | nul
     .join(', ')
 }
 
-function esNombreBasura(nombre: string | null | undefined): boolean {
+export function esNombreBasura(nombre: string | null | undefined): boolean {
   return !nombre || NOMBRE_BASURA_RE.test(nombre)
+}
+
+function limpiarAreasBasura<T extends { nombre?: string | null }>(areas: T[]): T[] {
+  return areas.filter((a) => !esNombreBasura(a.nombre))
 }
 
 /** Null Island / GPS basura: no buscar “cerca de mí” en (0,0). */
@@ -143,6 +147,9 @@ const ALIAS_UBICACION: Record<string, string> = {
   'massabielle': 'Lourdes, Francia',
   'santuario de lourdes': 'Lourdes, Francia',
   'bolemdam': 'Volendam, Países Bajos',
+  'ajo': 'Ajo, Cantabria, España',
+  'ajo cantabria': 'Ajo, Cantabria, España',
+  'ajo, cantabria': 'Ajo, Cantabria, España',
 }
 
 function resolverAliasUbicacion(nombre: string): string {
@@ -375,8 +382,9 @@ export async function searchAreas(params: BusquedaAreasParams): Promise<AreaResu
         )
       }
 
-      console.log(`✅ Resultado final: ${filtered.length} áreas después de filtros`)
-      return filtered.slice(0, 10)
+      const limpias = limpiarAreasBasura(filtered)
+      console.log(`✅ Resultado final: ${limpias.length} áreas después de filtros`)
+      return limpias.slice(0, 10)
     }
     
     // CASO 2: Búsqueda por nombre de ciudad/provincia/país
@@ -750,7 +758,7 @@ export async function searchAreasAlongRoute(
     throw error
   }
 
-  const enCorredor = (data || [])
+  const enCorredor = limpiarAreasBasura(data || [])
     .map((area: any) => {
       const { distKm, t } = distanciaAlSegmentoKm(
         { lat: area.latitud, lng: area.longitud },
@@ -775,9 +783,50 @@ export async function searchAreasAlongRoute(
 /**
  * Formatea un área para mostrar en el chat
  */
+function formatUbicacionArea(area: AreaResumen): string {
+  const parts = [area.ciudad, area.provincia, area.pais]
+    .map((s) => String(s || '').trim())
+    .filter((s) => s && !/^s\/n$/i.test(s) && s.toLowerCase() !== 'null')
+  const uniq = parts.filter((p, i) => i === 0 || p.toLowerCase() !== parts[i - 1].toLowerCase())
+  return uniq.join(', ') || 'Ubicación no disponible'
+}
+
+/**
+ * Reescribe enlaces inventados (example.com, markdown externo) a `/area/{slug}`.
+ * No toca el resto del texto.
+ */
+export function sanitizarRespuestaChat(texto: string, areas: AreaResumen[] = []): string {
+  if (!texto) return texto
+
+  const slugDeUrl = (url: string): string | null => {
+    const m = String(url).match(/\/area\/([A-Za-z0-9-]+)/i)
+    return m ? m[1] : null
+  }
+
+  const slugPorNombre = (label: string): string | null => {
+    const key = normalizarClave(label)
+    if (!key) return null
+    const hit = areas.find((a) => a.slug && a.nombre && normalizarClave(a.nombre) === key)
+    return hit?.slug || null
+  }
+
+  let out = texto
+  out = out.replace(/\[([^\]]*)\]\(([^)]+)\)/g, (_all, label: string, url: string) => {
+    const slug = slugDeUrl(url) || slugPorNombre(label)
+    return slug ? `/area/${slug}` : (label || '').trim()
+  })
+  out = out.replace(/https?:\/\/[^\s)]+/gi, (url) => {
+    const slug = slugDeUrl(url)
+    if (slug) return `/area/${slug}`
+    if (/example\.com|autocaravanas\.com/i.test(url)) return ''
+    return url
+  })
+  return out.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n')
+}
+
 export function formatAreaParaChat(area: AreaResumen): string {
   let texto = `🚐 **${area.nombre}**\n`
-  texto += `📍 ${area.ciudad}, ${area.provincia}, ${area.pais}\n`
+  texto += `📍 ${formatUbicacionArea(area)}\n`
   
   if (area.distancia_km !== undefined) {
     texto += `📏 ${area.distancia_km.toFixed(1)} km de distancia\n`

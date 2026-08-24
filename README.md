@@ -267,8 +267,11 @@ Cada respuesta (también anónima) se guarda en `chatbot_respuestas_log`. El adm
 Revisor automático (clasifica correcta / mejorable / incorrecta y escribe `motivo_ia` + `sugerencia_ia`):
 
 ```powershell
-npm run evaluar:chatbot
-$env:NODE_TLS_REJECT_UNAUTHORIZED="0"; $env:EVAL_RUN="1"; npm run evaluar:chatbot
+$env:NODE_TLS_REJECT_UNAUTHORIZED="0"
+node scripts/evaluar-respuestas-chatbot.js
+node scripts/evaluar-respuestas-chatbot.js --dry-run
+node scripts/evaluar-respuestas-chatbot.js --all
+node scripts/evaluar-respuestas-chatbot.js --limit=50
 ```
 
 **Círculo revisión → corrección** (regla `.cursor/rules/chatbot-revision.mdc`): al pedir “revisa el chatbot” no basta el informe; hay que parchear prompt o código (`lib/chatbot/functions.ts`, `app/api/chatbot/route.ts`) y pushear a `main`. Las filas viejas del admin no se reescriben.

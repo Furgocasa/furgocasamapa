@@ -23,6 +23,7 @@ yarn-debug.log*
 yarn-error.log*
 scripts/*.log
 scripts/*-dry-report.json
+scripts/INFORME-REVISION-MENSAJES.md
 scripts/audit-copyright-*.csv
 scripts/imagenes-ia-vacias.txt
 

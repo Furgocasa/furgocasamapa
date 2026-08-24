@@ -19,6 +19,7 @@ import {
   searchAreasAlongRoute,
   serializeToolResultForModel,
   esGpsValido,
+  sanitizarRespuestaChat,
   BusquedaAreasParams,
   AreaResumen
 } from '@/lib/chatbot/functions'
@@ -285,6 +286,35 @@ interface EstadisticasBD {
  * Detecta si el mensaje pide paradas/áreas en una ruta entre dos ciudades.
  * Usado para forzar search_areas_along_route en la primera ronda.
  */
+const TIPOS_AREA_VALIDOS = ['publica', 'privada', 'camping'] as const
+
+/** "Huesca", "En Tecolutla", "Viseu" → no heredar filtros del turno anterior. */
+function esMensajeSoloUbicacion(mensaje: string): boolean {
+  const t = (mensaje || '')
+    .replace(/[\u{1F300}-\u{1FAFF}]/gu, '')
+    .replace(/[¿?¡!.,]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!t || t.length > 48) return false
+  if (/\b(gratis|free|luz|electricidad|agua|wc|ducha|wifi|mascotas|cerca de m[ií]|ruta|paro|precio|cu[aá]nto|best|mejores)\b/i.test(t)) {
+    return false
+  }
+  return /^(en\s+)?[A-Za-zÀ-ÿ0-9\s,'-]{2,48}$/i.test(t)
+}
+
+function sanitizarArgsBusqueda(fnArgs: any, ultimoMensaje: string) {
+  if (fnArgs?.tipo_area && !TIPOS_AREA_VALIDOS.includes(fnArgs.tipo_area)) {
+    delete fnArgs.tipo_area
+  }
+  if (esMensajeSoloUbicacion(ultimoMensaje)) {
+    delete fnArgs.servicios
+    delete fnArgs.solo_gratuitas
+    delete fnArgs.tipo_area
+    delete fnArgs.precio_max
+  }
+  return fnArgs
+}
+
 function detectarPreguntaRuta(mensaje: string): boolean {
   if (!mensaje || typeof mensaje !== 'string') return false
   const t = mensaje.trim()
@@ -744,6 +774,9 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
           firstFunctionName = fnName
           firstFunctionArgs = fnArgs
         }
+        if (fnName === 'search_areas') {
+          sanitizarArgsBusqueda(fnArgs, ultimoMensajeUsuario)
+        }
         funcionesEjecutadas.push({ name: fnName, args: fnArgs })
 
         // Inyectar GPS del usuario si busca sin ubicación explícita
@@ -827,6 +860,10 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         vistos.add((a as any).id)
         areasEncontradas.push(a)
       }
+    }
+
+    if (finalResponse) {
+      finalResponse = sanitizarRespuestaChat(finalResponse, areasEncontradas)
     }
 
     const functionName = firstFunctionName

@@ -21,6 +21,7 @@
     "slugs:clean:apply": "ts-node --project tsconfig.scripts.json scripts/limpiar-slugs-importados.ts --apply",
     "translate": "node scripts/translate-descriptions.js",
     "evaluar:chatbot": "node scripts/evaluar-respuestas-chatbot.js",
+    "review:chatbot-messages": "node scripts/evaluar-respuestas-chatbot.js",
     "backfill:ratings": "node scripts/backfill-google-ratings-total.js",
     "backfill:ratings:run": "node scripts/backfill-google-ratings-total.js --confirm",
     "enrich:datos": "node scripts/enrich-datos-estructurados.js",

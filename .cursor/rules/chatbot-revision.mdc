@@ -9,7 +9,10 @@ Si el usuario pide revisar, evaluar o mirar las respuestas del Tío Viajero / ch
 
 ## Ciclo obligatorio
 
-1. Evaluar pendientes: `EVAL_RUN=1 node scripts/evaluar-respuestas-chatbot.js` (tabla `chatbot_respuestas_log`).
+1. Evaluar pendientes (como el auditor de Furgocasa). En Windows no uses `npm run` si hay flags:
+   `$env:NODE_TLS_REJECT_UNAUTHORIZED="0"; node scripts/evaluar-respuestas-chatbot.js`
+   Dry-run: `--dry-run`. Reevaluar todo: `--all`. Límite: `--limit=50`. Una fila: `--id=<uuid>`.
+   Tabla: `chatbot_respuestas_log`. Informe: `scripts/INFORME-REVISION-MENSAJES.md`.
 2. Agrupar **incorrectas** y **mejorables** por causa raíz (precio, geo, GPS, filtros, idioma, prompt, datos).
 3. **Corregir de verdad** en código o prompt (`lib/chatbot/functions.ts`, `app/api/chatbot/route.ts`, `chatbot_config`) hasta que esa causa no se repita. Un canvas o un listado de fallos no cierra el ciclo.
 4. Commit + push a `main` de los arreglos. Decir qué se ha cambiado y que las filas viejas del admin no se reescriben: lo nuevo ya debe salir bien.
