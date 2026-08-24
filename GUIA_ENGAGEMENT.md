@@ -115,7 +115,8 @@ retoman favoritos o “Estuve aquí”.
 - Evento `route_save` en `user_interactions`.
 
 `/ruta` sigue pidiendo login para **usar** el planificador (`LoginWall`). El
-mapa y las fichas son libres.
+mapa y las fichas son libres. El chat **no** lista paradas de trayecto: deriva
+a `/ruta` (también si el usuario ya está logueado). Prefill: `?origen=&destino=`.
 
 ### 4.5 Chatbot
 
@@ -123,8 +124,12 @@ mapa y las fichas son libres.
 
 - Corazón en cada card (local o cuenta).
 - “Guardar estas N áreas”.
-- Chips de enlace (no son mensajes al modelo): `/valoracion-ia-vehiculos` y
+- Sin GPS el chat se sombrea (mismo estado que el mapa).
+- Anónimo: 2 preguntas. Con cuenta: sin tope.
+- Pastillas de mensaje: solo «cerca de mí» (gratis, pública, agua/luz, mascotas).
+- Chips de enlace (no gastan pregunta): `/ruta`, `/valoracion-ia-vehiculos` y
   `/sistema-reporte-accidentes`.
+- ↻ limpia la vista; el historial queda en BD. F5 tras ↻ sigue limpio.
 
 ### 4.6 Home y ficha: vehículo visible
 

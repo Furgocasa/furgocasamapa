@@ -123,7 +123,7 @@ de BD falla, mejor caer en el gratuito.
 - [x] Migrado de la API obsoleta `functions` a la moderna `tools` con **bucle de hasta 4 rondas**: puede encadenar y combinar varias búsquedas en un mensaje ("compara áreas gratis en Granada y Sevilla")
 - [x] Responde en el **idioma de la interfaz** del usuario (es/en/fr/de/it)
 - [x] Nueva función `get_area_by_name` ("háblame del área de Ronda")
-- [x] Nueva función `search_areas_along_route` (paradas entre dos ciudades, geocodificación Nominatim GRATIS, ordenadas origen→destino)
+- [x] `search_areas_along_route` existe en código pero **ya no lista paradas** (24 ago 2026): el chat deriva a `/ruta`
 - [x] Nuevo filtro `valoracion_minima` en las búsquedas
 - [x] Deduplicación de áreas entre búsquedas para las tarjetas
 
@@ -138,8 +138,8 @@ de BD falla, mejor caer en el gratuito.
 **Auditoría de respuestas** (28 jul 2026 + 21 ago 2026):
 - [x] Migración `20260728_chatbot_respuestas_log.sql` ✅ ejecutada
 - [x] TODAS las respuestas (también de anónimos) se registran con pregunta, respuesta, búsquedas ejecutadas, tokens, modelo y duración
-- [x] Página `/admin/chatbot-respuestas`: tabla (fecha, usuario, tipo, mensaje, respuesta, categorización), quesito de %, detalle expandible, marcar revisada
-- [x] Círculo revisión → corrección (regla `.cursor/rules/chatbot-revision.mdc`): evaluar no cierra el ciclo; hay que parchear y pushear
+- [x] Página `/admin/chatbot-respuestas`: tabla + quesito. Estado = veredicto IA (Sin revisar / Correcta / Mejorable / Incorrecta). Sin check manual «Revisada».
+- [x] Círculo revisión → corrección (regla `.cursor/rules/chatbot-revision.mdc`): «revisa» = evaluar en real (nunca dry-run) + parchear y pushear
 
 **Agente revisor IA** (28 jul 2026):
 - [x] Código y script listos (`npm run evaluar:chatbot`)
@@ -249,6 +249,7 @@ con teléfono. Mercado = WhatsApp/lead, no OTA.
   huecos Italia (914 → 1170 soste/campeggi);
   caché `/api/areas` a 30 s (`s-maxage=30`, sin SWR) para que los lotes
   salgan en el mapa al hacer Ctrl+F5. Landing `/mapa-autocaravanas-reino-unido`.
+- **24 ago 2026 (Tío Viajero)**: GPS mapa+chat unificado (sin ubicación el chat se sombrea); anónimo 2 preguntas; paradas en ruta → `/ruta` (también logueado; `/ruta` sigue pidiendo cuenta); pastillas solo locales + enlace al planificador; admin sin check «Revisada»; ↻ limpia la vista y F5 no revive el hilo (`fc_chat_fresh`); votar no hace scroll al final. Ver `README.md` y `CAMBIOS_CURSOR.md` §7.11.
 - **21 ago 2026 (Tío Viajero)**: admin tabla + quesito; primera evaluación
   (~53% incorrectas, casi todas por “Gratis” con precio null); parches de
   precio/geo/GPS/prompt; regla de círculo revisión-corrección.

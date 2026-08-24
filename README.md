@@ -51,7 +51,7 @@ Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMEN
 - ⚙️ **Panel Admin 3.0** (`/admin`): menú lateral oscuro con secciones agrupadas (Áreas / IA y Chatbot / Datos y análisis / Sistema), barra superior con «Ver web» y dashboard con contadores en vivo. Layout único en `app/admin/layout.tsx` (auth admin centralizada; la navegación se edita en su array `NAV`)
 - 📊 **Analytics por pestañas**: usuarios, áreas, rutas, engagement
 - 🤖 **Editor de prompts IA** configurable
-- 🧑‍⚖️ **Respuestas del Tío Viajero** (`/admin/chatbot-respuestas`): tabla + quesito de calidad (correcta / mejorable / incorrecta)
+- 🧑‍⚖️ **Respuestas del Tío Viajero** (`/admin/chatbot-respuestas`): tabla + quesito (sin revisar / correcta / mejorable / incorrecta)
 - 🖼️ **Sistema de banners** con alternancia inteligente CasiCinco/Furgocasa
 - 🗺️ **Selector de proveedor de mapa** (Google/MapLibre/Leaflet)
 
@@ -260,21 +260,29 @@ Terra cubre Chat Completions, Responses, function calling y `web_search`. Las fo
 
 > El Tío Viajero usa **gpt-5.6-terra** con function calling contra la base de áreas (no `web_search`: el catálogo es la fuente de verdad). Con tools el reasoning va a `none` para evitar 400. GPT-5 no admite temperature custom.
 
+### Tío Viajero: producto (24 ago 2026)
+
+- **GPS obligatorio** para hablar: mapa y chat comparten el mismo interruptor. Sin ubicación el chat queda sombreado.
+- **Anónimo**: 2 preguntas (huella de IP, ~90 días). Con cuenta, sin tope de preguntas.
+- **Cerca / un área / un filtro en un sitio**: el chat busca y enseña fichas (máx. 3).
+- **Paradas en una ruta** (logueado o no): no lista áreas. Deriva a `/ruta` (con `?origen=&destino=` si los tiene). `/ruta` exige login para calcular.
+- **Pastillas**: solo búsquedas locales (gratis, pública, agua/luz, mascotas). «Planificar una ruta», tasación y QR son enlaces, no gastan pregunta.
+- **↻ Nueva conversación**: limpia la vista; el historial sigue en BD/admin. Tras ↻, F5 también sale limpio (`fc_chat_fresh`). F5 a mitad de hilo conserva lo que se ve.
+
 ### Tío Viajero: calidad y revisión
 
-Cada respuesta (también anónima) se guarda en `chatbot_respuestas_log`. El admin las ve en [https://www.mapafurgocasa.com/admin/chatbot-respuestas](https://www.mapafurgocasa.com/admin/chatbot-respuestas): tabla (fecha, usuario, anónimo/registrado, mensaje, respuesta, categorización) y quesito de porcentajes.
+Cada respuesta (también anónima) se guarda en `chatbot_respuestas_log`. El admin las ve en [https://www.mapafurgocasa.com/admin/chatbot-respuestas](https://www.mapafurgocasa.com/admin/chatbot-respuestas). El estado de cada fila **es** el veredicto IA: **Sin revisar** / **Correcta** / **Mejorable** / **Incorrecta**. No hay check manual «Revisada».
 
-Revisor automático (clasifica correcta / mejorable / incorrecta y escribe `motivo_ia` + `sugerencia_ia`):
+Revisor (siempre en real, nunca `--dry-run`; escribe `valoracion_ia`, `motivo_ia`, `sugerencia_ia`, `evaluado_at`). Por defecto coge las **Sin revisar**:
 
 ```powershell
 $env:NODE_TLS_REJECT_UNAUTHORIZED="0"
 node scripts/evaluar-respuestas-chatbot.js
-node scripts/evaluar-respuestas-chatbot.js --dry-run
 node scripts/evaluar-respuestas-chatbot.js --all
 node scripts/evaluar-respuestas-chatbot.js --limit=50
 ```
 
-**Círculo revisión → corrección** (regla `.cursor/rules/chatbot-revision.mdc`): al pedir “revisa el chatbot” no basta el informe; hay que parchear prompt o código (`lib/chatbot/functions.ts`, `app/api/chatbot/route.ts`) y pushear a `main`. Las filas viejas del admin no se reescriben.
+**Círculo revisión → corrección** (regla `.cursor/rules/chatbot-revision.mdc`): «revisa» = el agente evalúa en real + corrige código/prompt y pushea a `main`. Las filas viejas del admin no se reescriben.
 
 Reglas de datos que el bot debe cumplir:
 
@@ -283,6 +291,7 @@ Reglas de datos que el bot debe cumplir:
 - Ciudad o “Ajo, Cantabria” se geocodifica (Nominatim) y se busca por radio.
 - POI conocidos: Massabielle → Lourdes; bolemdam → Volendam.
 - Ciudad suelta no hereda filtros (mascotas, luz, gratis) del turno anterior.
+- Votar 👍/👎 una respuesta de más arriba no hace scroll al final.
 
 ---
 
@@ -389,6 +398,7 @@ Cada país se trata como mercado propio: **se busca con el nombre local**, no co
 
 | Versión | Fecha | Cambios principales |
 |---------|-------|---------------------|
+| v5.1 | 24 ago 2026 | Tío Viajero: GPS compartido, 2 preguntas anónimas, rutas → `/ruta`, admin = veredicto IA, ↻ no revive el hilo al F5 |
 | v5.0 | 22 ago 2026 | **Admin 3.0**: panel con menú lateral agrupado, layout propio, auth centralizada y dashboard con contadores |
 | v4.10 | 22 ago 2026 | URLs de área limpias (`/area/{nombre}-{ciudad}`, sin país ni Place ID) + redirecciones 301 |
 | v4.9 | 22 ago 2026 | Buscadores del mapa insensibles a tildes (`rio` → Río) |

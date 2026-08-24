@@ -191,14 +191,24 @@
 - **Archivos**:
   - `app/api/chatbot/historial/route.ts` (NUEVO): GET que identifica al usuario por su COOKIE de sesión (nunca por parámetros → un usuario no puede leer conversaciones ajenas) y devuelve su última conversación con los últimos 30 mensajes (lectura con service role).
   - `components/chatbot/ChatbotWidget.tsx`:
-    - Al montar, restaura la conversación: 1º desde localStorage (`fc_chat_msgs` + `fc_chat_conv_id`, funciona también para anónimos); 2º si no hay nada local y el usuario está logueado, desde `/api/chatbot/historial`.
-    - Persiste automáticamente los últimos 30 mensajes y el conversacionId en localStorage en cada cambio (solo si hay conversación real, no la bienvenida sola).
-    - Botón **↻ "Nueva conversación"** en la cabecera: limpia la vista y el localStorage y pone conversacionId a null (la siguiente pregunta crea conversación nueva). **NO borra nada de la base de datos**: las conversaciones anteriores permanecen en `chatbot_conversaciones`/`chatbot_mensajes`.
+    - Al montar, restaura la conversación: 1º desde localStorage (`fc_chat_msgs` + `fc_chat_conv_id`, funciona también para anónimos); 2º si pulsó ↻ (`fc_chat_fresh=1`) se queda limpio; 3º si no hay nada local ni ↻ y el usuario está logueado, desde `/api/chatbot/historial`.
+    - Persiste automáticamente los últimos 30 mensajes y el conversacionId en localStorage en cada cambio (solo si hay conversación real, no la bienvenida sola). Al escribir de nuevo se quita `fc_chat_fresh`.
+    - Botón **↻ "Nueva conversación"** en la cabecera: limpia la vista, borra el localStorage del hilo y marca `fc_chat_fresh`. **NO borra nada de la base de datos**: las conversaciones anteriores permanecen en `chatbot_conversaciones`/`chatbot_mensajes`.
 - **Verificar**:
   1. Conversar con el chatbot → F5 → al reabrir el chat, la conversación sigue ahí (logueado y anónimo).
-  2. Logueado, borrar localStorage → F5 → la conversación se recupera desde BD.
-  3. Botón ↻ → la vista se resetea con bienvenida; comprobar en Supabase que las filas de la conversación anterior siguen existiendo; el siguiente mensaje crea un conversacionId nuevo.
+  2. Logueado, borrar localStorage (y `fc_chat_fresh`) → F5 → la conversación se recupera desde BD.
+  3. Botón ↻ → la vista se resetea con bienvenida; F5 sigue limpio; en Supabase las filas de la conversación anterior siguen existiendo; el siguiente mensaje crea un conversacionId nuevo.
   4. Seguridad: `/api/chatbot/historial` sin sesión devuelve `{conversacionId: null, messages: []}`.
+
+### 7.11 Ajustes de producto (24 ago 2026)
+
+- **GPS mapa + chat**: `avisarGps` / `onGpsChange` en `CookieConsentBar.tsx`. Sin ubicación el chat queda sombreado (logueado o no).
+- **Cupo anónimo**: 2 preguntas (`lib/chatbot/guest-quota.ts`, huella de IP ~90 días). No se resetea al apagar el móvil.
+- **Rutas**: el chat no lista paradas. Atajo `ruta_sin_intencion` → enlace `/ruta` o `/ruta?origen=&destino=`. El planificador geocodifica esos params. Logueado o no da igual en el chat; `/ruta` sigue con `LoginWall`.
+- **Pastillas**: gratis / pública / agua+luz / mascotas, todas «cerca de mí». Enlaces: planificar ruta, tasación, QR.
+- **Admin** `/admin/chatbot-respuestas`: estado = veredicto IA (Sin revisar / Correcta / Mejorable / Incorrecta). Sin botón «Marcar revisada». «Revisa» = evaluador en real, nunca `--dry-run`. Regla: `.cursor/rules/chatbot-revision.mdc`.
+- **Voto 👍/👎**: no dispara scroll al final (`messages.length` + `sending`, no `[messages]`).
+- **Archivos**: `components/chatbot/ChatbotWidget.tsx`, `components/CookieConsentBar.tsx`, `app/api/chatbot/route.ts`, `lib/chatbot/intencion.ts`, `lib/chatbot/functions.ts`, `components/ruta/PlanificadorRuta.tsx`, `app/admin/chatbot-respuestas/page.tsx`.
 
 ---
 
