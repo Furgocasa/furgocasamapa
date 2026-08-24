@@ -20,7 +20,7 @@ function getSupabaseClient() {
   return createClient(supabaseUrl, supabaseKey)
 }
 
-async function urlsUsadasPorOtras(supabase: ReturnType<typeof createClient>, exceptId: string) {
+async function urlsUsadasPorOtras(supabase: ReturnType<typeof getSupabaseClient>, exceptId: string) {
   const used = new Set<string>()
   let page = 0
   while (true) {
