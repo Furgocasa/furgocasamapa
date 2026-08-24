@@ -507,6 +507,40 @@ const AREA_SELECT_RESUMEN_LEGACY = `
   plazas_totales, google_maps_url, fotos_urls, foto_principal
 `
 
+/**
+ * La función SQL `areas_cerca` no devuelve `foto_principal` ni
+ * `google_ratings_total`. Sin esto, la tarjeta del chat cae al icono 🚐
+ * aunque el área tenga foto. Rellenamos esas columnas por id.
+ */
+async function enriquecerFotosYReseñas(supabase: any, areas: any[]): Promise<void> {
+  const faltan = areas.filter(
+    (a) => a && a.id && (a.foto_principal === undefined || a.google_ratings_total === undefined)
+  )
+  if (!faltan.length) return
+  const ids = [...new Set(faltan.map((a) => a.id))]
+  try {
+    let { data, error } = await (supabase as any)
+      .from('areas')
+      .select('id, foto_principal, google_ratings_total')
+      .in('id', ids)
+    if (error && /google_ratings_total/i.test(error.message || '')) {
+      ;({ data } = await (supabase as any)
+        .from('areas')
+        .select('id, foto_principal')
+        .in('id', ids))
+    }
+    const porId = new Map((data || []).map((r: any) => [r.id, r]))
+    for (const a of areas) {
+      const extra: any = porId.get(a.id)
+      if (!extra) continue
+      if (a.foto_principal === undefined) a.foto_principal = extra.foto_principal ?? null
+      if (a.google_ratings_total === undefined) a.google_ratings_total = extra.google_ratings_total ?? null
+    }
+  } catch (e) {
+    console.warn('⚠️ No se pudieron enriquecer fotos/reseñas de las áreas cercanas', e)
+  }
+}
+
 /** Select con fallback si aún no se ha ejecutado la migración google_ratings_total. */
 async function queryAreasResumen(build: (select: string) => any) {
   let result = await build(AREA_SELECT_RESUMEN)
@@ -630,6 +664,7 @@ export async function searchAreas(params: BusquedaAreasParams): Promise<AreaResu
       const conOrigen = limpias.slice(0, 10).map((a: any) =>
         a.distancia_km != null ? { ...a, distancia_desde: a.distancia_desde || etiqueta } : a
       )
+      await enriquecerFotosYReseñas(supabase, conOrigen)
       console.log(`✅ Resultado final: ${conOrigen.length} áreas después de filtros`)
       return conOrigen
     }
