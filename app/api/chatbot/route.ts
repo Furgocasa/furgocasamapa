@@ -616,6 +616,40 @@ export async function POST(req: NextRequest) {
 
     const supabase = getSupabaseClient()
 
+    // ============================================
+    // RATE LIMITING (por cuenta o IP real, no por userId del body)
+    // Antes del atajo: sin esto un bot podría llenar el log con atajos gratis.
+    // ============================================
+    if (ratelimit) {
+      const identifier = userId || ip || 'anonymous'
+
+      logger.debug('Verificando rate limit', { identifier })
+
+      const { success, limit, reset, remaining } = await ratelimit.limit(identifier)
+
+      if (!success) {
+        const waitSeconds = Math.ceil((reset - Date.now()) / 1000)
+        logger.warn(`Rate limit excedido para ${identifier}`, { waitSeconds, limit })
+
+        return NextResponse.json({
+          error: 'Demasiadas peticiones',
+          message: `Has realizado muchas consultas. Por favor, espera ${waitSeconds} segundos antes de volver a intentarlo.`,
+          tip: 'Mientras tanto, puedes explorar el mapa o buscar manualmente áreas.',
+          retryAfter: waitSeconds
+        }, {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': limit.toString(),
+            'X-RateLimit-Remaining': remaining.toString(),
+            'X-RateLimit-Reset': new Date(reset).toISOString(),
+            'Retry-After': waitSeconds.toString()
+          }
+        })
+      }
+
+      logger.debug(`Rate limit OK. Restantes: ${remaining}/${limit}`)
+    }
+
     const ultimoMensajeUsuario = [...messages]
       .reverse()
       .find((m: any) => m.role === 'user')?.content || ''
@@ -683,39 +717,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ============================================
-    // RATE LIMITING (por cuenta o IP real, no por userId del body)
-    // ============================================
-    if (ratelimit) {
-      const identifier = userId || ip || 'anonymous'
-      
-      logger.debug('Verificando rate limit', { identifier })
-      
-      const { success, limit, reset, remaining } = await ratelimit.limit(identifier)
-      
-      if (!success) {
-        const waitSeconds = Math.ceil((reset - Date.now()) / 1000)
-        logger.warn(`Rate limit excedido para ${identifier}`, { waitSeconds, limit })
-        
-        return NextResponse.json({
-          error: 'Demasiadas peticiones',
-          message: `Has realizado muchas consultas. Por favor, espera ${waitSeconds} segundos antes de volver a intentarlo.`,
-          tip: 'Mientras tanto, puedes explorar el mapa o buscar manualmente áreas.',
-          retryAfter: waitSeconds
-        }, { 
-          status: 429,
-          headers: {
-            'X-RateLimit-Limit': limit.toString(),
-            'X-RateLimit-Remaining': remaining.toString(),
-            'X-RateLimit-Reset': new Date(reset).toISOString(),
-            'Retry-After': waitSeconds.toString()
-          }
-        })
-      }
-      
-      logger.debug(`Rate limit OK. Restantes: ${remaining}/${limit}`)
-    }
-    
     // Crear hilo para registrados y anónimos (el admin agrupa por conversacion_id)
     if (!conversacionId) {
       const primerMensaje = [...messages].reverse().find((m: any) => m.role === 'user')?.content || ''

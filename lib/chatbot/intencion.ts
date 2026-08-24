@@ -39,12 +39,21 @@ export function esGasolineraSinSitio(mensaje: string): boolean {
 }
 
 export function extraerSitioNombrado(mensaje: string): string {
-  return (mensaje || '')
+  const t = (mensaje || '')
     .replace(/[\u{1F300}-\u{1FAFF}]/gu, '')
     .replace(/[¿?¡!.,:;]/g, ' ')
     .replace(/^(en|in|à|a|stadt|ciudad de)\s+/i, '')
     .replace(/\s+/g, ' ')
     .trim()
+  // Solo si parece topónimo: cada palabra empieza por mayúscula o es un conector
+  // ("El Puerto de Santa María" sí; "necesito ayuda" no se incrusta como lugar).
+  const conectores = new Set(['de', 'del', 'la', 'las', 'el', 'los', 'y', 'sur', 'sobre', 'da', 'do', 'di'])
+  const palabras = t.split(/\s+/)
+  if (!palabras.length || palabras.length > 5) return ''
+  const esToponimo = palabras.every(
+    (p) => conectores.has(p.toLowerCase()) || /^[A-ZÁÉÍÓÚÑÀ-Ö0-9]/u.test(p)
+  )
+  return esToponimo && /^[A-ZÁÉÍÓÚÑÀ-Ö0-9]/u.test(palabras[0]) ? t : ''
 }
 
 export function asistentePidioClarificar(texto: string | null | undefined): boolean {
