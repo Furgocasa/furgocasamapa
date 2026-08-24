@@ -370,14 +370,14 @@ async function cargarConversaciones(
   const { data: convs } = ids.length
     ? await admin.from('chatbot_conversaciones').select('*').in('id', ids)
     : { data: [] }
-  const convMap = new Map((convs || []).map((c: any) => [c.id, c]))
+  const convMap = new Map<string, any>((convs || []).map((c: any) => [c.id, c]))
 
   const userIds = [...new Set((convs || []).map((c: any) => c.user_id).filter(Boolean))] as string[]
   const usuarios = await usuariosDeIds(admin, userIds)
 
   const rows = ids.map((id) => {
-    const logs = byConv.get(id) || []
-    const conv = convMap.get(id)
+    const logs: any[] = byConv.get(id) || []
+    const conv: any = convMap.get(id)
     let scoreSum = 0
     let classified = 0
     let unclassified = 0
