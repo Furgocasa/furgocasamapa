@@ -210,6 +210,41 @@
 - **Voto 👍/👎**: no dispara scroll al final (`messages.length` + `sending`, no `[messages]`).
 - **Archivos**: `components/chatbot/ChatbotWidget.tsx`, `components/CookieConsentBar.tsx`, `app/api/chatbot/route.ts`, `lib/chatbot/intencion.ts`, `lib/chatbot/functions.ts`, `components/ruta/PlanificadorRuta.tsx`, `app/admin/chatbot-respuestas/page.tsx`.
 
+### 7.12 Noche del 24 ago 2026: `/ruta` móvil + GPS en el admin
+
+**Problema 1 — `/ruta` en el teléfono.** Al entrar se veía el mapa vacío. Había que adivinar el botón **Ruta** de abajo.
+
+- Vista inicial: `vistaActual = 'ruta'` (`app/(public)/ruta/page.tsx`). La hoja del planificador sube sola.
+- Si cierran la hoja sin calcular: aviso en el mapa (`!rutaInfo && vistaMovil === 'mapa'`) con botón **Calcular Ruta** → `onAbrirPlanificador`.
+- El tab central **Ruta** es un círculo naranja que sobresale de la barra.
+- Tras calcular, `onRutaCalculada` sigue pasando al mapa.
+- **Archivos**: `app/(public)/ruta/page.tsx`, `components/ruta/PlanificadorRuta.tsx`.
+- **Verificar** (móvil o DevTools): `/ruta` → se ve origen/destino al primer vistazo. Cerrar la hoja → aviso «Calcular Ruta». Calcular → mapa con el trazado.
+
+**Problema 2 — «Ubicación desconocida» en el admin.** El chat ya exigía GPS (widget + `403 LOCATION_REQUIRED`). El atajo a `/ruta` contestaba y **no guardaba** el GPS: no creaba hilo, no geocodificaba, no metía `_ubicacion` en `funciones`. Además `chatbot_respuestas_log` **no tiene** columnas `ciudad`/`pais`/`lat`/`lng` (el insert fallaba y se reintentaba sin ellas).
+
+- Antes del atajo: `resolverUbicacionLog()` (geocoding cacheado).
+- El atajo crea/actualiza `chatbot_conversaciones` con `ubicacion_usuario` + `preferencias_detectadas.ubicacion`.
+- Todas las respuestas (atajo y modelo) guardan `{ name: '_ubicacion', args: { ciudad, pais, lat, lng } }` en `funciones`.
+- Admin (`ubicacionDeFila`): ciudad/país desde log, preferencias o `_ubicacion`. Si no hay ciudad pero sí coords → `GPS 37.99, -1.13`.
+- **Archivos**: `app/api/chatbot/route.ts`, `app/api/admin/chatbot-respuestas/route.ts`.
+
+**Problema 3 — el revisor marcaba el atajo a `/ruta` como Incorrecta.** Pedía 3-4 paradas en el chat. Producto: el chat no ve el trazado.
+
+- Criterio en `scripts/evaluar-respuestas-chatbot.js`: derivar a `/ruta` o `/ruta?origen=&destino=` y no listar áreas = **Correcta**. Listar el corredor a ojo = Incorrecta.
+- Las dos de las 21:40–21:41 («Paradas en una ruta» y «Entre Murcia y madrid») se reevaluaron como Correcta. Eran desde Murcia, España (se anotó `_ubicacion` a mano). Luego se borró todo el historial de prueba de `info@furgocasa.com` (abajo).
+
+**Limpieza de pruebas (misma noche).** A petición, se borraron de la base **solo las interacciones del chat** de `info@furgocasa.com` (user `a2d2b547-b531-4e53-82ea-6b694887643d`). La cuenta no se tocó.
+
+| Tabla | Borradas |
+|---|---|
+| `chatbot_respuestas_log` | 31 |
+| `chatbot_conversaciones` | 32 |
+| `chatbot_mensajes` | 101 |
+| `chatbot_analytics` | 37 |
+
+Para repetirlo: localizar `user_id` por email (`auth.admin.getUserById` / `listUsers`), borrar en este orden: analytics y mensajes por `conversacion_id`, logs por `user_id`, hilos por `user_id`. `.env.local` + service role. Nunca el MCP de otra cuenta.
+
 ---
 
 ## BLOQUE 8 — Higiene

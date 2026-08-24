@@ -46,3 +46,8 @@ Las filas viejas del admin (el ~48% incorrectas) son de **antes**. No se reescri
 | Voto que salta al final | Scroll solo si cambia el nº de mensajes |
 | ↻ y luego F5 revive el hilo | `fc_chat_fresh` |
 | Atajo de ruta sin ciudad en admin | El atajo geocodifica el GPS y guarda `_ubicacion` en el log |
+| Revisor pide 3-4 paradas de A→B | Derivación a `/ruta` = Correcta. Listar el corredor = Incorrecta |
+
+La tabla `chatbot_respuestas_log` no tiene columnas `ciudad`/`pais`/`lat`/`lng`. La ubicación vive en `funciones` (`_ubicacion`) y en `chatbot_conversaciones.preferencias_detectadas.ubicacion`.
+
+Si piden borrar las interacciones de un email: solo chat (`chatbot_respuestas_log`, `chatbot_conversaciones`, `chatbot_mensajes`, `chatbot_analytics`). No borrar la cuenta de Auth. `.env.local`, nunca el MCP.

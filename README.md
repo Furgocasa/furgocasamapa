@@ -36,7 +36,7 @@
 Sistema visual completo (tokens, basemap, móvil, filtros): **[GUIA_DISENO_V3.md](./GUIA_DISENO_V3.md)**.
 
 ### Para Usuarios
-- 🛣️ **Planificador de rutas** con paradas intermedias (guardar + volcar áreas a favoritos)
+- 🛣️ **Planificador de rutas** con paradas intermedias (guardar + volcar áreas a favoritos). En móvil abre el formulario al entrar; si lo cierran, un aviso en el mapa para calcular.
 - 🤖 **Chatbot IA "Tío Viajero"** — áreas, corazón en cards, atajos a tasación IA y QR
 - ❤️ **Favoritos sin cuenta** (localStorage) y sync al crear sesión
 - ⭐ **Estuve aquí**: visita + valoración de área en un solo modal
@@ -262,10 +262,11 @@ Terra cubre Chat Completions, Responses, function calling y `web_search`. Las fo
 
 ### Tío Viajero: producto (24 ago 2026)
 
-- **GPS obligatorio** para hablar: mapa y chat comparten el mismo interruptor. Sin ubicación el chat queda sombreado.
+- **GPS obligatorio** para hablar: mapa y chat comparten el mismo interruptor. Sin ubicación el chat queda sombreado (logueado o no). El API responde `403 LOCATION_REQUIRED` si no hay GPS válido.
 - **Anónimo**: 2 preguntas (huella de IP, ~90 días). Con cuenta, sin tope de preguntas.
 - **Cerca / un área / un filtro en un sitio**: el chat busca y enseña fichas (máx. 3).
-- **Paradas en una ruta** (logueado o no): no lista áreas. Deriva a `/ruta` (con `?origen=&destino=` si los tiene). `/ruta` exige login para calcular.
+- **Paradas en una ruta** (logueado o no): no lista áreas. Deriva a `/ruta` (con `?origen=&destino=` si los tiene). Eso es **Correcta** en el revisor. `/ruta` exige login para calcular.
+- **Ubicación en el admin**: el atajo (y el resto de respuestas) geocodifica el GPS y guarda `_ubicacion` en `funciones`. El admin muestra ciudad/país o, si el geocoding falla, `GPS lat, lng`. La tabla `chatbot_respuestas_log` **no tiene** columnas `ciudad`/`pais`/`lat`/`lng`: no fiarse de ellas.
 - **Pastillas**: solo búsquedas locales (gratis, pública, agua/luz, mascotas). «Planificar una ruta», tasación y QR son enlaces, no gastan pregunta.
 - **↻ Nueva conversación**: limpia la vista; el historial sigue en BD/admin. Tras ↻, F5 también sale limpio (`fc_chat_fresh`). F5 a mitad de hilo conserva lo que se ve.
 
@@ -292,6 +293,11 @@ Reglas de datos que el bot debe cumplir:
 - POI conocidos: Massabielle → Lourdes; bolemdam → Volendam.
 - Ciudad suelta no hereda filtros (mascotas, luz, gratis) del turno anterior.
 - Votar 👍/👎 una respuesta de más arriba no hace scroll al final.
+- Borrar las interacciones de un usuario (no la cuenta): `chatbot_respuestas_log` + `chatbot_conversaciones` + `chatbot_mensajes` + `chatbot_analytics` por `user_id`. Credenciales de `.env.local`, nunca el MCP de otra cuenta.
+
+### `/ruta` en móvil (24 ago 2026, noche)
+
+Al entrar, la pestaña inicial es **Ruta** (el formulario sube solo). Si cierran la hoja sin calcular, el mapa muestra un aviso con **Calcular Ruta**. El botón central de la barra de abajo queda más visible. Tras calcular, se pasa al mapa como antes. Desktop no cambia: panel izquierdo siempre a la vista.
 
 ---
 
@@ -398,6 +404,7 @@ Cada país se trata como mercado propio: **se busca con el nombre local**, no co
 
 | Versión | Fecha | Cambios principales |
 |---------|-------|---------------------|
+| v5.2 | 24 ago 2026 | `/ruta` móvil abre el planificador; atajo de ruta guarda GPS en el admin; revisor: `/ruta` = correcta |
 | v5.1 | 24 ago 2026 | Tío Viajero: GPS compartido, 2 preguntas anónimas, rutas → `/ruta`, admin = veredicto IA, ↻ no revive el hilo al F5 |
 | v5.0 | 22 ago 2026 | **Admin 3.0**: panel con menú lateral agrupado, layout propio, auth centralizada y dashboard con contadores |
 | v4.10 | 22 ago 2026 | URLs de área limpias (`/area/{nombre}-{ciudad}`, sin país ni Place ID) + redirecciones 301 |

@@ -118,13 +118,19 @@ retoman favoritos o “Estuve aquí”.
 mapa y las fichas son libres. El chat **no** lista paradas de trayecto: deriva
 a `/ruta` (también si el usuario ya está logueado). Prefill: `?origen=&destino=`.
 
+En **móvil**, `/ruta` abre el formulario al entrar (pestaña Ruta). Si cierran
+la hoja sin calcular, el mapa enseña un aviso «Calcular Ruta». El botón central
+de la barra queda más visible. Tras calcular, pasa al mapa.
+
 ### 4.5 Chatbot
 
 `components/chatbot/ChatbotWidget.tsx`
 
 - Corazón en cada card (local o cuenta).
 - “Guardar estas N áreas”.
-- Sin GPS el chat se sombrea (mismo estado que el mapa).
+- Sin GPS el chat se sombrea (mismo estado que el mapa). Logueado o no.
+- Cada respuesta (también el atajo a `/ruta`) guarda `_ubicacion` en el log
+  para el admin. Sin ciudad: muestra coordenadas.
 - Anónimo: 2 preguntas. Con cuenta: sin tope.
 - Pastillas de mensaje: solo «cerca de mí» (gratis, pública, agua/luz, mascotas).
 - Chips de enlace (no gastan pregunta): `/ruta`, `/valoracion-ia-vehiculos` y
