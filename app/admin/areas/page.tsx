@@ -113,7 +113,7 @@ export default function AdminAreasPage() {
     areaNombre: ''
   })
   const [bulkDeleteModal, setBulkDeleteModal] = useState(false)
-  const [itemsPorPagina, setItemsPorPagina] = useState(10)
+  const [itemsPorPagina, setItemsPorPagina] = useState(20)
   const router = useRouter()
   
   // Hook para drag-to-scroll en tabla
@@ -522,10 +522,34 @@ export default function AdminAreasPage() {
   }
 
   // Paginación
-  const totalPaginas = Math.ceil(areasFiltradas.length / itemsPorPagina)
-  const indiceInicio = (paginaActual - 1) * itemsPorPagina
-  const indiceFin = indiceInicio + itemsPorPagina
+  const mostrarTodas = itemsPorPagina === -1
+  const totalPaginas = mostrarTodas
+    ? 1
+    : Math.max(1, Math.ceil(areasFiltradas.length / itemsPorPagina))
+  const indiceInicio = mostrarTodas ? 0 : (paginaActual - 1) * itemsPorPagina
+  const indiceFin = mostrarTodas ? areasFiltradas.length : indiceInicio + itemsPorPagina
   const areasEnPagina = areasFiltradas.slice(indiceInicio, indiceFin)
+
+  const renderSelectorPagina = () => (
+    <div className="flex items-center gap-2">
+      <span className="text-sm text-gray-700">Mostrar</span>
+      <select
+        value={itemsPorPagina}
+        onChange={(e) => {
+          setItemsPorPagina(Number(e.target.value))
+          setPaginaActual(1)
+        }}
+        className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+      >
+        <option value={20}>20</option>
+        <option value={50}>50</option>
+        <option value={100}>100</option>
+        <option value={500}>500</option>
+        <option value={-1}>Todos</option>
+      </select>
+      <span className="text-sm text-gray-700">por página</span>
+    </div>
+  )
 
   // Resetear a página 1 cuando cambian los filtros
   useEffect(() => {
@@ -851,6 +875,16 @@ export default function AdminAreasPage() {
 
         {/* Tabla mejorada de áreas */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
+          {areasFiltradas.length > 0 && (
+            <div className="px-4 py-3 border-b border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              {renderSelectorPagina()}
+              <span className="text-sm text-gray-600">
+                {mostrarTodas
+                  ? `${areasFiltradas.length} áreas`
+                  : `${indiceInicio + 1}–${Math.min(indiceFin, areasFiltradas.length)} de ${areasFiltradas.length}`}
+              </span>
+            </div>
+          )}
           <div className="overflow-x-auto" style={containerStyle} {...handlers}>
             <table className="w-full table-fixed divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -1097,47 +1131,38 @@ export default function AdminAreasPage() {
 
           {/* Paginación */}
           {areasFiltradas.length > 0 && (
-            <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-700">Mostrar</span>
-                <select
-                  value={itemsPorPagina}
-                  onChange={(e) => {
-                    setItemsPorPagina(Number(e.target.value))
-                    setPaginaActual(1)
-                  }}
-                  className="px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-transparent"
-                >
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-                <span className="text-sm text-gray-700">
-                  por página
-                </span>
-              </div>
+            <div className="bg-gray-50 px-4 py-3 flex flex-col sm:flex-row items-center justify-between border-t border-gray-200 gap-4 sm:px-6">
+              {renderSelectorPagina()}
 
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-700">
-                  Página {paginaActual} de {totalPaginas} ({areasFiltradas.length} resultados)
+                  {mostrarTodas
+                    ? `Mostrando ${areasFiltradas.length} de ${areasFiltradas.length} resultados`
+                    : `Página ${paginaActual} de ${totalPaginas} (${areasFiltradas.length} resultados)`}
                 </span>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
-                    disabled={paginaActual === 1}
-                    className="p-1 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ChevronLeftIcon className="w-5 h-5 text-gray-600" />
-                  </button>
-                  <button
-                    onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
-                    disabled={paginaActual === totalPaginas}
-                    className="p-1 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ChevronRightIcon className="w-5 h-5 text-gray-600" />
-                  </button>
-                </div>
+                {!mostrarTodas && (
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
+                      disabled={paginaActual === 1}
+                      className="p-1.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Página anterior"
+                    >
+                      <ChevronLeftIcon className="w-5 h-5 text-gray-600" />
+                    </button>
+                    <div className="px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg">
+                      Página {paginaActual} de {totalPaginas}
+                    </div>
+                    <button
+                      onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
+                      disabled={paginaActual === totalPaginas}
+                      className="p-1.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Página siguiente"
+                    >
+                      <ChevronRightIcon className="w-5 h-5 text-gray-600" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
