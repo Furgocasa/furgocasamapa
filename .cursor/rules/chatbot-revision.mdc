@@ -29,3 +29,19 @@ El estado de cada respuesta en el admin **es** el veredicto IA: `Sin revisar` (=
 - Pedir permiso para corregir si el usuario ya pidió revisar: la corrección va incluida.
 - Inventar “Gratis” si `precio_noche` es null; no buscar con GPS 0,0; no heredar filtros de un turno anterior si solo nombran una ciudad.
 - Presentar «stopover» como un cuarto tipo. Solo hay pública, privada y camping.
+- Listar paradas de A→B en el chat. Eso va a `/ruta`.
+- Decir que un área admite mascotas si `zona_mascotas` no es true.
+- Preguntar “¿dónde?” cuando ya hay GPS y no han nombrado otra ciudad.
+
+## Patrones ya tapados (24 ago 2026)
+
+Las filas viejas del admin (el ~48% incorrectas) son de **antes**. No se reescriben. Lo nuevo no debe repetir:
+
+| Causa | Cierre |
+|---|---|
+| Corredor / metralleta de ruta | Atajo → `/ruta` (también logueado) |
+| Gratis con precio null | `esPrecioGratis` solo si `=== 0` |
+| Filtro sin sitio con GPS puesto | No atajo; inyecta GPS |
+| Área concreta (Garcimuñoz) | `get_area_by_name`, 1 ficha |
+| Voto que salta al final | Scroll solo si cambia el nº de mensajes |
+| ↻ y luego F5 revive el hilo | `fc_chat_fresh` |

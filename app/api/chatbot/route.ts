@@ -699,7 +699,9 @@ export async function POST(req: NextRequest) {
         .map((m: any) => m.content),
       ultimoAsistente: [...messages].reverse().find((m: any) => m.role === 'assistant')?.content || null,
     })
-    if (atajo === 'filtro_sin_sitio' && areaEnMapa) atajo = null
+    if (atajo === 'filtro_sin_sitio' && (areaEnMapa || esGpsValido(ubicacionUsuario?.lat, ubicacionUsuario?.lng))) {
+      atajo = null
+    }
     if (atajo) {
       const previosUsuario = messages
         .filter((m: any) => m.role === 'user')
@@ -983,10 +985,11 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 ✅ CALIDAD DE DATOS (OBLIGATORIO)
 ═══════════════════════════════════════
 - PRECIO: Solo di "Gratis" si el resumen o precio_noche es 0. Si dice "Precio no disponible" o precio_noche es null, escribe exactamente eso. NUNCA conviertas un precio desconocido en gratis.
-- FICHAS: pega el campo "resumen" de cada área TAL CUAL. No reescribas precio, servicios ni enlaces. Prohibido autocaravanas.com, example.com y Google Maps.
+- FICHAS: pega el campo "resumen" de cada área TAL CUAL. No reescribas precio, servicios ni enlaces. Prohibido autocaravanas.com, example.com y Google Maps. Di el mismo número de áreas que te llegan (máx. 3). Nunca "he encontrado 5" si solo hay 3 fichas.
 - FILTROS: Si el usuario nombra solo una ciudad DESPUÉS de haber pedido áreas/servicios, busca ahí SIN heredar filtros viejos.
-- TIPO: solo tres. publica = ayuntamiento/organismo. privada = empresa/particular (camper park, granja, Weingut, CL, Brit Stop). camping = recinto. No existe la categoría stopover. En cada país la gente usa otro nombre (aire, sosta, Stellplatz, camperplaats, motorhome aire, trailer park): eso es etiqueta. Un "parking autocaravanas" del pueblo es pública. UK: touring park = camping; CL/aire de anfitrión = privada; Arosfan = pública.
-- CERCA DE MÍ: si no hay GPS válido en este mensaje, pide la ciudad. No busques en todo el mundo ni inventes una ubicación.
+- TIPO: solo tres. publica = ayuntamiento/organismo. privada = empresa/particular (camper park, granja, Weingut, CL, Brit Stop). camping = recinto. No existe la categoría stopover. En cada país la gente usa otro nombre (aire, sosta, Stellplatz, camperplaats, motorhome aire, trailer park): eso es etiqueta. Un "parking autocaravanas" del pueblo es pública. UK: touring park = camping; CL/aire de anfitrión = privada; Arosfan = pública. "Dónde estacionar" = áreas de esas tres, nunca un tipo parking.
+- MASCOTAS: zona_mascotas=true es lo único confirmado. Si piden "mascotas bienvenidas" NO filtres por eso (casi no hay dato) y NO digas que las cercanas admiten perros. Enseña cercanas y di que en las fichas no está confirmado, salvo las que lleven Mascotas en servicios.
+- CERCA DE MÍ: si hay GPS válido y no nombran otra ciudad, busca ahí. Si no hay GPS, pide la ciudad. No busques en todo el mundo ni inventes una ubicación.
 - NO eres una guía turística. Si piden qué ver, pueblos, planes o itinerarios, NO inventes una guía y NO uses buscar_info_viaje. Di que no cubres eso y enlaza https://www.furgocasa.com/es/blog?category=rutas
 - Si piden áreas/gasolinera Y además turismo: responde SOLO la parte de áreas/gasolinera y manda el turismo al blog de Furgocasa.
 - Gasolinera o taller de emergencia: buscar_info_viaje. Di que es info de la web, no una ficha /area/. Prohibido restaurantes, hoteles, monumentos y "qué ver".
@@ -1120,14 +1123,19 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         }
         funcionesEjecutadas.push({ name: fnName, args: fnArgs })
 
-        // GPS solo si pide "cerca de mí". Un "recomiéndame un área" no vuelca Murcia.
+        // GPS: "cerca de mí" o un filtro sin ciudad (agua, pública, mascotas).
+        // Si nombran un pueblo/ruta, no vuelques la ubicación del usuario.
+        const nombraOtroSitio =
+          Boolean(extraerSitioNombrado(ultimoMensajeUsuario)) ||
+          Boolean(extraerRutaNombrada(ultimoMensajeUsuario)) ||
+          Boolean(extraerNombreAreaConcreta(ultimoMensajeUsuario))
         if (
           ubicacionUsuario &&
           esGpsValido(ubicacionUsuario.lat, ubicacionUsuario.lng) &&
           fnName === 'search_areas' &&
-          pideCercaDeMi(ultimoMensajeUsuario) &&
           !fnArgs.ubicacion?.lat &&
-          !fnArgs.ubicacion?.nombre
+          !fnArgs.ubicacion?.nombre &&
+          (pideCercaDeMi(ultimoMensajeUsuario) || !nombraOtroSitio)
         ) {
           console.log('📍 Inyectando ubicación del usuario (cerca de mí)')
           fnArgs.ubicacion = {
