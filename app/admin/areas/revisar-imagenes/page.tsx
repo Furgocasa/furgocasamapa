@@ -29,6 +29,7 @@ const FILTROS: { id: Filtro; label: string }[] = [
   { id: 'revista', label: 'Revistas' },
   { id: 'social', label: 'Facebook/Instagram' },
   { id: 'basura', label: 'Basura' },
+  { id: 'mapa', label: 'Capturas de mapa' },
   { id: 'todas', label: 'Todas las sospechosas' },
 ]
 
@@ -157,8 +158,30 @@ export default function RevisarImagenesPage() {
     deleteRemovals(removals, 'Borrado selección')
   }
 
+  const handlePurgeMapas = async () => {
+    if (!confirm('¿Borrar todas las capturas de mapa (Park4Night / staticmap) de las áreas activas? No son fotos del recinto.')) return
+    setProcessing(true)
+    appendLog('🗑️ Purgando capturas de mapa...')
+    try {
+      const resp = await fetch('/api/admin/revisar-imagenes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'purge_mapas' }),
+      })
+      const data = await resp.json()
+      if (!resp.ok) throw new Error(data.error || 'Error al purgar mapas')
+      appendLog(`✅ Mapas: ${data.imagesRemoved} fotos, ${data.areasUpdated} áreas, ${data.leftEmpty} vacías`)
+      setSelected(new Set())
+      await fetchAreas()
+    } catch (e: any) {
+      appendLog(`❌ ${e.message}`)
+    } finally {
+      setProcessing(false)
+    }
+  }
+
   const handlePurgeAlto = async () => {
-    if (!confirm('¿Borrar TODAS las imágenes de riesgo alto (stock, catálogo, revistas, redes y basura)?')) return
+    if (!confirm('¿Borrar TODAS las imágenes de riesgo alto (stock, catálogo, revistas, redes, mapas y basura)?')) return
     setProcessing(true)
     appendLog('🗑️ Purgando riesgo alto en todas las áreas...')
     try {
@@ -208,6 +231,7 @@ export default function RevisarImagenesPage() {
   }
 
   const altoCount = flagged.filter((f) => f.riesgo === 'ALTO').length
+  const mapaCount = flagged.filter((f) => f.clasificacion === 'mapa').length
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -271,6 +295,13 @@ export default function RevisarImagenesPage() {
             >
               <TrashIcon className="w-4 h-4" />
               Borrar seleccionadas ({selected.size})
+            </button>
+            <button
+              onClick={handlePurgeMapas}
+              disabled={processing || mapaCount === 0}
+              className="px-3 py-2 bg-amber-700 text-white rounded-lg text-sm disabled:opacity-50"
+            >
+              Purgar capturas de mapa ({mapaCount})
             </button>
             <button
               onClick={handlePurgeAlto}

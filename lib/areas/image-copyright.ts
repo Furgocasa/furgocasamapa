@@ -4,6 +4,7 @@ export type ClasificacionImagen =
   | 'revista'
   | 'social'
   | 'basura'
+  | 'mapa'
   | 'google_places'
   | 'directorio_area'
   | 'ia_propia'
@@ -18,6 +19,7 @@ export const CLASE_LABELS: Record<ClasificacionImagen, string> = {
   revista: 'Revista / medio',
   social: 'Facebook / Instagram',
   basura: 'Miniatura / basura',
+  mapa: 'Captura de mapa',
   google_places: 'Google Places',
   directorio_area: 'Directorio del área',
   ia_propia: 'Generada por nosotros',
@@ -74,14 +76,17 @@ const JUNK_HOSTS = [
   'scribdassets.com', 'scribd.com',
 ]
 
+const MAP_URL = [
+  'img_cache/streets',
+  'streets-v2',
+  'staticmap',
+]
+
 const JUNK_URL = [
   'x-raw-image://',
   'registrationmodal',
   'placeholder',
   'data:image',
-  'img_cache/streets',
-  'streets-v2',
-  'staticmap',
   'editor-elements-library',
 ]
 
@@ -102,7 +107,7 @@ const GOOGLE_HOSTS = [
 ]
 
 export const CLASES_ALTO: ClasificacionImagen[] = [
-  'stock', 'catalogo', 'revista', 'social', 'basura',
+  'stock', 'catalogo', 'revista', 'social', 'basura', 'mapa',
 ]
 
 export function hostOf(url: string): string {
@@ -125,6 +130,7 @@ export function classifyUrl(url: string): ClasificacionImagen {
   if (full.includes('/storage/v1/object/public/areas/ia/')) return 'ia_propia'
   if (!host && full.startsWith('x-raw-image://')) return 'basura'
   if (!host) return 'invalid'
+  if (MAP_URL.some((p) => full.includes(p))) return 'mapa'
   if (JUNK_URL.some((p) => full.includes(p))) return 'basura'
   if (hostMatches(host, JUNK_HOSTS)) return 'basura'
   if (STOCK_FILENAME.some((re) => re.test(url))) return 'stock'
@@ -256,6 +262,20 @@ export function flagImages(areas: AreaImagenMin[]): ImagenFlagged[] {
   }
 
   return rows
+}
+
+export function isMapScreenshot(url: string): boolean {
+  return classifyUrl(url) === 'mapa'
+}
+
+export function mapaUrlsOf(areas: AreaImagenMin[]): Set<string> {
+  const urls = new Set<string>()
+  for (const area of areas) {
+    for (const url of uniqueUrlsOf(area)) {
+      if (isMapScreenshot(url)) urls.add(url)
+    }
+  }
+  return urls
 }
 
 export function altoUrlsOf(areas: AreaImagenMin[]): Set<string> {

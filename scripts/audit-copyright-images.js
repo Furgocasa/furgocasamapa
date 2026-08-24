@@ -63,6 +63,11 @@ const JUNK_HOSTS = [
   'i.ytimg.com', 'ytimg.com', 'youtube.com', 'tiktok.com',
   'scribdassets.com', 'scribd.com'
 ]
+const MAP_URL = [
+  'img_cache/streets',
+  'streets-v2',
+  'staticmap',
+]
 const JUNK_URL = [
   'x-raw-image://',
   'registrationmodal',
@@ -112,6 +117,7 @@ function classifyUrl(url) {
   if (!url) return 'invalid'
   if (!host && full.startsWith('x-raw-image://')) return 'basura'
   if (!host) return 'invalid'
+  if (MAP_URL.some((p) => full.includes(p))) return 'mapa'
   if (JUNK_URL.some((p) => full.includes(p))) return 'basura'
   if (hostMatches(host, JUNK_HOSTS)) return 'basura'
   if (STOCK_FILENAME.some((re) => re.test(url))) return 'stock'
@@ -160,6 +166,7 @@ function riskOf(clasificacion, areasDistintas) {
   if (clasificacion === 'stock') return 'ALTO'
   if (clasificacion === 'catalogo') return 'ALTO'
   if (clasificacion === 'basura') return 'ALTO'
+  if (clasificacion === 'mapa') return 'ALTO'
   if (areasDistintas >= 3) return 'ALTO'
   if (clasificacion === 'social') return 'MEDIO'
   if (areasDistintas === 2) return 'MEDIO'

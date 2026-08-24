@@ -3,6 +3,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import {
   altoUrlsOf,
   flagImages,
+  mapaUrlsOf,
   removeUrlsFromArea,
   uniqueUrlsOf,
   type AreaImagenMin,
@@ -134,6 +135,39 @@ export async function POST(request: NextRequest) {
 
       for (const area of areas) {
         const next = removeUrlsFromArea(area, alto)
+        if (next.removed === 0) continue
+        const { error: updateError } = await (service as any)
+          .from('areas')
+          .update({
+            foto_principal: next.foto_principal,
+            fotos_urls: next.fotos_urls,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', area.id)
+        if (updateError) throw updateError
+        areasUpdated++
+        imagesRemoved += next.removed
+        if (!next.foto_principal) emptiedIds.push(area.id)
+      }
+
+      return NextResponse.json({
+        success: true,
+        areasUpdated,
+        imagesRemoved,
+        leftEmpty: emptiedIds.length,
+        emptiedIds,
+      })
+    }
+
+    if (action === 'purge_mapas') {
+      const areas = await fetchAllAreas(service)
+      const mapas = mapaUrlsOf(areas)
+      let areasUpdated = 0
+      let imagesRemoved = 0
+      const emptiedIds: string[] = []
+
+      for (const area of areas) {
+        const next = removeUrlsFromArea(area, mapas)
         if (next.removed === 0) continue
         const { error: updateError } = await (service as any)
           .from('areas')
