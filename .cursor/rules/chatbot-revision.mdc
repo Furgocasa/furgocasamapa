@@ -45,3 +45,4 @@ Las filas viejas del admin (el ~48% incorrectas) son de **antes**. No se reescri
 | Área concreta (Garcimuñoz) | `get_area_by_name`, 1 ficha |
 | Voto que salta al final | Scroll solo si cambia el nº de mensajes |
 | ↻ y luego F5 revive el hilo | `fc_chat_fresh` |
+| Atajo de ruta sin ciudad en admin | El atajo geocodifica el GPS y guarda `_ubicacion` en el log |

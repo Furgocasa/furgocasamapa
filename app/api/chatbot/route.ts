@@ -536,6 +536,23 @@ async function getEstadisticasBD(supabase: any): Promise<EstadisticasBD> {
   )
 }
 
+async function resolverUbicacionLog(ubicacionUsuario?: { lat: number; lng: number } | null) {
+  if (!ubicacionUsuario || !esGpsValido(ubicacionUsuario.lat, ubicacionUsuario.lng)) {
+    return { ciudad: null as string | null, pais: null as string | null, lat: null as number | null, lng: null as number | null }
+  }
+  const geo = await getCached(
+    `geocoding:${ubicacionUsuario.lat.toFixed(4)},${ubicacionUsuario.lng.toFixed(4)}`,
+    CACHE_TTL.GEOCODING,
+    () => getCityAndProvinceFromCoords(ubicacionUsuario.lat, ubicacionUsuario.lng)
+  )
+  return {
+    ciudad: geo?.city && geo.city !== 'Desconocida' ? geo.city : null,
+    pais: geo?.country && geo.country !== 'Desconocida' ? geo.country : null,
+    lat: ubicacionUsuario.lat,
+    lng: ubicacionUsuario.lng,
+  }
+}
+
 /**
  * Registra TODA respuesta del chatbot (también anónimas) en
  * chatbot_respuestas_log para revisión manual desde el admin.
@@ -704,6 +721,7 @@ export async function POST(req: NextRequest) {
     if (atajo === 'filtro_sin_sitio' && (areaEnMapa || esGpsValido(ubicacionUsuario?.lat, ubicacionUsuario?.lng))) {
       atajo = null
     }
+    const ubicacionLog = await resolverUbicacionLog(ubicacionUsuario)
     if (atajo) {
       const previosUsuario = messages
         .filter((m: any) => m.role === 'user')
@@ -721,6 +739,37 @@ export async function POST(req: NextRequest) {
       const message = textoAtajoIntencion(atajo, idiomaAtajo, etiqueta)
       const seguimiento = chipsSeguimiento(atajo, idiomaAtajo, etiqueta)
       logger.info('Respuesta corta sin modelo', { atajo, pregunta: ultimoMensajeUsuario.slice(0, 80) })
+
+      if (!conversacionId) {
+        const fila: Record<string, any> = {
+          sesion_id: userId || crypto.randomUUID(),
+          titulo: String(ultimoMensajeUsuario).trim().slice(0, 80) || 'Nueva conversación',
+          ubicacion_usuario: ubicacionUsuario || null,
+          total_mensajes: 1,
+          preferencias_detectadas: { ubicacion: ubicacionLog },
+        }
+        if (userId) fila.user_id = userId
+        const { data: nuevaConv, error: convError } = await (supabase as any)
+          .from('chatbot_conversaciones')
+          .insert(fila)
+          .select('id')
+          .single()
+        if (convError) {
+          logger.warn('No se pudo crear conversación del atajo', { error: convError.message })
+        } else if (nuevaConv?.id) {
+          conversacionId = nuevaConv.id
+        }
+      } else if (ubicacionLog.ciudad || ubicacionLog.lat != null) {
+        await (supabase as any)
+          .from('chatbot_conversaciones')
+          .update({
+            ubicacion_usuario: ubicacionUsuario || undefined,
+            preferencias_detectadas: { ubicacion: ubicacionLog },
+            ultimo_mensaje_at: new Date().toISOString(),
+          })
+          .eq('id', conversacionId)
+      }
+
       const logId = await logRespuesta(supabase, {
         conversacion_id: conversacionId || null,
         user_id: userId || null,
@@ -730,6 +779,7 @@ export async function POST(req: NextRequest) {
         funciones: [
           ...(userId ? [] : [{ name: '_cliente', args: { huella } }]),
           { name: '_intencion', args: { tipo: atajo } },
+          { name: '_ubicacion', args: ubicacionLog },
         ],
         areas_ids: [],
         tokens: 0,
@@ -771,7 +821,7 @@ export async function POST(req: NextRequest) {
         titulo: String(primerMensaje).trim().slice(0, 80) || 'Nueva conversación',
         ubicacion_usuario: ubicacionUsuario || null,
         total_mensajes: 0,
-        preferencias_detectadas: {},
+        preferencias_detectadas: { ubicacion: ubicacionLog },
       }
       if (userId) fila.user_id = userId
 
@@ -881,16 +931,12 @@ export async function POST(req: NextRequest) {
 
     const ciudadGps = ubicacionDetectada?.city && ubicacionDetectada.city !== 'Desconocida'
       ? ubicacionDetectada.city
-      : null
+      : ubicacionLog.ciudad
     const paisGps = ubicacionDetectada?.country && ubicacionDetectada.country !== 'Desconocida'
       ? ubicacionDetectada.country
-      : null
-    const ubicacionLog = {
-      ciudad: ciudadGps,
-      pais: paisGps,
-      lat: ubicacionUsuario?.lat ?? null,
-      lng: ubicacionUsuario?.lng ?? null,
-    }
+      : ubicacionLog.pais
+    if (ciudadGps) ubicacionLog.ciudad = ciudadGps
+    if (paisGps) ubicacionLog.pais = paisGps
     if (conversacionId && (ubicacionLog.ciudad || ubicacionLog.lat != null)) {
       await (supabase as any)
         .from('chatbot_conversaciones')
@@ -1036,6 +1082,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
     if (!userId && huella) {
       funcionesEjecutadas.push({ name: '_cliente', args: { huella } })
     }
+    funcionesEjecutadas.push({ name: '_ubicacion', args: ubicacionLog })
     const conversation: OpenAI.Chat.ChatCompletionMessageParam[] = [...fullMessages]
     let finalResponse: string | null = null
 
@@ -1344,10 +1391,6 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         tokens: totalTokens,
         modelo: config.modelo,
         duracion_ms: duration,
-        ciudad: ubicacionLog.ciudad,
-        pais: ubicacionLog.pais,
-        lat: ubicacionLog.lat,
-        lng: ubicacionLog.lng,
       })
 
       return NextResponse.json({
@@ -1410,10 +1453,6 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       tokens: totalTokens,
       modelo: config.modelo,
       duracion_ms: duration,
-      ciudad: ubicacionLog.ciudad,
-      pais: ubicacionLog.pais,
-      lat: ubicacionLog.lat,
-      lng: ubicacionLog.lng,
     })
 
     return NextResponse.json({

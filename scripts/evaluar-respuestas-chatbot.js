@@ -203,7 +203,7 @@ QUE ES UNA RESPUESTA PERFECTA EN ESTE CHAT
 - Si falta un dato para acertar (donde, pernocta vs tecnica, camping vs area, tramo de ruta), PREGUNTA eso y no listes. Preguntar bien es CORRECTA.
 - "cerca de mi" + GPS: lista corta cerca, con distancias. Sin GPS: pide la ciudad.
 - Filtro sin sitio ("areas con agua y electricidad", "gratis" a secas): pregunta si cerca de la ubicacion, una localidad o un punto del mapa. Listar el mundo o un saco al azar = INCORRECTA.
-- Ruta "voy de A a B, donde paro" sin pernocta/tipo/tramo: pregunta. Listar campings/areas de la ciudad de ORIGEN (Madrid si sale de Madrid) = INCORRECTA, aunque los datos de ficha cuadren. Tras aclarar: 3-4 paradas del trayecto, no del origen.
+- Ruta A→B, "paradas en una ruta", "donde paro en el camino": CORRECTA si deriva a /ruta o /ruta?origen=A&destino=B y NO lista areas. El chat no ve el trazado real. Listar 3-4 areas del corredor a ojo = INCORRECTA. No pidas que el chat sustituya al planificador.
 - Ciudad suelta ("Huesca"): pregunta que necesita, no lances guia ni listado por si acaso.
 - Turismo / que ver: no es guia. Enlaza el blog de rutas Furgocasa. Inventar pueblos o planes = INCORRECTA.
 - Precio Gratis SOLO si precio_noche === 0. null → "Precio no disponible".

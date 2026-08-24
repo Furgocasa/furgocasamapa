@@ -187,21 +187,32 @@ export async function PATCH(request: NextRequest) {
 
 const QUALITY_SCORE: Record<string, number> = { correcta: 10, mejorable: 5, incorrecta: 0 }
 
-function textoUbicacion(u?: { ciudad?: string | null; pais?: string | null } | null): string {
+function textoUbicacion(u?: {
+  ciudad?: string | null
+  pais?: string | null
+  lat?: number | null
+  lng?: number | null
+} | null): string {
   const ciudad = String(u?.ciudad || '').trim()
   const pais = String(u?.pais || '').trim()
   if (ciudad && pais && ciudad.toLowerCase() !== pais.toLowerCase()) return `${ciudad}, ${pais}`
   if (ciudad) return ciudad
   if (pais) return pais
+  if (Number.isFinite(Number(u?.lat)) && Number.isFinite(Number(u?.lng))) {
+    return `GPS ${Number(u?.lat).toFixed(2)}, ${Number(u?.lng).toFixed(2)}`
+  }
   return 'Ubicación desconocida'
 }
 
 function ubicacionDeFila(row: any, conv?: any): { ciudad: string | null; pais: string | null; ubicacion: string } {
   const pref = conv?.preferencias_detectadas?.ubicacion || {}
   const meta = (row.funciones || []).find((f: any) => f?.name === '_ubicacion')?.args || {}
+  const gps = conv?.ubicacion_usuario || {}
   const ciudad = row.ciudad || pref.ciudad || meta.ciudad || null
   const pais = row.pais || pref.pais || meta.pais || null
-  return { ciudad, pais, ubicacion: textoUbicacion({ ciudad, pais }) }
+  const lat = row.lat ?? pref.lat ?? meta.lat ?? gps.lat ?? null
+  const lng = row.lng ?? pref.lng ?? meta.lng ?? gps.lng ?? null
+  return { ciudad, pais, ubicacion: textoUbicacion({ ciudad, pais, lat, lng }) }
 }
 
 async function adjuntarUbicacion(admin: any, rows: any[]) {
