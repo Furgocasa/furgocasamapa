@@ -7,6 +7,8 @@ import ChatbotWidget from '@/components/chatbot/ChatbotWidget'
 import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
 import FavoritosSync from '@/components/ui/FavoritosSync'
 import { LanguageProvider } from '@/lib/i18n/LanguageProvider'
+import { CookieConsentBar } from '@/components/CookieConsentBar'
+import GoogleAnalytics from '@/components/GoogleAnalytics'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -114,21 +116,30 @@ export default function RootLayout({
         <link rel="shortcut icon" href="/favicon.png" />
         {/* Meta tag moderno para reemplazar el deprecado apple-mobile-web-app-capable */}
         <meta name="mobile-web-app-capable" content="yes" />
+        <Script
+          id="gtag-consent-default"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){window.dataLayer.push(arguments);}
+              window.gtag = gtag;
+              var granted = false;
+              try { granted = localStorage.getItem('mapafc_cookie_consent') === 'granted'; } catch (e) {}
+              var v = granted ? 'granted' : 'denied';
+              gtag('consent', 'default', {
+                analytics_storage: v,
+                ad_storage: v,
+                ad_user_data: v,
+                ad_personalization: v,
+                wait_for_update: 500
+              });
+            `,
+          }}
+        />
       </head>
       <body className="font-sans antialiased">
-        {/* Google Analytics */}
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-8E3JE5ZVET"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-8E3JE5ZVET');
-          `}
-        </Script>
+        <GoogleAnalytics />
 
         {/* Google Maps Places API - Necesario para el buscador geográfico */}
         <Script
@@ -142,6 +153,7 @@ export default function RootLayout({
           <WelcomeModal />
           <ChatbotWidget />
           {children}
+          <CookieConsentBar />
         </LanguageProvider>
       </body>
     </html>
