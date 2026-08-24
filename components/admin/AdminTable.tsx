@@ -19,6 +19,11 @@ export interface AdminTableColumn<T> {
   searchable?: boolean
   render?: (item: T) => React.ReactNode
   exportValue?: (item: T) => string | number
+  /** Clases de celda (th + td), p. ej. anchos en layout fixed */
+  className?: string
+  headerClassName?: string
+  /** false = el texto puede partir; por defecto no envuelve */
+  nowrap?: boolean
 }
 
 interface AdminTableProps<T> {
@@ -31,6 +36,9 @@ interface AdminTableProps<T> {
   className?: string
   initialSortColumn?: string | null
   initialSortDirection?: 'asc' | 'desc'
+  /** fixed reparte el 100% del contenedor y evita el scroll lateral innecesario */
+  layout?: 'auto' | 'fixed'
+  minWidth?: string
 }
 
 export function AdminTable<T extends Record<string, any>>({
@@ -42,7 +50,9 @@ export function AdminTable<T extends Record<string, any>>({
   exportFilename = 'datos',
   className = '',
   initialSortColumn,
-  initialSortDirection = 'asc'
+  initialSortDirection = 'asc',
+  layout = 'auto',
+  minWidth
 }: AdminTableProps<T>) {
   const [searchTerm, setSearchTerm] = useState('')
   const [sortColumn, setSortColumn] = useState<string | null>(initialSortColumn ?? null)
@@ -246,25 +256,28 @@ export function AdminTable<T extends Record<string, any>>({
 
       {/* Tabla */}
       <div className="overflow-x-auto" style={containerStyle} {...handlers}>
-        <table className="min-w-full divide-y divide-gray-200">
+        <table
+          className={`w-full divide-y divide-gray-200 ${layout === 'fixed' ? 'table-fixed' : ''}`}
+          style={minWidth ? { minWidth } : undefined}
+        >
           <thead className="bg-gray-50">
             <tr>
               {columns.map((column: any) => (
                 <th
                   key={column.key}
-                  className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
+                  className={`px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
                     column.sortable !== false ? 'cursor-pointer hover:bg-gray-100 select-none' : ''
-                  }`}
+                  } ${column.headerClassName || ''} ${column.className || ''}`}
                   onClick={() => column.sortable !== false && handleSort(column.key)}
                 >
-                  <div className="flex items-center gap-2">
-                    {column.title}
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className="truncate">{column.title}</span>
                     {column.sortable !== false && sortColumn === column.key && (
-                      <span className="text-sky-600">
+                      <span className="text-sky-600 shrink-0">
                         {sortDirection === 'asc' ? (
-                          <ChevronUpIcon className="w-4 h-4" />
+                          <ChevronUpIcon className="w-3.5 h-3.5" />
                         ) : (
-                          <ChevronDownIcon className="w-4 h-4" />
+                          <ChevronDownIcon className="w-3.5 h-3.5" />
                         )}
                       </span>
                     )}
@@ -276,7 +289,7 @@ export function AdminTable<T extends Record<string, any>>({
           <tbody className="bg-white divide-y divide-gray-200">
             {paginatedData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={columns.length} className="px-3 py-12 text-center text-gray-500">
                   {emptyMessage}
                 </td>
               </tr>
@@ -284,7 +297,12 @@ export function AdminTable<T extends Record<string, any>>({
               paginatedData.map((item: any, index: any) => (
                 <tr key={index} className="hover:bg-gray-50">
                   {columns.map((column: any) => (
-                    <td key={column.key} className="px-6 py-4 whitespace-nowrap">
+                    <td
+                      key={column.key}
+                      className={`px-2.5 py-2 overflow-hidden ${
+                        column.nowrap === false ? '' : 'whitespace-nowrap'
+                      } ${column.className || ''}`}
+                    >
                       {column.render ? column.render(item) : (
                         <span className="text-sm text-gray-900">{String(item[column.key] ?? '')}</span>
                       )}

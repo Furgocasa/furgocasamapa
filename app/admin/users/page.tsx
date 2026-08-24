@@ -111,19 +111,33 @@ export default function AdminUsersPage() {
     return 'email'
   }
 
+  const formatDate = (value: string) =>
+    new Date(value).toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+
+  const formatDateTime = (value: string) =>
+    `${formatDate(value)} ${new Date(value).toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })}`
+
   // Definir columnas para la tabla
   const columns: AdminTableColumn<UserProfile>[] = [
     {
       key: 'provider',
       title: 'Tipo',
       sortable: true,
+      className: 'w-[5%]',
       render: (user) => {
         const provider = getAuthProvider(user)
         return (
           <div className="flex items-center justify-center">
             {provider === 'google' ? (
-              <div className="w-8 h-8 flex items-center justify-center" title="Google">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
+              <div className="w-6 h-6 flex items-center justify-center" title="Google">
+                <svg viewBox="0 0 24 24" className="w-5 h-5">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -131,8 +145,8 @@ export default function AdminUsersPage() {
                 </svg>
               </div>
             ) : (
-              <div className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded" title="Email">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-600">
+              <div className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded" title="Email">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-600">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
                 </svg>
               </div>
@@ -146,22 +160,29 @@ export default function AdminUsersPage() {
       key: 'full_name',
       title: 'Nombre',
       sortable: true,
-      render: (user) => (
-        <div className="text-sm font-medium text-gray-900">
-          {user.user_metadata?.full_name || 
-           user.user_metadata?.username || 
-           user.user_metadata?.first_name || 
-           'Sin nombre'}
-        </div>
-      ),
+      className: 'w-[16%]',
+      nowrap: false,
+      render: (user) => {
+        const nombre = user.user_metadata?.full_name ||
+          user.user_metadata?.username ||
+          user.user_metadata?.first_name ||
+          'Sin nombre'
+        return (
+          <div className="text-sm font-medium text-gray-900 truncate" title={nombre}>
+            {nombre}
+          </div>
+        )
+      },
       exportValue: (user) => user.user_metadata?.full_name || user.user_metadata?.username || 'Sin nombre'
     },
     {
       key: 'email',
       title: 'Email',
       sortable: true,
+      className: 'w-[23%]',
+      nowrap: false,
       render: (user) => (
-        <div className="text-sm text-gray-900 truncate max-w-xs" title={user.email}>
+        <div className="text-sm text-gray-900 truncate" title={user.email}>
           {user.email}
         </div>
       )
@@ -170,9 +191,10 @@ export default function AdminUsersPage() {
       key: 'id',
       title: 'ID',
       sortable: true,
+      className: 'w-[9%]',
       render: (user) => (
-        <div className="text-xs text-gray-500 font-mono" title={user.id}>
-          {user.id.substring(0, 8)}...
+        <div className="text-xs text-gray-500 font-mono truncate" title={user.id}>
+          {user.id.substring(0, 8)}
         </div>
       ),
       exportValue: (user) => user.id
@@ -181,15 +203,16 @@ export default function AdminUsersPage() {
       key: 'rol',
       title: 'Rol',
       sortable: true,
+      className: 'w-[11%]',
       render: (user) => (
         user.user_metadata?.is_admin ? (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-            <ShieldCheckIcon className="w-4 h-4 mr-1" />
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+            <ShieldCheckIcon className="w-3.5 h-3.5" />
             Admin
           </span>
         ) : (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-            <UserCircleIcon className="w-4 h-4 mr-1" />
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            <UserCircleIcon className="w-3.5 h-3.5" />
             Usuario
           </span>
         )
@@ -198,63 +221,48 @@ export default function AdminUsersPage() {
     },
     {
       key: 'created_at',
-      title: 'Fecha Registro',
+      title: 'Registro',
       sortable: true,
+      className: 'w-[11%]',
       render: (user) => (
-        <span className="text-sm text-gray-500">
-          {new Date(user.created_at).toLocaleDateString('es-ES', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-          })}
+        <span className="text-sm text-gray-600">
+          {formatDate(user.created_at)}
         </span>
       ),
       exportValue: (user) => new Date(user.created_at).toLocaleDateString('es-ES')
     },
     {
       key: 'last_sign_in_at',
-      title: 'Último Acceso',
+      title: 'Acceso',
       sortable: true,
+      className: 'w-[14%]',
       render: (user) => (
-        <div className="text-sm text-gray-500">
-          {user.last_sign_in_at ? (
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-900">
-                {new Date(user.last_sign_in_at).toLocaleDateString('es-ES', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric'
-                })}
-              </span>
-              <span className="text-xs text-gray-500">
-                {new Date(user.last_sign_in_at).toLocaleTimeString('es-ES', {
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </span>
-            </div>
-          ) : (
-            <span className="text-gray-400">Nunca</span>
-          )}
-        </div>
+        user.last_sign_in_at ? (
+          <span className="text-sm text-gray-900" title={formatDateTime(user.last_sign_in_at)}>
+            {formatDateTime(user.last_sign_in_at)}
+          </span>
+        ) : (
+          <span className="text-sm text-gray-400">Nunca</span>
+        )
       ),
-      exportValue: (user) => user.last_sign_in_at 
-        ? `${new Date(user.last_sign_in_at).toLocaleDateString('es-ES')} ${new Date(user.last_sign_in_at).toLocaleTimeString('es-ES')}` 
+      exportValue: (user) => user.last_sign_in_at
+        ? `${new Date(user.last_sign_in_at).toLocaleDateString('es-ES')} ${new Date(user.last_sign_in_at).toLocaleTimeString('es-ES')}`
         : 'Nunca'
     },
     {
       key: 'confirmed_at',
       title: 'Estado',
       sortable: true,
+      className: 'w-[11%]',
       render: (user) => (
         user.confirmed_at ? (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            <CheckCircleIcon className="w-4 h-4 mr-1" />
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <CheckCircleIcon className="w-3.5 h-3.5" />
             Confirmado
           </span>
         ) : (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-            <XCircleIcon className="w-4 h-4 mr-1" />
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+            <XCircleIcon className="w-3.5 h-3.5" />
             Pendiente
           </span>
         )
@@ -277,11 +285,11 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="min-h-full bg-gray-50">
+      <header className="bg-white border-b border-gray-200">
+        <div className="px-4 sm:px-6 py-5">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Gestión de Usuarios</h1>
             <p className="mt-1 text-sm text-gray-500">
               Total: {users.length} usuarios registrados
             </p>
@@ -289,7 +297,7 @@ export default function AdminUsersPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="px-4 sm:px-6 py-6">
         {/* Filtro Rol y Acciones */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end justify-between">
@@ -426,6 +434,7 @@ export default function AdminUsersPage() {
             exportFilename="usuarios"
             initialSortColumn="last_sign_in_at"
             initialSortDirection="desc"
+            layout="fixed"
           />
         )}
       </main>
