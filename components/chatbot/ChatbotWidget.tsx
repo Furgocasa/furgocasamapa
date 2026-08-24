@@ -71,13 +71,13 @@ const TEXTOS: Record<string, {
   locationWall: string
   locationCta: string
   locationDenied: string
+  planificarRuta: string
 }> = {
   es: {
-    bienvenida: '¡Hola! 👋 Soy el Tío Viajero IA. Pregúntame por áreas, rutas… o por valorar tu furgo y el QR anti-golpes. ¿Por dónde empezamos?',
+    bienvenida: '¡Hola! 👋 Soy el Tío Viajero IA. Pregúntame por áreas cerca, un sitio concreto o servicios. Para paradas en un trayecto, usa el planificador de rutas.',
     sugerencias: [
       '🆓 Áreas gratis cerca de mí',
       '⭐ Las mejores áreas de España',
-      '🛣️ Paradas en una ruta',
       '💧 Áreas con agua y electricidad',
       '🐕 Áreas cerca de mí (mascotas bienvenidas)'
     ],
@@ -95,14 +95,14 @@ const TEXTOS: Record<string, {
     cookiesCta: 'Aceptar cookies',
     locationWall: 'Activa la ubicación para usar el chat. Sin ella no puedo situarte ni decirte qué hay cerca.',
     locationCta: 'Activar ubicación',
-    locationDenied: 'El navegador ha bloqueado la ubicación. Actívala en los permisos de esta página y pulsa de nuevo.'
+    locationDenied: 'El navegador ha bloqueado la ubicación. Actívala en los permisos de esta página y pulsa de nuevo.',
+    planificarRuta: '🛣️ Planificar una ruta'
   },
   en: {
-    bienvenida: "Hi! 👋 I'm Tío Viajero AI. Ask me about motorhome areas, services, prices or route stops. Where shall we start?",
+    bienvenida: "Hi! 👋 I'm Tío Viajero AI. Ask me about areas nearby, a specific spot or services. For stops on a drive, use the route planner.",
     sugerencias: [
       '🆓 Free areas near me',
       '⭐ Best areas in Spain',
-      '🛣️ Stops along a route',
       '💧 Areas with water and electricity',
       '🐕 Areas near me (pets welcome)'
     ],
@@ -120,14 +120,14 @@ const TEXTOS: Record<string, {
     cookiesCta: 'Accept cookies',
     locationWall: 'Turn on location to use the chat. Without it I can’t place you or tell you what’s nearby.',
     locationCta: 'Enable location',
-    locationDenied: 'The browser blocked location. Allow it for this page and tap again.'
+    locationDenied: 'The browser blocked location. Allow it for this page and tap again.',
+    planificarRuta: '🛣️ Plan a route'
   },
   fr: {
-    bienvenida: "Salut ! 👋 Je suis Tío Viajero IA. Demandez-moi des aires, services, prix ou étapes d'itinéraire. On commence ?",
+    bienvenida: "Salut ! 👋 Je suis Tío Viajero IA. Demande-moi des aires près de toi, un lieu précis ou des services. Pour les haltes sur un trajet, utilise le planificateur.",
     sugerencias: [
       '🆓 Aires gratuites près de moi',
       '⭐ Meilleures aires en Espagne',
-      '🛣️ Étapes sur une route',
       '💧 Aires avec eau et électricité',
       '🐕 Aires près de moi (animaux)'
     ],
@@ -145,14 +145,14 @@ const TEXTOS: Record<string, {
     cookiesCta: 'Accepter les cookies',
     locationWall: 'Active la localisation pour utiliser le chat. Sans elle, je ne peux pas te placer ni dire ce qu’il y a près de toi.',
     locationCta: 'Activer la localisation',
-    locationDenied: 'Le navigateur a bloqué la localisation. Autorise-la pour cette page et réessaie.'
+    locationDenied: 'Le navigateur a bloqué la localisation. Autorise-la pour cette page et réessaie.',
+    planificarRuta: '🛣️ Planifier un trajet'
   },
   de: {
-    bienvenida: 'Hallo! 👋 Ich bin Tío Viajero KI. Frag mich nach Stellplätzen, Services, Preisen oder Routenstopps. Womit fangen wir an?',
+    bienvenida: 'Hallo! 👋 Ich bin Tío Viajero KI. Frag mich nach Plätzen in der Nähe, einem konkreten Ort oder Services. Für Stopps auf der Strecke nimm den Routenplaner.',
     sugerencias: [
       '🆓 Kostenlose Stellplätze in meiner Nähe',
       '⭐ Beste Stellplätze in Spanien',
-      '🛣️ Stopps auf einer Route',
       '💧 Stellplätze mit Wasser und Strom',
       '🐕 Stellplätze in meiner Nähe (Haustiere)'
     ],
@@ -170,14 +170,14 @@ const TEXTOS: Record<string, {
     cookiesCta: 'Cookies akzeptieren',
     locationWall: 'Aktiviere den Standort, um den Chat zu nutzen. Ohne ihn kann ich dich nicht orten.',
     locationCta: 'Standort aktivieren',
-    locationDenied: 'Der Browser hat den Standort blockiert. Erlaube ihn für diese Seite und tippe erneut.'
+    locationDenied: 'Der Browser hat den Standort blockiert. Erlaube ihn für diese Seite und tippe erneut.',
+    planificarRuta: '🛣️ Route planen'
   },
   it: {
-    bienvenida: 'Ciao! 👋 Sono Tío Viajero IA. Chiedimi aree, servizi, prezzi o soste lungo il percorso. Da dove iniziamo?',
+    bienvenida: 'Ciao! 👋 Sono Tío Viajero IA. Chiedimi aree vicine, un posto concreto o servizi. Per le soste su un tragitto usa il pianificatore.',
     sugerencias: [
       '🆓 Aree gratuite vicino a me',
       '⭐ Le migliori aree in Spagna',
-      '🛣️ Soste su un percorso',
       '💧 Aree con acqua ed elettricità',
       '🐕 Aree vicino a me (animali)'
     ],
@@ -195,7 +195,8 @@ const TEXTOS: Record<string, {
     cookiesCta: 'Accetta i cookie',
     locationWall: 'Attiva la posizione per usare la chat. Senza non posso collocarti né dirti cosa c’è vicino.',
     locationCta: 'Attiva posizione',
-    locationDenied: 'Il browser ha bloccato la posizione. Abilitala per questa pagina e riprova.'
+    locationDenied: 'Il browser ha bloccato la posizione. Abilitala per questa pagina e riprova.',
+    planificarRuta: '🛣️ Pianifica un percorso'
   }
 }
 
@@ -960,6 +961,12 @@ export default function ChatbotWidget() {
                 ))}
                 {messages.length <= 1 && (
                   <>
+                <Link
+                  href="/ruta"
+                  className="text-xs bg-sky-600 text-white hover:bg-sky-700 rounded-full px-3 py-1.5 transition-all shadow-sm"
+                >
+                  {txt.planificarRuta}
+                </Link>
                 <Link
                   href="/valoracion-ia-vehiculos"
                   className="text-xs bg-[#0b3c74] text-white hover:bg-[#0d4a8f] rounded-full px-3 py-1.5 transition-all shadow-sm"
