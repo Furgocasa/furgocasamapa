@@ -134,7 +134,8 @@ de la barra queda más visible. Tras calcular, pasa al mapa.
 - Anónimo: 2 preguntas. Con cuenta: sin tope.
 - Pastillas de mensaje: solo «cerca de mí» (gratis, pública, agua/luz, mascotas).
 - Chips de enlace (no gastan pregunta): `/ruta`, `/valoracion-ia-vehiculos` y
-  `/sistema-reporte-accidentes`.
+  `/sistema-reporte-accidentes`. Al pulsarlos el chat se minimiza para que en
+  móvil se vea la página.
 - ↻ limpia la vista; el historial queda en BD. F5 tras ↻ sigue limpio.
 
 ### 4.6 Home y ficha: vehículo visible

@@ -401,6 +401,12 @@ export default function ChatbotWidget() {
     setIsMinimized(true)
   }
 
+  // Chips que salen del chat (ruta, tasación, QR): si no se minimiza, en
+  // móvil la ventana a pantalla completa tapa la página y parece que no ha pasado nada.
+  const minimizarParaVerPagina = () => {
+    setIsMinimized(true)
+  }
+
   // Nueva conversación: resetea SOLO la vista y el hilo actual.
   // Las conversaciones anteriores permanecen intactas en la base de datos.
   const nuevaConversacion = () => {
@@ -967,18 +973,21 @@ export default function ChatbotWidget() {
                   <>
                 <Link
                   href="/ruta"
+                  onClick={minimizarParaVerPagina}
                   className="text-xs bg-sky-600 text-white hover:bg-sky-700 rounded-full px-3 py-1.5 transition-all shadow-sm"
                 >
                   {txt.planificarRuta}
                 </Link>
                 <Link
                   href="/valoracion-ia-vehiculos"
+                  onClick={minimizarParaVerPagina}
                   className="text-xs bg-[#0b3c74] text-white hover:bg-[#0d4a8f] rounded-full px-3 py-1.5 transition-all shadow-sm"
                 >
                   🤖 ¿Cuánto vale mi furgo?
                 </Link>
                 <Link
                   href="/sistema-reporte-accidentes"
+                  onClick={minimizarParaVerPagina}
                   className="text-xs bg-red-600 text-white hover:bg-red-700 rounded-full px-3 py-1.5 transition-all shadow-sm"
                 >
                   🛡️ QR anti-golpes
