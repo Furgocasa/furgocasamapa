@@ -4,7 +4,8 @@
  * Lee un JSON con una lista de correcciones investigadas a mano:
  *   [{ "slug": "...", "precio_noche": 12, "plazas_totales": 50,
  *      "plazas_camper": 24, "tipo_area": "privada",
- *      "telefono": "...", "website": "...",
+ *      "telefono": "...", "website": "...", "ciudad": "Mazarrón",
+ *      "nombre": "...", "activo": false,
  *      "servicios_true": ["agua", "electricidad"],
  *      "verificado": true, "fuente": "web oficial ..." }]
  *
@@ -34,7 +35,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-const CAMPOS = ['precio_noche', 'plazas_totales', 'plazas_camper', 'tipo_area', 'telefono', 'website']
+const CAMPOS = ['precio_noche', 'plazas_totales', 'plazas_camper', 'tipo_area', 'telefono', 'website', 'ciudad', 'nombre', 'activo']
 
 async function main() {
   console.log(`${correcciones.length} correcciones | modo: ${APPLY ? 'APPLY' : 'DRY-RUN'}`)
@@ -42,7 +43,7 @@ async function main() {
   for (const c of correcciones) {
     const { data: area, error } = await supabase
       .from('areas')
-      .select('id, nombre, slug, servicios, precio_noche, plazas_totales, tipo_area, telefono, website, verificado')
+      .select('id, nombre, slug, ciudad, activo, servicios, precio_noche, plazas_totales, tipo_area, telefono, website, verificado')
       .eq('slug', c.slug)
       .single()
     if (error || !area) {

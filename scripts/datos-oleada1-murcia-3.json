@@ -1,0 +1,91 @@
+[
+  {
+    "slug": "area-camping-mazarron",
+    "ciudad": "Mazarrón",
+    "fuente": "Web oficial areacampingmazarron.com: Ctra. Mazarrón al Puerto, km 2,5. Ciudad era el CP 30870"
+  },
+  {
+    "slug": "area-camping-mazarron-murcia",
+    "activo": false,
+    "fuente": "Duplicado de area-camping-mazarron: mismas coordenadas (37.589233, -1.291159), mismo nombre, 0 reseñas frente a 1146 y web oficial de la ficha canónica"
+  },
+  {
+    "slug": "area-autocaravanas-murcia-s-n",
+    "activo": false,
+    "fuente": "Duplicado del área pública del Thader (area-autocaravanas-murcia): mismas coordenadas, ciudad 's/n', web de una aseguradora. Se conserva la ficha verificada"
+  },
+  {
+    "slug": "camping-la-encina-san-javier",
+    "activo": false,
+    "fuente": "Mismo recinto que Camping San Javier (coords a ~5 m, 190 parcelas, Av. de Balsicas). La Encina es el nombre antiguo; la web histórica apunta a campingsanjavier.com"
+  },
+  {
+    "slug": "camping-las-torres-murcia",
+    "ciudad": "Puerto de Mazarrón",
+    "website": "https://campinglastorres.com/",
+    "verificado": true,
+    "fuente": "Web oficial campinglastorres.com: CN-332 km 26, 30860 Puerto de Mazarrón. Precio 19,80 € y 220 plazas ya coinciden con ACSI (220 rotación)"
+  },
+  {
+    "slug": "area-camper-el-moreral-murcia",
+    "ciudad": "Mazarrón",
+    "plazas_totales": 50,
+    "telefono": "621 28 46 98",
+    "verificado": true,
+    "fuente": "areasAC (fuente El Moreral): 50 plazas, 14 €/día 1-5 noches (ya en ficha), tel. 621 284 698; web oficial areacamperelmoreral.com confirma Mazarrón"
+  },
+  {
+    "slug": "area-autocaravanas-anibal-aguilas",
+    "plazas_totales": 60,
+    "telefono": "968 41 42 59",
+    "website": "https://www.anibalcamperarea.es/",
+    "servicios_true": ["wc", "duchas", "lavanderia"],
+    "verificado": true,
+    "fuente": "Web oficial anibalcamperarea.es: 60 plazas, duchas, WC adaptado, lavandería; areasAC confirma 11 € pernocta+aguas (ya en ficha) y tel. 968 414 259"
+  },
+  {
+    "slug": "camper-park-el-mastil-cartagena",
+    "plazas_totales": 70,
+    "telefono": "672 67 14 10",
+    "website": "https://elmastilcamperpark.com/",
+    "verificado": true,
+    "fuente": "Web oficial elmastilcamperpark.com: desde 12 € (ya en ficha); tempoparkings/park4night: 70 plazas; Campercontact: tel. +34 672 671 410"
+  },
+  {
+    "slug": "area-autocaravanas-las-torres-de-cotillas-las-torres-de-cotillas",
+    "plazas_totales": 10,
+    "verificado": true,
+    "fuente": "Coords de la ficha = Av. Reyes Católicos (área municipal junto al campo de fútbol). park4night y fuentes locales: 10 plazas, gratuita (precio 0 ya en ficha). La 2ª área de San Jorge (19 plazas, abr. 2026) es otro recinto"
+  },
+  {
+    "slug": "area-autocaravanas-murcia",
+    "plazas_totales": 70,
+    "verificado": true,
+    "fuente": "Área municipal del Thader / Av. Juan de Borbón. park4night y destinocamper: gratuita, ~70 plazas, máx. 72 h, agua y vaciado. Las 371 reseñas Google están en el duplicado que se desactiva"
+  },
+  {
+    "slug": "camper-area-camino-de-vera-184-lorca",
+    "tipo_area": "privada",
+    "precio_noche": 15,
+    "plazas_totales": 10,
+    "servicios_true": ["agua", "wc", "duchas", "lavanderia", "electricidad", "zona_mascotas"],
+    "verificado": true,
+    "fuente": "Cortijo El Granado, recinto privado (no pública). meinwomo 02/2025: 15 €/24h 2 pax, agua y vaciado incl.; camping-app: capacidad 10, cocina, baño, ducha, lavadora, perros"
+  },
+  {
+    "slug": "campista-hollanda",
+    "tipo_area": "privada",
+    "precio_noche": 19,
+    "plazas_totales": 7,
+    "telefono": "667 95 67 32",
+    "servicios_true": ["agua", "electricidad", "wc", "duchas", "wifi", "lavanderia", "zona_mascotas"],
+    "verificado": true,
+    "fuente": "Web oficial campistahollanda.com + Campercontact 2026: 7 plazas, ~19 €/noche 2 pax, solo adultos, piscina, wifi, perros. Es finca privada, no área pública. Tel. +34 667 956 732"
+  },
+  {
+    "slug": "camping-camino-del-sol-caravaca-de-la-cruz-murcia",
+    "nombre": "Camping Camino del Sol",
+    "website": "https://campingcaminodelsol.com/",
+    "fuente": "Web oficial: electricidad, agua, desagüe, lavandería, wifi. Publican 'desde 4,15 €/día' para caravana en temporada baja (parece larga estancia); sin tarifa de 1 noche verificable. No se inventa precio ni plazas"
+  }
+]

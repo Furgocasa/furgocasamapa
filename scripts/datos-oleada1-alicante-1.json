@@ -1,0 +1,59 @@
+[
+  {
+    "slug": "camping-los-llanos-alicante",
+    "ciudad": "Dénia",
+    "verificado": true,
+    "fuente": "Web oficial losllanos.net: Camping Los Llanos Dénia, Partida Deveses / N-332 km 203-204. Precio 12 € ya en ficha"
+  },
+  {
+    "slug": "camping-fonts-del-algar-alicante",
+    "ciudad": "Callosa d'en Sarrià",
+    "servicios_true": ["zona_mascotas"],
+    "verificado": true,
+    "fuente": "Web oficial fontsdelalgar.com / contacto: Partida Algar s/n, 03510 Callosa d'en Sarrià. Precio 24 € ya en ficha; admite perros"
+  },
+  {
+    "slug": "camping-palm-mar-alicante",
+    "ciudad": "Guardamar del Segura",
+    "verificado": true,
+    "fuente": "Web oficial campingpalmmar.es: Ctra. Cartagena-Alicante km 70,5, 03140 Guardamar del Segura. Precio 17,50 € y 559 plazas ya en ficha"
+  },
+  {
+    "slug": "camper-area-7",
+    "tipo_area": "privada",
+    "precio_noche": 15,
+    "plazas_totales": 49,
+    "servicios_true": ["agua", "electricidad", "wc", "duchas", "wifi", "lavanderia", "zona_mascotas", "vaciado_aguas_grises", "vaciado_aguas_negras"],
+    "verificado": true,
+    "fuente": "Tarifas oficiales camperarea7.com: 15 €/noche 1-30 días (2 pax, aguas, wifi, duchas, mascotas); AreasCamper: 49 plazas. Recinto privado de pago, no área pública"
+  },
+  {
+    "slug": "camper-area-campello-beach",
+    "tipo_area": "privada",
+    "precio_noche": 16,
+    "plazas_totales": 45,
+    "servicios_true": ["agua", "electricidad", "wc", "duchas", "wifi", "lavanderia", "zona_mascotas", "vaciado_aguas_grises", "vaciado_aguas_negras"],
+    "verificado": true,
+    "fuente": "Web oficial camperareacampellobeach.com/tarifas: 16 €/día 1-3 noches (2 pax, duchas, aguas, wifi, mascota); camperstop: 45 plazas. Área privada"
+  },
+  {
+    "slug": "area-natur-playamuchavista",
+    "tipo_area": "privada",
+    "precio_noche": 15,
+    "plazas_totales": 70,
+    "servicios_true": ["agua", "electricidad", "wc", "duchas", "wifi", "lavanderia", "zona_mascotas", "vaciado_aguas_grises", "vaciado_aguas_negras"],
+    "verificado": true,
+    "fuente": "Web oficial areanaturplaya.com: 15 €/día 1-3 noches; camperstop/AreasCamper: 70 plazas; wifi, duchas, lavandería, mascotas. Recinto privado vigilado"
+  },
+  {
+    "slug": "camping-el-torres-villajoyosa",
+    "precio_noche": 28,
+    "verificado": true,
+    "fuente": "Web oficial campingeltorres.com packs 2026: noche extra de parcela 28 €/día (2 pax, agua y desagüe). No publican tarifa rack diaria; 28 € es la cifra oficial de noche suelta"
+  },
+  {
+    "slug": "nomading-camp-alicante-las-virtudes",
+    "tipo_area": "camping",
+    "fuente": "Es camping/glamping (hotel burbuja + parcelas) en Las Virtudes, Villena. Web oficial no publica tarifa de pernocta de autocaravana. Se corrige tipo: no es área pública"
+  }
+]
