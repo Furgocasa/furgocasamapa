@@ -6,6 +6,11 @@ import { ArrowLeftIcon, PhotoIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import type { Area } from '@/types/database.types'
 import { createClient } from '@/lib/supabase/client'
+import { esFotoSeguraEnFicha, uniqueUrlsOf } from '@/lib/areas/image-copyright'
+
+function tieneFotoUsable(area: { foto_principal?: string | null; fotos_urls?: string[] | null }) {
+  return uniqueUrlsOf(area).some((url) => esFotoSeguraEnFicha(url))
+}
 export default function EnriquecerImagenesPage() {
   const [areas, setAreas] = useState<Area[]>([])
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -34,6 +39,7 @@ export default function EnriquecerImagenesPage() {
         const { data, error } = await (supabase as any)
           .from('areas')
           .select('*')
+          .eq('activo', true)
           .order('created_at', { ascending: false })
           .range(page * pageSize, (page + 1) * pageSize - 1)
 
@@ -73,7 +79,11 @@ export default function EnriquecerImagenesPage() {
         setProcessLog((prev) => [...prev, `  ✗ ${data.message || data.error || 'Sin imágenes'}`])
         return false
       }
-      setProcessLog((prev) => [...prev, `  ✓ ${data.total_imagenes} fotos (${data.imagenes?.[0]?.fuente || 'web'})`])
+      if (data.skipped) {
+        setProcessLog((prev) => [...prev, `  ↷ Ya tenía fotos propias (${data.total_imagenes})`])
+        return true
+      }
+      setProcessLog((prev) => [...prev, `  ✓ ${data.total_imagenes} fotos (${data.fuente || data.imagenes?.[0]?.fuente || 'web'})`])
       return true
     } catch (error) {
       console.error('❌ Error enriqueciendo imágenes:', error)
@@ -90,8 +100,10 @@ export default function EnriquecerImagenesPage() {
 
     const confirmacion = confirm(
       `¿Enriquecer imágenes de ${selectedIds.length} área(s)?\n\n` +
-      `Orden: web oficial del recinto. Si no hay fotos propias, se genera IA.\n` +
-      `No se usa Google ni directorios con fotos de terceros.\n\n` +
+      `1. Solo la web oficial del recinto (no Park4Night, Google ni directorios).\n` +
+      `2. Nada de capturas de mapa, stock ni fotos ya usadas en otra ficha.\n` +
+      `3. Si no hay foto propia, se genera una ilustración nuestra.\n` +
+      `4. Si ya tiene fotos buenas, se deja como está.\n\n` +
       `Tiempo estimado: ${selectedIds.length * 20} segundos`
     )
 
@@ -133,10 +145,9 @@ export default function EnriquecerImagenesPage() {
     
     setProcessLog(prev => [...prev, `✅ Lista actualizada`])
     setProcessing(false)
-    
-    // Mostrar mensaje de éxito
+    const totalHechas = selectedIds.length
     setTimeout(() => {
-      alert(`✅ Proceso completado\n\n${selectedIds.length} área(s) procesada(s) exitosamente`)
+      alert(`✅ Proceso completado\n\n${totalHechas} área(s) procesada(s)`)
     }, 500)
   }
 
@@ -223,22 +234,22 @@ export default function EnriquecerImagenesPage() {
       className: 'w-[25%]',
       searchable: false,
       render: (area) => (
-        area.foto_principal ? (
+        tieneFotoUsable(area) ? (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            ✓ Con imágenes
+            ✓ Foto propia
           </span>
         ) : (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-            ⚠ Sin imágenes
+            ⚠ Sin foto usable
           </span>
         )
       ),
-      exportValue: (area) => area.foto_principal ? 'Con imágenes' : 'Sin imágenes'
+      exportValue: (area) => tieneFotoUsable(area) ? 'Foto propia' : 'Sin foto usable'
     }
   ]
 
   // Filtrar áreas sin foto_principal
-  const areasSinImagenes = areasFiltradas.filter((a: any) => !a.foto_principal)
+  const areasSinImagenes = areasFiltradas.filter((a: any) => !tieneFotoUsable(a))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -256,7 +267,9 @@ export default function EnriquecerImagenesPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Enriquecer Imágenes</h1>
-              <p className="text-gray-600 mt-1">Web oficial del recinto; si no hay foto propia, IA. Sin Google.</p>
+              <p className="text-gray-600 mt-1">
+                Web oficial del recinto. Si no hay foto propia, IA. Ni Google, ni Park4Night, ni mapas, ni la misma URL en dos fichas.
+              </p>
             </div>
           </div>
         </div>
@@ -295,7 +308,7 @@ export default function EnriquecerImagenesPage() {
               onClick={() => setSelectedIds(areasSinImagenes.map((a: any) => a.id))}
               className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
             >
-              Seleccionar sin imágenes ({areasSinImagenes.length})
+              Seleccionar sin foto usable ({areasSinImagenes.length})
             </button>
             <button
               onClick={() => setSelectedIds([])}
@@ -343,7 +356,7 @@ export default function EnriquecerImagenesPage() {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-xl font-bold">🖼️ Buscando Imágenes</h3>
-                    <p className="text-purple-100 text-sm">Scrapeando webs y plataformas...</p>
+                    <p className="text-purple-100 text-sm">Web oficial del recinto; si no hay, IA propia</p>
                   </div>
                 </div>
               </div>

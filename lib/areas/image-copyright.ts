@@ -155,6 +155,25 @@ export function isProhibidaParaEnriquecer(url: string): boolean {
   return CLASES_ALTO.includes(c) || c === 'directorio_area' || c === 'google_places'
 }
 
+/** Foto que puede quedarse en la ficha: propia, IA o web oficial. No mapas, stock ni directorios. */
+export function esFotoSeguraEnFicha(url?: string | null): boolean {
+  if (!url) return false
+  const c = classifyUrl(url)
+  if (c === 'invalid') return false
+  if (c === 'ia_propia') return true
+  return !isProhibidaParaEnriquecer(url)
+}
+
+export function esWebDirectorio(website?: string | null): boolean {
+  if (!website) return false
+  const raw = website.startsWith('http') ? website : `https://${website}`
+  const host = hostOf(raw)
+  if (!host) return false
+  if (hostMatches(host, AREA_HOSTS) || host.includes('park4night')) return true
+  if (hostMatches(host, SOCIAL_HOSTS)) return true
+  return /(?:^|\.)(?:instagram|facebook|fb|tiktok|twitter|x)\.com$/.test(host)
+}
+
 export function isImagenIA(url?: string | null): boolean {
   return classifyUrl(url || '') === 'ia_propia'
 }
