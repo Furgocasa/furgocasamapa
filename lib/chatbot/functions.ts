@@ -6,6 +6,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { esPreguntaAreaConcreta } from '@/lib/chatbot/intencion'
 
 // Cliente de Supabase con service role para acceso completo
 function getSupabaseClient() {
@@ -861,17 +862,32 @@ export async function getAreasPopulares(limit: number = 10): Promise<AreaResumen
  * Búsqueda textual por nombre de área
  * Para cuando el usuario menciona un área específica
  */
-export async function buscarAreasPorNombre(nombre: string, limit: number = 5): Promise<AreaResumen[]> {
+function variantesNombreArea(nombre: string): string[] {
+  const raw = String(nombre || '').trim()
+  if (!raw || /^(esta|esa|esto|eso|aqui|aquí|la|el)$/i.test(raw)) return []
+  const n = raw.normalize('NFD').replace(/\p{M}/gu, '')
+  const out = new Set<string>([raw, n])
+  out.add(n.replace(/\s+/g, ''))
+  out.add(n.replace(/garcia\s*munoz/ig, 'Garcimunoz'))
+  out.add(n.replace(/^.*\bcastillo de\s+/i, ''))
+  out.add(n.replace(/^(el|la|los|las|area|área|camping)\s+/i, ''))
+  return [...out].map((s) => s.trim()).filter((s) => s.length >= 3)
+}
+
+export async function buscarAreasPorNombre(nombre: string, limit: number = 3): Promise<AreaResumen[]> {
   const supabase = getSupabaseClient()
+  const variantes = variantesNombreArea(nombre)
+  const termino = variantes[0] || String(nombre || '').trim()
   
-  console.log('🔎 [buscarAreasPorNombre] Buscando:', nombre)
+  console.log('🔎 [buscarAreasPorNombre] Buscando:', nombre, variantes)
+  if (!termino || termino.length < 3) return []
   
   try {
     const { data, error } = await queryAreasResumen((select) =>
       (supabase as any).from('areas')
         .select(select)
         .eq('activo', true)
-        .ilike('nombre', `%${nombre}%`)
+        .or(variantes.slice(0, 4).map((v) => `nombre.ilike.%${v.replace(/,/g, '')}%`).join(','))
         .order('google_rating', { ascending: false, nullsFirst: false })
         .limit(Math.max(20, limit * 3))
     )
@@ -1143,6 +1159,43 @@ export function sanitizarRespuestaChat(texto: string, areas: AreaResumen[] = [])
  * El modelo no reescribe fichas: se queda la intro y se pegan los
  * resúmenes oficiales (precio, servicios, /area/{slug}, distancias).
  */
+function normalizarClaveArea(s: string): string {
+  return String(s || '')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+export function areaMencionadaEnTexto(texto: string, area: AreaResumen): boolean {
+  const t = normalizarClaveArea(texto)
+  if (!t) return false
+  const keys = [area.nombre, (area.slug || '').replace(/-/g, ' '), area.ciudad].filter(Boolean)
+  return keys.some((k) => {
+    const n = normalizarClaveArea(String(k))
+    return n.length >= 4 && t.includes(n)
+  })
+}
+
+/** Máximo 3 fichas, solo las que el texto nombra. Cero si está pidiendo aclaración. */
+export function elegirAreasParaTarjetas(
+  texto: string,
+  areas: AreaResumen[] = [],
+  pregunta = '',
+  max = 3
+): AreaResumen[] {
+  if (!areas.length) return []
+  if (/te refieres|te refer[ií]as|o a un [aá]rea concreta|dime si quieres que ampl[ií]e|qu[eé] parada buscas|d[oó]nde las buscas|no me queda claro/i.test(texto)) {
+    return []
+  }
+  const blob = `${texto}\n${pregunta}`
+  const mencionadas = areas.filter((a) => areaMencionadaEnTexto(blob, a))
+  if (mencionadas.length) return mencionadas.slice(0, max)
+  if (esPreguntaAreaConcreta(pregunta)) return areas.slice(0, 1)
+  return areas.slice(0, max)
+}
+
 export function componerRespuestaConFichas(
   textoModelo: string,
   areas: AreaResumen[] = [],
@@ -1172,7 +1225,7 @@ export function componerRespuestaConFichas(
     keep.push(linea)
   }
   const intro = keep.join('\n').replace(/\n{3,}/g, '\n\n').trim()
-  const fichas = areas.slice(0, 6).map((a) => formatAreaParaChat(a, locale)).join('\n')
+  const fichas = areas.slice(0, 3).map((a) => formatAreaParaChat(a, locale)).join('\n')
   return [intro, fichas].filter(Boolean).join('\n\n')
 }
 

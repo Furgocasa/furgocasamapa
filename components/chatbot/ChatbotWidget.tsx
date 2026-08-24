@@ -24,6 +24,26 @@ import {
 } from '@/components/CookieConsentBar'
 import { ChatMensajeTexto } from '@/components/chatbot/ChatMensajeTexto'
 
+export const AREA_MAPA_CHANGE = 'mapafc:area-mapa'
+export type AreaEnMapa = {
+  id: string
+  nombre: string
+  slug?: string
+  ciudad?: string
+  pais?: string
+}
+
+export function avisarAreaMapa(area: AreaEnMapa | null) {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent(AREA_MAPA_CHANGE, { detail: area }))
+}
+
+export function onAreaMapaChange(cb: (area: AreaEnMapa | null) => void) {
+  const handler = (e: Event) => cb(((e as CustomEvent).detail as AreaEnMapa) || null)
+  window.addEventListener(AREA_MAPA_CHANGE, handler)
+  return () => window.removeEventListener(AREA_MAPA_CHANGE, handler)
+}
+
 interface Message {
   rol: 'user' | 'assistant'
   contenido: string
@@ -199,6 +219,7 @@ export default function ChatbotWidget() {
   const [guestRemaining, setGuestRemaining] = useState<number | null>(null)
   const [cookiesOk, setCookiesOk] = useState(false)
   const [gpsOn, setGpsOn] = useState(false)
+  const [areaEnMapa, setAreaEnMapa] = useState<AreaEnMapa | null>(null)
   const [geoError, setGeoError] = useState<string | null>(null)
   const [pidiendoGeo, setPidiendoGeo] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -344,6 +365,8 @@ export default function ChatbotWidget() {
   useEffect(() => {
     if (isOpen && cookiesOk && gpsOn && !ubicacion) pedirUbicacion()
   }, [isOpen, cookiesOk, gpsOn, ubicacion])
+
+  useEffect(() => onAreaMapaChange(setAreaEnMapa), [])
 
   // Iniciar conversación (abierta a todos, con o sin cuenta)
   const iniciarConversacion = async () => {
@@ -549,7 +572,8 @@ export default function ChatbotWidget() {
               ? ubicacion
               : undefined,
           userId: user?.id || undefined, // Con cuenta: se guarda el historial
-          locale // Fallback si el mensaje es corto; manda el idioma del último mensaje
+          locale, // Fallback si el mensaje es corto; manda el idioma del último mensaje
+          areaEnMapa: areaEnMapa || undefined,
         })
       })
       
@@ -790,7 +814,7 @@ export default function ChatbotWidget() {
                   {/* Tarjetas de áreas encontradas */}
                   {msg.areas && msg.areas.length > 0 && (
                     <div className="mt-3 space-y-2">
-                      {msg.areas.slice(0, 6).map((area: any) => {
+                      {msg.areas.slice(0, 3).map((area: any) => {
                         const fotoCandidata = (() => {
                           if (Array.isArray(area.fotos_urls) && area.fotos_urls.length > 0) return area.fotos_urls[0]
                           if (typeof area.fotos_urls === 'string' && area.fotos_urls.trim().startsWith('http')) {
@@ -872,13 +896,13 @@ export default function ChatbotWidget() {
                       })}
 
                       {/* Guardar todas las áreas sugeridas de una vez */}
-                      {msg.areas.slice(0, 6).some((a: any) => !favIds.has(a.id)) && (
+                      {msg.areas.slice(0, 3).some((a: any) => !favIds.has(a.id)) && (
                         <button
                           type="button"
-                          onClick={() => guardarTodas(msg.areas!.slice(0, 6))}
+                          onClick={() => guardarTodas(msg.areas!.slice(0, 3))}
                           className="w-full text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded-lg py-2 transition-colors"
                         >
-                          ❤️ Guardar {msg.areas.slice(0, 6).length === 1 ? 'esta área' : `estas ${msg.areas.slice(0, 6).length} áreas`} en favoritos
+                          ❤️ Guardar {msg.areas.slice(0, 3).length === 1 ? 'esta área' : `estas ${msg.areas.slice(0, 3).length} áreas`} en favoritos
                         </button>
                       )}
                     </div>

@@ -18,6 +18,7 @@ import { TIPO_AREA_IDS, getTipoAreaColor, getTipoAreaIconPath } from '@/lib/area
 import { sinTildes } from '@/lib/areas/slug'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cookiesGranted, onCookieConsentChange } from '@/components/CookieConsentBar'
+import { avisarAreaMapa } from '@/components/chatbot/ChatbotWidget'
 
 const SPLASH_JOKES = ['splash_joke_1', 'splash_joke_2', 'splash_joke_3'] as const
 
@@ -93,6 +94,20 @@ export default function MapaPage() {
 
     return () => subscription.unsubscribe()
   }, [])
+
+  useEffect(() => {
+    avisarAreaMapa(
+      areaSeleccionada
+        ? {
+            id: areaSeleccionada.id,
+            nombre: areaSeleccionada.nombre,
+            slug: areaSeleccionada.slug || undefined,
+            ciudad: areaSeleccionada.ciudad || undefined,
+            pais: areaSeleccionada.pais || undefined,
+          }
+        : null
+    )
+  }, [areaSeleccionada])
 
   // ✅ CARGAR TODAS LAS ÁREAS desde /api/areas (cacheado en CDN; se recarga al cambiar idioma)
   useEffect(() => {

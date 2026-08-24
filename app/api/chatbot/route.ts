@@ -22,6 +22,7 @@ import {
   esGpsValido,
   sanitizarRespuestaChat,
   componerRespuestaConFichas,
+  elegirAreasParaTarjetas,
   resolveChatLocale,
   BusquedaAreasParams,
   AreaResumen
@@ -50,6 +51,10 @@ import {
   tieneDetalleParadaRuta,
   etiquetaFiltro,
   chipsSeguimiento,
+  pideCercaDeMi,
+  esDeixisMapa,
+  esPreguntaAreaConcreta,
+  extraerNombreAreaConcreta,
 } from '@/lib/chatbot/intencion'
 
 // ============================================
@@ -114,7 +119,7 @@ if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) 
 const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
   {
     name: 'search_areas',
-    description: 'Busca áreas de autocaravanas según múltiples criterios. Retorna hasta 10 resultados. USAR SIEMPRE que el usuario pregunte por áreas, ubicaciones, servicios o precios. NO sirve para gasolineras, restaurantes ni hoteles.',
+    description: 'Busca áreas de autocaravanas. Máximo 3 fichas útiles. NO la uses si pregunta por UN área concreta (usa get_area_by_name). NO la uses con GPS salvo que diga cerca de mí / aquí. Si no hay sitio, PREGUNTA; no dispares un listado.',
     parameters: {
       type: 'object',
       properties: {
@@ -192,7 +197,7 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
   },
   {
     name: 'get_area_by_name',
-    description: 'Busca un área CONCRETA por su nombre. Usar cuando el usuario menciona un área específica: "háblame del área de Ronda", "el área municipal de Zafra".',
+    description: 'UN área concreta por nombre (Castillo de Garcimuñoz, García Muñoz, "esta" si hay pin). Una o dos coincidencias, nunca un corredor de ruta.',
     parameters: {
       type: 'object',
       properties: {
@@ -203,7 +208,7 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
         limit: {
           type: 'number',
           description: 'Máximo de coincidencias a devolver',
-          default: 5
+          default: 2
         }
       },
       required: ['nombre']
@@ -332,6 +337,13 @@ interface ChatbotRequest {
   }
   userId?: string
   locale?: string // idioma de la interfaz del usuario (es, fr, de, it, en...)
+  areaEnMapa?: {
+    id: string
+    nombre: string
+    slug?: string
+    ciudad?: string
+    pais?: string
+  } | null
 }
 
 interface EstadisticasBD {
@@ -574,7 +586,8 @@ export async function POST(req: NextRequest) {
     
     // Parsear body primero
     const body: ChatbotRequest = await req.json()
-    let { messages, conversacionId, ubicacionUsuario, locale } = body
+    let { messages, conversacionId, ubicacionUsuario, locale, areaEnMapa } = body
+    if (areaEnMapa && (!areaEnMapa.id || !areaEnMapa.nombre)) areaEnMapa = undefined
     if (ubicacionUsuario && !esGpsValido(ubicacionUsuario.lat, ubicacionUsuario.lng)) {
       logger.warn('GPS inválido o Null Island; se ignora', ubicacionUsuario)
       ubicacionUsuario = undefined
@@ -681,7 +694,7 @@ export async function POST(req: NextRequest) {
         .slice(0, -1)
         .map((m: any) => m.content),
     })
-    const atajo = clasificarIntencion({
+    let atajo = clasificarIntencion({
       ultimo: ultimoMensajeUsuario,
       previosUsuario: messages
         .filter((m: any) => m.role === 'user')
@@ -689,6 +702,7 @@ export async function POST(req: NextRequest) {
         .map((m: any) => m.content),
       ultimoAsistente: [...messages].reverse().find((m: any) => m.role === 'assistant')?.content || null,
     })
+    if (atajo === 'filtro_sin_sitio' && areaEnMapa) atajo = null
     if (atajo) {
       const ruta = extraerRutaNombrada(ultimoMensajeUsuario)
       const etiqueta =
@@ -902,15 +916,12 @@ export async function POST(req: NextRequest) {
 - Coordenadas: ${ubicacionUsuario!.lat.toFixed(4)}, ${ubicacionUsuario!.lng.toFixed(4)}
 
 REGLAS DE UBICACIÓN:
-1. Cuando el usuario pregunte por "áreas cerca", "áreas aquí", "cerca de mí", o no mencione ciudad específica → USA su ubicación GPS (${ubicacionDetectada.city})
-2. "De aquí a X", "desde aquí", "from here to X": el origen ES ${ubicacionDetectada.city}. NUNCA pases origen="aquí".
-3. Recuerda el hilo: si ya hablasteis de un área o una ciudad, "esa", "la de antes" y "desde aquí" apuntan a eso o al GPS.
-4. Si el usuario menciona EXPLÍCITAMENTE otra ciudad ("áreas en Barcelona"), IGNORA su GPS y busca en esa ciudad
-5. Siempre incluye las distancias cuando uses búsqueda por GPS (el campo "distancia_km" estará disponible)
-6. Radio de búsqueda:
-   - Si dice "cerca", "aquí", "cerca de mí" → Radio 10-20km
-   - Si es genérico ("áreas", "buscar") → Radio 50km
-   - Si menciona ciudad específica → Búsqueda por nombre de ciudad (sin radio)`
+1. GPS SOLO si dice "cerca de mí", "aquí" o "donde estoy". "Recomiéndame un área" o "qué área" SIN sitio NO usa el GPS: pregunta dónde, o usa el pin del mapa.
+2. "De aquí a X", "desde aquí": el origen ES ${ubicacionDetectada.city}. NUNCA pases origen="aquí".
+3. Recuerda el hilo: "esa", "la de antes" apuntan al área o ciudad del hilo, NO a un listado nuevo.
+4. Si nombra otra ciudad, IGNORA el GPS.
+5. Distancias solo en búsquedas GPS.
+6. Radio: cerca de mí → 10-20km. Ciudad concreta → por nombre, sin radio. NUNCA 50km por una frase genérica.`
     }
 
     const ciudadGpsTxt = ciudadGps || 'desconocida'
@@ -921,9 +932,11 @@ El Tío DEBE usar las últimas frases de ESTA conversación. No empieces de cero
 ${hiloModelo.slice(-8).map((m) => `- ${m.role === 'user' ? 'Usuario' : 'Tío'}: ${m.content.slice(0, 220)}`).join('\n') || '- (primer mensaje)'}
 - GPS (dónde está físicamente): ${ciudadGpsTxt}
 - Ciudades ya dichas en el hilo: ${ciudadesHilo.join(', ') || '(ninguna aún)'}
+- Pin abierto en el mapa: ${areaEnMapa ? `${areaEnMapa.nombre} (${[areaEnMapa.ciudad, areaEnMapa.pais].filter(Boolean).join(', ')}) /area/${areaEnMapa.slug || ''}` : '(ninguno)'}
 - "aquí / cerca de mí / donde estoy" → GPS (${ciudadGpsTxt}).
-- "allí / esa / la de antes / y ahora a X" → el hilo (${ciudadHilo || ciudadGpsTxt}).
-GPS y memoria se complementan: pueden no ser el mismo sitio. Ubicar se hace con las dos.`
+- "esta / esa / la del mapa / recomiéndame un área" con pin abierto → ESA área, una ficha.
+- "allí / la de antes" → el hilo (${ciudadHilo || ciudadGpsTxt}).
+GPS, pin y memoria se complementan. No dispares el corredor entero si preguntan por una.`
     
     // Añadir estadísticas de la plataforma
     systemPromptEnriquecido += `\n\n═══════════════════════════════════════
@@ -957,7 +970,9 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 🛣️ RUTAS Y FORMATO (RECORDATORIO)
 ═══════════════════════════════════════
 - Si dice solo "voy de A a B, dónde paro" SIN decir si duerme, camping/área o tramo: PREGUNTA eso. No listes áreas (sobre todo no las del origen).
-- Cuando YA ha dicho pernocta / tipo / tramo → search_areas_along_route. Máximo 3-4 paradas, repartidas, NUNCA un racimo en la ciudad de salida.
+- Cuando YA ha dicho pernocta / tipo / tramo → search_areas_along_route. Máximo 3 paradas, repartidas, NUNCA un racimo en la ciudad de salida.
+- Si pregunta por UN área o pueblo (Garcimuñoz, "esta", "la de X"): get_area_by_name. UNA ficha. NO reabras la ruta ni pegues el corredor.
+- Si estás pidiendo aclaración ("¿te refieres a…?"): CERO fichas. Primero que confirme.
 - /ruta es complemento OPCIONAL después de listar paradas, NUNCA la única respuesta.
 - Servicios: SOLO los que estén en true (ej: "Agua, Electricidad"). NUNCA "[agua: no, ...]".
 - Valoración: "⭐ 4.7/5 (128 valoraciones)" si hay nº de reseñas. No digas "5 estrellas" sin volumen.
@@ -1027,11 +1042,16 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       ],
     })
     const hiloTieneRuta = hiloModelo.some((m) => m.role === 'user' && detectarPreguntaRuta(m.content))
-    const detalleParadaRuta =
-      tieneDetalleParadaRuta(ultimoMensajeUsuario) ||
-      hiloModelo.some((m) => m.role === 'user' && tieneDetalleParadaRuta(m.content))
+    const preguntaConcreta =
+      esPreguntaAreaConcreta(ultimoMensajeUsuario) ||
+      esDeixisMapa(ultimoMensajeUsuario) ||
+      Boolean(extraerNombreAreaConcreta(ultimoMensajeUsuario)) ||
+      Boolean(areaEnMapa && /recomi[eé]ndame|esta no te suena|qu[eé] (pasa con |tal )?([eé]sta|[eé]sa)/i.test(ultimoMensajeUsuario))
     const forzarBusquedaRuta =
-      detalleParadaRuta && (detectarPreguntaRuta(ultimoMensajeUsuario) || hiloTieneRuta)
+      !preguntaConcreta &&
+      tieneDetalleParadaRuta(ultimoMensajeUsuario) &&
+      (detectarPreguntaRuta(ultimoMensajeUsuario) || hiloTieneRuta)
+    const forzarAreaConcreta = preguntaConcreta && !forzarBusquedaRuta
     const pareceFueraCatalogo =
       esPreguntaFueraCatalogo(ultimoMensajeUsuario) && !pideAreasEnMensaje(ultimoMensajeUsuario)
 
@@ -1042,15 +1062,19 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       const toolChoice: OpenAI.Chat.ChatCompletionToolChoiceOption =
         rounds === 1 && forzarBusquedaRuta && !firstFunctionName
           ? { type: 'function', function: { name: 'search_areas_along_route' } }
-          : rounds === 1 && pareceFueraCatalogo && !firstFunctionName
-            ? { type: 'function', function: { name: 'buscar_info_viaje' } }
-            : 'auto'
+          : rounds === 1 && forzarAreaConcreta && !firstFunctionName
+            ? { type: 'function', function: { name: 'get_area_by_name' } }
+            : rounds === 1 && pareceFueraCatalogo && !firstFunctionName
+              ? { type: 'function', function: { name: 'buscar_info_viaje' } }
+              : 'auto'
 
       if (toolChoice !== 'auto') {
         console.log(
           forzarBusquedaRuta
             ? '🛣️ Forzando search_areas_along_route (ruta con intención)'
-            : '🌐 Forzando buscar_info_viaje (fuera de catálogo)'
+            : forzarAreaConcreta
+              ? '📌 Forzando get_area_by_name (un área, no el corredor)'
+              : '🌐 Forzando buscar_info_viaje (fuera de catálogo)'
         )
       }
 
@@ -1095,22 +1119,30 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
             fnArgs.ubicacion.nombre = resolverLugarRelativo(fnArgs.ubicacion.nombre, ciudadGps, ciudadHilo)
           }
         }
+        if (fnName === 'get_area_by_name') {
+          const nombrada = extraerNombreAreaConcreta(ultimoMensajeUsuario)
+          if (!fnArgs.nombre || esDeixisMapa(fnArgs.nombre) || String(fnArgs.nombre).length < 3) {
+            fnArgs.nombre = nombrada || areaEnMapa?.nombre || fnArgs.nombre
+          }
+          fnArgs.limit = Math.min(Number(fnArgs.limit) || 2, 2)
+        }
         funcionesEjecutadas.push({ name: fnName, args: fnArgs })
 
-        // Inyectar GPS del usuario si busca sin ubicación explícita
+        // GPS solo si pide "cerca de mí". Un "recomiéndame un área" no vuelca Murcia.
         if (
           ubicacionUsuario &&
           esGpsValido(ubicacionUsuario.lat, ubicacionUsuario.lng) &&
           fnName === 'search_areas' &&
+          pideCercaDeMi(ultimoMensajeUsuario) &&
           !fnArgs.ubicacion?.lat &&
           !fnArgs.ubicacion?.nombre
         ) {
-          console.log('📍 Inyectando ubicación del usuario')
+          console.log('📍 Inyectando ubicación del usuario (cerca de mí)')
           fnArgs.ubicacion = {
             ...fnArgs.ubicacion,
             lat: ubicacionUsuario.lat,
             lng: ubicacionUsuario.lng,
-            radio_km: fnArgs.ubicacion?.radio_km || config.radio_busqueda_default_km || 50
+            radio_km: fnArgs.ubicacion?.radio_km || 20
           }
         }
 
@@ -1120,7 +1152,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
           switch (fnName) {
             case 'search_areas':
               functionResult = await searchAreas(fnArgs as BusquedaAreasParams)
-              if (Array.isArray(functionResult)) todasLasAreas.push(...functionResult)
+              if (Array.isArray(functionResult)) todasLasAreas.push(...functionResult.slice(0, 3))
               break
             case 'get_area_details':
               functionResult = await getAreaDetails(fnArgs.area_id)
@@ -1130,11 +1162,18 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
               if (Array.isArray(functionResult)) todasLasAreas.push(...functionResult)
               break
             case 'get_area_by_name':
-              functionResult = await buscarAreasPorNombre(fnArgs.nombre, fnArgs.limit || 5)
-              if (Array.isArray(functionResult)) todasLasAreas.push(...functionResult)
+              functionResult = await buscarAreasPorNombre(fnArgs.nombre, fnArgs.limit || 2)
+              if (Array.isArray(functionResult)) todasLasAreas.push(...functionResult.slice(0, 2))
               break
             case 'search_areas_along_route':
               {
+                if (preguntaConcreta) {
+                  functionResult = {
+                    areas: [],
+                    aviso: 'El usuario pregunta por un área o pueblo concreto. Usa get_area_by_name. No listes el corredor.',
+                  }
+                  break
+                }
                 const rutaHilo = extraerRutaNombrada(ultimoMensajeUsuario)
                   || [...hiloModelo].reverse().map((m) => extraerRutaNombrada(m.content)).find(Boolean)
                 if (!fnArgs.origen && rutaHilo) fnArgs.origen = rutaHilo.origen
@@ -1154,7 +1193,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
                     incluir_origen: Boolean(fnArgs.incluir_origen || delHilo.incluir_origen),
                   }
                 )
-                if (functionResult?.areas) todasLasAreas.push(...functionResult.areas)
+                if (functionResult?.areas) todasLasAreas.push(...functionResult.areas.slice(0, 3))
               }
               break
             case 'buscar_info_viaje':
@@ -1199,20 +1238,30 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       totalTokens += closing.usage?.total_tokens || 0
     }
 
-    // Deduplicar áreas por id para las tarjetas del chat
+    // Deduplicar y recortar: no pegar el corredor si pregunta por una
     const vistos = new Set<string>()
-    const areasEncontradas: AreaResumen[] = []
+    const areasBrutas: AreaResumen[] = []
     for (const a of todasLasAreas) {
       if (a && (a as any).id && !vistos.has((a as any).id)) {
         vistos.add((a as any).id)
-        areasEncontradas.push(a)
+        areasBrutas.push(a)
       }
     }
+    if (areaEnMapa?.id && preguntaConcreta && !areasBrutas.some((a) => a.id === areaEnMapa.id)) {
+      const delPin = await getAreaDetails(areaEnMapa.id)
+      if (delPin) areasBrutas.unshift(delPin)
+    }
+    const areasEncontradas = elegirAreasParaTarjetas(
+      finalResponse || '',
+      areasBrutas,
+      ultimoMensajeUsuario,
+      3
+    )
 
     if (finalResponse) {
       finalResponse = areasEncontradas.length
         ? componerRespuestaConFichas(finalResponse, areasEncontradas, idiomaRespuesta)
-        : sanitizarRespuestaChat(finalResponse, areasEncontradas)
+        : sanitizarRespuestaChat(finalResponse, areasBrutas)
     }
 
     const functionName = firstFunctionName

@@ -59,7 +59,45 @@ export function extraerSitioNombrado(mensaje: string): string {
 export function asistentePidioClarificar(texto: string | null | undefined): boolean {
   return /no me queda claro|qu[eé] informaci[oó]n necesitas|not sure what you need|what do you need about|pas clair|de quoi tu as besoin|nicht klar|was du brauchst|non mi [eè] chiaro|qu[eé] parada buscas|pernoctar|mitad de ruta|cerca del destino|no al salir|what kind of stop|quelle halte|welche pause|che sosta|d[oó]nde las buscas|cerca de tu ubicaci[oó]n|en una localidad|punto del mapa|where do you want them|pr[eè]s de (toi|vous)|in einer ortschaft/i.test(
     texto || ''
+  ) || /te refieres|te refer[ií]as|o a un [aá]rea concreta|dime si quieres que ampl[ií]e/i.test(texto || '')
+}
+
+/** "cerca de mí / aquí" — único caso en el que el GPS decide el listado. */
+export function pideCercaDeMi(mensaje: string): boolean {
+  return /cerca de m[ií]|cerca de (tu |mi )?ubicaci[oó]n|near me|from my location|pr[eè]s de (moi|toi|vous)|in meiner n[aä]he|vicino a me|junto a m[ií]|donde estoy|where I am/i.test(
+    mensaje || ''
   )
+}
+
+/** Señala el pin del mapa o "esta/esa" sin nombrar otra cosa. */
+export function esDeixisMapa(mensaje: string): boolean {
+  const t = (mensaje || '').replace(/[\u{1F300}-\u{1FAFF}]/gu, '').trim()
+  if (!t || t.length > 80) return false
+  return /^(y\s+)?(esta|esa|esto|eso)\b|esta no te suena|esa no te suena|la del mapa|este (sitio|pin|[aá]rea)|ese ([aá]rea|sitio)/i.test(t)
+}
+
+/**
+ * Pregunta por UN sitio/área concreto. No es "dónde paro en la ruta".
+ * Evita reabrir el corredor entero (metralleta de fichas).
+ */
+export function esPreguntaAreaConcreta(mensaje: string): boolean {
+  const t = (mensaje || '').replace(/[\u{1F300}-\u{1FAFF}]/gu, '').trim()
+  if (!t) return false
+  if (parecePreguntaRuta(t) && !/castillo|[aá]rea de|la de |esta no te suena/i.test(t)) return false
+  return (
+    esDeixisMapa(t) ||
+    /qu[eé] pasa con|h[aá]blame de|la (informaci[oó]n )?de la|solo (te )?(pido|quiero|das) (una|esa|esta)|una sola|[aá]rea concreta|el [aá]rea de|castillo de|garcim[uú][nñ]oz|garc[ií]a\s*mu[nñ]oz|me refer[ií]a|te suena esa|te suena esta|recomi[eé]ndame (esa|esta)/i.test(t)
+  )
+}
+
+export function extraerNombreAreaConcreta(mensaje: string): string {
+  const t = (mensaje || '').replace(/[\u{1F300}-\u{1FAFF}]/gu, '').replace(/[¿?¡!]/g, ' ').replace(/\s+/g, ' ').trim()
+  const m =
+    t.match(/castillo de\s+([A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9\s'-]{2,40})/i) ||
+    t.match(/(?:[aá]rea(?: de autocaravanas)?|camping)\s+(?:de\s+)?([A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9\s'-]{2,40})/i) ||
+    t.match(/(?:la de|el de|la del|el del)\s+([A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9\s'-]{2,40})/i)
+  if (m) return m[1].replace(/\s+(de )?(cuenca|espa[nñ]a|murcia).*$/i, '').trim()
+  return ''
 }
 
 /** "Voy de Madrid a Valencia, dónde paro" — pregunta de ruta, no de un sitio suelto. */
@@ -165,6 +203,7 @@ export function clasificarIntencion(opts: {
   if (esGuiaTuristicaPura(ultimo)) return 'guia'
   if (esGasolineraSinSitio(ultimo)) return 'gas_sin_sitio'
   if (asistentePidioClarificar(opts.ultimoAsistente)) return null
+  if (esPreguntaAreaConcreta(ultimo) || esDeixisMapa(ultimo)) return null
   if (esRutaSinIntencion(ultimo)) return 'ruta_sin_intencion'
   if (esFiltroSinSitio(ultimo)) return 'filtro_sin_sitio'
   if (!esSitioSinIntencion(ultimo)) return null
