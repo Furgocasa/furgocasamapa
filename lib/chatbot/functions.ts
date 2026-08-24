@@ -842,19 +842,27 @@ export function componerRespuestaConFichas(textoModelo: string, areas: AreaResum
   const limpio = sanitizarRespuestaChat(textoModelo || '', areas)
   if (!areas.length) return limpio
 
-  const corte = limpio.search(/(?:🚐\s*\*\*|\n\s*\d+\.\s+\*\*|\n\s*\*\*[^*\n]{6,}\*\*\s*\n\s*📍)/)
-  let intro = (corte >= 0 ? limpio.slice(0, corte) : limpio).trim()
-  intro = intro.replace(/https?:\/\/\S+/g, '').replace(/[ \t]+\n/g, '\n').trim()
-  const lineasIntro = intro.split('\n').filter((linea) => {
+  const keep: string[] = []
+  let enFicha = false
+  for (const linea of limpio.split('\n')) {
     const l = linea.trim()
-    if (!l) return false
-    if (/autocaravanas\.com|example\.com|maps\.google/i.test(l)) return false
-    if (/💰|✨ Servicios:|🔗 \/area\//.test(l)) return false
-    return true
-  })
-  intro = lineasIntro.join('\n').trim()
-  if (intro.length > 360) intro = `${intro.slice(0, 300).replace(/\s+\S*$/, '')}…`
-
+    if (/^🚐/.test(l) || /^\d+\.\s+\*\*[^*]+\*\*\s*$/.test(l)) {
+      enFicha = true
+      continue
+    }
+    if (enFicha && (/^[📍💰✨⭐🅿️🔗📏↔]/.test(l) || /✨ Servicios:|🔗 \/area\//.test(l))) {
+      continue
+    }
+    if (enFicha && !l) {
+      enFicha = false
+      continue
+    }
+    enFicha = false
+    if (/autocaravanas\.com|example\.com/i.test(l)) continue
+    if (/💰|✨ Servicios:|🔗 \/area\//.test(l)) continue
+    keep.push(linea)
+  }
+  const intro = keep.join('\n').replace(/\n{3,}/g, '\n\n').trim()
   const fichas = areas.slice(0, 6).map((a) => formatAreaParaChat(a)).join('\n')
   return [intro, fichas].filter(Boolean).join('\n\n')
 }
@@ -929,5 +937,59 @@ export async function contarAreas(params: BusquedaAreasParams): Promise<number> 
   
   if (error) throw error
   return count || 0
+}
+
+export interface InfoViajeWebParams {
+  pregunta: string
+  lugar?: string
+  origen?: string
+  destino?: string
+}
+
+/**
+ * Web search de Terra SOLO para lo que no está en el catálogo
+ * (gasolineras, qué ver, restaurantes, talleres). Nunca para listar áreas.
+ */
+export async function buscarInfoViajeWeb(params: InfoViajeWebParams): Promise<{
+  texto: string
+  aviso: string
+}> {
+  const pregunta = (params.pregunta || '').trim()
+  if (!pregunta) return { texto: '', aviso: 'Falta la pregunta' }
+
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    return { texto: '', aviso: 'Búsqueda web no configurada' }
+  }
+
+  const { default: OpenAI } = await import('openai')
+  const openai = new OpenAI({ apiKey })
+  const detalle = [
+    pregunta,
+    params.lugar ? `Lugar: ${params.lugar}` : '',
+    params.origen && params.destino ? `Entre ${params.origen} y ${params.destino}` : '',
+  ]
+    .filter(Boolean)
+    .join('. ')
+
+  const resp = await openai.responses.create({
+    model: 'gpt-5.6-terra',
+    tools: [{ type: 'web_search' }],
+    max_output_tokens: 700,
+    reasoning: { effort: 'low' },
+    instructions:
+      'Información práctica de viaje (gasolineras, qué ver, restaurantes, talleres). ' +
+      'Idioma de la pregunta. Sitios reales, breve. ' +
+      'NO inventes áreas de autocaravanas ni enlaces /area/. ' +
+      'Si no hay dato fiable, dilo.',
+    input: detalle,
+  })
+
+  return {
+    texto: (resp as any).output_text || '',
+    aviso:
+      'Esto NO es el catálogo de áreas. No lo presentes como ficha /area/. ' +
+      'Di que es información de la web, no verificada en Mapa Furgocasa.',
+  }
 }
 

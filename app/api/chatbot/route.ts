@@ -17,6 +17,7 @@ import {
   getAreasByCountry,
   buscarAreasPorNombre,
   searchAreasAlongRoute,
+  buscarInfoViajeWeb,
   serializeToolResultForModel,
   esGpsValido,
   sanitizarRespuestaChat,
@@ -250,6 +251,36 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
       },
       required: ['pais']
     }
+  },
+  {
+    name: 'buscar_info_viaje',
+    description:
+      'Búsqueda web (GPT-5.6 Terra) SOLO para lo que NO está en el catálogo: gasolineras, qué ver / monumentos, restaurantes, talleres, hoteles. ' +
+      'Ej: "hay gasolinera entre Pepito y Manolo", "qué ver en Cuenca". ' +
+      'NUNCA para listar áreas de autocaravanas (usa search_areas). ' +
+      'Si preguntan áreas Y qué ver, llama también a search_areas.',
+    parameters: {
+      type: 'object',
+      properties: {
+        pregunta: {
+          type: 'string',
+          description: 'La pregunta del usuario, tal cual o resumida (gasolinera / qué ver / restaurante)'
+        },
+        lugar: {
+          type: 'string',
+          description: 'Ciudad o zona si la hay. Ejemplo: "Cuenca"'
+        },
+        origen: {
+          type: 'string',
+          description: 'Origen si preguntan algo entre dos sitios'
+        },
+        destino: {
+          type: 'string',
+          description: 'Destino si preguntan algo entre dos sitios'
+        }
+      },
+      required: ['pregunta']
+    }
   }
 ]
 
@@ -316,8 +347,18 @@ function sanitizarArgsBusqueda(fnArgs: any, ultimoMensaje: string) {
   return fnArgs
 }
 
+function esPreguntaFueraCatalogo(mensaje: string): boolean {
+  if (!mensaje) return false
+  return /\b(gasolinera|gasolineras|gasolina|di[eé]sel|petrol|tankstelle|station.?service|qu[eé] ver|qu[eé] visitar|visitar en|monumentos?|museos?|catedral|restaurantes?|talleres?\b|hoteles?\b|farmacia)/i.test(mensaje)
+}
+
+function pideAreasEnMensaje(mensaje: string): boolean {
+  return /\b(area|área|areas|áreas|stellplatz|sosta|aire camping|pernoct|autocaravana|camper park)\b/i.test(mensaje || '')
+}
+
 function detectarPreguntaRuta(mensaje: string): boolean {
   if (!mensaje || typeof mensaje !== 'string') return false
+  if (esPreguntaFueraCatalogo(mensaje) && !pideAreasEnMensaje(mensaje)) return false
   const t = mensaje.trim()
   // "Driving Madrid to Valencia, where to stop?" / "voy de X a Y" / "de X a Y dónde paro"
   const patrones = [
@@ -682,8 +723,8 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 - FILTROS: Si el usuario solo nombra una ciudad o país ("Murcia", "Viseu", "Cádiz", "En Tecolutla"), busca SIN heredar servicios, tipo_area ni solo_gratuitas del turno anterior.
 - TIPO: solo tres. publica = ayuntamiento/organismo. privada = empresa/particular (camper park, granja, Weingut, CL, Brit Stop). camping = recinto. No existe la categoría stopover. En cada país la gente usa otro nombre (aire, sosta, Stellplatz, camperplaats, motorhome aire, trailer park): eso es etiqueta. Un "parking autocaravanas" del pueblo es pública. UK: touring park = camping; CL/aire de anfitrión = privada; Arosfan = pública.
 - CERCA DE MÍ: si no hay GPS válido en este mensaje, pide la ciudad. No busques en todo el mundo ni inventes una ubicación.
-- POI turísticos (grutas, catedrales, playas, santuarios): busca áreas CERCA de esa ciudad, no un área con ese nombre. Ej: Gruta de Massabielle → Lourdes.
-- Gasolineras, talleres, restaurantes, hoteles: NO están en el catálogo. No llames a search_areas con supermercado. Explica que solo hay áreas de autocaravanas.
+- POI turísticos: si preguntan "qué ver" / monumentos → buscar_info_viaje. Si también quieren pernoctar, llama TAMBIÉN a search_areas en esa ciudad (áreas cerca, no un área con el nombre del monumento).
+- Gasolineras, talleres, restaurantes, hoteles: NO están en el catálogo. Usa buscar_info_viaje. No llames a search_areas con supermercado. Di que esa info es de la web, no una ficha /area/.
 - example.com u otras URLs inventadas: prohibido. Solo /area/{slug}.
 - Idioma: si el último mensaje está en inglés, portugués, francés, alemán o italiano, responde TODO en ese idioma (también títulos y etiquetas).`
     
@@ -735,19 +776,26 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       .reverse()
       .find((m: any) => m.role === 'user')?.content || ''
     const parecePreguntaRuta = detectarPreguntaRuta(ultimoMensajeUsuario)
+    const pareceFueraCatalogo =
+      esPreguntaFueraCatalogo(ultimoMensajeUsuario) && !pideAreasEnMensaje(ultimoMensajeUsuario)
 
     while (rounds < MAX_TOOL_ROUNDS) {
       rounds++
       console.log(`🔮 Llamando a OpenAI (ronda ${rounds})...`)
 
-      // Primera ronda + pregunta de ruta → forzar search_areas_along_route
       const toolChoice: OpenAI.Chat.ChatCompletionToolChoiceOption =
         rounds === 1 && parecePreguntaRuta && !firstFunctionName
           ? { type: 'function', function: { name: 'search_areas_along_route' } }
-          : 'auto'
+          : rounds === 1 && pareceFueraCatalogo && !firstFunctionName
+            ? { type: 'function', function: { name: 'buscar_info_viaje' } }
+            : 'auto'
 
       if (toolChoice !== 'auto') {
-        console.log('🛣️ Forzando search_areas_along_route por detección de ruta')
+        console.log(
+          parecePreguntaRuta
+            ? '🛣️ Forzando search_areas_along_route por detección de ruta'
+            : '🌐 Forzando buscar_info_viaje (fuera de catálogo)'
+        )
       }
 
       const completion = await openai.chat.completions.create({
@@ -829,6 +877,14 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
             case 'search_areas_along_route':
               functionResult = await searchAreasAlongRoute(fnArgs.origen, fnArgs.destino, fnArgs.corredor_km || 15)
               if (functionResult?.areas) todasLasAreas.push(...functionResult.areas)
+              break
+            case 'buscar_info_viaje':
+              functionResult = await buscarInfoViajeWeb({
+                pregunta: fnArgs.pregunta || ultimoMensajeUsuario,
+                lugar: fnArgs.lugar,
+                origen: fnArgs.origen,
+                destino: fnArgs.destino,
+              })
               break
             default:
               functionResult = { error: `Función ${fnName} no implementada` }
