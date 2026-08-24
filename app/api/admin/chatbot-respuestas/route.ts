@@ -187,7 +187,7 @@ export async function PATCH(request: NextRequest) {
 
 const QUALITY_SCORE: Record<string, number> = { correcta: 10, mejorable: 5, incorrecta: 0 }
 
-export function textoUbicacion(u?: { ciudad?: string | null; pais?: string | null } | null): string {
+function textoUbicacion(u?: { ciudad?: string | null; pais?: string | null } | null): string {
   const ciudad = String(u?.ciudad || '').trim()
   const pais = String(u?.pais || '').trim()
   if (ciudad && pais && ciudad.toLowerCase() !== pais.toLowerCase()) return `${ciudad}, ${pais}`
