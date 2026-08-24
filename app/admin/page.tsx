@@ -47,7 +47,7 @@ const GRUPOS: Grupo[] = [
       { title: 'Búsqueda masiva', description: 'Encuentra áreas en Google Maps', icon: <MagnifyingGlassIcon className="w-6 h-6" />, href: '/admin/areas/busqueda-masiva' },
       { title: 'Actualizar servicios', description: 'Detecta servicios con IA y SerpAPI', icon: <ArrowPathIcon className="w-6 h-6" />, href: '/admin/areas/actualizar-servicios' },
       { title: 'Enriquecer textos', description: 'Genera descripciones automáticas', icon: <SparklesIcon className="w-6 h-6" />, href: '/admin/areas/enriquecer-textos' },
-      { title: 'Enriquecer imágenes', description: 'Busca y añade imágenes automáticamente', icon: <PhotoIcon className="w-6 h-6" />, href: '/admin/areas/enriquecer-imagenes' },
+      { title: 'Gestión de imágenes', description: 'Revisa, filtra y enriquece las fotos de las áreas', icon: <PhotoIcon className="w-6 h-6" />, href: '/admin/areas/enriquecer-imagenes' },
       { title: 'Derechos de imagen', description: 'Revisa fotos de terceros y genera IA', icon: <ShieldExclamationIcon className="w-6 h-6" />, href: '/admin/areas/revisar-imagenes' },
       { title: 'Confirmaciones de viajeros', description: 'Revisa y aplica servicios, precio y plazas', icon: <HandThumbUpIcon className="w-6 h-6" />, href: '/admin/areas/contribuciones' },
     ],
