@@ -1,0 +1,35 @@
+[
+  {
+    "slug": "camping-las-menas-seron",
+    "precio_noche": 28,
+    "verificado": true,
+    "fuente": "Tarifas oficiales campinglasmenasdeseron.com: parcela 10 € + autocaravana 8 € + 2 adultos 10 € = 28 € (luz 6 € aparte)"
+  },
+  {
+    "slug": "camping-valle-del-andarax-fondon",
+    "precio_noche": 28.6,
+    "verificado": true,
+    "fuente": "Tarifas oficiales 2026-27 campingvalleandarax.com: 2 adultos 12 € + autocaravana 8 € + parcela/luz 6 € = 26 € + 10% IVA = 28,60 € temporada baja"
+  },
+  {
+    "slug": "camping-pinar-del-rey-velez-blanco",
+    "precio_noche": 18,
+    "verificado": true,
+    "fuente": "Web oficial pinardelrey.com/camping: promoción zona de acampada desde 18 € dos personas"
+  },
+  {
+    "slug": "cabo-de-gata-camper-almeria",
+    "activo": false,
+    "fuente": "Duplicado exacto de cabo-de-gata-camper (mismas coords 36.81646, -2.14921). Se deja la ficha con 1440 reseñas"
+  },
+  {
+    "slug": "camper-area-cabo-de-gata-almeria",
+    "activo": false,
+    "fuente": "Duplicado exacto de camper-area-cabo-de-gata (mismas coords 36.798018, -2.232329)"
+  },
+  {
+    "slug": "camper-park-carboneras-almeria",
+    "activo": false,
+    "fuente": "Duplicado exacto de camper-park-carboneras (mismas coords 37.003454, -1.908875)"
+  }
+]

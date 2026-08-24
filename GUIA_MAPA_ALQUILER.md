@@ -650,6 +650,21 @@ vistas (90 días) no tienen precio, con Cantabria dominando el tráfico
   públicas despacio y con la regla de imágenes de siempre (sin riesgo;
   IA propia marcada si no hay segura).
 
+### Espiral geográfica (en marcha)
+
+Se enriquece por proximidad a Murcia, no por ranking nacional. Script
+`scripts/aplicar-datos-areas.js` + JSON de lote. Solo cifras de web
+oficial o directorio fiable; `null` no se inventa.
+
+| Lote | Territorio | Hecho |
+|---|---|---|
+| Murcia 1–3 | Murcia | 16 fichas + 3 duplicados desactivados (301) |
+| Alicante 1 | Alicante | 8 fichas (ciudad, tipo, precio) |
+| Alicante–Almería | Costa Blanca + Cabo de Gata | 25 fichas (privadas con web + campings con tarifa); parking de guarda El Verger fuera; 3 duplicados Almería (301) |
+
+Siguiente: resto de Alicante (campings sin rack, públicas) y resto de
+Almería; luego Albacete / Granada / Valencia.
+
 ---
 
 ## 17. Casi Cinco: el modelo del mapa NO se replica con restaurantes

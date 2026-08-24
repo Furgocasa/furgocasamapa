@@ -1,0 +1,163 @@
+[
+  {
+    "slug": "paraiso-camper",
+    "tipo_area": "privada",
+    "ciudad": "Calpe",
+    "precio_noche": 22,
+    "plazas_totales": 60,
+    "servicios_true": ["agua", "electricidad", "wc", "duchas", "wifi", "lavanderia", "zona_mascotas", "vaciado_aguas_grises", "vaciado_aguas_negras"],
+    "verificado": true,
+    "fuente": "Tarifas oficiales paraisocamper.com: 22 €/noche 1-3 noches (01/01-30/04 y 01/09-31/12), 2 pax, 5 kWh, duchas, aguas. AreasCamper: 60 plazas. Recinto privado, no pública"
+  },
+  {
+    "slug": "camping-mediterraneo-area",
+    "tipo_area": "camping",
+    "ciudad": "Calpe",
+    "precio_noche": 22,
+    "servicios_true": ["agua", "electricidad", "wc", "duchas", "wifi", "lavanderia", "zona_mascotas", "vaciado_aguas_grises", "vaciado_aguas_negras"],
+    "verificado": true,
+    "fuente": "Tarifas oficiales 2026-27 mediterraneocamper.com: 22 € 1-4 noches (01/09-30/04 + puentes), 2 pax, 5 kWh, duchas, aguas, wifi"
+  },
+  {
+    "slug": "camperlive-vip",
+    "tipo_area": "privada",
+    "ciudad": "Finestrat",
+    "precio_noche": 17,
+    "plazas_totales": 85,
+    "servicios_true": ["agua", "electricidad", "wc", "duchas", "wifi", "lavanderia", "zona_mascotas", "vaciado_aguas_grises", "vaciado_aguas_negras"],
+    "verificado": true,
+    "fuente": "Tarifa vigente citada en Stellplatzführer (jun 2025): parcela 8,5×6 m 17 €/noche; 85 plazas. Recinto privado (camperlive.vip), no pública"
+  },
+  {
+    "slug": "san-antonio-camper-park",
+    "tipo_area": "privada",
+    "precio_noche": 25,
+    "plazas_totales": 52,
+    "servicios_true": ["agua", "electricidad", "wc", "duchas", "wifi", "lavanderia", "zona_mascotas", "vaciado_aguas_grises", "vaciado_aguas_negras"],
+    "verificado": true,
+    "fuente": "Tarifas oficiales 2026 sanantonioaltea.com: 25 €/día 1-6 días (2 adultos, aguas, duchas). Camperstop: 52 plazas"
+  },
+  {
+    "slug": "camper-park-xalo",
+    "precio_noche": 16,
+    "plazas_totales": 42,
+    "servicios_true": ["agua", "electricidad", "wc", "duchas", "wifi", "lavanderia", "zona_mascotas", "vaciado_aguas_grises", "vaciado_aguas_negras"],
+    "verificado": true,
+    "fuente": "Web oficial camperparkxalo.com: 42 plazas; Confort 16 €/noche (04/05-30/06), 2 pax + 1 mascota, aguas, duchas, wifi. Luz 0,50 €/kWh aparte"
+  },
+  {
+    "slug": "orange-grove-camper-park",
+    "precio_noche": 16,
+    "plazas_totales": 35,
+    "servicios_true": ["agua", "electricidad", "wc", "duchas", "wifi", "lavanderia", "zona_mascotas", "vaciado_aguas_grises", "vaciado_aguas_negras"],
+    "verificado": true,
+    "fuente": "Tarifa oficial orangegrovecamperpark.com: 16 € 1-14 noches (2 pax, 1 mascota, baños, piscina, aguas, wifi). 35 parcelas. Luz 3 €/noche"
+  },
+  {
+    "slug": "camper-area-coveta",
+    "tipo_area": "privada",
+    "ciudad": "El Campello",
+    "precio_noche": 10,
+    "plazas_totales": 37,
+    "servicios_true": ["agua", "electricidad", "wc", "duchas", "wifi", "lavanderia", "zona_mascotas", "vaciado_aguas_grises", "vaciado_aguas_negras"],
+    "verificado": true,
+    "fuente": "camperareacoveta.com / park4night (texto del área): desde 10 € parcela pequeña, 37 plazas; abierto 01/09-30/06. Recinto privado, no pública. Ciudad: El Campello (l'Amerador)"
+  },
+  {
+    "slug": "camping-el-naranjal-javea",
+    "precio_noche": 37.25,
+    "verificado": true,
+    "fuente": "Tarifas oficiales campingelnaranjal.com: parcela grande + 2 adultos + luz = 37,25 € temporada baja / 45,35 € alta"
+  },
+  {
+    "slug": "camping-costa-blanca-el-campello",
+    "precio_noche": 29,
+    "verificado": true,
+    "fuente": "Tarifa parcelas 2026 campingcostablanca.com: parcela 60 m² 18,15 € + 2 adultos 5,45 € = 29,05 €/noche (1 noche, temporada base)"
+  },
+  {
+    "slug": "camping-santa-pola",
+    "ciudad": "Santa Pola",
+    "fuente": "Corrige ciudad 'Pol. Ind.' → Santa Pola. Web oficial no publica tarifa de pernocta suelta"
+  },
+  {
+    "slug": "parking-santa-ana",
+    "activo": false,
+    "fuente": "Parking/taller de guarda de caravanas (parkingelverger.com / parkingsantaana.com), no área de pernocta. Storage: no entra"
+  },
+  {
+    "slug": "cabo-de-gata-camper",
+    "tipo_area": "privada",
+    "ciudad": "Níjar",
+    "precio_noche": 14,
+    "plazas_totales": 40,
+    "servicios_true": ["agua", "electricidad", "wc", "duchas", "wifi", "lavanderia", "zona_mascotas", "vaciado_aguas_grises", "vaciado_aguas_negras"],
+    "verificado": true,
+    "fuente": "cabogatacamper.com + tarifa publicada en su ficha park4night: 14 € baja / 18 € alta (2 adultos, aguas, duchas); 40 plazas. Recinto privado en Níjar (04117)"
+  },
+  {
+    "slug": "camper-park-roquetas-de-mar",
+    "precio_noche": 19,
+    "plazas_totales": 70,
+    "servicios_true": ["agua", "electricidad", "wc", "duchas", "wifi", "lavanderia", "zona_mascotas", "vaciado_aguas_grises", "vaciado_aguas_negras"],
+    "verificado": true,
+    "fuente": "Tarifas oficiales camperparkroquetas.com: 19 €/noche (4 kWh incluidos); +30 noches 17 €. park4night/Stellplatz: 70 plazas"
+  },
+  {
+    "slug": "agua-amarga-camper-park",
+    "plazas_totales": 40,
+    "servicios_true": ["agua", "electricidad", "wc", "duchas", "wifi", "vaciado_aguas_grises", "vaciado_aguas_negras"],
+    "fuente": "AreasCamper / Campercontact: 40 plazas. Precio no fijado: reseñas 2026 entre 17 y 23 €, sin tarifa oficial en web"
+  },
+  {
+    "slug": "camper-park-carboneras",
+    "ciudad": "Carboneras",
+    "precio_noche": 12,
+    "plazas_totales": 50,
+    "verificado": true,
+    "fuente": "AreasAutocaravanas 12 €; Campercontact 2026: 12 € ene-jun / 10 € sep-dic / 18 € jul-ago. AreasCamper: 50 plazas. Ciudad 04140 → Carboneras"
+  },
+  {
+    "slug": "camping-albergue-tau-san-jose",
+    "precio_noche": 20,
+    "plazas_totales": 60,
+    "verificado": true,
+    "fuente": "Tarifas oficiales 2026 campingtau.com: solo pernocta 2 pax + camper/furgo sin luz = 20 € (temporada baja). campings.net: 60 parcelas"
+  },
+  {
+    "slug": "camping-el-quinto-almeria",
+    "ciudad": "Mojácar",
+    "plazas_totales": 29,
+    "fuente": "Dirección oficial Ctra. Mojácar-Turre s/n, 04638 Mojácar. ACSI: 29 parcelas de rotación. Precio 32,45 € ya en ficha"
+  },
+  {
+    "slug": "camping-sopalmo-almeria",
+    "ciudad": "Mojácar",
+    "plazas_totales": 28,
+    "verificado": true,
+    "fuente": "Web oficial campingsopalmo.com: Sopalmo, 04638 Mojácar; 28 parcelas. Precio 12 € ya en ficha"
+  },
+  {
+    "slug": "camper-area-cabo-de-gata",
+    "tipo_area": "privada",
+    "ciudad": "Níjar",
+    "fuente": "cabodegatacamper.com: recinto privado de pago (tel. 633 19 59 65), distinto de Cabo de Gata Camper (cabogatacamper.com). Ciudad Km 10 → Níjar"
+  },
+  {
+    "slug": "wecamp-cabo-de-gata",
+    "tipo_area": "camping",
+    "fuente": "wecamp.net: camping de la cadena WeCamp en Las Negras. No es área pública"
+  },
+  {
+    "slug": "camper-park-carboneras-almeria",
+    "ciudad": "Carboneras",
+    "plazas_totales": 50,
+    "fuente": "Duplicado de Camper Park Carboneras (precio 12 € ya en ficha). Se rellena ciudad/plazas; fusión de slugs en siguiente pasada si las coords coinciden"
+  },
+  {
+    "slug": "cabo-de-gata-camper-almeria",
+    "tipo_area": "privada",
+    "ciudad": "Níjar",
+    "fuente": "Duplicado probable de Cabo de Gata Camper. Se corrige tipo y ciudad; fusión si coords coinciden"
+  }
+]
