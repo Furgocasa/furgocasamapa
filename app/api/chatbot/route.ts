@@ -341,11 +341,66 @@ function esMensajeSoloUbicacion(mensaje: string): boolean {
 const LUGAR_AQUI_RE =
   /^(aqu[ií]|aca|acá|here|from here|desde aqu[ií]|de aqu[ií]|mi (ubicaci[oó]n|posici[oó]n)|donde estoy|d[oó]nde estoy|near me|pr[eè]s de moi|hier|qui)$/i
 
-function resolverLugarRelativo(valor: string | undefined, ciudadGps: string | null): string | undefined {
+const LUGAR_ALLI_RE =
+  /^(all[ií]|allá|alla|esa ciudad|ese sitio|la de antes|from there|there|l[aà]-bas)$/i
+
+function resolverLugarRelativo(
+  valor: string | undefined,
+  ciudadGps: string | null,
+  ciudadHilo: string | null = null
+): string | undefined {
   const t = String(valor || '').trim()
-  if (!t) return ciudadGps || undefined
-  if (ciudadGps && LUGAR_AQUI_RE.test(t)) return ciudadGps
+  if (!t) return ciudadGps || ciudadHilo || undefined
+  if (LUGAR_AQUI_RE.test(t)) return ciudadGps || ciudadHilo || t
+  if (LUGAR_ALLI_RE.test(t)) return ciudadHilo || ciudadGps || t
   return t
+}
+
+function normalizarMsgHilo(m: { role?: string; rol?: string; content?: string; contenido?: string }) {
+  const raw = String(m.role || m.rol || 'user')
+  const role = raw === 'assistant' ? 'assistant' : 'user'
+  const content = String(m.content ?? m.contenido ?? '').trim()
+  return { role, content }
+}
+
+/** Un solo hilo para el modelo: las últimas frases, sin duplicar BD + cliente. */
+function fusionarHilo(
+  db: Array<{ rol: string; contenido: string }> | null | undefined,
+  client: any[]
+): Array<{ role: 'user' | 'assistant'; content: string }> {
+  const cli = (client || []).map(normalizarMsgHilo).filter((m) => m.content)
+  const fromDb = (db || []).map(normalizarMsgHilo).filter((m) => m.content)
+  const usuariosCliente = cli.filter((m) => m.role === 'user').length
+  const base = usuariosCliente >= 1 && cli.length >= 2 ? [...cli] : [...fromDb]
+  if (!(usuariosCliente >= 1 && cli.length >= 2)) {
+    for (const m of cli) {
+      const last = base[base.length - 1]
+      if (last && last.role === m.role && last.content === m.content) continue
+      base.push(m)
+    }
+  }
+  return base.slice(-16)
+}
+
+function ciudadesDelHilo(hilo: Array<{ role: string; content: string }>): string[] {
+  const stop = new Set([
+    'aqui', 'aquí', 'aca', 'acá', 'alli', 'allí', 'hola', 'area', 'área', 'areas', 'áreas',
+    'gratis', 'mejor', 'mejores', 'españa', 'spain', 'francia', 'portugal',
+  ])
+  const found: string[] = []
+  const re =
+    /(?:\b(?:en|a|hacia|desde|de|cerca de)\s+)([A-ZÁÉÍÓÚÑ][A-Za-zÀ-ÿ''-]{2,}(?:\s+[A-ZÁÉÍÓÚÑ][A-Za-zÀ-ÿ''-]{2,})?)/g
+  for (const m of hilo) {
+    if (m.role !== 'user') continue
+    let match: RegExpExecArray | null
+    const t = m.content
+    re.lastIndex = 0
+    while ((match = re.exec(t))) {
+      const c = match[1].trim()
+      if (!stop.has(c.toLowerCase())) found.push(c)
+    }
+  }
+  return [...new Set(found)].slice(-6)
 }
 
 function sanitizarArgsBusqueda(fnArgs: any, ultimoMensaje: string) {
@@ -685,18 +740,8 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    // Guardar mensaje del usuario en BD (si hay conversación)
-    if (conversacionId && messages.length > 0) {
-      const lastUserMessage = messages[messages.length - 1]
-      if (lastUserMessage.role === 'user') {
-        console.log('💾 Guardando mensaje del usuario...')
-        await (supabase as any).from('chatbot_mensajes').insert({
-          conversacion_id: conversacionId,
-          rol: 'user',
-          contenido: lastUserMessage.content
-        })
-      }
-    }
+    // El mensaje de este turno se guarda DESPUÉS de leer el historial,
+    // para no duplicarlo en el contexto del modelo.
     
     // Cargar configuración del chatbot
     console.log('⚙️ Cargando configuración del chatbot...')
@@ -756,7 +801,7 @@ export async function POST(req: NextRequest) {
             .select('rol, contenido')
             .eq('conversacion_id', conversacionId)
             .order('created_at', { ascending: true })
-            .limit(10)
+            .limit(24)
         : Promise.resolve({ data: null, error: null })
     ])
     
@@ -770,6 +815,20 @@ export async function POST(req: NextRequest) {
     })
     
     const historialPrevio: Array<{ rol: string, contenido: string }> = historialData.data || []
+    const hiloModelo = fusionarHilo(historialPrevio, messages)
+    const ciudadesHilo = ciudadesDelHilo(hiloModelo)
+    const ciudadHilo = ciudadesHilo.length ? ciudadesHilo[ciudadesHilo.length - 1] : null
+
+    if (conversacionId && messages.length > 0) {
+      const lastUserMessage = messages[messages.length - 1]
+      if (lastUserMessage.role === 'user') {
+        await (supabase as any).from('chatbot_mensajes').insert({
+          conversacion_id: conversacionId,
+          rol: 'user',
+          contenido: lastUserMessage.content
+        })
+      }
+    }
 
     const ciudadGps = ubicacionDetectada?.city && ubicacionDetectada.city !== 'Desconocida'
       ? ubicacionDetectada.city
@@ -788,7 +847,11 @@ export async function POST(req: NextRequest) {
         .from('chatbot_conversaciones')
         .update({
           ubicacion_usuario: ubicacionUsuario || undefined,
-          preferencias_detectadas: { ubicacion: ubicacionLog },
+          preferencias_detectadas: {
+            ubicacion: ubicacionLog,
+            ciudades_hilo: ciudadesHilo,
+            ciudad_hilo: ciudadHilo,
+          },
         })
         .eq('id', conversacionId)
     }
@@ -819,6 +882,18 @@ REGLAS DE UBICACIÓN:
    - Si es genérico ("áreas", "buscar") → Radio 50km
    - Si menciona ciudad específica → Búsqueda por nombre de ciudad (sin radio)`
     }
+
+    const ciudadGpsTxt = ciudadGps || 'desconocida'
+    systemPromptEnriquecido += `\n\n═══════════════════════════════════════
+🧠 MEMORIA DEL HILO (OBLIGATORIO)
+═══════════════════════════════════════
+El Tío DEBE usar las últimas frases de ESTA conversación. No empieces de cero.
+${hiloModelo.slice(-8).map((m) => `- ${m.role === 'user' ? 'Usuario' : 'Tío'}: ${m.content.slice(0, 220)}`).join('\n') || '- (primer mensaje)'}
+- GPS (dónde está físicamente): ${ciudadGpsTxt}
+- Ciudades ya dichas en el hilo: ${ciudadesHilo.join(', ') || '(ninguna aún)'}
+- "aquí / cerca de mí / donde estoy" → GPS (${ciudadGpsTxt}).
+- "allí / esa / la de antes / y ahora a X" → el hilo (${ciudadHilo || ciudadGpsTxt}).
+GPS y memoria se complementan: pueden no ser el mismo sitio. Ubicar se hace con las dos.`
     
     // Añadir estadísticas de la plataforma
     systemPromptEnriquecido += `\n\n═══════════════════════════════════════
@@ -871,25 +946,19 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 - example.com u otras URLs inventadas: prohibido. Solo /area/{slug}.
 - Idioma: último mensaje del cliente. TODO en ese idioma (intro y etiquetas). Las fichas "resumen" ya están traducidas.`
     
-    // 5. PREPARAR MENSAJES COMPLETOS
+    // 5. PREPARAR MENSAJES COMPLETOS (un solo hilo, sin duplicar)
     const fullMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       { 
         role: 'system', 
         content: systemPromptEnriquecido 
       },
-      // Añadir historial previo
-      ...historialPrevio.map((h: any) => ({
-        role: h.rol as 'user' | 'assistant',
-        content: h.contenido
-      })),
-      // Añadir nuevos mensajes
-      ...messages.map((m: any) => ({
-        role: m.role as 'user' | 'assistant' | 'system',
+      ...hiloModelo.map((m) => ({
+        role: m.role as 'user' | 'assistant',
         content: m.content
       }))
     ]
     
-    console.log(`📝 Total mensajes en contexto: ${fullMessages.length} (system: 1, historial: ${historialPrevio.length}, nuevos: ${messages.length})`)
+    console.log(`📝 Hilo al modelo: ${hiloModelo.length} frases (bd ${historialPrevio.length}, cliente ${messages.length})`)
     
     // Crear cliente OpenAI (bajo demanda para asegurar que las env vars estén cargadas)
     const openai = getOpenAIClient()
@@ -922,7 +991,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       pageLocale: locale,
       lastUserText: ultimoMensajeUsuario,
       previousUserTexts: [
-        ...historialPrevio.filter((h) => h.rol === 'user').map((h) => h.contenido),
+        ...hiloModelo.filter((h) => h.role === 'user').slice(0, -1).map((h) => h.content),
         ...messages.filter((m: any) => m.role === 'user').slice(0, -1).map((m: any) => m.content),
       ],
     })
@@ -987,7 +1056,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         if (fnName === 'search_areas') {
           sanitizarArgsBusqueda(fnArgs, ultimoMensajeUsuario)
           if (fnArgs.ubicacion?.nombre) {
-            fnArgs.ubicacion.nombre = resolverLugarRelativo(fnArgs.ubicacion.nombre, ciudadGps)
+            fnArgs.ubicacion.nombre = resolverLugarRelativo(fnArgs.ubicacion.nombre, ciudadGps, ciudadHilo)
           }
         }
         funcionesEjecutadas.push({ name: fnName, args: fnArgs })
@@ -1029,8 +1098,8 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
               if (Array.isArray(functionResult)) todasLasAreas.push(...functionResult)
               break
             case 'search_areas_along_route':
-              fnArgs.origen = resolverLugarRelativo(fnArgs.origen, ciudadGps)
-              fnArgs.destino = resolverLugarRelativo(fnArgs.destino, ciudadGps)
+              fnArgs.origen = resolverLugarRelativo(fnArgs.origen, ciudadGps, ciudadHilo)
+              fnArgs.destino = resolverLugarRelativo(fnArgs.destino, ciudadGps, ciudadHilo)
               functionResult = await searchAreasAlongRoute(fnArgs.origen, fnArgs.destino, fnArgs.corredor_km || 15)
               if (functionResult?.areas) todasLasAreas.push(...functionResult.areas)
               break
