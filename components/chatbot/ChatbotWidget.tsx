@@ -54,7 +54,7 @@ const TEXTOS: Record<string, {
     sugerencias: [
       '🆓 Áreas gratis cerca de mí',
       '⭐ Las mejores áreas de España',
-      '🛣️ Voy de Madrid a Valencia, ¿dónde paro?',
+      '🛣️ Paradas en una ruta',
       '💧 Áreas con agua y electricidad',
       '🐕 Áreas cerca de mí (mascotas bienvenidas)'
     ],
@@ -79,7 +79,7 @@ const TEXTOS: Record<string, {
     sugerencias: [
       '🆓 Free areas near me',
       '⭐ Best areas in Spain',
-      '🛣️ Driving Madrid to Valencia, where to stop?',
+      '🛣️ Stops along a route',
       '💧 Areas with water and electricity',
       '🐕 Areas near me (pets welcome)'
     ],
@@ -104,9 +104,9 @@ const TEXTOS: Record<string, {
     sugerencias: [
       '🆓 Aires gratuites près de moi',
       '⭐ Meilleures aires en Espagne',
-      '🛣️ De Madrid à Valence, où m\'arrêter ?',
+      '🛣️ Étapes sur une route',
       '💧 Aires avec eau et électricité',
-      '🐕 Aires acceptant les animaux'
+      '🐕 Aires près de moi (animaux)'
     ],
     placeholder: 'Demandez à Tío Viajero...',
     enviar: 'Envoyer',
@@ -129,9 +129,9 @@ const TEXTOS: Record<string, {
     sugerencias: [
       '🆓 Kostenlose Stellplätze in meiner Nähe',
       '⭐ Beste Stellplätze in Spanien',
-      '🛣️ Von Madrid nach Valencia — wo halten?',
+      '🛣️ Stopps auf einer Route',
       '💧 Stellplätze mit Wasser und Strom',
-      '🐕 Haustierfreundliche Stellplätze'
+      '🐕 Stellplätze in meiner Nähe (Haustiere)'
     ],
     placeholder: 'Frag Tío Viajero...',
     enviar: 'Senden',
@@ -154,9 +154,9 @@ const TEXTOS: Record<string, {
     sugerencias: [
       '🆓 Aree gratuite vicino a me',
       '⭐ Le migliori aree in Spagna',
-      '🛣️ Da Madrid a Valencia, dove fermarmi?',
+      '🛣️ Soste su un percorso',
       '💧 Aree con acqua ed elettricità',
-      '🐕 Aree che accettano animali'
+      '🐕 Aree vicino a me (animali)'
     ],
     placeholder: 'Chiedi a Tío Viajero...',
     enviar: 'Invia',
@@ -187,6 +187,7 @@ export default function ChatbotWidget() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [messages, setMessages] = useState<Message[]>([])
+  const [seguimiento, setSeguimiento] = useState<string[]>([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [conversacionId, setConversacionId] = useState<string | null>(null)
@@ -501,6 +502,7 @@ export default function ChatbotWidget() {
     const userMessage: Message = { rol: 'user', contenido: texto }
     setMessages(prev => [...prev, userMessage])
     setInput('')
+    setSeguimiento([])
     setSending(true)
 
     track('chatbot_message', {
@@ -568,6 +570,7 @@ export default function ChatbotWidget() {
         logId: data.logId || undefined,
         voto: null
       }])
+      setSeguimiento(Array.isArray(data.seguimiento) ? data.seguimiento : [])
     } catch (error: any) {
       console.error('Error:', error)
       
@@ -890,10 +893,10 @@ export default function ChatbotWidget() {
               </div>
             ))}
             
-            {/* Mensajes prefijados (solo al inicio de la conversación) */}
-            {!sending && puedeHablar && messages.length <= 1 && (
+            {/* Arranque: temas. Tras un atajo: segunda fase (dónde / qué parada). */}
+            {!sending && puedeHablar && (messages.length <= 1 || seguimiento.length > 0) && (
               <div className="flex flex-wrap gap-2 pt-1">
-                {txt.sugerencias.map((sugerencia) => (
+                {(messages.length <= 1 ? txt.sugerencias : seguimiento).map((sugerencia) => (
                   <button
                     key={sugerencia}
                     onClick={() => enviarMensaje(sugerencia)}
@@ -902,6 +905,8 @@ export default function ChatbotWidget() {
                     {sugerencia}
                   </button>
                 ))}
+                {messages.length <= 1 && (
+                  <>
                 <Link
                   href="/valoracion-ia-vehiculos"
                   className="text-xs bg-[#0b3c74] text-white hover:bg-[#0d4a8f] rounded-full px-3 py-1.5 transition-all shadow-sm"
@@ -914,6 +919,8 @@ export default function ChatbotWidget() {
                 >
                   🛡️ QR anti-golpes
                 </Link>
+                  </>
+                )}
               </div>
             )}
 

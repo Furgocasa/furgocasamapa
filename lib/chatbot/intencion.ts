@@ -57,7 +57,7 @@ export function extraerSitioNombrado(mensaje: string): string {
 }
 
 export function asistentePidioClarificar(texto: string | null | undefined): boolean {
-  return /no me queda claro|qu[eé] informaci[oó]n necesitas|not sure what you need|what do you need about|pas clair|de quoi tu as besoin|nicht klar|was du brauchst|non mi [eè] chiaro|qu[eé] parada buscas|pernoctar|mitad de ruta|cerca del destino|no al salir|what kind of stop|quelle halte|welche pause|che sosta/i.test(
+  return /no me queda claro|qu[eé] informaci[oó]n necesitas|not sure what you need|what do you need about|pas clair|de quoi tu as besoin|nicht klar|was du brauchst|non mi [eè] chiaro|qu[eé] parada buscas|pernoctar|mitad de ruta|cerca del destino|no al salir|what kind of stop|quelle halte|welche pause|che sosta|d[oó]nde las buscas|cerca de tu ubicaci[oó]n|en una localidad|punto del mapa|where do you want them|pr[eè]s de (toi|vous)|in einer ortschaft/i.test(
     texto || ''
   )
 }
@@ -131,11 +131,29 @@ export function inferirFiltrosRuta(mensaje: string): {
 export function esRutaSinIntencion(mensaje: string): boolean {
   if (!mensaje) return false
   if (/(gasolinera|gasolineras|gasolina|di[eé]sel|petrol|tankstelle|taller)/i.test(mensaje)) return false
+  if (/paradas? en (una )?ruta|etapas de (ruta|itinerario)|stops? on (a |the )?route/i.test(mensaje) && !extraerRutaNombrada(mensaje)) {
+    return true
+  }
   if (!parecePreguntaRuta(mensaje)) return false
   return !tieneDetalleParadaRuta(mensaje)
 }
 
-export type AtajoIntencion = 'ambigua' | 'guia' | 'gas_sin_sitio' | 'ruta_sin_intencion'
+function tieneSitioOCerca(mensaje: string): boolean {
+  return /cerca de m[ií]|cerca de (tu |mi )?ubicaci[oó]n|near me|from my location|pr[eè]s de (moi|toi|vous)|in meiner n[aä]he|vicino a me|junto a m[ií]|espa[nñ]a|spain|francia|france|portugal|italia|italy|alemania|germany|m[eé]xico|mexico/i.test(
+    mensaje || ''
+  )
+}
+
+/** "Áreas con agua y electricidad" — filtro claro, sitio no. */
+export function esFiltroSinSitio(mensaje: string): boolean {
+  const t = (mensaje || '').replace(/[\u{1F300}-\u{1FAFF}]/gu, '').trim()
+  if (!t) return false
+  if (tieneSitioOCerca(t) || extraerRutaNombrada(t) || parecePreguntaRuta(t)) return false
+  if (esGuiaTuristicaPura(t) || esGasolineraSinSitio(t)) return false
+  return pideUtilCamper(t) || /mascotas|pets|animales|haustier|animaux|water|electricity|[eé]lectricit[eé]|strom|acqua|elettricit/i.test(t)
+}
+
+export type AtajoIntencion = 'ambigua' | 'guia' | 'gas_sin_sitio' | 'ruta_sin_intencion' | 'filtro_sin_sitio'
 
 export function clasificarIntencion(opts: {
   ultimo: string
@@ -148,6 +166,7 @@ export function clasificarIntencion(opts: {
   if (esGasolineraSinSitio(ultimo)) return 'gas_sin_sitio'
   if (asistentePidioClarificar(opts.ultimoAsistente)) return null
   if (esRutaSinIntencion(ultimo)) return 'ruta_sin_intencion'
+  if (esFiltroSinSitio(ultimo)) return 'filtro_sin_sitio'
   if (!esSitioSinIntencion(ultimo)) return null
   const hiloUtil = (opts.previosUsuario || []).some((t) => pideUtilCamper(t))
   if (hiloUtil) return null
@@ -164,9 +183,20 @@ export function textoAtajoIntencion(tipo: AtajoIntencion, locale: ChatLocale, si
   const deLugar = lugar ? { es: ` de ${lugar}`, en: ` about ${lugar}`, fr: ` sur ${lugar}`, de: ` zu ${lugar}`, it: ` su ${lugar}`, pt: ` de ${lugar}` }[locale] : ''
 
   const ruta = lugar || 'esa ruta'
+  const filtro = lugar || 'esas áreas'
   const textos: Record<AtajoIntencion, Record<ChatLocale, string>> = {
+    filtro_sin_sitio: {
+      es: `Entiendo: ${filtro}. ¿Dónde las buscas?\n• ¿Cerca de tu ubicación actual?\n• ¿En una localidad? Dime cuál.\n• ¿En un punto del mapa? Dime la zona.`,
+      en: `Got it: ${filtro}. Where should I look?\n• Near your current location?\n• In a town? Tell me which.\n• Around a spot on the map? Tell me the area.`,
+      fr: `Compris : ${filtro}. Où je cherche ?\n• Près de ta position actuelle ?\n• Dans une ville ? Dis-moi laquelle.\n• Autour d’un point sur la carte ?`,
+      de: `Verstanden: ${filtro}. Wo soll ich suchen?\n• In deiner Nähe?\n• In einem Ort? Sag welchen.\n• An einem Punkt auf der Karte?`,
+      it: `Capito: ${filtro}. Dove le cerco?\n• Vicino a te?\n• In un paese? Dimmi quale.\n• In un punto della mappa?`,
+      pt: `Percebi: ${filtro}. Onde as procuro?\n• Perto da tua localização?\n• Numa localidade? Diz qual.\n• Num ponto do mapa?`,
+    },
     ruta_sin_intencion: {
-      es: `Para ${ruta} no te suelto un listado al salir: casi nadie para en el mismo sitio del que acaba de arrancar.\n\n¿Qué parada buscas?\n• ¿Pernoctar (dormir) o una parada técnica (agua, vaciado)?\n• ¿Camping o un área (pública / privada)?\n• ¿A mitad de ruta, más cerca del destino, o te da igual mientras no sea al salir?\n\nCon eso te dejo 3 o 4 que sirvan de verdad.`,
+      es: lugar && lugar.includes('→')
+        ? `Para ${ruta} no te suelto un listado al salir: casi nadie para en el mismo sitio del que acaba de arrancar.\n\n¿Qué parada buscas?\n• ¿Pernoctar (dormir) o una parada técnica (agua, vaciado)?\n• ¿Camping o un área (pública / privada)?\n• ¿A mitad de ruta, más cerca del destino, o te da igual mientras no sea al salir?\n\nCon eso te dejo 3 o 4 que sirvan de verdad.`
+        : `Para proponerte paradas necesito origen y destino, y qué buscas:\n• ¿Pernoctar o parada técnica?\n• ¿Camping o un área?\n• ¿A mitad, cerca del destino, o da igual mientras no sea al salir?\n\nEjemplo: «de Murcia a Granada, camping a mitad».`,
       en: `For ${ruta} I won’t dump stops in the city you’re leaving — nobody wants to halt where they just started.\n\nWhat kind of stop?\n• Overnight, or a service halt (water / dump)?\n• Camping or an aire (public / private)?\n• Mid-route, nearer the destination, or anywhere except the start?\n\nThen I’ll give you 3 or 4 that actually help.`,
       fr: `Pour ${ruta} je ne te liste pas les aires de la ville de départ.\n\nQuelle halte ?\n• Dormir, ou une halte technique (eau / vidange) ?\n• Camping ou aire (publique / privée) ?\n• Au milieu, plus près de l’arrivée, ou n’importe où sauf au départ ?\n\nEnsuite je te donne 3 ou 4 vraies options.`,
       de: `Für ${ruta} schütte ich dir keine Stellplätze der Startstadt hin.\n\nWelche Pause?\n• Übernachten oder Technikhalt (Wasser / Entsorgung)?\n• Camping oder Stellplatz (öffentlich / privat)?\n• In der Mitte, näher am Ziel, oder egal — nur nicht am Start?\n\nDann bekommst du 3–4, die wirklich passen.`,
@@ -200,4 +230,34 @@ export function textoAtajoIntencion(tipo: AtajoIntencion, locale: ChatLocale, si
   }
 
   return textos[tipo][locale] || textos[tipo].es
+}
+
+export function etiquetaFiltro(mensaje: string): string {
+  const t = (mensaje || '').replace(/[\u{1F300}-\u{1FAFF}🆓⭐🛣️💧🐕]/gu, '').replace(/\s+/g, ' ').trim()
+  return t.length > 60 ? `${t.slice(0, 57)}…` : t
+}
+
+export function chipsSeguimiento(tipo: AtajoIntencion, locale: ChatLocale, sitio?: string): string[] {
+  const t: Record<AtajoIntencion, Record<ChatLocale, string[]>> = {
+    filtro_sin_sitio: {
+      es: ['Cerca de mi ubicación', 'En una localidad', 'En un punto del mapa'],
+      en: ['Near my location', 'In a town', 'Around a map spot'],
+      fr: ['Près de moi', 'Dans une ville', 'Sur la carte'],
+      de: ['In meiner Nähe', 'In einem Ort', 'Auf der Karte'],
+      it: ['Vicino a me', 'In un paese', 'Sulla mappa'],
+      pt: ['Perto de mim', 'Numa localidade', 'No mapa'],
+    },
+    ruta_sin_intencion: sitio && sitio.includes('→') ? {
+      es: ['Pernoctar a mitad de ruta', 'Camping, no al salir', 'Parada técnica cerca del destino'],
+      en: ['Overnight mid-route', 'Camping, not at the start', 'Service halt near the destination'],
+      fr: ['Dormir au milieu', 'Camping, pas au départ', 'Halte technique près de l’arrivée'],
+      de: ['Übernachten in der Mitte', 'Camping, nicht am Start', 'Technikhalt nah am Ziel'],
+      it: ['Pernottare a metà', 'Campeggio, non in partenza', 'Sosta tecnica vicino all’arrivo'],
+      pt: ['Pernoitar a meio', 'Camping, não à saída', 'Paragem técnica perto do destino'],
+    } : { es: [], en: [], fr: [], de: [], it: [], pt: [] },
+    ambigua: { es: [], en: [], fr: [], de: [], it: [], pt: [] },
+    guia: { es: [], en: [], fr: [], de: [], it: [], pt: [] },
+    gas_sin_sitio: { es: [], en: [], fr: [], de: [], it: [], pt: [] },
+  }
+  return t[tipo]?.[locale] || t[tipo]?.es || []
 }

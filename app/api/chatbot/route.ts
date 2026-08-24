@@ -48,6 +48,8 @@ import {
   parecePreguntaRuta,
   textoAtajoIntencion,
   tieneDetalleParadaRuta,
+  etiquetaFiltro,
+  chipsSeguimiento,
 } from '@/lib/chatbot/intencion'
 
 // ============================================
@@ -694,8 +696,11 @@ export async function POST(req: NextRequest) {
           ? extraerSitioNombrado(ultimoMensajeUsuario)
           : atajo === 'ruta_sin_intencion' && ruta
             ? `${ruta.origen} → ${ruta.destino}`
-            : undefined
+            : atajo === 'filtro_sin_sitio'
+              ? etiquetaFiltro(ultimoMensajeUsuario)
+              : undefined
       const message = textoAtajoIntencion(atajo, idiomaAtajo, etiqueta)
+      const seguimiento = chipsSeguimiento(atajo, idiomaAtajo, etiqueta)
       logger.info('Respuesta corta sin modelo', { atajo, pregunta: ultimoMensajeUsuario.slice(0, 80) })
       const logId = await logRespuesta(supabase, {
         conversacion_id: conversacionId || null,
@@ -719,6 +724,7 @@ export async function POST(req: NextRequest) {
         modelo: 'atajo',
         duration: Date.now() - startTime,
         guest,
+        seguimiento,
       })
     }
 
