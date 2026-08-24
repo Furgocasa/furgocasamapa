@@ -11,6 +11,7 @@ const publicAllow = [
   '/contacto',
   '/privacidad',
   '/condiciones',
+  '/cookies',
 ]
 
 const publicDisallow = [

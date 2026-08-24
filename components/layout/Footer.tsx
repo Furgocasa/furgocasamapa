@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/i18n";
+import { openCookieSettings } from "@/components/CookieConsentBar";
 
 export function Footer() {
   const { t } = useLanguage();
@@ -207,6 +208,36 @@ export function Footer() {
                 >
                   {t("footer_privacy")}
                 </Link>
+              </li>
+              <li>
+                <Link
+                  href="/cookies"
+                  className="hover:text-white transition-colors"
+                >
+                  {t("footer_cookies")}
+                </Link>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={openCookieSettings}
+                  className="hover:text-accent-400 transition-colors inline-flex items-center gap-2"
+                  aria-label={t("cookies_open_settings")}
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M12 2a9.5 9.5 0 0 0-1.2 18.93A10 10 0 1 0 21.8 11.4 7 7 0 0 1 12 2Z"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinejoin="round"
+                    />
+                    <circle cx="8.2" cy="10" r="1.1" fill="currentColor" />
+                    <circle cx="12.5" cy="8" r="1" fill="currentColor" />
+                    <circle cx="10.5" cy="14.2" r="1.15" fill="currentColor" />
+                    <circle cx="15.2" cy="13.2" r="0.9" fill="currentColor" />
+                  </svg>
+                  {t("footer_cookies_config")}
+                </button>
               </li>
               <li>
                 <Link

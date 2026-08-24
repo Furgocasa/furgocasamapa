@@ -7,7 +7,7 @@ import ChatbotWidget from '@/components/chatbot/ChatbotWidget'
 import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
 import FavoritosSync from '@/components/ui/FavoritosSync'
 import { LanguageProvider } from '@/lib/i18n/LanguageProvider'
-import { CookieConsentBar } from '@/components/CookieConsentBar'
+import { CookieConsentBar, CookieProvider } from '@/components/CookieConsentBar'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 
 const inter = Inter({
@@ -125,7 +125,15 @@ export default function RootLayout({
               function gtag(){window.dataLayer.push(arguments);}
               window.gtag = gtag;
               var granted = false;
-              try { granted = localStorage.getItem('mapafc_cookie_consent') === 'granted'; } catch (e) {}
+              try {
+                var raw = localStorage.getItem('mapafc_cookie_preferences');
+                if (raw) {
+                  var prefs = JSON.parse(raw);
+                  granted = !!prefs.analytics;
+                } else {
+                  granted = localStorage.getItem('mapafc_cookie_consent') === 'granted';
+                }
+              } catch (e) {}
               var v = granted ? 'granted' : 'denied';
               gtag('consent', 'default', {
                 analytics_storage: v,
@@ -148,12 +156,14 @@ export default function RootLayout({
         />
 
         <LanguageProvider>
-          <AnalyticsTracker />
-          <FavoritosSync />
-          <WelcomeModal />
-          <ChatbotWidget />
-          {children}
-          <CookieConsentBar />
+          <CookieProvider>
+            <AnalyticsTracker />
+            <FavoritosSync />
+            <WelcomeModal />
+            <ChatbotWidget />
+            {children}
+            <CookieConsentBar />
+          </CookieProvider>
         </LanguageProvider>
       </body>
     </html>
