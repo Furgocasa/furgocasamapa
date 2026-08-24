@@ -11,7 +11,7 @@ import { useLanguage } from '@/lib/i18n'
 type VistaRuta = 'ruta' | 'mapa' | 'lista'
 
 export default function RutaPage() {
-  const [vistaActual, setVistaActual] = useState<VistaRuta>('mapa')
+  const [vistaActual, setVistaActual] = useState<VistaRuta>('ruta')
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClientComponentClient()
@@ -69,6 +69,7 @@ export default function RutaPage() {
             <PlanificadorRuta
               vistaMovil={vistaActual}
               onRutaCalculada={handleRutaCalculada}
+              onAbrirPlanificador={() => setVistaActual('ruta')}
             />
           </div>
         </Suspense>
@@ -76,7 +77,7 @@ export default function RutaPage() {
 
       {!user && <LoginWall />}
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-200/80 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] z-40 pb-[env(safe-area-inset-bottom)]">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-200/80 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] z-40 overflow-visible pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center justify-around h-14 px-3">
           <button
             onClick={() => setVistaActual('mapa')}
@@ -94,14 +95,14 @@ export default function RutaPage() {
 
           <button
             onClick={() => setVistaActual('ruta')}
-            className={`flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-200 active:scale-95 ${
+            className={`relative flex flex-col items-center justify-end flex-1 h-full pb-1 transition-all duration-200 active:scale-95 ${
               vistaActual === 'ruta' ? 'text-accent-600' : 'text-gray-500'
             }`}
           >
-            <span className={`px-4 py-1 rounded-full transition-colors duration-200 ${
-              vistaActual === 'ruta' ? 'bg-accent-50' : 'bg-transparent'
+            <span className={`absolute -top-5 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-colors duration-200 ${
+              vistaActual === 'ruta' ? 'bg-accent-600 text-white' : 'bg-accent-500 text-white'
             }`}>
-              <MapPinIcon className="w-6 h-6" />
+              <MapPinIcon className="w-7 h-7" />
             </span>
             <span className={`text-[11px] ${vistaActual === 'ruta' ? 'font-semibold' : 'font-medium'}`}>{t('ruta_tab_route')}</span>
           </button>

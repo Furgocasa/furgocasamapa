@@ -90,6 +90,7 @@ interface RoutePoint {
 interface PlanificadorRutaProps {
   vistaMovil?: 'ruta' | 'mapa' | 'lista'
   onRutaCalculada?: () => void
+  onAbrirPlanificador?: () => void
 }
 
 // Componente sortable para cada waypoint
@@ -572,7 +573,7 @@ function PanelPlanificador({
   )
 }
 
-export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada }: PlanificadorRutaProps = {}) {
+export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada, onAbrirPlanificador }: PlanificadorRutaProps = {}) {
   const mapRef = useRef<HTMLDivElement>(null)
   const { toast, showToast, hideToast } = useToast()
   const searchParams = useSearchParams()
@@ -2070,6 +2071,25 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
             {areasEnRuta.length === 1 ? 'área' : 'áreas'}
           </p>
         </div>
+
+        {!rutaInfo && vistaMovil === 'mapa' && (
+          <div className="md:hidden absolute inset-x-5 top-[28%] z-20">
+            <div className="bg-white rounded-2xl shadow-xl ring-1 ring-gray-900/10 px-5 py-5 text-center">
+              <div className="mx-auto mb-3 w-12 h-12 rounded-full bg-accent-50 text-accent-600 flex items-center justify-center">
+                <MapPinIcon className="w-6 h-6" />
+              </div>
+              <p className="text-base font-semibold text-gray-900">{t('ruta_empty_title')}</p>
+              <p className="mt-1 text-sm text-gray-600">{t('ruta_sub')}</p>
+              <button
+                type="button"
+                onClick={() => onAbrirPlanificador?.()}
+                className="mt-4 w-full py-3 rounded-xl bg-accent-600 text-white font-semibold active:scale-[0.98] transition-transform"
+              >
+                {t('ruta_calc')}
+              </button>
+            </div>
+          </div>
+        )}
 
         <button
           onClick={() => {
