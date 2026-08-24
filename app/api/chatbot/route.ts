@@ -356,9 +356,11 @@ function resolverLugarRelativo(
   return t
 }
 
-function normalizarMsgHilo(m: { role?: string; rol?: string; content?: string; contenido?: string }) {
+function normalizarMsgHilo(
+  m: { role?: string; rol?: string; content?: string; contenido?: string }
+): { role: 'user' | 'assistant'; content: string } {
   const raw = String(m.role || m.rol || 'user')
-  const role = raw === 'assistant' ? 'assistant' : 'user'
+  const role: 'user' | 'assistant' = raw === 'assistant' ? 'assistant' : 'user'
   const content = String(m.content ?? m.contenido ?? '').trim()
   return { role, content }
 }
