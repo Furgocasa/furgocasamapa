@@ -16,7 +16,6 @@ import {
   getAreaDetails,
   getAreasByCountry,
   buscarAreasPorNombre,
-  searchAreasAlongRoute,
   buscarInfoViajeWeb,
   serializeToolResultForModel,
   esGpsValido,
@@ -45,10 +44,7 @@ import {
   clasificarIntencion,
   extraerSitioNombrado,
   extraerRutaNombrada,
-  inferirFiltrosRuta,
-  parecePreguntaRuta,
   textoAtajoIntencion,
-  tieneDetalleParadaRuta,
   etiquetaFiltro,
   chipsSeguimiento,
   pideCercaDeMi,
@@ -217,10 +213,9 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
   {
     name: 'search_areas_along_route',
     description:
-      'Paradas ÚTILES entre dos ciudades, NO las del origen. ' +
-      'Solo cuando el usuario ya dijo qué quiere: pernoctar / parada técnica, camping o área, mitad o cerca del destino. ' +
-      'Si solo dice "dónde paro de A a B", NO llames: pregunta primero. ' +
-      'Nunca listes 5 campings de la ciudad de salida.',
+      'NO USAR para listar áreas en un trayecto. Si piden paradas / áreas de A a B, ' +
+      'responde con el enlace /ruta (o /ruta?origen=A&destino=B) y no llames esta función. ' +
+      'El planificador ve el trazado real; el chat no.',
     parameters: {
       type: 'object',
       properties: {
@@ -453,20 +448,6 @@ function ciudadesDelHilo(hilo: Array<{ role: string; content: string }>): string
   return [...new Set(found)].slice(-6)
 }
 
-/** Infiere servicios obligatorios de una frase ("vaciado y llenado de aguas"). */
-function serviciosDeTexto(texto: string): string[] {
-  const t = (texto || '').toLowerCase()
-  const s = new Set<string>()
-  if (/\b(agua|llenado|water|rellen)/.test(t)) s.add('agua')
-  if (/(vaciado|vaciar).*(gris|todas|aguas)|aguas grises|grey water/.test(t)) s.add('vaciado_aguas_grises')
-  if (/(vaciado|vaciar).*(negr|todas|aguas)|aguas negras|black water|wc\s*qu[ií]mico/.test(t)) s.add('vaciado_aguas_negras')
-  if (/\belectricidad|enchufe|luz|corriente|electric/.test(t)) s.add('electricidad')
-  if (/\bduchas?\b|shower/.test(t)) s.add('duchas')
-  if (/\bwifi\b/.test(t)) s.add('wifi')
-  if (/\blavander[ií]a|washing/.test(t)) s.add('lavanderia')
-  return [...s]
-}
-
 function sanitizarArgsBusqueda(fnArgs: any, ultimoMensaje: string) {
   if (fnArgs?.tipo_area && !TIPOS_AREA_VALIDOS.includes(fnArgs.tipo_area)) {
     delete fnArgs.tipo_area
@@ -487,12 +468,6 @@ function esPreguntaFueraCatalogo(mensaje: string): boolean {
 
 function pideAreasEnMensaje(mensaje: string): boolean {
   return /\b(area|área|areas|áreas|stellplatz|sosta|aire camping|pernoct|autocaravana|camper park)\b/i.test(mensaje || '')
-}
-
-function detectarPreguntaRuta(mensaje: string): boolean {
-  if (!mensaje || typeof mensaje !== 'string') return false
-  if (esPreguntaFueraCatalogo(mensaje) && !pideAreasEnMensaje(mensaje)) return false
-  return parecePreguntaRuta(mensaje)
 }
 
 /**
@@ -726,7 +701,11 @@ export async function POST(req: NextRequest) {
     })
     if (atajo === 'filtro_sin_sitio' && areaEnMapa) atajo = null
     if (atajo) {
+      const previosUsuario = messages
+        .filter((m: any) => m.role === 'user')
+        .map((m: any) => m.content)
       const ruta = extraerRutaNombrada(ultimoMensajeUsuario)
+        || [...previosUsuario].reverse().map((t) => extraerRutaNombrada(t)).find(Boolean)
       const etiqueta =
         atajo === 'ambigua'
           ? extraerSitioNombrado(ultimoMensajeUsuario)
@@ -992,11 +971,10 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
     systemPromptEnriquecido += `\n\n═══════════════════════════════════════
 🛣️ RUTAS Y FORMATO (RECORDATORIO)
 ═══════════════════════════════════════
-- Si dice solo "voy de A a B, dónde paro" SIN decir si duerme, camping/área o tramo: PREGUNTA eso. No listes áreas (sobre todo no las del origen).
-- Cuando YA ha dicho pernocta / tipo / tramo → search_areas_along_route. Máximo 3 paradas, repartidas, NUNCA un racimo en la ciudad de salida.
+- Áreas / paradas en una ruta (de A a B, "dónde paro", "paradas en el camino"): NO listes áreas y NO llames search_areas_along_route. Deriva al planificador: /ruta o /ruta?origen=A&destino=B. Ahí se ve el trazado real.
 - Si pregunta por UN área o pueblo (Garcimuñoz, "esta", "la de X"): get_area_by_name. UNA ficha. NO reabras la ruta ni pegues el corredor.
 - Si estás pidiendo aclaración ("¿te refieres a…?"): CERO fichas. Primero que confirme.
-- /ruta es complemento OPCIONAL después de listar paradas, NUNCA la única respuesta.
+- /ruta es la respuesta cuando piden un trayecto. No sueltes 3 áreas a ojo.
 - Servicios: SOLO los que estén en true (ej: "Agua, Electricidad"). NUNCA "[agua: no, ...]".
 - Valoración: "⭐ 4.7/5 (128 valoraciones)" si hay nº de reseñas. No digas "5 estrellas" sin volumen.
 - Links: solo /area/{slug}. Prohibido Google Maps e imágenes markdown.
@@ -1064,17 +1042,12 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         ...messages.filter((m: any) => m.role === 'user').slice(0, -1).map((m: any) => m.content),
       ],
     })
-    const hiloTieneRuta = hiloModelo.some((m) => m.role === 'user' && detectarPreguntaRuta(m.content))
     const preguntaConcreta =
       esPreguntaAreaConcreta(ultimoMensajeUsuario) ||
       esDeixisMapa(ultimoMensajeUsuario) ||
       Boolean(extraerNombreAreaConcreta(ultimoMensajeUsuario)) ||
       Boolean(areaEnMapa && /recomi[eé]ndame|esta no te suena|qu[eé] (pasa con |tal )?([eé]sta|[eé]sa)/i.test(ultimoMensajeUsuario))
-    const forzarBusquedaRuta =
-      !preguntaConcreta &&
-      tieneDetalleParadaRuta(ultimoMensajeUsuario) &&
-      (detectarPreguntaRuta(ultimoMensajeUsuario) || hiloTieneRuta)
-    const forzarAreaConcreta = preguntaConcreta && !forzarBusquedaRuta
+    const forzarAreaConcreta = preguntaConcreta
     const pareceFueraCatalogo =
       esPreguntaFueraCatalogo(ultimoMensajeUsuario) && !pideAreasEnMensaje(ultimoMensajeUsuario)
 
@@ -1083,21 +1056,17 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       console.log(`🔮 Llamando a OpenAI (ronda ${rounds})...`)
 
       const toolChoice: OpenAI.Chat.ChatCompletionToolChoiceOption =
-        rounds === 1 && forzarBusquedaRuta && !firstFunctionName
-          ? { type: 'function', function: { name: 'search_areas_along_route' } }
-          : rounds === 1 && forzarAreaConcreta && !firstFunctionName
-            ? { type: 'function', function: { name: 'get_area_by_name' } }
-            : rounds === 1 && pareceFueraCatalogo && !firstFunctionName
-              ? { type: 'function', function: { name: 'buscar_info_viaje' } }
-              : 'auto'
+        rounds === 1 && forzarAreaConcreta && !firstFunctionName
+          ? { type: 'function', function: { name: 'get_area_by_name' } }
+          : rounds === 1 && pareceFueraCatalogo && !firstFunctionName
+            ? { type: 'function', function: { name: 'buscar_info_viaje' } }
+            : 'auto'
 
       if (toolChoice !== 'auto') {
         console.log(
-          forzarBusquedaRuta
-            ? '🛣️ Forzando search_areas_along_route (ruta con intención)'
-            : forzarAreaConcreta
-              ? '📌 Forzando get_area_by_name (un área, no el corredor)'
-              : '🌐 Forzando buscar_info_viaje (fuera de catálogo)'
+          forzarAreaConcreta
+            ? '📌 Forzando get_area_by_name (un área, no el corredor)'
+            : '🌐 Forzando buscar_info_viaje (fuera de catálogo)'
         )
       }
 
@@ -1190,40 +1159,18 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
               break
             case 'search_areas_along_route':
               {
-                if (preguntaConcreta) {
-                  functionResult = {
-                    areas: [],
-                    aviso: 'El usuario pregunta por un área o pueblo concreto. Usa get_area_by_name. No listes el corredor.',
-                  }
-                  break
-                }
                 const rutaHilo = extraerRutaNombrada(ultimoMensajeUsuario)
                   || [...hiloModelo].reverse().map((m) => extraerRutaNombrada(m.content)).find(Boolean)
-                if (!fnArgs.origen && rutaHilo) fnArgs.origen = rutaHilo.origen
-                if (!fnArgs.destino && rutaHilo) fnArgs.destino = rutaHilo.destino
-                fnArgs.origen = resolverLugarRelativo(fnArgs.origen, ciudadGps, ciudadHilo)
-                fnArgs.destino = resolverLugarRelativo(fnArgs.destino, ciudadGps, ciudadHilo)
-                const hiloRutaTexto = [ultimoMensajeUsuario, ...hiloModelo.map((m) => m.content)].join('\n')
-                const soloUsuarioRuta = [
-                  ultimoMensajeUsuario,
-                  ...hiloModelo.filter((m) => m.role === 'user').map((m) => m.content),
-                ].join('\n')
-                const delHilo = inferirFiltrosRuta(hiloRutaTexto)
-                const serviciosRuta = Array.isArray(fnArgs.servicios) && fnArgs.servicios.length
-                  ? fnArgs.servicios
-                  : serviciosDeTexto(soloUsuarioRuta)
-                functionResult = await searchAreasAlongRoute(
-                  fnArgs.origen,
-                  fnArgs.destino,
-                  fnArgs.corredor_km || 15,
-                  {
-                    tramo: fnArgs.tramo || delHilo.tramo,
-                    tipo_area: fnArgs.tipo_area || delHilo.tipo_area,
-                    servicios: serviciosRuta,
-                    incluir_origen: Boolean(fnArgs.incluir_origen || delHilo.incluir_origen),
-                  }
-                )
-                if (functionResult?.areas) todasLasAreas.push(...functionResult.areas.slice(0, 3))
+                const origen = fnArgs.origen || rutaHilo?.origen
+                const destino = fnArgs.destino || rutaHilo?.destino
+                const q = origen && destino
+                  ? `/ruta?origen=${encodeURIComponent(origen)}&destino=${encodeURIComponent(destino)}`
+                  : '/ruta'
+                functionResult = {
+                  areas: [],
+                  aviso:
+                    `No listes áreas. El usuario quiere paradas de ruta: deriva al planificador ${q}. El chat no ve el trazado real.`,
+                }
               }
               break
             case 'buscar_info_viaje':

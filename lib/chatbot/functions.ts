@@ -478,7 +478,7 @@ export function serializeToolResultForModel(result: any, locale: ChatLocale = 'e
       total: mostradas.length,
       aviso: result.aviso || undefined,
       instrucciones:
-        `El "resumen" YA está en el idioma de respuesta: pégalo TAL CUAL. Muestra SOLO estas ${mostradas.length} paradas (no digas un número mayor), NO las del origen. Menciona desvío si existe. Tras listar puedes mencionar /ruta como complemento, nunca como única respuesta. Enlace interno: /area/{slug}.`,
+        `El "resumen" YA está en el idioma de respuesta: pégalo TAL CUAL. Si aviso pide derivar a /ruta, NO listes áreas: da el enlace del planificador. Si hay paradas, muestra SOLO estas ${mostradas.length} (no digas un número mayor). Enlace interno: /area/{slug}.`,
       areas: mostradas.map(mapArea),
     })
   }

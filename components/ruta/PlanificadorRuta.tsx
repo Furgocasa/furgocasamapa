@@ -682,6 +682,48 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
     }
   }, [searchParams, map, directionsService, directionsRenderer])
 
+  // Prefill origen/destino desde el chat: /ruta?origen=Murcia&destino=Madrid
+  const prefillRutaRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!map || searchParams.get('ruta')) return
+    const g = (window as any).google
+    if (!g?.maps?.Geocoder) return
+    const origenNombre = (searchParams.get('origen') || '').trim()
+    const destinoNombre = (searchParams.get('destino') || '').trim()
+    if (!origenNombre && !destinoNombre) return
+    const key = `${origenNombre}|${destinoNombre}`
+    if (prefillRutaRef.current === key) return
+    prefillRutaRef.current = key
+
+    const geocoder = new g.maps.Geocoder()
+    const geocode = (nombre: string): Promise<RoutePoint | null> =>
+      new Promise((resolve) => {
+        geocoder.geocode({ address: nombre }, (results: any, status: string) => {
+          if (status === 'OK' && results?.[0]?.geometry?.location) {
+            const loc = results[0].geometry.location
+            resolve({
+              name: nombre,
+              lat: typeof loc.lat === 'function' ? loc.lat() : loc.lat,
+              lng: typeof loc.lng === 'function' ? loc.lng() : loc.lng,
+            })
+          } else {
+            resolve(null)
+          }
+        })
+      })
+
+    void (async () => {
+      if (origenNombre) {
+        const p = await geocode(origenNombre)
+        if (p) setOrigen(p)
+      }
+      if (destinoNombre) {
+        const p = await geocode(destinoNombre)
+        if (p) setDestino(p)
+      }
+    })()
+  }, [map, searchParams])
+
   // Obtener ubicación del usuario para ordenación
   useEffect(() => {
     if ('geolocation' in navigator) {

@@ -166,14 +166,27 @@ export function inferirFiltrosRuta(mensaje: string): {
   return { tramo, tipo_area, incluir_origen }
 }
 
+/** Áreas / paradas en un trayecto: van al planificador, no a un listado del chat. */
 export function esRutaSinIntencion(mensaje: string): boolean {
   if (!mensaje) return false
   if (/(gasolinera|gasolineras|gasolina|di[eé]sel|petrol|tankstelle|taller)/i.test(mensaje)) return false
-  if (/paradas? en (una )?ruta|etapas de (ruta|itinerario)|stops? on (a |the )?route/i.test(mensaje) && !extraerRutaNombrada(mensaje)) {
+  if (esPreguntaAreaConcreta(mensaje) || esDeixisMapa(mensaje)) return false
+  if (/paradas? en (una )?ruta|etapas de (ruta|itinerario)|stops? on (a |the )?route/i.test(mensaje)) {
     return true
   }
-  if (!parecePreguntaRuta(mensaje)) return false
-  return !tieneDetalleParadaRuta(mensaje)
+  return parecePreguntaRuta(mensaje)
+}
+
+export function enlacePlanificador(ruta?: { origen: string; destino: string } | null): string {
+  if (!ruta?.origen || !ruta?.destino) return '/ruta'
+  const q = new URLSearchParams({ origen: ruta.origen, destino: ruta.destino })
+  return `/ruta?${q.toString()}`
+}
+
+function enlaceDesdeEtiqueta(sitio?: string): string {
+  const m = (sitio || '').match(/^(.+?)\s+→\s+(.+)$/)
+  if (!m) return '/ruta'
+  return enlacePlanificador({ origen: m[1].trim(), destino: m[2].trim() })
 }
 
 function tieneSitioOCerca(mensaje: string): boolean {
@@ -207,9 +220,13 @@ export function clasificarIntencion(opts: {
   if (!ultimo) return null
   if (esGuiaTuristicaPura(ultimo)) return 'guia'
   if (esGasolineraSinSitio(ultimo)) return 'gas_sin_sitio'
-  if (asistentePidioClarificar(opts.ultimoAsistente)) return null
   if (esPreguntaAreaConcreta(ultimo) || esDeixisMapa(ultimo)) return null
   if (esRutaSinIntencion(ultimo)) return 'ruta_sin_intencion'
+  const hiloRuta =
+    (opts.previosUsuario || []).some((t) => parecePreguntaRuta(t) || Boolean(extraerRutaNombrada(t))) ||
+    /planificador de rutas|\/ruta/i.test(opts.ultimoAsistente || '')
+  if (hiloRuta && tieneDetalleParadaRuta(ultimo)) return 'ruta_sin_intencion'
+  if (asistentePidioClarificar(opts.ultimoAsistente)) return null
   // Si el asistente acaba de listar áreas, "amplía", "esas no son gratis" o
   // "y con duchas" son seguimientos: el modelo debe usar el hilo, no preguntar dónde.
   const hiloConAreas = asistenteListoAreas(opts.ultimoAsistente)
@@ -243,13 +260,23 @@ export function textoAtajoIntencion(tipo: AtajoIntencion, locale: ChatLocale, si
     },
     ruta_sin_intencion: {
       es: lugar && lugar.includes('→')
-        ? `Para ${ruta} no te suelto un listado al salir: casi nadie para en el mismo sitio del que acaba de arrancar.\n\n¿Qué parada buscas?\n• ¿Pernoctar (dormir) o una parada técnica (agua, vaciado)?\n• ¿Camping o un área (pública / privada)?\n• ¿A mitad de ruta, más cerca del destino, o te da igual mientras no sea al salir?\n\nCon eso te dejo 3 o 4 que sirvan de verdad.`
-        : `Para proponerte paradas necesito origen y destino, y qué buscas:\n• ¿Pernoctar o parada técnica?\n• ¿Camping o un área?\n• ¿A mitad, cerca del destino, o da igual mientras no sea al salir?\n\nEjemplo: «de Murcia a Granada, camping a mitad».`,
-      en: `For ${ruta} I won’t dump stops in the city you’re leaving — nobody wants to halt where they just started.\n\nWhat kind of stop?\n• Overnight, or a service halt (water / dump)?\n• Camping or an aire (public / private)?\n• Mid-route, nearer the destination, or anywhere except the start?\n\nThen I’ll give you 3 or 4 that actually help.`,
-      fr: `Pour ${ruta} je ne te liste pas les aires de la ville de départ.\n\nQuelle halte ?\n• Dormir, ou une halte technique (eau / vidange) ?\n• Camping ou aire (publique / privée) ?\n• Au milieu, plus près de l’arrivée, ou n’importe où sauf au départ ?\n\nEnsuite je te donne 3 ou 4 vraies options.`,
-      de: `Für ${ruta} schütte ich dir keine Stellplätze der Startstadt hin.\n\nWelche Pause?\n• Übernachten oder Technikhalt (Wasser / Entsorgung)?\n• Camping oder Stellplatz (öffentlich / privat)?\n• In der Mitte, näher am Ziel, oder egal — nur nicht am Start?\n\nDann bekommst du 3–4, die wirklich passen.`,
-      it: `Per ${ruta} non ti scarico le aree della città di partenza.\n\nChe sosta vuoi?\n• Pernottare o sosta tecnica (acqua / scarico)?\n• Campeggio o area (pubblica / privata)?\n• A metà, più vicina all’arrivo, o ovunque tranne all’uscita?\n\nPoi ti lascio 3 o 4 che servono davvero.`,
-      pt: `Para ${ruta} não te deito uma lista na cidade de partida.\n\nQue paragem queres?\n• Pernoitar ou paragem técnica (água / esvaziamento)?\n• Camping ou área (pública / privada)?\n• A meio, mais perto do destino, ou tanto faz desde que não seja à saída?\n\nDepois deixo-te 3 ou 4 que sirvam de verdade.`,
+        ? `Para paradas de ${ruta} no te suelto áreas a ojo: el chat no ve el trazado real y acaba acertando a medias.\n\nUsa el planificador: marca origen y destino, calcula el camino y te enseña las áreas que quedan de verdad en la ruta.\n\n${enlaceDesdeEtiqueta(lugar)}`
+        : `Para paradas en una ruta usa el planificador: marca origen y destino y ves las áreas del camino. Aquí no especulo con un listado suelto.\n\n/ruta`,
+      en: lugar && lugar.includes('→')
+        ? `For stops on ${ruta} I won’t guess a handful of areas — the chat can’t see the real road.\n\nUse the route planner: set origin and destination, it traces the drive and shows areas that are actually on the way.\n\n${enlaceDesdeEtiqueta(lugar)}`
+        : `For stops along a route, use the planner: set origin and destination and see the areas on the way. I won’t guess a loose list here.\n\n/ruta`,
+      fr: lugar && lugar.includes('→')
+        ? `Pour les haltes de ${ruta} je ne te jette pas des aires au hasard : le chat ne voit pas le tracé réel.\n\nUtilise le planificateur : origine, destination, itinéraire, puis les aires vraiment sur le chemin.\n\n${enlaceDesdeEtiqueta(lugar)}`
+        : `Pour des haltes sur un trajet, utilise le planificateur : origine, destination, et les aires du chemin. Pas de liste au hasard ici.\n\n/ruta`,
+      de: lugar && lugar.includes('→')
+        ? `Für Stopps auf ${ruta} rate ich keine Stellplätze — der Chat sieht die echte Strecke nicht.\n\nNimm den Routenplaner: Start, Ziel, Strecke, dann die Plätze, die wirklich am Weg liegen.\n\n${enlaceDesdeEtiqueta(lugar)}`
+        : `Für Stopps auf einer Route nimm den Planer: Start und Ziel, dann die Plätze am Weg. Hier rate ich keine lose Liste.\n\n/ruta`,
+      it: lugar && lugar.includes('→')
+        ? `Per le soste di ${ruta} non ti butto aree a caso: la chat non vede il percorso vero.\n\nUsa il pianificatore: origine, destinazione, tracciato, e le aree che stanno davvero sulla strada.\n\n${enlaceDesdeEtiqueta(lugar)}`
+        : `Per soste su un percorso usa il pianificatore: origine e destinazione, e vedi le aree sulla strada. Qui non speculo con una lista sciolta.\n\n/ruta`,
+      pt: lugar && lugar.includes('→')
+        ? `Para paragens de ${ruta} não te deito áreas a olho: o chat não vê o traçado real.\n\nUsa o planeador: origem, destino, caminho, e as áreas que ficam mesmo na rota.\n\n${enlaceDesdeEtiqueta(lugar)}`
+        : `Para paragens numa rota usa o planeador: origem e destino, e vês as áreas do caminho. Aqui não especulo com uma lista solta.\n\n/ruta`,
     },
     ambigua: {
       es: `Perdona, no me queda claro qué información necesitas${deLugar}. ¿Buscas un área donde dormir, servicios (agua, electricidad) o una gasolinera en la zona?\n\nSi lo que quieres es qué ver, qué pueblos visitar o una guía de viaje, eso no lo cubro: en Furgocasa hay rutas pensadas para camper:\n${blog}`,
@@ -295,14 +322,7 @@ export function chipsSeguimiento(tipo: AtajoIntencion, locale: ChatLocale, sitio
       it: ['Vicino a me', 'In un paese', 'Sulla mappa'],
       pt: ['Perto de mim', 'Numa localidade', 'No mapa'],
     },
-    ruta_sin_intencion: sitio && sitio.includes('→') ? {
-      es: ['Pernoctar a mitad de ruta', 'Camping, no al salir', 'Parada técnica cerca del destino'],
-      en: ['Overnight mid-route', 'Camping, not at the start', 'Service halt near the destination'],
-      fr: ['Dormir au milieu', 'Camping, pas au départ', 'Halte technique près de l’arrivée'],
-      de: ['Übernachten in der Mitte', 'Camping, nicht am Start', 'Technikhalt nah am Ziel'],
-      it: ['Pernottare a metà', 'Campeggio, non in partenza', 'Sosta tecnica vicino all’arrivo'],
-      pt: ['Pernoitar a meio', 'Camping, não à saída', 'Paragem técnica perto do destino'],
-    } : { es: [], en: [], fr: [], de: [], it: [], pt: [] },
+    ruta_sin_intencion: { es: [], en: [], fr: [], de: [], it: [], pt: [] },
     ambigua: { es: [], en: [], fr: [], de: [], it: [], pt: [] },
     guia: { es: [], en: [], fr: [], de: [], it: [], pt: [] },
     gas_sin_sitio: { es: [], en: [], fr: [], de: [], it: [], pt: [] },
