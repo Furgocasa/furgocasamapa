@@ -35,6 +35,7 @@ export type TrackableEvent =
   | 'chatbot_message'
   | 'chatbot_nueva_conversacion'
   | 'chatbot_area_to_map'
+  | 'chatbot_voto'
   | 'vehicle_register'
   | 'vehicle_update'
   | 'profile_view'

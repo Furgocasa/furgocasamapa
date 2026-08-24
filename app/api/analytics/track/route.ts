@@ -37,6 +37,7 @@ const ALLOWED_EVENTS = new Set([
   'chatbot_message',
   'chatbot_nueva_conversacion',
   'chatbot_area_to_map',
+  'chatbot_voto',
   'vehicle_register',
   'vehicle_update',
   'profile_view',
@@ -85,7 +86,8 @@ export async function POST(request: Request) {
     const needsDbRemap =
       eventType === 'session_start' ||
       eventType === 'chatbot_nueva_conversacion' ||
-      eventType === 'chatbot_area_to_map'
+      eventType === 'chatbot_area_to_map' ||
+      eventType === 'chatbot_voto'
     if (needsDbRemap) eventType = 'other'
 
     const eventData =

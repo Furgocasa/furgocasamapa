@@ -1406,6 +1406,7 @@ export default function AdminAnalyticsPage() {
         chatbot_message: 'Mensaje al chatbot',
         chatbot_nueva_conversacion: 'Nueva conversación chatbot',
         chatbot_area_to_map: 'Chatbot → mapa (área)',
+        chatbot_voto: 'Voto respuesta chatbot',
         vehicle_register: 'Registrar vehículo',
         vehicle_update: 'Actualizar vehículo',
         profile_view: 'Ver perfil',
