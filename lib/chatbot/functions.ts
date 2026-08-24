@@ -111,12 +111,237 @@ function contarServicios(servicios: Record<string, boolean> | null | undefined):
   return Object.values(servicios).filter((v) => v === true).length
 }
 
+/** Idiomas de ficha. Misma heurística que Andrea (Furgocasa) + palabras de viaje. */
+export type ChatLocale = 'es' | 'en' | 'fr' | 'de' | 'it' | 'pt'
+
+/**
+ * Detección por palabras frecuentes. Portada de
+ * furgocasa-app/src/lib/chatbot/server.ts (`detectLanguage`).
+ * Si no hay señales, devuelve null (no fuerza español).
+ */
+export function detectLanguage(text: string): ChatLocale | null {
+  const t = ` ${text.toLowerCase()} `
+  const score: Record<ChatLocale, number> = { es: 0, en: 0, fr: 0, de: 0, it: 0, pt: 0 }
+  const dict: Record<ChatLocale, string[]> = {
+    es: [' el ', ' la ', ' que ', ' de ', ' hola ', ' gracias ', ' como ', ' donde ', ' cuanto ', ' precio ', ' areas ', ' cerca ', ' voy ', ' mejores '],
+    en: [' the ', ' and ', ' what ', ' how ', ' hello ', ' thanks ', ' where ', ' price ', ' is ', ' you ', ' best ', ' areas ', ' area ', ' with ', ' stop ', ' near ', ' free '],
+    fr: [' le ', ' la ', ' bonjour ', ' merci ', ' comment ', ' ou ', ' prix ', ' est ', ' vous ', ' je ', ' aires ', ' pres '],
+    de: [' der ', ' die ', ' das ', ' hallo ', ' danke ', ' wie ', ' wo ', ' preis ', ' ich ', ' und ', ' stellplatz ', ' zwischen '],
+    it: [' il ', ' la ', ' ciao ', ' grazie ', ' come ', ' dove ', ' prezzo ', ' che ', ' sono ', ' per ', ' sosta '],
+    pt: [' o ', ' a ', ' ola ', ' obrigado ', ' como ', ' onde ', ' preco ', ' que ', ' voce ', ' sim '],
+  }
+  for (const [lang, words] of Object.entries(dict) as [ChatLocale, string[]][]) {
+    for (const w of words) {
+      if (t.includes(w)) score[lang]++
+    }
+  }
+  let best: ChatLocale | null = null
+  let bestScore = 0
+  for (const [lang, s] of Object.entries(score) as [ChatLocale, number][]) {
+    if (s > bestScore) {
+      best = lang
+      bestScore = s
+    }
+  }
+  return bestScore > 0 ? best : null
+}
+
+/** Último mensaje del cliente; si es corto, el hilo; si no, el idioma de la web. */
+export function resolveChatLocale(opts: {
+  pageLocale?: string | null
+  lastUserText?: string | null
+  previousUserTexts?: string[]
+}): ChatLocale {
+  const page = String(opts.pageLocale || '').toLowerCase().split(/[-_]/)[0]
+  const pageOk = (['es', 'en', 'fr', 'de', 'it', 'pt'] as const).includes(page as ChatLocale)
+    ? (page as ChatLocale)
+    : null
+
+  const last = (opts.lastUserText || '').trim()
+  if (last.length > 12) {
+    const detected = detectLanguage(last)
+    if (detected) return detected
+  }
+  const previos = (opts.previousUserTexts || [])
+    .map((s) => String(s || '').trim())
+    .filter((s) => s.length > 12)
+  for (let i = previos.length - 1; i >= 0; i--) {
+    const detected = detectLanguage(previos[i])
+    if (detected) return detected
+  }
+  return pageOk || 'es'
+}
+
+const FICHA_I18N: Record<ChatLocale, {
+  priceUnknown: string
+  free: string
+  perNight: string
+  services: string
+  reviews: string
+  spots: string
+  fromYou: string
+  fromCenter: (city: string) => string
+  away: string
+  detour: string
+  locationUnknown: string
+}> = {
+  es: {
+    priceUnknown: 'Precio no disponible',
+    free: 'Gratis',
+    perNight: '€/noche',
+    services: 'Servicios',
+    reviews: 'valoraciones',
+    spots: 'plazas',
+    fromYou: 'desde tu ubicación',
+    fromCenter: (c) => `desde el centro de ${c}`,
+    away: 'de distancia',
+    detour: 'km de desvío',
+    locationUnknown: 'Ubicación no disponible',
+  },
+  en: {
+    priceUnknown: 'Price not available',
+    free: 'Free',
+    perNight: '€/night',
+    services: 'Services',
+    reviews: 'reviews',
+    spots: 'pitches',
+    fromYou: 'from your location',
+    fromCenter: (c) => `from the centre of ${c}`,
+    away: 'away',
+    detour: 'km detour',
+    locationUnknown: 'Location not available',
+  },
+  fr: {
+    priceUnknown: 'Prix non disponible',
+    free: 'Gratuit',
+    perNight: '€/nuit',
+    services: 'Services',
+    reviews: 'avis',
+    spots: 'emplacements',
+    fromYou: 'depuis votre position',
+    fromCenter: (c) => `depuis le centre de ${c}`,
+    away: 'de distance',
+    detour: 'km de détour',
+    locationUnknown: 'Lieu non disponible',
+  },
+  de: {
+    priceUnknown: 'Preis nicht verfügbar',
+    free: 'Kostenlos',
+    perNight: '€/Nacht',
+    services: 'Services',
+    reviews: 'Bewertungen',
+    spots: 'Stellplätze',
+    fromYou: 'von deinem Standort',
+    fromCenter: (c) => `vom Zentrum von ${c}`,
+    away: 'entfernt',
+    detour: 'km Umweg',
+    locationUnknown: 'Ort nicht verfügbar',
+  },
+  it: {
+    priceUnknown: 'Prezzo non disponibile',
+    free: 'Gratis',
+    perNight: '€/notte',
+    services: 'Servizi',
+    reviews: 'recensioni',
+    spots: 'posti',
+    fromYou: 'dalla tua posizione',
+    fromCenter: (c) => `dal centro di ${c}`,
+    away: 'di distanza',
+    detour: 'km di deviazione',
+    locationUnknown: 'Posizione non disponibile',
+  },
+  pt: {
+    priceUnknown: 'Preço não disponível',
+    free: 'Grátis',
+    perNight: '€/noite',
+    services: 'Serviços',
+    reviews: 'avaliações',
+    spots: 'lugares',
+    fromYou: 'da tua localização',
+    fromCenter: (c) => `do centro de ${c}`,
+    away: 'de distância',
+    detour: 'km de desvio',
+    locationUnknown: 'Localização não disponível',
+  },
+}
+
+const SERVICIOS_I18N: Record<ChatLocale, Record<string, string>> = {
+  es: SERVICIOS_NOMBRES,
+  en: {
+    agua: 'Water', electricidad: 'Electricity', wifi: 'WiFi', duchas: 'Showers', wc: 'WC',
+    zona_mascotas: 'Pets', vaciado_aguas_grises: 'Grey water dump', vaciado_aguas_negras: 'Black water dump',
+    lavanderia: 'Laundry', restaurante: 'Restaurant', supermercado: 'Supermarket',
+  },
+  fr: {
+    agua: 'Eau', electricidad: 'Électricité', wifi: 'WiFi', duchas: 'Douches', wc: 'WC',
+    zona_mascotas: 'Animaux', vaciado_aguas_grises: 'Eaux grises', vaciado_aguas_negras: 'Eaux noires',
+    lavanderia: 'Buanderie', restaurante: 'Restaurant', supermercado: 'Supermarché',
+  },
+  de: {
+    agua: 'Wasser', electricidad: 'Strom', wifi: 'WLAN', duchas: 'Duschen', wc: 'WC',
+    zona_mascotas: 'Haustiere', vaciado_aguas_grises: 'Grauwasser', vaciado_aguas_negras: 'Schwarzwasser',
+    lavanderia: 'Wäsche', restaurante: 'Restaurant', supermercado: 'Supermarkt',
+  },
+  it: {
+    agua: 'Acqua', electricidad: 'Elettricità', wifi: 'WiFi', duchas: 'Docce', wc: 'WC',
+    zona_mascotas: 'Animali', vaciado_aguas_grises: 'Acque grigie', vaciado_aguas_negras: 'Acque nere',
+    lavanderia: 'Lavanderia', restaurante: 'Ristorante', supermercado: 'Supermercato',
+  },
+  pt: {
+    agua: 'Água', electricidad: 'Eletricidade', wifi: 'WiFi', duchas: 'Duches', wc: 'WC',
+    zona_mascotas: 'Animais', vaciado_aguas_grises: 'Águas cinzentas', vaciado_aguas_negras: 'Águas negras',
+    lavanderia: 'Lavandaria', restaurante: 'Restaurante', supermercado: 'Supermercado',
+  },
+}
+
+const PAIS_I18N: Record<string, Record<ChatLocale, string>> = {
+  españa: { es: 'España', en: 'Spain', fr: 'Espagne', de: 'Spanien', it: 'Spagna', pt: 'Espanha' },
+  spain: { es: 'España', en: 'Spain', fr: 'Espagne', de: 'Spanien', it: 'Spagna', pt: 'Espanha' },
+  francia: { es: 'Francia', en: 'France', fr: 'France', de: 'Frankreich', it: 'Francia', pt: 'França' },
+  france: { es: 'Francia', en: 'France', fr: 'France', de: 'Frankreich', it: 'Francia', pt: 'França' },
+  portugal: { es: 'Portugal', en: 'Portugal', fr: 'Portugal', de: 'Portugal', it: 'Portogallo', pt: 'Portugal' },
+  italia: { es: 'Italia', en: 'Italy', fr: 'Italie', de: 'Italien', it: 'Italia', pt: 'Itália' },
+  italy: { es: 'Italia', en: 'Italy', fr: 'Italie', de: 'Italien', it: 'Italia', pt: 'Itália' },
+  alemania: { es: 'Alemania', en: 'Germany', fr: 'Allemagne', de: 'Deutschland', it: 'Germania', pt: 'Alemanha' },
+  germany: { es: 'Alemania', en: 'Germany', fr: 'Allemagne', de: 'Deutschland', it: 'Germania', pt: 'Alemanha' },
+  méxico: { es: 'México', en: 'Mexico', fr: 'Mexique', de: 'Mexiko', it: 'Messico', pt: 'México' },
+  mexico: { es: 'México', en: 'Mexico', fr: 'Mexique', de: 'Mexiko', it: 'Messico', pt: 'México' },
+  'países bajos': { es: 'Países Bajos', en: 'Netherlands', fr: 'Pays-Bas', de: 'Niederlande', it: 'Paesi Bassi', pt: 'Países Baixos' },
+  'paises bajos': { es: 'Países Bajos', en: 'Netherlands', fr: 'Pays-Bas', de: 'Niederlande', it: 'Paesi Bassi', pt: 'Países Baixos' },
+  netherlands: { es: 'Países Bajos', en: 'Netherlands', fr: 'Pays-Bas', de: 'Niederlande', it: 'Paesi Bassi', pt: 'Países Baixos' },
+}
+
+function traducirPais(pais: string, locale: ChatLocale): string {
+  const key = pais.trim().toLowerCase()
+  return PAIS_I18N[key]?.[locale] || pais
+}
+
+function formatDistanciaDesde(raw: string | undefined, locale: ChatLocale): string {
+  const L = FICHA_I18N[locale]
+  if (!raw || raw === 'de distancia') return L.away
+  if (/desde tu ubicaci[oó]n|from your location|depuis votre position|von deinem standort|dalla tua posizione|da tua localiza/i.test(raw)) {
+    return L.fromYou
+  }
+  const m = raw.match(/desde el centro de (.+)/i)
+    || raw.match(/from the centre of (.+)/i)
+    || raw.match(/depuis le centre de (.+)/i)
+    || raw.match(/vom zentrum von (.+)/i)
+    || raw.match(/dal centro di (.+)/i)
+    || raw.match(/do centro de (.+)/i)
+  if (m) return L.fromCenter(m[1].trim())
+  return raw
+}
+
 /** Lista legible de servicios en true (nunca muestra false ni el objeto crudo). */
-export function formatServiciosLegibles(servicios: Record<string, boolean> | null | undefined): string {
+export function formatServiciosLegibles(
+  servicios: Record<string, boolean> | null | undefined,
+  locale: ChatLocale = 'es'
+): string {
   if (!servicios || typeof servicios !== 'object') return ''
+  const nombres = SERVICIOS_I18N[locale] || SERVICIOS_NOMBRES
   return Object.entries(servicios)
     .filter(([, value]) => value === true)
-    .map(([key]) => SERVICIOS_NOMBRES[key] || key.replace(/_/g, ' '))
+    .map(([key]) => nombres[key] || SERVICIOS_NOMBRES[key] || key.replace(/_/g, ' '))
     .join(', ')
 }
 
@@ -157,7 +382,19 @@ const ALIAS_UBICACION: Record<string, string> = {
 }
 
 function resolverAliasUbicacion(nombre: string): string {
-  return ALIAS_UBICACION[normalizarClave(nombre)] || nombre.trim()
+  const clave = normalizarClave(nombre)
+  if (ALIAS_UBICACION[clave]) return ALIAS_UBICACION[clave]
+
+  const tokens = clave.split(/[^a-z0-9]+/).filter(Boolean)
+  const hits = Object.keys(ALIAS_UBICACION)
+    .filter((k) => {
+      const partes = k.split(/[^a-z0-9]+/).filter(Boolean)
+      if (partes.length === 1) return tokens.includes(partes[0])
+      return clave.includes(k)
+    })
+    .sort((a, b) => b.length - a.length)
+
+  return hits.length ? ALIAS_UBICACION[hits[0]] : nombre.trim()
 }
 
 const PAISES_NOMBRE_RE =
@@ -208,7 +445,7 @@ export function rankMejoresAreas<T extends AreaResumen>(areas: T[], limit: numbe
  * texto ya formateado (servicios legibles, slug interno) + campos clave.
  * Evita que el LLM invente formatos tipo "[agua: no, electricidad: sí]".
  */
-export function serializeToolResultForModel(result: any): string {
+export function serializeToolResultForModel(result: any, locale: ChatLocale = 'es'): string {
   if (result == null) return JSON.stringify({ error: 'Sin resultado' })
   if (result.error) return JSON.stringify(result)
 
@@ -216,7 +453,7 @@ export function serializeToolResultForModel(result: any): string {
     id: a.id,
     slug: a.slug,
     nombre: a.nombre,
-    resumen: formatAreaParaChat(a),
+    resumen: formatAreaParaChat(a, locale),
     google_rating: a.google_rating ?? null,
     google_ratings_total: a.google_ratings_total ?? null,
     precio_noche: a.precio_noche ?? null,
@@ -228,7 +465,7 @@ export function serializeToolResultForModel(result: any): string {
     return JSON.stringify({
       total: result.length,
       instrucciones:
-        'Usa el campo "resumen" de cada área tal cual (servicios solo en true, rating y enlace /area/{slug}). Si precio_noche es null el resumen dice "Precio no disponible": NUNCA lo conviertas en Gratis. No inventes servicios ni pegues Google Maps / imágenes.',
+        'El campo "resumen" YA está en el idioma de respuesta: pégalo TAL CUAL (servicios, rating, /area/{slug}). Si el precio es desconocido el resumen lo dice: NUNCA lo conviertas en Gratis. No inventes servicios ni pegues Google Maps / imágenes.',
       areas: result.map(mapArea),
     })
   }
@@ -237,7 +474,7 @@ export function serializeToolResultForModel(result: any): string {
     return JSON.stringify({
       total: result.areas.length,
       instrucciones:
-        'Usa el campo "resumen" de cada área tal cual. Menciona desvío_km si existe. Tras listar paradas puedes mencionar /ruta como complemento, nunca como única respuesta. Enlace interno: /area/{slug}.',
+        'El "resumen" YA está en el idioma de respuesta: pégalo TAL CUAL. Menciona desvío si existe. Tras listar paradas puedes mencionar /ruta como complemento, nunca como única respuesta. Enlace interno: /area/{slug}.',
       areas: result.areas.map(mapArea),
     })
   }
@@ -246,8 +483,8 @@ export function serializeToolResultForModel(result: any): string {
   if (result.id && result.nombre) {
     return JSON.stringify({
       ...result,
-      servicios_legibles: formatServiciosLegibles(result.servicios),
-      resumen: formatAreaParaChat(result),
+      servicios_legibles: formatServiciosLegibles(result.servicios, locale),
+      resumen: formatAreaParaChat(result, locale),
     })
   }
 
@@ -793,12 +1030,12 @@ export async function searchAreasAlongRoute(
 /**
  * Formatea un área para mostrar en el chat
  */
-function formatUbicacionArea(area: AreaResumen): string {
-  const parts = [area.ciudad, area.provincia, area.pais]
+function formatUbicacionArea(area: AreaResumen, locale: ChatLocale = 'es'): string {
+  const parts = [area.ciudad, area.provincia, area.pais ? traducirPais(area.pais, locale) : '']
     .map((s) => String(s || '').trim())
     .filter((s) => s && !/^s\/n$/i.test(s) && s.toLowerCase() !== 'null')
   const uniq = parts.filter((p, i) => i === 0 || p.toLowerCase() !== parts[i - 1].toLowerCase())
-  return uniq.join(', ') || 'Ubicación no disponible'
+  return uniq.join(', ') || FICHA_I18N[locale].locationUnknown
 }
 
 /**
@@ -838,7 +1075,11 @@ export function sanitizarRespuestaChat(texto: string, areas: AreaResumen[] = [])
  * El modelo no reescribe fichas: se queda la intro y se pegan los
  * resúmenes oficiales (precio, servicios, /area/{slug}, distancias).
  */
-export function componerRespuestaConFichas(textoModelo: string, areas: AreaResumen[] = []): string {
+export function componerRespuestaConFichas(
+  textoModelo: string,
+  areas: AreaResumen[] = [],
+  locale: ChatLocale = 'es'
+): string {
   const limpio = sanitizarRespuestaChat(textoModelo || '', areas)
   if (!areas.length) return limpio
 
@@ -850,7 +1091,7 @@ export function componerRespuestaConFichas(textoModelo: string, areas: AreaResum
       enFicha = true
       continue
     }
-    if (enFicha && (/^[📍💰✨⭐🅿️🔗📏↔]/.test(l) || /✨ Servicios:|🔗 \/area\//.test(l))) {
+    if (enFicha && (/^[📍💰✨⭐🅿️🔗📏↔]/.test(l) || /✨ Servicios:|✨ Services:|✨ Servizi:|✨ Serviços:|🔗 \/area\//.test(l))) {
       continue
     }
     if (enFicha && !l) {
@@ -859,49 +1100,50 @@ export function componerRespuestaConFichas(textoModelo: string, areas: AreaResum
     }
     enFicha = false
     if (/autocaravanas\.com|example\.com/i.test(l)) continue
-    if (/💰|✨ Servicios:|🔗 \/area\//.test(l)) continue
+    if (/💰|✨ Servicios:|✨ Services:|🔗 \/area\//.test(l)) continue
     keep.push(linea)
   }
   const intro = keep.join('\n').replace(/\n{3,}/g, '\n\n').trim()
-  const fichas = areas.slice(0, 6).map((a) => formatAreaParaChat(a)).join('\n')
+  const fichas = areas.slice(0, 6).map((a) => formatAreaParaChat(a, locale)).join('\n')
   return [intro, fichas].filter(Boolean).join('\n\n')
 }
 
-export function formatAreaParaChat(area: AreaResumen): string {
+export function formatAreaParaChat(area: AreaResumen, locale: ChatLocale = 'es'): string {
+  const L = FICHA_I18N[locale] || FICHA_I18N.es
   let texto = `🚐 **${area.nombre}**\n`
-  texto += `📍 ${formatUbicacionArea(area)}\n`
+  texto += `📍 ${formatUbicacionArea(area, locale)}\n`
   
   if (area.distancia_km !== undefined) {
-    const desde = area.distancia_desde || 'de distancia'
+    const desde = formatDistanciaDesde(area.distancia_desde, locale)
     texto += `📏 ${area.distancia_km.toFixed(1)} km ${desde}\n`
   }
   if ((area as any).desvio_km !== undefined) {
-    texto += `↔ ${(area as any).desvio_km} km de desvío\n`
+    texto += `↔ ${(area as any).desvio_km} ${L.detour}\n`
   }
   
   const precio = area.precio_noche
   if (typeof precio === 'number' && precio > 0) {
-    texto += `💰 ${precio}€/noche\n`
+    texto += `💰 ${precio}${L.perNight}\n`
   } else if (esPrecioGratis(precio)) {
-    texto += `💰 Gratis\n`
+    texto += `💰 ${L.free}\n`
   } else {
-    texto += `💰 Precio no disponible\n`
+    texto += `💰 ${L.priceUnknown}\n`
   }
   
-  const serviciosDisponibles = formatServiciosLegibles(area.servicios)
+  const serviciosDisponibles = formatServiciosLegibles(area.servicios, locale)
   if (serviciosDisponibles) {
-    texto += `✨ Servicios: ${serviciosDisponibles}\n`
+    texto += `✨ ${L.services}: ${serviciosDisponibles}\n`
   }
   
   if (area.google_rating && area.google_rating > 0) {
     const n = area.google_ratings_total
     texto += n != null && n > 0
-      ? `⭐ ${area.google_rating.toFixed(1)}/5 (${n} valoraciones)\n`
+      ? `⭐ ${area.google_rating.toFixed(1)}/5 (${n} ${L.reviews})\n`
       : `⭐ ${area.google_rating.toFixed(1)}/5 (Google)\n`
   }
   
   if (area.plazas_totales) {
-    texto += `🅿️ ${area.plazas_totales} plazas\n`
+    texto += `🅿️ ${area.plazas_totales} ${L.spots}\n`
   }
 
   // Link interno (las tarjetas del chat también lo muestran; evita Google Maps / markdown de imagen)
@@ -944,6 +1186,7 @@ export interface InfoViajeWebParams {
   lugar?: string
   origen?: string
   destino?: string
+  idioma?: ChatLocale
 }
 
 /**
@@ -979,7 +1222,8 @@ export async function buscarInfoViajeWeb(params: InfoViajeWebParams): Promise<{
     reasoning: { effort: 'low' },
     instructions:
       'Información práctica de viaje (gasolineras, qué ver, restaurantes, talleres). ' +
-      'Idioma de la pregunta. Sitios reales, breve. ' +
+      `Responde ENTERA en el idioma del cliente (${params.idioma || 'el de la pregunta'}). ` +
+      'Sitios reales, breve. ' +
       'NO inventes áreas de autocaravanas ni enlaces /area/. ' +
       'Si no hay dato fiable, dilo.',
     input: detalle,

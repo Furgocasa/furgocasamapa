@@ -22,6 +22,7 @@ import {
   esGpsValido,
   sanitizarRespuestaChat,
   componerRespuestaConFichas,
+  resolveChatLocale,
   BusquedaAreasParams,
   AreaResumen
 } from '@/lib/chatbot/functions'
@@ -690,20 +691,20 @@ REGLAS DE UBICACIÓN:
 
 Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónde están", etc.`
 
-    // Idioma: prioridad al mensaje del usuario; la UI es solo fallback
+    // Idioma: misma regla que Andrea (Furgocasa) — último mensaje del cliente
     {
       const NOMBRES_IDIOMA: Record<string, string> = {
         es: 'español', en: 'inglés', fr: 'francés', de: 'alemán', it: 'italiano', pt: 'portugués', nl: 'neerlandés'
       }
       const nombreUi = NOMBRES_IDIOMA[locale || 'es'] || locale || 'español'
       systemPromptEnriquecido += `\n\n═══════════════════════════════════════
-🌍 IDIOMA DE RESPUESTA (PRIORIDAD)
+🌍 IDIOMA (multilingüe, PRIORIDAD)
 ═══════════════════════════════════════
-1) PRIORIDAD MÁXIMA: responde en el idioma del ÚLTIMO mensaje del usuario
-   (si escribe en español → español; si en inglés → inglés; etc.), aunque la web esté en otro idioma.
-2) Solo si el mensaje es ambiguo/emoji/sin texto claro, usa el idioma de la interfaz (${nombreUi}).
-3) Los datos de áreas están en español: tradúcelos al idioma de la respuesta.
-4) NUNCA mezcles idiomas en la misma respuesta.`
+- Responde SIEMPRE en el MISMO idioma en el que te escribe el cliente, sea cual sea: español, inglés, francés, alemán, italiano, portugués, polaco, neerlandés, etc. No te limites a los idiomas de la web.
+- Detecta el idioma por el ÚLTIMO mensaje del cliente. Si cambia de idioma a mitad de conversación, cambia tú con él.
+- Aunque los datos de las áreas estén en español, TRADÚCELOS con naturalidad. Nunca respondas en español a quien te escribe en otro idioma, ni mezcles idiomas.
+- Los nombres propios (áreas, ciudades) se mantienen. Las fichas "resumen" YA vienen en el idioma de respuesta: pégalas TAL CUAL.
+- Si no estás seguro del idioma (mensaje muy corto como "ok"), responde en el idioma de los mensajes anteriores; si no hay, en ${nombreUi}.`
     }
 
     systemPromptEnriquecido += `\n\n═══════════════════════════════════════
@@ -726,7 +727,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 - POI turísticos: si preguntan "qué ver" / monumentos → buscar_info_viaje. Si también quieren pernoctar, llama TAMBIÉN a search_areas en esa ciudad (áreas cerca, no un área con el nombre del monumento).
 - Gasolineras, talleres, restaurantes, hoteles: NO están en el catálogo. Usa buscar_info_viaje. No llames a search_areas con supermercado. Di que esa info es de la web, no una ficha /area/.
 - example.com u otras URLs inventadas: prohibido. Solo /area/{slug}.
-- Idioma: si el último mensaje está en inglés, portugués, francés, alemán o italiano, responde TODO en ese idioma (también títulos y etiquetas).`
+- Idioma: último mensaje del cliente. TODO en ese idioma (intro y etiquetas). Las fichas "resumen" ya están traducidas.`
     
     // 5. PREPARAR MENSAJES COMPLETOS
     const fullMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
@@ -775,6 +776,14 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
     const ultimoMensajeUsuario = [...messages]
       .reverse()
       .find((m: any) => m.role === 'user')?.content || ''
+    const idiomaRespuesta = resolveChatLocale({
+      pageLocale: locale,
+      lastUserText: ultimoMensajeUsuario,
+      previousUserTexts: [
+        ...historialPrevio.filter((h) => h.rol === 'user').map((h) => h.contenido),
+        ...messages.filter((m: any) => m.role === 'user').slice(0, -1).map((m: any) => m.content),
+      ],
+    })
     const parecePreguntaRuta = detectarPreguntaRuta(ultimoMensajeUsuario)
     const pareceFueraCatalogo =
       esPreguntaFueraCatalogo(ultimoMensajeUsuario) && !pideAreasEnMensaje(ultimoMensajeUsuario)
@@ -884,6 +893,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
                 lugar: fnArgs.lugar,
                 origen: fnArgs.origen,
                 destino: fnArgs.destino,
+                idioma: idiomaRespuesta,
               })
               break
             default:
@@ -900,7 +910,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         conversation.push({
           role: 'tool',
           tool_call_id: toolCall.id,
-          content: serializeToolResultForModel(functionResult)
+          content: serializeToolResultForModel(functionResult, idiomaRespuesta)
         })
       }
     }
@@ -931,7 +941,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 
     if (finalResponse) {
       finalResponse = areasEncontradas.length
-        ? componerRespuestaConFichas(finalResponse, areasEncontradas)
+        ? componerRespuestaConFichas(finalResponse, areasEncontradas, idiomaRespuesta)
         : sanitizarRespuestaChat(finalResponse, areasEncontradas)
     }
 
@@ -1140,7 +1150,7 @@ export async function GET() {
 
   return NextResponse.json({
     service: 'Chatbot Furgocasa',
-    version: '2.4',
+    version: '2.5',
     status: hasOpenAI ? 'active' : 'error',
     openai_configured: hasOpenAI,
     supabase_configured: hasSupabase,

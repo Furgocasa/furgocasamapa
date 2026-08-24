@@ -495,7 +495,7 @@ export default function ChatbotWidget() {
               ? ubicacion
               : undefined,
           userId: user?.id || undefined, // Con cuenta: se guarda el historial
-          locale // La IA responde en el idioma de la interfaz
+          locale // Fallback si el mensaje es corto; manda el idioma del último mensaje
         })
       })
       
