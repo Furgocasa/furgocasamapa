@@ -72,9 +72,15 @@ const TEXTOS: Record<string, {
   locationCta: string
   locationDenied: string
   planificarRuta: string
+  valorarFurgo: string
+  qrAntiGolpes: string
+  preguntasLabel: string
+  rutaDescripcion: string
+  valoracionDescripcion: string
+  qrDescripcion: string
 }> = {
   es: {
-    bienvenida: '¡Hola! 👋 Soy el Tío Viajero. Empieza tocando una pastilla: gratis, pública, agua y luz o mascotas, cerca de ti. También puedes escribir un pueblo o un área. Si vas de un sitio a otro, usa Planificar una ruta.',
+    bienvenida: '¡Hola! 👋 Soy el Tío Viajero IA, tu asistente para viajar en autocaravana o camper.\n\nPregúntame lo que quieras sobre áreas públicas o privadas, campings, precios, servicios o lugares cercanos. Estaré encantado de ayudarte.',
     sugerencias: [
       '🆓 Áreas gratis cerca de mí',
       '🅿️ Área pública cerca de mí',
@@ -96,10 +102,16 @@ const TEXTOS: Record<string, {
     locationWall: 'Activa la ubicación para usar el chat. Sin ella no puedo situarte ni decirte qué hay cerca.',
     locationCta: 'Activar ubicación',
     locationDenied: 'El navegador ha bloqueado la ubicación. Actívala en los permisos de esta página y pulsa de nuevo.',
-    planificarRuta: '🛣️ Planificar una ruta'
+    planificarRuta: '🛣️ Planificar una ruta',
+    valorarFurgo: '🤖 ¿Cuánto vale mi furgo?',
+    qrAntiGolpes: '🛡️ QR anti-golpes',
+    preguntasLabel: 'O prueba una pregunta:',
+    rutaDescripcion: 'Si vas de un lugar a otro y quieres encontrar dónde parar por el camino:',
+    valoracionDescripcion: 'Si quieres calcular con IA el valor de tu autocaravana o camper:',
+    qrDescripcion: 'Si quieres proteger tu vehículo y recibir avisos si sufre algún golpe:'
   },
   en: {
-    bienvenida: "Hi! 👋 I'm Tío Viajero. Start by tapping a chip: free, public, water and power, or pet-friendly spots near you. You can also type a town or a place. Going from A to B? Use Plan a route.",
+    bienvenida: "Hi! 👋 I'm Tío Viajero AI, your assistant for travelling by motorhome or camper.\n\nAsk me anything about public or private areas, campsites, prices, services or nearby places. I'll be happy to help.",
     sugerencias: [
       '🆓 Free areas near me',
       '🅿️ Public aire near me',
@@ -121,10 +133,16 @@ const TEXTOS: Record<string, {
     locationWall: 'Turn on location to use the chat. Without it I can’t place you or tell you what’s nearby.',
     locationCta: 'Enable location',
     locationDenied: 'The browser blocked location. Allow it for this page and tap again.',
-    planificarRuta: '🛣️ Plan a route'
+    planificarRuta: '🛣️ Plan a route',
+    valorarFurgo: '🤖 How much is my van worth?',
+    qrAntiGolpes: '🛡️ Anti-damage QR',
+    preguntasLabel: 'Or try a question:',
+    rutaDescripcion: 'If you are travelling from one place to another and want to find stops along the way:',
+    valoracionDescripcion: 'If you want AI to estimate the value of your motorhome or camper:',
+    qrDescripcion: 'If you want to protect your vehicle and receive alerts if it is damaged:'
   },
   fr: {
-    bienvenida: "Salut ! 👋 Je suis Tío Viajero. Commence par un bouton : gratuit, publique, eau et électricité ou animaux, près de toi. Tu peux aussi écrire un village ou une aire. Trajet ? Utilise Planifier un trajet.",
+    bienvenida: "Salut ! 👋 Je suis Tío Viajero IA, ton assistant pour voyager en camping-car ou en van.\n\nDemande-moi tout ce que tu veux sur les aires publiques ou privées, les campings, les prix, les services ou les lieux proches. Je serai ravi de t'aider.",
     sugerencias: [
       '🆓 Aires gratuites près de moi',
       '🅿️ Aire publique près de moi',
@@ -146,10 +164,16 @@ const TEXTOS: Record<string, {
     locationWall: 'Active la localisation pour utiliser le chat. Sans elle, je ne peux pas te placer ni dire ce qu’il y a près de toi.',
     locationCta: 'Activer la localisation',
     locationDenied: 'Le navigateur a bloqué la localisation. Autorise-la pour cette page et réessaie.',
-    planificarRuta: '🛣️ Planifier un trajet'
+    planificarRuta: '🛣️ Planifier un trajet',
+    valorarFurgo: '🤖 Combien vaut mon van ?',
+    qrAntiGolpes: '🛡️ QR anti-chocs',
+    preguntasLabel: 'Ou essaie une question :',
+    rutaDescripcion: 'Si tu voyages d’un lieu à un autre et veux trouver des haltes en chemin :',
+    valoracionDescripcion: 'Si tu veux estimer avec l’IA la valeur de ton camping-car ou van :',
+    qrDescripcion: 'Si tu veux protéger ton véhicule et être alerté en cas de dommage :'
   },
   de: {
-    bienvenida: 'Hallo! 👋 Ich bin Tío Viajero. Tippe zuerst eine Pille: kostenlos, öffentlich, Wasser und Strom oder mit Hund, in deiner Nähe. Du kannst auch einen Ort schreiben. Von A nach B? Route planen.',
+    bienvenida: 'Hallo! 👋 Ich bin Tío Viajero KI, dein Reiseassistent für Wohnmobil und Camper.\n\nFrag mich alles über öffentliche oder private Stellplätze, Campingplätze, Preise, Ausstattung oder Orte in deiner Nähe. Ich helfe dir gern.',
     sugerencias: [
       '🆓 Kostenlose Stellplätze in meiner Nähe',
       '🅿️ Öffentlicher Stellplatz in meiner Nähe',
@@ -171,10 +195,16 @@ const TEXTOS: Record<string, {
     locationWall: 'Aktiviere den Standort, um den Chat zu nutzen. Ohne ihn kann ich dich nicht orten.',
     locationCta: 'Standort aktivieren',
     locationDenied: 'Der Browser hat den Standort blockiert. Erlaube ihn für diese Seite und tippe erneut.',
-    planificarRuta: '🛣️ Route planen'
+    planificarRuta: '🛣️ Route planen',
+    valorarFurgo: '🤖 Was ist mein Camper wert?',
+    qrAntiGolpes: '🛡️ Schadenschutz-QR',
+    preguntasLabel: 'Oder probiere eine Frage:',
+    rutaDescripcion: 'Wenn du von einem Ort zum anderen fährst und unterwegs Stopps finden möchtest:',
+    valoracionDescripcion: 'Wenn du den Wert deines Wohnmobils oder Campers mit KI berechnen möchtest:',
+    qrDescripcion: 'Wenn du dein Fahrzeug schützen und bei Schäden benachrichtigt werden möchtest:'
   },
   it: {
-    bienvenida: 'Ciao! 👋 Sono Tío Viajero. Inizia toccando una pastiglia: gratis, pubblica, acqua e luce o animali, vicino a te. Puoi anche scrivere un paese o un’area. Vai da A a B? Usa Pianifica un percorso.',
+    bienvenida: 'Ciao! 👋 Sono Tío Viajero IA, il tuo assistente per viaggiare in camper.\n\nChiedimi tutto ciò che vuoi su aree pubbliche o private, campeggi, prezzi, servizi o luoghi vicini. Sarò felice di aiutarti.',
     sugerencias: [
       '🆓 Aree gratuite vicino a me',
       '🅿️ Area pubblica vicino a me',
@@ -196,7 +226,13 @@ const TEXTOS: Record<string, {
     locationWall: 'Attiva la posizione per usare la chat. Senza non posso collocarti né dirti cosa c’è vicino.',
     locationCta: 'Attiva posizione',
     locationDenied: 'Il browser ha bloccato la posizione. Abilitala per questa pagina e riprova.',
-    planificarRuta: '🛣️ Pianifica un percorso'
+    planificarRuta: '🛣️ Pianifica un percorso',
+    valorarFurgo: '🤖 Quanto vale il mio camper?',
+    qrAntiGolpes: '🛡️ QR anti-urto',
+    preguntasLabel: 'Oppure prova una domanda:',
+    rutaDescripcion: 'Se viaggi da un luogo a un altro e vuoi trovare soste lungo il percorso:',
+    valoracionDescripcion: 'Se vuoi calcolare con l’IA il valore del tuo camper:',
+    qrDescripcion: 'Se vuoi proteggere il veicolo e ricevere avvisi in caso di danni:'
   }
 }
 
@@ -822,6 +858,50 @@ export default function ChatbotWidget() {
                   <div className="text-sm leading-relaxed">
                     <ChatMensajeTexto texto={msg.contenido} />
                   </div>
+
+                  {/* La bienvenida presenta las herramientas y preguntas dentro del mensaje. */}
+                  {msg.rol === 'assistant' && i === 0 && messages.length <= 1 && puedeHablar && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs leading-relaxed text-gray-700">{txt.rutaDescripcion}</p>
+                      <Link
+                        href="/ruta"
+                        onClick={minimizarParaVerPagina}
+                        className="block w-full rounded-lg bg-sky-600 px-3 py-2 text-center text-xs font-semibold text-white transition-colors hover:bg-sky-700"
+                      >
+                        {txt.planificarRuta}
+                      </Link>
+                      <p className="pt-1 text-xs leading-relaxed text-gray-700">{txt.valoracionDescripcion}</p>
+                      <Link
+                        href="/valoracion-ia-vehiculos"
+                        onClick={minimizarParaVerPagina}
+                        className="block w-full rounded-lg bg-[#0b3c74] px-3 py-2 text-center text-xs font-semibold text-white transition-colors hover:bg-[#0d4a8f]"
+                      >
+                        {txt.valorarFurgo}
+                      </Link>
+                      <p className="pt-1 text-xs leading-relaxed text-gray-700">{txt.qrDescripcion}</p>
+                      <Link
+                        href="/sistema-reporte-accidentes"
+                        onClick={minimizarParaVerPagina}
+                        className="block w-full rounded-lg bg-red-600 px-3 py-2 text-center text-xs font-semibold text-white transition-colors hover:bg-red-700"
+                      >
+                        {txt.qrAntiGolpes}
+                      </Link>
+
+                      <div className="border-t border-gray-200 pt-2 text-xs font-medium text-gray-600">
+                        {txt.preguntasLabel}
+                      </div>
+                      {txt.sugerencias.map((sugerencia) => (
+                        <button
+                          key={sugerencia}
+                          type="button"
+                          onClick={() => enviarMensaje(sugerencia)}
+                          className="block w-full rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-left text-xs text-sky-800 transition-colors hover:border-sky-400 hover:bg-sky-100"
+                        >
+                          {sugerencia}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   
                   {/* Tarjetas de áreas encontradas */}
                   {msg.areas && msg.areas.length > 0 && (
@@ -957,10 +1037,10 @@ export default function ChatbotWidget() {
               </div>
             ))}
             
-            {/* Arranque: temas. Tras un atajo: segunda fase (dónde / qué parada). */}
-            {!sending && puedeHablar && (messages.length <= 1 || seguimiento.length > 0) && (
+            {/* Tras un atajo: segunda fase (dónde / qué parada). */}
+            {!sending && puedeHablar && messages.length > 1 && seguimiento.length > 0 && (
               <div className="flex flex-wrap gap-2 pt-1">
-                {(messages.length <= 1 ? txt.sugerencias : seguimiento).map((sugerencia) => (
+                {seguimiento.map((sugerencia) => (
                   <button
                     key={sugerencia}
                     onClick={() => enviarMensaje(sugerencia)}
@@ -969,31 +1049,6 @@ export default function ChatbotWidget() {
                     {sugerencia}
                   </button>
                 ))}
-                {messages.length <= 1 && (
-                  <>
-                <Link
-                  href="/ruta"
-                  onClick={minimizarParaVerPagina}
-                  className="text-xs bg-sky-600 text-white hover:bg-sky-700 rounded-full px-3 py-1.5 transition-all shadow-sm"
-                >
-                  {txt.planificarRuta}
-                </Link>
-                <Link
-                  href="/valoracion-ia-vehiculos"
-                  onClick={minimizarParaVerPagina}
-                  className="text-xs bg-[#0b3c74] text-white hover:bg-[#0d4a8f] rounded-full px-3 py-1.5 transition-all shadow-sm"
-                >
-                  🤖 ¿Cuánto vale mi furgo?
-                </Link>
-                <Link
-                  href="/sistema-reporte-accidentes"
-                  onClick={minimizarParaVerPagina}
-                  className="text-xs bg-red-600 text-white hover:bg-red-700 rounded-full px-3 py-1.5 transition-all shadow-sm"
-                >
-                  🛡️ QR anti-golpes
-                </Link>
-                  </>
-                )}
               </div>
             )}
 
