@@ -11,7 +11,7 @@ import { getMapStyle } from '@/lib/mapStyles'
 import { useLanguage } from '@/lib/i18n'
 import { getTipoAreaColor, getTipoAreaPinSvg } from '@/lib/areas/tipo-area'
 import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
-import { cookiesGranted, onCookieConsentChange, pedirAceptarCookies } from '@/components/CookieConsentBar'
+import { avisarGps, cookiesGranted, onCookieConsentChange, onGpsChange, pedirAceptarCookies } from '@/components/CookieConsentBar'
 
 // Tipos simplificados para Google Maps (se cargan din├ímicamente)
 type GoogleMap = any
@@ -88,15 +88,35 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
     }
   }
   
-  // Cargar estado del GPS desde localStorage DESPU├ëS de montar (solo cliente)
+  // Cargar estado del GPS desde localStorage DESPUÉS de montar (solo cliente)
   useEffect(() => {
     const savedGpsState = localStorage.getItem('gpsActive') === 'true'
     if (savedGpsState && cookiesGranted()) {
       setGpsActive(true)
     }
-    return onCookieConsentChange((granted) => {
+    const offCookie = onCookieConsentChange((granted) => {
       if (granted) setGpsActive(true)
     })
+    const offGps = onGpsChange((active) => {
+      if (active) {
+        setGpsActive(true)
+        return
+      }
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current)
+        watchIdRef.current = null
+      }
+      if (userMarkerRef.current) {
+        userMarkerRef.current.setMap(null)
+        userMarkerRef.current = null
+      }
+      setUserLocation(null)
+      setGpsActive(false)
+    })
+    return () => {
+      offCookie()
+      offGps()
+    }
   }, [])
 
   // Inicializar Google Maps
@@ -456,7 +476,7 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
         (error) => {
           console.error('Error obteniendo ubicaci├│n (auto-activaci├│n):', error)
           setGpsActive(false)
-          localStorage.setItem('gpsActive', 'false')
+          avisarGps(false)
         },
         {
           enableHighAccuracy: true,
@@ -579,7 +599,7 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
               alert('No se pudo obtener tu ubicaci├│n')
             }
             setGpsActive(false)
-            localStorage.setItem('gpsActive', 'false')
+            avisarGps(false)
           },
           {
             enableHighAccuracy: true,
@@ -589,7 +609,7 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
         )
         watchIdRef.current = watchId
         setGpsActive(true)
-        localStorage.setItem('gpsActive', 'true') // Guardar estado
+        avisarGps(true) // Guardar estado
       }
     } else {
       // Desactivar GPS
@@ -603,7 +623,7 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
       }
       setUserLocation(null)
       setGpsActive(false)
-      localStorage.setItem('gpsActive', 'false') // Guardar estado
+      avisarGps(false)
     }
   }
 

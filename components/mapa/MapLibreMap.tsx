@@ -11,7 +11,7 @@ import { useLanguage } from '@/lib/i18n'
 import { getTipoAreaColor, getTipoAreaIconSvg } from '@/lib/areas/tipo-area'
 import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
 import { applyBrandTheme, applyMapLanguage } from '@/lib/map/brand-style'
-import { cookiesGranted, onCookieConsentChange, pedirAceptarCookies } from '@/components/CookieConsentBar'
+import { avisarGps, cookiesGranted, onCookieConsentChange, onGpsChange, pedirAceptarCookies } from '@/components/CookieConsentBar'
 
 function focusAreaOnMapLibre(
   map: maplibregl.Map,
@@ -86,9 +86,29 @@ export function MapLibreMap({
     if (savedGpsState && cookiesGranted()) {
       setGpsActive(true)
     }
-    return onCookieConsentChange((granted) => {
+    const offCookie = onCookieConsentChange((granted) => {
       if (granted) setGpsActive(true)
     })
+    const offGps = onGpsChange((active) => {
+      if (active) {
+        setGpsActive(true)
+        return
+      }
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current)
+        watchIdRef.current = null
+      }
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove()
+        userMarkerRef.current = null
+      }
+      setUserLocation(null)
+      setGpsActive(false)
+    })
+    return () => {
+      offCookie()
+      offGps()
+    }
   }, [])
 
   // Obtener URL de estilo
@@ -467,7 +487,7 @@ export function MapLibreMap({
         (error) => {
           console.error('Error GPS:', error)
           setGpsActive(false)
-          localStorage.setItem('gpsActive', 'false')
+          avisarGps(false)
         },
         { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
       )
@@ -529,13 +549,13 @@ export function MapLibreMap({
             console.error('Error GPS:', error)
             alert('No se pudo obtener tu ubicación')
             setGpsActive(false)
-            localStorage.setItem('gpsActive', 'false')
+            avisarGps(false)
           },
           { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
         )
         watchIdRef.current = watchId
         setGpsActive(true)
-        localStorage.setItem('gpsActive', 'true')
+        avisarGps(true)
       }
     } else {
       if (watchIdRef.current !== null) {
@@ -548,7 +568,7 @@ export function MapLibreMap({
       }
       setUserLocation(null)
       setGpsActive(false)
-      localStorage.setItem('gpsActive', 'false')
+      avisarGps(false)
     }
   }
 

@@ -52,6 +52,7 @@ import { useLanguage, getTipoAreaLabel } from '@/lib/i18n'
 import AuthModal from '@/components/ui/AuthModal'
 import { syncLocalFavoritesToAccount } from '@/lib/favoritos/local'
 import { track } from '@/lib/analytics/track'
+import { avisarGps, onGpsChange } from '@/components/CookieConsentBar'
 
 // Tipos simplificados para Google Maps
 type GoogleMap = any
@@ -655,6 +656,22 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
     if (savedGpsState) {
       setGpsActive(true)
     }
+    return onGpsChange((active) => {
+      if (active) {
+        setGpsActive(true)
+        return
+      }
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current)
+        watchIdRef.current = null
+      }
+      if (userMarkerRef.current) {
+        userMarkerRef.current.setMap(null)
+        userMarkerRef.current = null
+      }
+      setUserLocation(null)
+      setGpsActive(false)
+    })
   }, [])
 
   // Cargar ruta desde URL si existe
@@ -842,13 +859,13 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
             alert('No se pudo obtener tu ubicación')
           }
           setGpsActive(false)
-          localStorage.setItem('gpsActive', 'false')
+          avisarGps(false)
         },
         { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
       )
       watchIdRef.current = watchId
       setGpsActive(true)
-      localStorage.setItem('gpsActive', 'true')
+      avisarGps(true)
     }
   }
 
@@ -893,7 +910,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
         (error) => {
           console.error('Error obteniendo ubicación (auto-activación RUTA):', error)
           setGpsActive(false)
-          localStorage.setItem('gpsActive', 'false')
+          avisarGps(false)
         },
         {
           enableHighAccuracy: true,
@@ -2026,7 +2043,7 @@ export default function PlanificadorRuta({ vistaMovil = 'ruta', onRutaCalculada 
                 userMarkerRef.current = null
               }
               setGpsActive(false)
-              localStorage.setItem('gpsActive', 'false')
+              avisarGps(false)
             }
           }}
           className={`absolute left-3 bottom-[calc(8.25rem+env(safe-area-inset-bottom,0px))] md:left-1/2 md:-translate-x-1/2 md:bottom-20 p-3 md:px-4 md:py-2 rounded-full shadow-lg font-semibold transition-all z-30 flex items-center md:gap-2 ${

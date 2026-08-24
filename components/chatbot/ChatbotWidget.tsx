@@ -14,8 +14,11 @@ import {
   removeLocalFavorite,
 } from '@/lib/favoritos/local'
 import {
+  avisarGps,
   cookiesGranted,
+  gpsActivo,
   onCookieConsentChange,
+  onGpsChange,
   pedirAceptarCookies,
   setCookieConsent,
 } from '@/components/CookieConsentBar'
@@ -195,6 +198,7 @@ export default function ChatbotWidget() {
   const [loginRequired, setLoginRequired] = useState(false)
   const [guestRemaining, setGuestRemaining] = useState<number | null>(null)
   const [cookiesOk, setCookiesOk] = useState(false)
+  const [gpsOn, setGpsOn] = useState(false)
   const [geoError, setGeoError] = useState<string | null>(null)
   const [pidiendoGeo, setPidiendoGeo] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -302,6 +306,8 @@ export default function ChatbotWidget() {
         }
         setUbicacion({ lat, lng })
         setGeoError(null)
+        setGpsOn(true)
+        avisarGps(true, { lat, lng })
       },
       () => {
         setPidiendoGeo(false)
@@ -313,15 +319,31 @@ export default function ChatbotWidget() {
 
   useEffect(() => {
     setCookiesOk(cookiesGranted())
-    return onCookieConsentChange((granted) => {
+    setGpsOn(gpsActivo())
+    const offCookie = onCookieConsentChange((granted) => {
       setCookiesOk(granted)
-      if (granted && isOpen && !ubicacion) pedirUbicacion()
+      if (granted && isOpen && gpsActivo() && !ubicacion) pedirUbicacion()
     })
+    const offGps = onGpsChange((active, coords) => {
+      setGpsOn(active)
+      if (!active) {
+        setUbicacion(null)
+        return
+      }
+      if (coords && !(Math.abs(coords.lat) < 0.5 && Math.abs(coords.lng) < 0.5)) {
+        setUbicacion(coords)
+        setGeoError(null)
+      }
+    })
+    return () => {
+      offCookie()
+      offGps()
+    }
   }, [isOpen, ubicacion])
 
   useEffect(() => {
-    if (isOpen && cookiesOk && !ubicacion) pedirUbicacion()
-  }, [isOpen, cookiesOk, ubicacion])
+    if (isOpen && cookiesOk && gpsOn && !ubicacion) pedirUbicacion()
+  }, [isOpen, cookiesOk, gpsOn, ubicacion])
 
   // Iniciar conversación (abierta a todos, con o sin cuenta)
   const iniciarConversacion = async () => {
@@ -494,8 +516,7 @@ export default function ChatbotWidget() {
       pedirAceptarCookies()
       return
     }
-    if (!ubicacion) {
-      pedirUbicacion()
+    if (!gpsActivo() || !ubicacion) {
       return
     }
 
@@ -626,8 +647,8 @@ export default function ChatbotWidget() {
   const nextRegister = `/auth/register?next=${encodeURIComponent(pathname || '/mapa')}`
   const bloqueadoInvitado = loginRequired && !user
   const faltaCookies = !cookiesOk
-  const faltaUbicacion = cookiesOk && !ubicacion
-  const puedeHablar = cookiesOk && Boolean(ubicacion) && !bloqueadoInvitado
+  const faltaUbicacion = cookiesOk && (!gpsOn || !ubicacion)
+  const puedeHablar = cookiesOk && gpsOn && Boolean(ubicacion) && !bloqueadoInvitado
 
   return (
     <>
@@ -737,7 +758,14 @@ export default function ChatbotWidget() {
           </div>
           
           {/* Mensajes */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+          <div className="relative flex-1 min-h-0 bg-gray-50">
+            {faltaUbicacion && (
+              <div
+                className="absolute inset-0 z-10 bg-white/65 backdrop-blur-[1px]"
+                aria-hidden
+              />
+            )}
+          <div className={`h-full overflow-y-auto p-4 space-y-4 ${faltaUbicacion ? 'pointer-events-none' : ''}`}>
             {messages.map((msg: any, i: any) => (
               <div key={i} className={`flex ${msg.rol === 'user' ? 'justify-end' : 'justify-start gap-2'}`}>
                 {/* Avatar del Tío Viajero para mensajes del asistente */}
@@ -941,6 +969,7 @@ export default function ChatbotWidget() {
               </div>
             )}
             <div ref={messagesEndRef} />
+          </div>
           </div>
           
           {/* Input */}

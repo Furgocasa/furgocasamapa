@@ -192,6 +192,41 @@ export function onCookieConsentChange(cb: (granted: boolean) => void) {
   return () => window.removeEventListener(COOKIE_CONSENT_CHANGE, handler)
 }
 
+export const GPS_ACTIVE_KEY = 'gpsActive'
+export const GPS_CHANGE = 'mapafc:gps'
+
+export function gpsActivo(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return localStorage.getItem(GPS_ACTIVE_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+/** Mapa y chat comparten el mismo interruptor. Apagar el GPS deja el chat sombreado. */
+export function avisarGps(active: boolean, coords?: { lat: number; lng: number } | null) {
+  try {
+    localStorage.setItem(GPS_ACTIVE_KEY, active ? 'true' : 'false')
+  } catch {
+    /* modo privado */
+  }
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(GPS_CHANGE, { detail: { active, coords: coords || null } }))
+  }
+}
+
+export function onGpsChange(
+  cb: (active: boolean, coords: { lat: number; lng: number } | null) => void
+) {
+  const handler = (e: Event) => {
+    const d = (e as CustomEvent).detail || {}
+    cb(Boolean(d.active), d.coords || null)
+  }
+  window.addEventListener(GPS_CHANGE, handler)
+  return () => window.removeEventListener(GPS_CHANGE, handler)
+}
+
 interface CookieContextType {
   preferences: CookiePreferences
   hasConsented: boolean
