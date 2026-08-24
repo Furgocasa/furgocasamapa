@@ -21,9 +21,6 @@ interface ChatbotConfig {
   temperature: number
   max_tokens: number
   system_prompt: string
-  prompts?: IAConfigValue  // Sistema de prompts múltiples (nuevo)
-  contexto_inicial: string | null
-  instrucciones_busqueda: string | null
   puede_geolocalizar: boolean
   puede_buscar_areas: boolean
   puede_obtener_detalles: boolean
@@ -170,15 +167,7 @@ export default function ConfiguracionPage() {
   useEffect(() => {
     if (activeTab === 'chatbot') {
       if (chatbotConfig) {
-        const config = JSON.parse(JSON.stringify(chatbotConfig))
-
-        // Debug: ver estructura de prompts
-        console.log('🔍 Chatbot Config:', config)
-        console.log('🔍 Prompts:', config.prompts)
-        console.log('🔍 Prompts.prompts:', config.prompts?.prompts)
-        console.log('🔍 Es array?:', Array.isArray(config.prompts?.prompts))
-
-        setEditedChatbotConfig(config)
+        setEditedChatbotConfig(JSON.parse(JSON.stringify(chatbotConfig)))
       }
       setEditedConfig(null)
     } else {
@@ -294,8 +283,6 @@ export default function ConfiguracionPage() {
           temperature: editedChatbotConfig.temperature,
           max_tokens: editedChatbotConfig.max_tokens,
           system_prompt: editedChatbotConfig.system_prompt,
-          contexto_inicial: editedChatbotConfig.contexto_inicial,
-          instrucciones_busqueda: editedChatbotConfig.instrucciones_busqueda,
           puede_geolocalizar: editedChatbotConfig.puede_geolocalizar,
           puede_buscar_areas: editedChatbotConfig.puede_buscar_areas,
           puede_obtener_detalles: editedChatbotConfig.puede_obtener_detalles,
@@ -304,11 +291,6 @@ export default function ConfiguracionPage() {
           max_areas_por_respuesta: editedChatbotConfig.max_areas_por_respuesta,
           radio_busqueda_default_km: editedChatbotConfig.radio_busqueda_default_km,
           updated_at: new Date().toISOString()
-        }
-
-        // Si tiene prompts múltiples, incluirlos
-        if (editedChatbotConfig.prompts) {
-          updateData.prompts = editedChatbotConfig.prompts
         }
 
         const response = await fetch('/api/admin/chatbot-config', {
@@ -379,78 +361,6 @@ export default function ConfiguracionPage() {
     setEditedChatbotConfig({
       ...editedChatbotConfig,
       [field]: value
-    })
-  }
-
-  // Funciones para gestionar prompts del chatbot
-  const addChatbotPrompt = (role: 'user' | 'assistant' | 'agent') => {
-    if (!editedChatbotConfig || !editedChatbotConfig.prompts) return
-
-    const newPrompt: PromptMessage = {
-      id: `${role}-${Date.now()}`,
-      role,
-      content: '',
-      order: editedChatbotConfig.prompts.prompts.length + 1,
-      required: false
-    }
-
-    setEditedChatbotConfig({
-      ...editedChatbotConfig,
-      prompts: {
-        ...editedChatbotConfig.prompts,
-        prompts: [...editedChatbotConfig.prompts.prompts, newPrompt]
-      }
-    })
-  }
-
-  const updateChatbotPrompt = (promptId: string, field: keyof PromptMessage, value: any) => {
-    if (!editedChatbotConfig || !editedChatbotConfig.prompts) return
-
-    setEditedChatbotConfig({
-      ...editedChatbotConfig,
-      prompts: {
-        ...editedChatbotConfig.prompts,
-        prompts: editedChatbotConfig.prompts.prompts.map((p: any) =>
-          p.id === promptId ? { ...p, [field]: value } : p
-        )
-      }
-    })
-  }
-
-  const removeChatbotPrompt = (promptId: string) => {
-    if (!editedChatbotConfig || !editedChatbotConfig.prompts) return
-
-    const updatedPrompts = editedChatbotConfig.prompts.prompts
-      .filter((p: any) => p.id !== promptId)
-      .map((p: any, index: any) => ({ ...p, order: index + 1 }))
-
-    setEditedChatbotConfig({
-      ...editedChatbotConfig,
-      prompts: {
-        ...editedChatbotConfig.prompts,
-        prompts: updatedPrompts
-      }
-    })
-  }
-
-  const moveChatbotPrompt = (index: number, direction: 'up' | 'down') => {
-    if (!editedChatbotConfig || !editedChatbotConfig.prompts) return
-
-    const prompts = [...editedChatbotConfig.prompts.prompts]
-    const newIndex = direction === 'up' ? index - 1 : index + 1
-
-    if (newIndex < 0 || newIndex >= prompts.length) return
-
-    [prompts[index], prompts[newIndex]] = [prompts[newIndex], prompts[index]]
-
-    const reorderedPrompts = prompts.map((p: any, i: any) => ({ ...p, order: i + 1 }))
-
-    setEditedChatbotConfig({
-      ...editedChatbotConfig,
-      prompts: {
-        ...editedChatbotConfig.prompts,
-        prompts: reorderedPrompts
-      }
     })
   }
 
@@ -1181,146 +1091,22 @@ export default function ConfiguracionPage() {
                 </p>
               </div>
 
-              {/* Configuración de Prompts */}
-              {editedChatbotConfig.prompts && editedChatbotConfig.prompts.prompts && Array.isArray(editedChatbotConfig.prompts.prompts) ? (
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">🎨 Configuración de Prompts</h3>
-
-                  {/* Botones para añadir prompts */}
-                  <div className="flex gap-2 mb-4">
-                    <button
-                      onClick={() => addChatbotPrompt('user')}
-                      disabled={saving}
-                      className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition disabled:opacity-50"
-                    >
-                      <span className="text-lg">+</span>
-                      User Prompt
-                    </button>
-                    <button
-                      onClick={() => addChatbotPrompt('assistant')}
-                      disabled={saving}
-                      className="flex items-center gap-2 px-3 py-1.5 text-sm bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition disabled:opacity-50"
-                    >
-                      <span className="text-lg">+</span>
-                      Assistant Prompt
-                    </button>
-                    <button
-                      onClick={() => addChatbotPrompt('agent')}
-                      disabled={saving}
-                      className="flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg transition disabled:opacity-50"
-                    >
-                      <span className="text-lg">+</span>
-                      Agent Prompt
-                    </button>
-                  </div>
-
-                  {/* Lista de Prompts */}
-                  <div className="space-y-4">
-                    {editedChatbotConfig.prompts.prompts
-                      .sort((a: any, b: any) => a.order - b.order)
-                      .map((prompt: any, index: any) => {
-                        const colors = PROMPT_COLORS[prompt.role as keyof typeof PROMPT_COLORS]
-                        const label = PROMPT_LABELS[prompt.role as keyof typeof PROMPT_LABELS]
-
-                        return (
-                          <div
-                            key={prompt.id}
-                            className={`border-2 rounded-lg p-4 ${colors.border} ${colors.bg}`}
-                          >
-                            {/* Header del Prompt */}
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-3">
-                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${colors.badge}`}>
-                                  {colors.icon} {label} Prompt
-                                </span>
-                                <span className="text-xs text-gray-500">Orden: {index + 1}</span>
-                                {prompt.required && (
-                                  <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium">
-                                    Obligatorio
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Botones de Control */}
-                              <div className="flex items-center gap-2">
-                                {index > 0 && (
-                                  <button
-                                    onClick={() => moveChatbotPrompt(index, 'up')}
-                                    disabled={saving}
-                                    className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
-                                    title="Mover arriba"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                                    </svg>
-                                  </button>
-                                )}
-
-                                {index < editedChatbotConfig.prompts!.prompts.length - 1 && (
-                                  <button
-                                    onClick={() => moveChatbotPrompt(index, 'down')}
-                                    disabled={saving}
-                                    className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
-                                    title="Mover abajo"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                  </button>
-                                )}
-
-                                {!prompt.required && (
-                                  <button
-                                    onClick={() => removeChatbotPrompt(prompt.id)}
-                                    disabled={saving}
-                                    className="p-1 hover:bg-red-200 text-red-600 rounded disabled:opacity-50"
-                                    title="Eliminar"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Textarea del Prompt */}
-                            <textarea
-                              value={prompt.content}
-                              onChange={(e) => updateChatbotPrompt(prompt.id, 'content', e.target.value)}
-                              disabled={saving}
-                              rows={prompt.role === 'system' ? 12 : 8}
-                              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent font-mono text-sm resize-y disabled:opacity-50 disabled:bg-gray-100"
-                              placeholder={
-                                prompt.role === 'system' ? 'Define el comportamiento general del Tío Viajero IA...' :
-                                prompt.role === 'user' ? 'Contexto del usuario o instrucciones adicionales...' :
-                                prompt.role === 'assistant' ? 'Ejemplo de respuesta esperada del asistente...' :
-                                'Instrucciones específicas para el agente...'
-                              }
-                            />
-                          </div>
-                        )
-                      })}
-                  </div>
-                </div>
-              ) : (
-                /* System Prompt Legacy (si no tiene prompts múltiples) */
-                <div className="border-t pt-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    System Prompt (Instrucciones del Tío Viajero IA)
-                  </label>
-                  <textarea
-                    value={editedChatbotConfig.system_prompt}
-                    onChange={(e) => updateChatbotConfigValue('system_prompt', e.target.value)}
-                    rows={15}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm resize-y"
-                    placeholder="Define el comportamiento y personalidad del chatbot..."
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Este prompt define la personalidad, tono y comportamiento del Tío Viajero IA
-                  </p>
-                </div>
-              )}
+              {/* System Prompt: el ÚNICO prompt que lee /api/chatbot (config.system_prompt) */}
+              <div className="border-t pt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  System Prompt (Instrucciones del Tío Viajero IA)
+                </label>
+                <textarea
+                  value={editedChatbotConfig.system_prompt}
+                  onChange={(e) => updateChatbotConfigValue('system_prompt', e.target.value)}
+                  rows={20}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm resize-y"
+                  placeholder="Define el comportamiento y personalidad del chatbot..."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Este es el único prompt que usa el Tío Viajero. La API le añade sola la ubicación GPS, las estadísticas y el idioma de cada conversación.
+                </p>
+              </div>
 
               {/* Capacidades */}
               <div className="border-t pt-6">
