@@ -7,7 +7,7 @@
  * anónimos) registradas en chatbot_respuestas_log.
  */
 
-import { Fragment, useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { createClient } from '@/lib/supabase/client'
@@ -251,7 +251,30 @@ export default function ChatbotRespuestasPage() {
     cargar()
   }, [cargar])
 
+  const cerrarPaneles = () => {
+    setExpandido(null)
+    setHiloId(null)
+    setHilo(null)
+    setHiloMeta(null)
+  }
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') cerrarPaneles()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  const abrirDetalle = (id: string) => {
+    setHiloId(null)
+    setHilo(null)
+    setHiloMeta(null)
+    setExpandido((prev) => (prev === id ? null : id))
+  }
+
   const abrirHilo = async (id: string) => {
+    setExpandido(null)
     setHiloId(id)
     setHilo(null)
     setHiloMeta(null)
@@ -288,6 +311,7 @@ export default function ChatbotRespuestasPage() {
   }
 
   const totalPaginas = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const logAbierto = expandido ? logs.find((l) => l.id === expandido) || null : null
   const totalGrafico = stats.total || 0
   const pieData = CATEGORIAS_PIE
     .map((c) => ({ ...c, value: stats[c.key] || 0 }))
@@ -611,10 +635,10 @@ export default function ChatbotRespuestasPage() {
                       const categoria = log.valoracion_ia ? BADGE_IA[log.valoracion_ia] : null
                       const voto = etiquetaVoto(log.voto_usuario)
                       return (
-                        <Fragment key={log.id}>
                           <tr
-                            onClick={() => setExpandido(abierto ? null : log.id)}
-                            className={`cursor-pointer hover:bg-gray-50 ${abierto ? 'bg-sky-50/60' : ''} ${log.revisado ? 'bg-green-50/40' : ''}`}
+                            key={log.id}
+                            onClick={() => abrirDetalle(log.id)}
+                            className={`cursor-pointer hover:bg-gray-50 ${abierto ? 'bg-sky-50/60' : ''} ${log.revisado && !abierto ? 'bg-green-50/40' : ''}`}
                           >
                             <td className="px-2.5 py-2 align-top overflow-hidden">
                               <div className="text-sm font-medium text-gray-900">{fecha.dia}</div>
@@ -672,110 +696,6 @@ export default function ChatbotRespuestasPage() {
                               </span>
                             </td>
                           </tr>
-                          {abierto && (
-                            <tr className="bg-gray-50">
-                              <td colSpan={8} className="px-4 py-4">
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                  <div>
-                                    <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Mensaje del usuario</p>
-                                    <div className="text-sm text-gray-900 bg-white rounded-lg border border-gray-200 p-3">
-                                      <ChatMensajeTexto texto={log.pregunta || '—'} />
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Respuesta</p>
-                                    <div className="text-sm text-gray-900 bg-white rounded-lg border border-gray-200 p-3">
-                                      <ChatMensajeTexto texto={log.respuesta || '—'} />
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-gray-500">
-                                  {log.conversacion_id && (
-                                    <button
-                                      type="button"
-                                      onClick={(e) => { e.stopPropagation(); abrirHilo(log.conversacion_id!) }}
-                                      className="text-sky-700 font-medium hover:underline"
-                                    >
-                                      Ver hilo
-                                    </button>
-                                  )}
-                                  <span className={textoUbicacion(log) === 'Ubicación desconocida' ? 'text-gray-400' : ''}>
-                                    {textoUbicacion(log)}
-                                  </span>
-                                  {log.locale && <span className="uppercase font-semibold">{log.locale}</span>}
-                                  {log.funciones && log.funciones.filter((f) => !f.name.startsWith('_')).length > 0 && (
-                                    <span>{log.funciones.filter((f) => !f.name.startsWith('_')).map((f) => f.name).join(', ')}</span>
-                                  )}
-                                  <span>{log.tokens ?? '—'} tokens</span>
-                                  <span>{log.duracion_ms ? `${(log.duracion_ms / 1000).toFixed(1)} s` : '—'}</span>
-                                  {log.revisado && <span className="text-green-700 font-medium">Revisada</span>}
-                                </div>
-
-                                {log.funciones && log.funciones.length > 0 && (
-                                  <pre className="mt-3 text-xs bg-gray-900 text-green-300 rounded-lg p-3 overflow-x-auto">
-                                    {JSON.stringify(log.funciones, null, 2)}
-                                  </pre>
-                                )}
-
-                                {log.valoracion_ia && (
-                                  <div className={`mt-3 rounded-lg p-3 border ${
-                                    log.valoracion_ia === 'correcta' ? 'bg-green-50 border-green-200'
-                                      : log.valoracion_ia === 'mejorable' ? 'bg-amber-50 border-amber-200'
-                                      : 'bg-red-50 border-red-200'
-                                  }`}>
-                                    <p className="text-xs font-semibold text-gray-600 uppercase mb-1">
-                                      Revisor IA: {BADGE_IA[log.valoracion_ia].label}
-                                    </p>
-                                    {log.motivo_ia && <p className="text-sm text-gray-800"><strong>Motivo:</strong> {log.motivo_ia}</p>}
-                                    {log.sugerencia_ia && <p className="text-sm text-gray-800 mt-1"><strong>Sugerencia:</strong> {log.sugerencia_ia}</p>}
-                                    {log.voto_usuario && (
-                                      <p className="text-sm text-gray-800 mt-1">
-                                        <strong>Voto usuario:</strong>{' '}
-                                        {log.voto_usuario === 'up' ? '👍 le gustó' : '👎 no le gustó'}
-                                        {log.valoracion_ia && log.valoracion_ia === 'incorrecta' && log.voto_usuario === 'up' && ' · gustó aunque la IA la marca incorrecta'}
-                                        {log.valoracion_ia && log.valoracion_ia === 'correcta' && log.voto_usuario === 'down' && ' · no gustó aunque la IA la marca correcta'}
-                                      </p>
-                                    )}
-                                  </div>
-                                )}
-                                {!log.valoracion_ia && log.voto_usuario && (
-                                  <p className="mt-3 text-sm text-gray-700">
-                                    Voto del usuario: {log.voto_usuario === 'up' ? '👍 le gustó' : '👎 no le gustó'}
-                                  </p>
-                                )}
-
-                                <div className="flex items-end gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
-                                  <div className="flex-1">
-                                    <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Nota de revisión</label>
-                                    <input
-                                      type="text"
-                                      value={notas[log.id] ?? log.nota_revision ?? ''}
-                                      onChange={(e) => setNotas((prev) => ({ ...prev, [log.id]: e.target.value }))}
-                                      placeholder="p.ej. respuesta inventada, faltó buscar, OK..."
-                                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
-                                    />
-                                  </div>
-                                  {log.revisado ? (
-                                    <button
-                                      onClick={() => marcarRevisado(log.id, false)}
-                                      className="px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors whitespace-nowrap"
-                                    >
-                                      Desmarcar
-                                    </button>
-                                  ) : (
-                                    <button
-                                      onClick={() => marcarRevisado(log.id, true)}
-                                      className="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors whitespace-nowrap"
-                                    >
-                                      Marcar revisada
-                                    </button>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                        </Fragment>
                       )
                     })}
                   </tbody>
@@ -805,12 +725,14 @@ export default function ChatbotRespuestasPage() {
           </>
         )}
 
-        {hiloId && (
-          <div className="fixed inset-0 z-40 flex justify-end bg-black/30" onClick={() => { setHiloId(null); setHilo(null); setHiloMeta(null) }}>
+        {(hiloId || logAbierto) && (
+          <div className="fixed inset-0 z-40 flex justify-end bg-black/30" onClick={cerrarPaneles}>
             <div
-              className="w-full max-w-xl h-full bg-white shadow-xl overflow-y-auto"
+              className="w-full max-w-2xl h-full bg-white shadow-xl overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
+              {hiloId ? (
+                <>
               <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900">Interacción</h3>
@@ -826,7 +748,7 @@ export default function ChatbotRespuestasPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => { setHiloId(null); setHilo(null); setHiloMeta(null) }}
+                  onClick={cerrarPaneles}
                   className="text-sm text-gray-500 hover:text-gray-800"
                 >
                   Cerrar
@@ -868,6 +790,110 @@ export default function ChatbotRespuestasPage() {
                   })
                 )}
               </div>
+                </>
+              ) : logAbierto ? (
+                <>
+                  <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900">Respuesta</h3>
+                      <p className="text-xs text-gray-500">
+                        {nombreUsuario(logAbierto)} · {textoUbicacion(logAbierto)} · {formatFecha(logAbierto.created_at).dia} {formatFecha(logAbierto.created_at).hora}
+                      </p>
+                    </div>
+                    <button type="button" onClick={cerrarPaneles} className="text-sm text-gray-500 hover:text-gray-800">
+                      Cerrar
+                    </button>
+                  </div>
+                  <div className="p-5 space-y-4">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Mensaje del usuario</p>
+                      <div className="text-sm text-gray-900 bg-sky-50 rounded-lg border border-sky-100 p-3">
+                        <ChatMensajeTexto texto={logAbierto.pregunta || '—'} />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Respuesta</p>
+                      <div className="text-sm text-gray-900 bg-white rounded-lg border border-gray-200 p-3">
+                        <ChatMensajeTexto texto={logAbierto.respuesta || '—'} />
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                      {logAbierto.conversacion_id && (
+                        <button
+                          type="button"
+                          onClick={() => abrirHilo(logAbierto.conversacion_id!)}
+                          className="text-sky-700 font-medium hover:underline"
+                        >
+                          Ver hilo
+                        </button>
+                      )}
+                      {logAbierto.locale && <span className="uppercase font-semibold">{logAbierto.locale}</span>}
+                      {logAbierto.funciones && logAbierto.funciones.filter((f) => !f.name.startsWith('_')).length > 0 && (
+                        <span>{logAbierto.funciones.filter((f) => !f.name.startsWith('_')).map((f) => f.name).join(', ')}</span>
+                      )}
+                      <span>{logAbierto.tokens ?? '—'} tokens</span>
+                      <span>{logAbierto.duracion_ms ? `${(logAbierto.duracion_ms / 1000).toFixed(1)} s` : '—'}</span>
+                      {logAbierto.revisado && <span className="text-green-700 font-medium">Revisada</span>}
+                    </div>
+                    {logAbierto.funciones && logAbierto.funciones.length > 0 && (
+                      <pre className="text-xs bg-gray-900 text-green-300 rounded-lg p-3 overflow-x-auto">
+                        {JSON.stringify(logAbierto.funciones, null, 2)}
+                      </pre>
+                    )}
+                    {logAbierto.valoracion_ia && (
+                      <div className={`rounded-lg p-3 border ${
+                        logAbierto.valoracion_ia === 'correcta' ? 'bg-green-50 border-green-200'
+                          : logAbierto.valoracion_ia === 'mejorable' ? 'bg-amber-50 border-amber-200'
+                          : 'bg-red-50 border-red-200'
+                      }`}>
+                        <p className="text-xs font-semibold text-gray-600 uppercase mb-1">
+                          Revisor IA: {BADGE_IA[logAbierto.valoracion_ia].label}
+                        </p>
+                        {logAbierto.motivo_ia && <p className="text-sm text-gray-800"><strong>Motivo:</strong> {logAbierto.motivo_ia}</p>}
+                        {logAbierto.sugerencia_ia && <p className="text-sm text-gray-800 mt-1"><strong>Sugerencia:</strong> {logAbierto.sugerencia_ia}</p>}
+                        {logAbierto.voto_usuario && (
+                          <p className="text-sm text-gray-800 mt-1">
+                            <strong>Voto usuario:</strong>{' '}
+                            {logAbierto.voto_usuario === 'up' ? '👍 le gustó' : '👎 no le gustó'}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    {!logAbierto.valoracion_ia && logAbierto.voto_usuario && (
+                      <p className="text-sm text-gray-700">
+                        Voto del usuario: {logAbierto.voto_usuario === 'up' ? '👍 le gustó' : '👎 no le gustó'}
+                      </p>
+                    )}
+                    <div className="flex items-end gap-2">
+                      <div className="flex-1">
+                        <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Nota de revisión</label>
+                        <input
+                          type="text"
+                          value={notas[logAbierto.id] ?? logAbierto.nota_revision ?? ''}
+                          onChange={(e) => setNotas((prev) => ({ ...prev, [logAbierto.id]: e.target.value }))}
+                          placeholder="p.ej. respuesta inventada, faltó buscar, OK..."
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        />
+                      </div>
+                      {logAbierto.revisado ? (
+                        <button
+                          onClick={() => marcarRevisado(logAbierto.id, false)}
+                          className="px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors whitespace-nowrap"
+                        >
+                          Desmarcar
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => marcarRevisado(logAbierto.id, true)}
+                          className="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors whitespace-nowrap"
+                        >
+                          Marcar revisada
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </>
+              ) : null}
             </div>
           </div>
         )}
