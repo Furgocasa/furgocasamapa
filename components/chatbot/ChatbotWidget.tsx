@@ -305,10 +305,11 @@ export default function ChatbotWidget() {
     return () => subscription.unsubscribe()
   }, [])
   
-  // Auto-scroll al último mensaje
+  // Auto-scroll al último mensaje solo cuando entra uno nuevo o el bot escribe,
+  // no al mutar un mensaje existente (p.ej. votar una respuesta de más arriba)
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages.length, sending])
   
   const pedirUbicacion = () => {
     if (!navigator.geolocation) {
