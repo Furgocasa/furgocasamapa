@@ -52,6 +52,7 @@ import {
   esDeixisMapa,
   esPreguntaAreaConcreta,
   extraerNombreAreaConcreta,
+  esFiltroSinSitio,
 } from '@/lib/chatbot/intencion'
 
 // ============================================
@@ -1054,6 +1055,18 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
     const forzarAreaConcreta = preguntaConcreta
     const pareceFueraCatalogo =
       esPreguntaFueraCatalogo(ultimoMensajeUsuario) && !pideAreasEnMensaje(ultimoMensajeUsuario)
+    const nombraOtroSitioGps =
+      Boolean(extraerSitioNombrado(ultimoMensajeUsuario)) ||
+      Boolean(extraerCiudadNombrada(ultimoMensajeUsuario)) ||
+      Boolean(extraerRutaNombrada(ultimoMensajeUsuario))
+    const forzarBusquedaGps =
+      !forzarAreaConcreta &&
+      !pareceFueraCatalogo &&
+      esGpsValido(ubicacionUsuario?.lat, ubicacionUsuario?.lng) &&
+      !nombraOtroSitioGps &&
+      (pideCercaDeMi(ultimoMensajeUsuario) ||
+        esFiltroSinSitio(ultimoMensajeUsuario) ||
+        /recomi[eé]ndame|estacionar|d[oó]nde duermo|cerca/i.test(ultimoMensajeUsuario))
 
     while (rounds < MAX_TOOL_ROUNDS) {
       rounds++
@@ -1064,13 +1077,17 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
           ? { type: 'function', function: { name: 'get_area_by_name' } }
           : rounds === 1 && pareceFueraCatalogo && !firstFunctionName
             ? { type: 'function', function: { name: 'buscar_info_viaje' } }
+          : rounds === 1 && forzarBusquedaGps && !firstFunctionName
+            ? { type: 'function', function: { name: 'search_areas' } }
             : 'auto'
 
       if (toolChoice !== 'auto') {
         console.log(
           forzarAreaConcreta
             ? '📌 Forzando get_area_by_name (un área, no el corredor)'
-            : '🌐 Forzando buscar_info_viaje (fuera de catálogo)'
+            : pareceFueraCatalogo
+              ? '🌐 Forzando buscar_info_viaje (fuera de catálogo)'
+              : '📍 Forzando search_areas (GPS ya activo)'
         )
       }
 
