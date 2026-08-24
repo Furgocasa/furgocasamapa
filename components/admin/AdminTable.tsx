@@ -39,6 +39,8 @@ interface AdminTableProps<T> {
   /** fixed (por defecto) reparte el 100% del contenedor y evita el scroll lateral */
   layout?: 'auto' | 'fixed'
   minWidth?: string
+  pageSizeOptions?: number[]
+  initialPageSize?: number
 }
 
 export function AdminTable<T extends Record<string, any>>({
@@ -52,13 +54,15 @@ export function AdminTable<T extends Record<string, any>>({
   initialSortColumn,
   initialSortDirection = 'asc',
   layout = 'fixed',
-  minWidth
+  minWidth,
+  pageSizeOptions = [20, 50, 100, 500, -1],
+  initialPageSize = 20
 }: AdminTableProps<T>) {
   const [searchTerm, setSearchTerm] = useState('')
   const [sortColumn, setSortColumn] = useState<string | null>(initialSortColumn ?? null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(initialSortDirection)
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [itemsPerPage, setItemsPerPage] = useState(initialPageSize)
   
   // Hook para drag-to-scroll en tabla
   const { handlers, containerStyle } = useDragToScroll()
@@ -114,7 +118,54 @@ export function AdminTable<T extends Record<string, any>>({
   }, [filteredData, sortColumn, sortDirection])
 
   // Paginación
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage)
+  const totalPages = itemsPerPage === -1
+    ? 1
+    : Math.max(1, Math.ceil(sortedData.length / itemsPerPage))
+
+  const renderPageSizeSelect = () => (
+    <div className="flex items-center gap-2">
+      <span className="text-sm text-gray-700">Mostrar</span>
+      <select
+        value={itemsPerPage}
+        onChange={(e) => {
+          setItemsPerPage(Number(e.target.value))
+          setCurrentPage(1)
+        }}
+        className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+      >
+        {pageSizeOptions.map((size) => (
+          <option key={size} value={size}>
+            {size === -1 ? 'Todos' : size}
+          </option>
+        ))}
+      </select>
+      <span className="text-sm text-gray-700">por página</span>
+    </div>
+  )
+
+  const pageNav = itemsPerPage !== -1 && (
+    <div className="flex gap-1">
+      <button
+        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+        disabled={currentPage === 1}
+        className="p-1.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        title="Página anterior"
+      >
+        <ChevronLeftIcon className="w-5 h-5 text-gray-600" />
+      </button>
+      <div className="px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg">
+        Página {currentPage} de {totalPages}
+      </div>
+      <button
+        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+        disabled={currentPage === totalPages}
+        className="p-1.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        title="Página siguiente"
+      >
+        <ChevronRightIcon className="w-5 h-5 text-gray-600" />
+      </button>
+    </div>
+  )
   const paginatedData = useMemo(() => {
     if (itemsPerPage === -1) return sortedData // Mostrar todos
     const start = (currentPage - 1) * itemsPerPage
@@ -137,11 +188,6 @@ export function AdminTable<T extends Record<string, any>>({
       setSortColumn(columnKey)
       setSortDirection('asc')
     }
-    setCurrentPage(1)
-  }
-
-  const handleItemsPerPageChange = (value: number) => {
-    setItemsPerPage(value)
     setCurrentPage(1)
   }
 
@@ -233,7 +279,8 @@ export function AdminTable<T extends Record<string, any>>({
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-3">
+            {filteredData.length > 0 && renderPageSizeSelect()}
             <button
               onClick={exportToCSV}
               className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
@@ -318,21 +365,7 @@ export function AdminTable<T extends Record<string, any>>({
       {/* Paginación */}
       {filteredData.length > 0 && (
         <div className="bg-gray-50 px-4 py-3 flex flex-col sm:flex-row items-center justify-between border-t border-gray-200 gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-700">Mostrar</span>
-            <select
-              value={itemsPerPage}
-              onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-              className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-transparent"
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-              <option value={-1}>Todos</option>
-            </select>
-            <span className="text-sm text-gray-700">por página</span>
-          </div>
+          {renderPageSizeSelect()}
 
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-700">
@@ -342,30 +375,7 @@ export function AdminTable<T extends Record<string, any>>({
                 `Mostrando ${((currentPage - 1) * itemsPerPage) + 1}-${Math.min(currentPage * itemsPerPage, sortedData.length)} de ${sortedData.length} resultados`
               )}
             </span>
-            
-            {itemsPerPage !== -1 && (
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="p-1.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Página anterior"
-                >
-                  <ChevronLeftIcon className="w-5 h-5 text-gray-600" />
-                </button>
-                <div className="px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg">
-                  Página {currentPage} de {totalPages}
-                </div>
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="p-1.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Página siguiente"
-                >
-                  <ChevronRightIcon className="w-5 h-5 text-gray-600" />
-                </button>
-              </div>
-            )}
+            {pageNav}
           </div>
         </div>
       )}

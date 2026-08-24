@@ -435,6 +435,8 @@ export default function AdminUsersPage() {
             initialSortColumn="last_sign_in_at"
             initialSortDirection="desc"
             layout="fixed"
+            initialPageSize={20}
+            pageSizeOptions={[20, 50, 100, 500, -1]}
           />
         )}
       </main>
