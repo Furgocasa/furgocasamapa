@@ -273,12 +273,113 @@ async function usuariosDeIds(admin: any, userIds: string[]) {
   return usuarios
 }
 
+const GAP_SESION_MS = 60 * 60 * 1000
+
+function claveAgrupacion(log: any): string {
+  if (log.user_id) return `user:${log.user_id}`
+  if (log.conversacion_id) return `conv:${log.conversacion_id}`
+  const meta = (log.funciones || []).find((f: any) => f?.name === '_ubicacion')?.args || {}
+  const sitio = String(log.ciudad || meta.ciudad || '').trim().toLowerCase()
+  if (sitio) return `anon:${sitio}:${log.locale || 'es'}`
+  return `log:${log.id}`
+}
+
+function agruparEnSesiones(logs: any[]): Array<{ id: string; logs: any[] }> {
+  const ordenados = [...logs].sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))
+  const porClave = new Map<string, any[]>()
+  for (const log of ordenados) {
+    const clave = claveAgrupacion(log)
+    const arr = porClave.get(clave) || []
+    arr.push(log)
+    porClave.set(clave, arr)
+  }
+
+  const grupos: Array<{ id: string; logs: any[] }> = []
+  for (const [clave, lista] of porClave) {
+    let cubo: any[] = []
+    let inicio = ''
+    let ultimo = 0
+    for (const log of lista) {
+      const t = new Date(log.created_at).getTime()
+      if (cubo.length && Number.isFinite(t) && t - ultimo > GAP_SESION_MS) {
+        grupos.push({ id: `grupo:${clave}:${inicio}`, logs: cubo })
+        cubo = []
+      }
+      if (!cubo.length) inicio = log.created_at
+      cubo.push(log)
+      ultimo = t
+    }
+    if (cubo.length) grupos.push({ id: `grupo:${clave}:${inicio}`, logs: cubo })
+  }
+  return grupos
+}
+
+function notaInteraccion(logs: any[]) {
+  let scoreSum = 0
+  let classified = 0
+  let unclassified = 0
+  let correcta = 0
+  let mejorable = 0
+  let incorrecta = 0
+  for (const log of logs) {
+    if (!log.valoracion_ia) unclassified++
+    else if (log.valoracion_ia in QUALITY_SCORE) {
+      classified++
+      scoreSum += QUALITY_SCORE[log.valoracion_ia]
+      if (log.valoracion_ia === 'correcta') correcta++
+      else if (log.valoracion_ia === 'mejorable') mejorable++
+      else incorrecta++
+    }
+  }
+  const quality_score = classified > 0 ? Math.round((scoreSum / classified) * 10) / 10 : null
+  const interaccion =
+    classified === 0 ? 'sin_valorar'
+      : incorrecta > 0 ? 'con_errores'
+        : mejorable > 0 ? 'mejorable'
+          : 'correcta'
+  return {
+    correcta,
+    mejorable,
+    incorrecta,
+    sin_evaluar: unclassified,
+    quality_score,
+    interaccion,
+    pct_correctas: classified > 0 ? Math.round((correcta / classified) * 100) : null,
+  }
+}
+
 async function cargarHilo(admin: any, id: string) {
-  const [{ data: conv }, { data: logs }, { data: msgs }] = await Promise.all([
-    admin.from('chatbot_conversaciones').select('*').eq('id', id).maybeSingle(),
-    admin.from('chatbot_respuestas_log').select('*').eq('conversacion_id', id).order('created_at', { ascending: true }),
-    admin.from('chatbot_mensajes').select('id,rol,contenido,created_at').eq('conversacion_id', id).order('created_at', { ascending: true }),
-  ])
+  const { data: todos } = await admin
+    .from('chatbot_respuestas_log')
+    .select('*')
+    .order('created_at', { ascending: true })
+
+  const grupo = agruparEnSesiones(todos || []).find((g) => g.id === id)
+  let logs = grupo?.logs || []
+  let conv: any = null
+
+  if (!logs.length && !String(id).startsWith('grupo:')) {
+    const [{ data: convRow }, { data: logsConv }, { data: msgs }] = await Promise.all([
+      admin.from('chatbot_conversaciones').select('*').eq('id', id).maybeSingle(),
+      admin.from('chatbot_respuestas_log').select('*').eq('conversacion_id', id).order('created_at', { ascending: true }),
+      admin.from('chatbot_mensajes').select('id,rol,contenido,created_at').eq('conversacion_id', id).order('created_at', { ascending: true }),
+    ])
+    conv = convRow
+    logs = logsConv || []
+    if (!logs.length && msgs?.length) {
+      const hiloMsgs = (msgs || []).map((m: any) => ({
+        role: m.rol === 'user' ? 'user' : 'assistant',
+        content: m.contenido,
+        created_at: m.created_at,
+      }))
+      return { conversacion: { id, ...(conv || {}), ...notaInteraccion([]) }, hilo: hiloMsgs }
+    }
+  }
+
+  if (logs[0]?.conversacion_id && !conv) {
+    const { data } = await admin.from('chatbot_conversaciones').select('*').eq('id', logs[0].conversacion_id).maybeSingle()
+    conv = data
+  }
 
   const hilo: Array<{
     role: 'user' | 'assistant'
@@ -286,30 +387,24 @@ async function cargarHilo(admin: any, id: string) {
     created_at: string
     log?: any
   }> = []
-
-  if (logs && logs.length > 0) {
-    for (const log of logs) {
-      hilo.push({ role: 'user', content: log.pregunta, created_at: log.created_at })
-      hilo.push({ role: 'assistant', content: log.respuesta, created_at: log.created_at, log })
-    }
-  } else {
-    for (const m of msgs || []) {
-      hilo.push({
-        role: m.rol === 'user' ? 'user' : 'assistant',
-        content: m.contenido,
-        created_at: m.created_at,
-      })
-    }
+  for (const log of logs) {
+    hilo.push({ role: 'user', content: log.pregunta, created_at: log.created_at })
+    hilo.push({ role: 'assistant', content: log.respuesta, created_at: log.created_at, log })
   }
 
   let usuario = null
-  if (conv?.user_id) {
-    const map = await usuariosDeIds(admin, [conv.user_id])
-    usuario = map[conv.user_id] || null
+  const userId = conv?.user_id || logs[0]?.user_id
+  if (userId) {
+    const map = await usuariosDeIds(admin, [userId])
+    usuario = map[userId] || null
   }
 
-  const ubi = ubicacionDeFila(logs?.[0] || {}, conv)
-  return { conversacion: conv ? { ...conv, usuario, ...ubi } : { id, ...ubi }, hilo }
+  const ubi = ubicacionDeFila(logs[0] || {}, conv)
+  const nota = notaInteraccion(logs)
+  return {
+    conversacion: { id, ...(conv || {}), usuario, user_id: userId || null, ...ubi, ...nota, respuestas: logs.length },
+    hilo,
+  }
 }
 
 async function cargarConversaciones(
@@ -318,9 +413,8 @@ async function cargarConversaciones(
 ) {
   const { filtro, filtroIA, filtroVoto, pagina } = opts
 
-  const [{ data: logsAll }, { data: msgRows }, stats] = await Promise.all([
-    admin.from('chatbot_respuestas_log').select('*').not('conversacion_id', 'is', null).order('created_at', { ascending: true }),
-    admin.from('chatbot_mensajes').select('conversacion_id,rol,contenido,created_at').order('created_at', { ascending: true }),
+  const [{ data: logsAll }, stats] = await Promise.all([
+    admin.from('chatbot_respuestas_log').select('*').order('created_at', { ascending: true }),
     statsLogs(admin, filtro),
   ])
 
@@ -334,86 +428,46 @@ async function cargarConversaciones(
     return true
   })
 
-  const idsConFiltro = new Set(logsFiltrados.map((l: any) => l.conversacion_id).filter(Boolean))
   const hayFiltroFino = filtro !== 'todas' || filtroIA !== 'todas' || filtroVoto !== 'todas'
+  const idsConFiltro = new Set(logsFiltrados.map((l: any) => l.id))
 
-  const byConv = new Map<string, any[]>()
-  for (const log of logsAll || []) {
-    if (!log.conversacion_id) continue
-    if (hayFiltroFino && !idsConFiltro.has(log.conversacion_id)) continue
-    const arr = byConv.get(log.conversacion_id) || []
-    arr.push(log)
-    byConv.set(log.conversacion_id, arr)
-  }
+  const grupos = agruparEnSesiones(logsAll || []).filter((g) =>
+    hayFiltroFino ? g.logs.some((l: any) => idsConFiltro.has(l.id)) : true
+  )
 
-  const firstUserMsg = new Map<string, string>()
-  const lastMsgAt = new Map<string, string>()
-  const msgCount = new Map<string, number>()
-  for (const m of msgRows || []) {
-    if (!m.conversacion_id) continue
-    msgCount.set(m.conversacion_id, (msgCount.get(m.conversacion_id) || 0) + 1)
-    if (m.created_at && (!lastMsgAt.has(m.conversacion_id) || m.created_at > lastMsgAt.get(m.conversacion_id)!)) {
-      lastMsgAt.set(m.conversacion_id, m.created_at)
-    }
-    if (m.rol === 'user' && m.contenido && !firstUserMsg.has(m.conversacion_id)) {
-      firstUserMsg.set(m.conversacion_id, m.contenido)
-    }
-  }
-
-  if (!hayFiltroFino) {
-    for (const id of msgCount.keys()) {
-      if (!byConv.has(id)) byConv.set(id, [])
-    }
-  }
-
-  const ids = [...byConv.keys()]
-  const { data: convs } = ids.length
-    ? await admin.from('chatbot_conversaciones').select('*').in('id', ids)
+  const convIds = [...new Set(grupos.flatMap((g) => g.logs.map((l: any) => l.conversacion_id).filter(Boolean)))]
+  const { data: convs } = convIds.length
+    ? await admin.from('chatbot_conversaciones').select('*').in('id', convIds)
     : { data: [] }
   const convMap = new Map<string, any>((convs || []).map((c: any) => [c.id, c]))
 
-  const userIds = [...new Set((convs || []).map((c: any) => c.user_id).filter(Boolean))] as string[]
+  const userIds = [...new Set([
+    ...(convs || []).map((c: any) => c.user_id),
+    ...grupos.flatMap((g) => g.logs.map((l: any) => l.user_id)),
+  ].filter(Boolean))] as string[]
   const usuarios = await usuariosDeIds(admin, userIds)
 
-  const rows = ids.map((id) => {
-    const logs: any[] = byConv.get(id) || []
-    const conv: any = convMap.get(id)
-    let scoreSum = 0
-    let classified = 0
-    let unclassified = 0
-    let correcta = 0
-    let mejorable = 0
-    let incorrecta = 0
-    for (const log of logs) {
-      if (!log.valoracion_ia) unclassified++
-      else if (log.valoracion_ia in QUALITY_SCORE) {
-        classified++
-        scoreSum += QUALITY_SCORE[log.valoracion_ia]
-        if (log.valoracion_ia === 'correcta') correcta++
-        else if (log.valoracion_ia === 'mejorable') mejorable++
-        else incorrecta++
-      }
-    }
-    const lastLog = logs[logs.length - 1]
+  const rows = grupos.map((g) => {
+    const logs: any[] = g.logs
     const firstLog = logs[0]
+    const lastLog = logs[logs.length - 1]
+    const conv: any = convMap.get(firstLog?.conversacion_id) || convMap.get(lastLog?.conversacion_id)
+    const userId = conv?.user_id || lastLog?.user_id || firstLog?.user_id || null
     const ubi = ubicacionDeFila(lastLog || firstLog || {}, conv)
+    const nota = notaInteraccion(logs)
     return {
-      id,
-      created_at: conv?.created_at || firstLog?.created_at || lastMsgAt.get(id) || null,
-      ultimo_mensaje_at: conv?.ultimo_mensaje_at || lastLog?.created_at || lastMsgAt.get(id) || null,
-      titulo: conv?.titulo || firstLog?.pregunta || firstUserMsg.get(id) || 'Conversación',
-      user_id: conv?.user_id || lastLog?.user_id || null,
-      usuario: (conv?.user_id && usuarios[conv.user_id]) || null,
+      id: g.id,
+      created_at: firstLog?.created_at || conv?.created_at || null,
+      ultimo_mensaje_at: lastLog?.created_at || conv?.ultimo_mensaje_at || null,
+      titulo: firstLog?.pregunta || conv?.titulo || 'Conversación',
+      user_id: userId,
+      usuario: (userId && usuarios[userId]) || null,
       locale: lastLog?.locale || firstLog?.locale || null,
-      respuestas: logs.length || Math.ceil((msgCount.get(id) || 0) / 2),
-      mensajes: msgCount.get(id) || logs.length * 2,
-      first_user_message: firstLog?.pregunta || firstUserMsg.get(id) || '',
+      respuestas: logs.length,
+      mensajes: logs.length * 2,
+      first_user_message: firstLog?.pregunta || '',
       last_message: lastLog?.respuesta || lastLog?.pregunta || '',
-      correcta,
-      mejorable,
-      incorrecta,
-      sin_evaluar: unclassified,
-      quality_score: classified > 0 ? Math.round((scoreSum / classified) * 10) / 10 : null,
+      ...nota,
       ciudad: ubi.ciudad,
       pais: ubi.pais,
       ubicacion: ubi.ubicacion,

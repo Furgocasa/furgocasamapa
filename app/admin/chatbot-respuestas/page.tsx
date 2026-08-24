@@ -70,6 +70,8 @@ interface ConversacionRow {
   incorrecta: number
   sin_evaluar: number
   quality_score: number | null
+  interaccion?: 'correcta' | 'mejorable' | 'con_errores' | 'sin_valorar'
+  pct_correctas?: number | null
   ciudad?: string | null
   pais?: string | null
   ubicacion?: string | null
@@ -139,6 +141,19 @@ function nombreUsuario(log: RespuestaLog) {
   return 'Usuario'
 }
 
+function etiquetaInteraccion(c: ConversacionRow) {
+  if (c.interaccion === 'correcta' || (c.quality_score === 10 && !c.incorrecta && !c.mejorable && (c.correcta || 0) > 0)) {
+    return { label: '100% correcta', clase: 'bg-green-50 text-green-700' }
+  }
+  if (c.interaccion === 'mejorable') {
+    return { label: 'Mejorable', clase: 'bg-amber-50 text-amber-700' }
+  }
+  if (c.interaccion === 'con_errores') {
+    return { label: 'Con errores', clase: 'bg-red-50 text-red-700' }
+  }
+  return { label: 'Sin valorar', clase: 'bg-gray-100 text-gray-500' }
+}
+
 function textoUbicacion(row: { ubicacion?: string | null; ciudad?: string | null; pais?: string | null }) {
   if (row.ubicacion) return row.ubicacion
   const ciudad = (row.ciudad || '').trim()
@@ -155,6 +170,7 @@ export default function ChatbotRespuestasPage() {
   const [logs, setLogs] = useState<RespuestaLog[]>([])
   const [conversaciones, setConversaciones] = useState<ConversacionRow[]>([])
   const [hilo, setHilo] = useState<HiloMensaje[] | null>(null)
+  const [hiloMeta, setHiloMeta] = useState<ConversacionRow | null>(null)
   const [hiloId, setHiloId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [filtro, setFiltro] = useState<'pendientes' | 'revisadas' | 'todas'>('todas')
@@ -224,11 +240,13 @@ export default function ChatbotRespuestasPage() {
   const abrirHilo = async (id: string) => {
     setHiloId(id)
     setHilo(null)
+    setHiloMeta(null)
     try {
-      const res = await fetch(`/api/admin/chatbot-respuestas?vista=hilo&id=${id}`, { cache: 'no-store' })
+      const res = await fetch(`/api/admin/chatbot-respuestas?vista=hilo&id=${encodeURIComponent(id)}`, { cache: 'no-store' })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'No se pudo cargar el hilo')
       setHilo(json.hilo || [])
+      if (json.conversacion) setHiloMeta(json.conversacion)
     } catch (e) {
       console.error(e)
       setHilo([])
@@ -284,7 +302,7 @@ export default function ChatbotRespuestasPage() {
               <h1 className="text-2xl font-bold text-gray-900">Respuestas del Tío Viajero</h1>
               <p className="text-gray-500 text-sm mt-1">
                 {vista === 'conversaciones'
-                  ? 'Hilos completos, como en el chatbot de Furgocasa.'
+                  ? 'Mismo usuario en el mismo rato. La nota es de toda la interacción; las respuestas sueltas se siguen corrigiendo en la otra pestaña.'
                   : 'Cada pregunta-respuesta por separado. Incluye anónimos.'}
               </p>
             </div>
@@ -462,7 +480,7 @@ export default function ChatbotRespuestasPage() {
         ) : (vista === 'conversaciones' ? conversaciones.length === 0 : logs.length === 0) ? (
           <div className="bg-white rounded-lg shadow p-12 text-center text-gray-500">
             {vista === 'conversaciones'
-              ? 'No hay conversaciones con este filtro. Los chats anónimos antiguos no tenían hilo; los nuevos sí.'
+              ? 'No hay interacciones con este filtro.'
               : `No hay respuestas ${filtro === 'pendientes' ? 'pendientes de revisar' : filtro === 'revisadas' ? 'revisadas' : 'registradas'} todavía.`}
           </div>
         ) : vista === 'conversaciones' ? (
@@ -476,8 +494,8 @@ export default function ChatbotRespuestasPage() {
                       <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[12%]">Usuario</th>
                       <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[16%]">Ubicación</th>
                       <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[30%]">Primer mensaje</th>
-                      <th className="px-2.5 py-2.5 text-center text-xs font-medium text-gray-500 uppercase w-[10%]">Resp.</th>
-                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[16%]">Calidad</th>
+                      <th className="px-2.5 py-2.5 text-center text-xs font-medium text-gray-500 uppercase w-[10%]">Preg.</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[16%]">Nota interacción</th>
                       <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[10%]">Idioma</th>
                     </tr>
                   </thead>
@@ -509,21 +527,20 @@ export default function ChatbotRespuestasPage() {
                           </td>
                           <td className="px-2.5 py-2 text-center text-sm text-gray-700 tabular-nums">{c.respuestas}</td>
                           <td className="px-2.5 py-2 align-top">
-                            {c.quality_score == null ? (
-                              <span className="text-xs text-gray-400">
-                                Sin valorar{c.sin_evaluar > 0 ? ` (${c.sin_evaluar})` : ''}
-                              </span>
-                            ) : (
-                              <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
-                                c.quality_score >= 7 ? 'bg-green-50 text-green-700' : c.quality_score >= 4 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'
-                              }`}>
-                                {c.quality_score.toFixed(1)}/10
-                                {c.sin_evaluar > 0 ? ` · ${c.sin_evaluar}` : ''}
-                              </span>
-                            )}
-                            <div className="text-[10px] text-gray-400 mt-0.5">
-                              {c.correcta}✓ {c.mejorable}~ {c.incorrecta}✗
-                            </div>
+                            {(() => {
+                              const nota = etiquetaInteraccion(c)
+                              return (
+                                <>
+                                  <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${nota.clase}`}>
+                                    {c.quality_score == null ? nota.label : `${c.quality_score.toFixed(1)}/10 · ${nota.label}`}
+                                  </span>
+                                  <div className="text-[10px] text-gray-400 mt-0.5">
+                                    {c.correcta} correctas · {c.mejorable} mejorables · {c.incorrecta} incorrectas
+                                    {c.sin_evaluar > 0 ? ` · ${c.sin_evaluar} sin evaluar` : ''}
+                                  </div>
+                                </>
+                              )
+                            })()}
                           </td>
                           <td className="px-2.5 py-2 text-xs uppercase text-gray-500">{c.locale || '—'}</td>
                         </tr>
@@ -772,19 +789,27 @@ export default function ChatbotRespuestasPage() {
         )}
 
         {hiloId && (
-          <div className="fixed inset-0 z-40 flex justify-end bg-black/30" onClick={() => { setHiloId(null); setHilo(null) }}>
+          <div className="fixed inset-0 z-40 flex justify-end bg-black/30" onClick={() => { setHiloId(null); setHilo(null); setHiloMeta(null) }}>
             <div
               className="w-full max-w-xl h-full bg-white shadow-xl overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">Conversación</h3>
-                  <p className="text-xs text-gray-500">Hilo completo, pregunta y respuesta</p>
+                  <h3 className="text-sm font-semibold text-gray-900">Interacción</h3>
+                  <p className="text-xs text-gray-500">
+                    {hiloMeta
+                      ? `${hiloMeta.respuestas || hilo?.filter((m) => m.role === 'assistant').length || 0} preguntas · ${
+                          hiloMeta.quality_score == null
+                            ? 'sin valorar'
+                            : `${hiloMeta.quality_score.toFixed(1)}/10 · ${etiquetaInteraccion(hiloMeta).label}`
+                        }`
+                      : 'Hilo del mismo usuario en el mismo rato'}
+                  </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => { setHiloId(null); setHilo(null) }}
+                  onClick={() => { setHiloId(null); setHilo(null); setHiloMeta(null) }}
                   className="text-sm text-gray-500 hover:text-gray-800"
                 >
                   Cerrar
