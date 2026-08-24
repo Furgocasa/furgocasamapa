@@ -13,6 +13,12 @@ import {
   addLocalFavorite,
   removeLocalFavorite,
 } from '@/lib/favoritos/local'
+import {
+  cookiesGranted,
+  onCookieConsentChange,
+  pedirAceptarCookies,
+  setCookieConsent,
+} from '@/components/CookieConsentBar'
 
 interface Message {
   rol: 'user' | 'assistant'
@@ -36,6 +42,11 @@ const TEXTOS: Record<string, {
   loginCta: string
   registerCta: string
   guestHint: string
+  cookiesWall: string
+  cookiesCta: string
+  locationWall: string
+  locationCta: string
+  locationDenied: string
 }> = {
   es: {
     bienvenida: '¡Hola! 👋 Soy el Tío Viajero IA. Pregúntame por áreas, rutas… o por valorar tu furgo y el QR anti-golpes. ¿Por dónde empezamos?',
@@ -55,7 +66,12 @@ const TEXTOS: Record<string, {
     loginWall: 'Has usado tus 2 preguntas gratis. Entra o crea una cuenta para seguir preguntando.',
     loginCta: 'Entrar',
     registerCta: 'Crear cuenta',
-    guestHint: 'Te quedan {n} preguntas sin cuenta'
+    guestHint: 'Te quedan {n} preguntas sin cuenta',
+    cookiesWall: 'Para hablar con el Tío Viajero hay que aceptar las cookies y activar la ubicación. Así te sitúo en el mapa y te digo dónde dormir cerca.',
+    cookiesCta: 'Aceptar cookies',
+    locationWall: 'Activa la ubicación para usar el chat. Sin ella no puedo situarte ni decirte qué hay cerca.',
+    locationCta: 'Activar ubicación',
+    locationDenied: 'El navegador ha bloqueado la ubicación. Actívala en los permisos de esta página y pulsa de nuevo.'
   },
   en: {
     bienvenida: "Hi! 👋 I'm Tío Viajero AI. Ask me about motorhome areas, services, prices or route stops. Where shall we start?",
@@ -75,7 +91,12 @@ const TEXTOS: Record<string, {
     loginWall: 'You’ve used your 2 free questions. Sign in or create an account to keep asking.',
     loginCta: 'Sign in',
     registerCta: 'Create account',
-    guestHint: '{n} free questions left'
+    guestHint: '{n} free questions left',
+    cookiesWall: 'To chat with Tío Viajero you need to accept cookies and turn on location. That’s how I place you on the map and find places to sleep nearby.',
+    cookiesCta: 'Accept cookies',
+    locationWall: 'Turn on location to use the chat. Without it I can’t place you or tell you what’s nearby.',
+    locationCta: 'Enable location',
+    locationDenied: 'The browser blocked location. Allow it for this page and tap again.'
   },
   fr: {
     bienvenida: "Salut ! 👋 Je suis Tío Viajero IA. Demandez-moi des aires, services, prix ou étapes d'itinéraire. On commence ?",
@@ -95,7 +116,12 @@ const TEXTOS: Record<string, {
     loginWall: 'Vous avez utilisé vos 2 questions gratuites. Connectez-vous ou créez un compte pour continuer.',
     loginCta: 'Connexion',
     registerCta: 'Créer un compte',
-    guestHint: 'Il vous reste {n} questions sans compte'
+    guestHint: 'Il vous reste {n} questions sans compte',
+    cookiesWall: 'Pour parler au Tío Viajero, accepte les cookies et active la localisation. Ainsi je te place sur la carte et je cherche où dormir près de toi.',
+    cookiesCta: 'Accepter les cookies',
+    locationWall: 'Active la localisation pour utiliser le chat. Sans elle, je ne peux pas te placer ni dire ce qu’il y a près de toi.',
+    locationCta: 'Activer la localisation',
+    locationDenied: 'Le navigateur a bloqué la localisation. Autorise-la pour cette page et réessaie.'
   },
   de: {
     bienvenida: 'Hallo! 👋 Ich bin Tío Viajero KI. Frag mich nach Stellplätzen, Services, Preisen oder Routenstopps. Womit fangen wir an?',
@@ -115,7 +141,12 @@ const TEXTOS: Record<string, {
     loginWall: 'Du hast deine 2 kostenlosen Fragen verbraucht. Melde dich an oder erstelle ein Konto, um weiterzufragen.',
     loginCta: 'Anmelden',
     registerCta: 'Konto erstellen',
-    guestHint: 'Noch {n} Fragen ohne Konto'
+    guestHint: 'Noch {n} Fragen ohne Konto',
+    cookiesWall: 'Für den Tío Viajero musst du Cookies akzeptieren und den Standort aktivieren. So setze ich dich auf die Karte und finde Schlafplätze in der Nähe.',
+    cookiesCta: 'Cookies akzeptieren',
+    locationWall: 'Aktiviere den Standort, um den Chat zu nutzen. Ohne ihn kann ich dich nicht orten.',
+    locationCta: 'Standort aktivieren',
+    locationDenied: 'Der Browser hat den Standort blockiert. Erlaube ihn für diese Seite und tippe erneut.'
   },
   it: {
     bienvenida: 'Ciao! 👋 Sono Tío Viajero IA. Chiedimi aree, servizi, prezzi o soste lungo il percorso. Da dove iniziamo?',
@@ -135,7 +166,12 @@ const TEXTOS: Record<string, {
     loginWall: 'Hai usato le 2 domande gratis. Accedi o crea un account per continuare.',
     loginCta: 'Accedi',
     registerCta: 'Crea account',
-    guestHint: 'Ti restano {n} domande senza account'
+    guestHint: 'Ti restano {n} domande senza account',
+    cookiesWall: 'Per parlare con Tío Viajero devi accettare i cookie e attivare la posizione. Così ti metto sulla mappa e cerco dove dormire vicino.',
+    cookiesCta: 'Accetta i cookie',
+    locationWall: 'Attiva la posizione per usare la chat. Senza non posso collocarti né dirti cosa c’è vicino.',
+    locationCta: 'Attiva posizione',
+    locationDenied: 'Il browser ha bloccato la posizione. Abilitala per questa pagina e riprova.'
   }
 }
 
@@ -156,6 +192,9 @@ export default function ChatbotWidget() {
   const [ubicacion, setUbicacion] = useState<{lat: number, lng: number} | null>(null)
   const [loginRequired, setLoginRequired] = useState(false)
   const [guestRemaining, setGuestRemaining] = useState<number | null>(null)
+  const [cookiesOk, setCookiesOk] = useState(false)
+  const [geoError, setGeoError] = useState<string | null>(null)
+  const [pidiendoGeo, setPidiendoGeo] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const restauradoRef = useRef(false)
 
@@ -312,28 +351,43 @@ export default function ChatbotWidget() {
     return <span className="whitespace-pre-wrap">{nodes.length ? nodes : sinImagenes}</span>
   }
   
-  // Obtener geolocalización (también para usuarios sin cuenta)
-  useEffect(() => {
-    if (isOpen && !ubicacion) {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const lat = position.coords.latitude
-            const lng = position.coords.longitude
-            if (Math.abs(lat) < 0.5 && Math.abs(lng) < 0.5) {
-              console.log('⚠️ GPS ignorado (Null Island)')
-              return
-            }
-            setUbicacion({ lat, lng })
-            console.log('📍 Ubicación obtenida:', lat, lng)
-          },
-          (error) => {
-            console.log('⚠️ No se pudo obtener ubicación:', error)
-          }
-        )
-      }
+  const pedirUbicacion = () => {
+    if (!navigator.geolocation) {
+      setGeoError('denied')
+      return
     }
+    setPidiendoGeo(true)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude
+        const lng = position.coords.longitude
+        setPidiendoGeo(false)
+        if (Math.abs(lat) < 0.5 && Math.abs(lng) < 0.5) {
+          setGeoError('denied')
+          return
+        }
+        setUbicacion({ lat, lng })
+        setGeoError(null)
+      },
+      () => {
+        setPidiendoGeo(false)
+        setGeoError('denied')
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+    )
+  }
+
+  useEffect(() => {
+    setCookiesOk(cookiesGranted())
+    return onCookieConsentChange((granted) => {
+      setCookiesOk(granted)
+      if (granted && isOpen && !ubicacion) pedirUbicacion()
+    })
   }, [isOpen, ubicacion])
+
+  useEffect(() => {
+    if (isOpen && cookiesOk && !ubicacion) pedirUbicacion()
+  }, [isOpen, cookiesOk, ubicacion])
 
   // Iniciar conversación (abierta a todos, con o sin cuenta)
   const iniciarConversacion = async () => {
@@ -352,6 +406,7 @@ export default function ChatbotWidget() {
     setIsMinimized(false)
     setIsHidden(false)
     track('chatbot_open', { event_data: { autenticado: Boolean(user) } })
+    if (!cookiesGranted()) pedirAceptarCookies()
     if (messages.length === 0) {
       iniciarConversacion()
     }
@@ -501,6 +556,14 @@ export default function ChatbotWidget() {
   const enviarMensaje = async (textoPrefijado?: string) => {
     const texto = (textoPrefijado ?? input).trim()
     if (!texto || sending || (loginRequired && !user)) return
+    if (!cookiesGranted()) {
+      pedirAceptarCookies()
+      return
+    }
+    if (!ubicacion) {
+      pedirUbicacion()
+      return
+    }
 
     const userMessage: Message = { rol: 'user', contenido: texto }
     setMessages(prev => [...prev, userMessage])
@@ -541,6 +604,11 @@ export default function ChatbotWidget() {
           setLoginRequired(true)
           setGuestRemaining(0)
           try { localStorage.setItem('fc_chat_guest_done', '1') } catch {}
+          return
+        }
+        if (response.status === 403 && errorData.errorType === 'LOCATION_REQUIRED') {
+          setGeoError('denied')
+          pedirUbicacion()
           return
         }
         throw new Error(errorData.error || 'Error en la respuesta')
@@ -617,10 +685,13 @@ export default function ChatbotWidget() {
     ? 'fixed z-[11000] right-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:right-6 md:bottom-6'
     : 'fixed z-[11000] right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))] md:right-6 md:bottom-6'
 
-  // Sin cuenta: 2 preguntas. Luego hay que entrar.
+  // Cookies + GPS obligatorios. Sin cuenta: 2 preguntas. Luego hay que entrar.
   const nextAuth = `/auth/login?next=${encodeURIComponent(pathname || '/mapa')}`
   const nextRegister = `/auth/register?next=${encodeURIComponent(pathname || '/mapa')}`
   const bloqueadoInvitado = loginRequired && !user
+  const faltaCookies = !cookiesOk
+  const faltaUbicacion = cookiesOk && !ubicacion
+  const puedeHablar = cookiesOk && Boolean(ubicacion) && !bloqueadoInvitado
 
   return (
     <>
@@ -887,7 +958,7 @@ export default function ChatbotWidget() {
             ))}
             
             {/* Mensajes prefijados (solo al inicio de la conversación) */}
-            {!sending && !bloqueadoInvitado && messages.length <= 1 && (
+            {!sending && puedeHablar && messages.length <= 1 && (
               <div className="flex flex-wrap gap-2 pt-1">
                 {txt.sugerencias.map((sugerencia) => (
                   <button
@@ -934,7 +1005,32 @@ export default function ChatbotWidget() {
           
           {/* Input */}
           <div className="p-4 border-t bg-white md:rounded-b-2xl">
-            {bloqueadoInvitado ? (
+            {faltaCookies ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-center">
+                <p className="text-sm text-gray-800 mb-3">{txt.cookiesWall}</p>
+                <button
+                  type="button"
+                  onClick={() => setCookieConsent(true)}
+                  className="rounded-full bg-gradient-to-r from-blue-600 to-gray-700 text-white text-sm font-semibold px-4 py-2"
+                >
+                  {txt.cookiesCta}
+                </button>
+              </div>
+            ) : faltaUbicacion ? (
+              <div className="rounded-xl border border-sky-200 bg-sky-50 p-3 text-center">
+                <p className="text-sm text-gray-800 mb-3">
+                  {geoError === 'denied' ? txt.locationDenied : txt.locationWall}
+                </p>
+                <button
+                  type="button"
+                  onClick={pedirUbicacion}
+                  disabled={pidiendoGeo}
+                  className="rounded-full bg-gradient-to-r from-blue-600 to-gray-700 text-white text-sm font-semibold px-4 py-2 disabled:opacity-50"
+                >
+                  {pidiendoGeo ? '...' : txt.locationCta}
+                </button>
+              </div>
+            ) : bloqueadoInvitado ? (
               <div className="rounded-xl border border-sky-200 bg-sky-50 p-3 text-center">
                 <p className="text-sm text-gray-800 mb-3">{txt.loginWall}</p>
                 <div className="flex gap-2 justify-center">

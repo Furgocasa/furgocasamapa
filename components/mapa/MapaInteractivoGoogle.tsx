@@ -11,6 +11,7 @@ import { getMapStyle } from '@/lib/mapStyles'
 import { useLanguage } from '@/lib/i18n'
 import { getTipoAreaColor, getTipoAreaPinSvg } from '@/lib/areas/tipo-area'
 import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
+import { cookiesGranted, onCookieConsentChange, pedirAceptarCookies } from '@/components/CookieConsentBar'
 
 // Tipos simplificados para Google Maps (se cargan din├ímicamente)
 type GoogleMap = any
@@ -90,9 +91,12 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
   // Cargar estado del GPS desde localStorage DESPU├ëS de montar (solo cliente)
   useEffect(() => {
     const savedGpsState = localStorage.getItem('gpsActive') === 'true'
-    if (savedGpsState) {
+    if (savedGpsState && cookiesGranted()) {
       setGpsActive(true)
     }
+    return onCookieConsentChange((granted) => {
+      if (granted) setGpsActive(true)
+    })
   }, [])
 
   // Inicializar Google Maps
@@ -521,6 +525,11 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
   // Funci├│n para activar/desactivar GPS (ANTES del return condicional)
   const toggleGPS = (autoActivate: boolean = false) => {
     console.log('­ƒöä toggleGPS llamado - gpsActive:', gpsActive, 'autoActivate:', autoActivate, 'watchIdRef:', !!watchIdRef.current)
+
+    if (!cookiesGranted()) {
+      pedirAceptarCookies()
+      return
+    }
     
     if (!gpsActive) {
       // Activar GPS

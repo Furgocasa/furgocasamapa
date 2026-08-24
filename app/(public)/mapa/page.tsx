@@ -17,6 +17,7 @@ import { useLanguage, getTipoAreaLabel } from '@/lib/i18n'
 import { TIPO_AREA_IDS, getTipoAreaColor, getTipoAreaIconPath } from '@/lib/areas/tipo-area'
 import { sinTildes } from '@/lib/areas/slug'
 import { motion, AnimatePresence } from 'framer-motion'
+import { cookiesGranted, onCookieConsentChange } from '@/components/CookieConsentBar'
 
 const SPLASH_JOKES = ['splash_joke_1', 'splash_joke_2', 'splash_joke_3'] as const
 
@@ -169,8 +170,10 @@ export default function MapaPage() {
     return () => window.clearInterval(id)
   }, [initialLoading])
 
-  // ✅ OPTIMIZACIÓN #3: Obtener ubicación del usuario CON REVERSE GEOCODING (con cache)
+  // GPS solo si aceptó cookies. Si las rechazó, no se le sitúa ni puede usar el chat.
   useEffect(() => {
+    const pedirGps = () => {
+    if (!cookiesGranted()) return
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
@@ -243,7 +246,12 @@ export default function MapaPage() {
         }
       )
     }
-  }, []) // Solo ejecutar al montar
+    }
+    pedirGps()
+    return onCookieConsentChange((granted) => {
+      if (granted) pedirGps()
+    })
+  }, []) // Solo ejecutar al montar si hay cookies; si las acepta después, se relanza
 
   // País objetivo: selección manual del usuario o, en su defecto, el país GPS.
   // Se usa para CENTRAR el mapa (no para filtrar).

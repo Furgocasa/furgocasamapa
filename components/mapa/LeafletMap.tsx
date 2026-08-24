@@ -8,6 +8,7 @@ import Supercluster from 'supercluster'
 import { useLanguage } from '@/lib/i18n'
 import { getTipoAreaColor, getTipoAreaIconSvg } from '@/lib/areas/tipo-area'
 import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
+import { cookiesGranted, onCookieConsentChange, pedirAceptarCookies } from '@/components/CookieConsentBar'
 
 // Importar Leaflet solo en cliente
 let L: any = null
@@ -78,12 +79,15 @@ export function LeafletMap({
     }
   }
 
-  // Cargar estado del GPS desde localStorage
+  // Cargar estado del GPS desde localStorage (solo con cookies aceptadas)
   useEffect(() => {
     const savedGpsState = localStorage.getItem('gpsActive') === 'true'
-    if (savedGpsState) {
+    if (savedGpsState && cookiesGranted()) {
       setGpsActive(true)
     }
+    return onCookieConsentChange((granted) => {
+      if (granted) setGpsActive(true)
+    })
   }, [])
 
   // Obtener URL de tiles según estilo
@@ -411,6 +415,10 @@ export function LeafletMap({
 
   // Función para activar/desactivar GPS
   const toggleGPS = () => {
+    if (!cookiesGranted()) {
+      pedirAceptarCookies()
+      return
+    }
     if (!gpsActive) {
       if (navigator.geolocation && map && L) {
         const watchId = navigator.geolocation.watchPosition(

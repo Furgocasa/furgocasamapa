@@ -539,6 +539,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    if (!ubicacionUsuario) {
+      return NextResponse.json({
+        error: 'LOCATION_REQUIRED',
+        errorType: 'LOCATION_REQUIRED',
+        message: 'Activa la ubicación para usar el Tío Viajero.',
+      }, { status: 403 })
+    }
+
     const supabase = getSupabaseClient()
 
     const ultimoMensajeUsuario = [...messages]

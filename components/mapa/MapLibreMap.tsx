@@ -11,6 +11,7 @@ import { useLanguage } from '@/lib/i18n'
 import { getTipoAreaColor, getTipoAreaIconSvg } from '@/lib/areas/tipo-area'
 import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
 import { applyBrandTheme, applyMapLanguage } from '@/lib/map/brand-style'
+import { cookiesGranted, onCookieConsentChange, pedirAceptarCookies } from '@/components/CookieConsentBar'
 
 function focusAreaOnMapLibre(
   map: maplibregl.Map,
@@ -79,12 +80,15 @@ export function MapLibreMap({
     }
   }
 
-  // Cargar estado del GPS desde localStorage
+  // Cargar estado del GPS desde localStorage (solo con cookies aceptadas)
   useEffect(() => {
     const savedGpsState = localStorage.getItem('gpsActive') === 'true'
-    if (savedGpsState) {
+    if (savedGpsState && cookiesGranted()) {
       setGpsActive(true)
     }
+    return onCookieConsentChange((granted) => {
+      if (granted) setGpsActive(true)
+    })
   }, [])
 
   // Obtener URL de estilo
@@ -490,6 +494,10 @@ export function MapLibreMap({
 
   // Función para activar/desactivar GPS
   const toggleGPS = () => {
+    if (!cookiesGranted()) {
+      pedirAceptarCookies()
+      return
+    }
     if (!gpsActive) {
       if (navigator.geolocation && map) {
         const watchId = navigator.geolocation.watchPosition(
