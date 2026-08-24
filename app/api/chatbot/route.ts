@@ -543,23 +543,23 @@ export async function POST(req: NextRequest) {
     
     const supabase = getSupabaseClient()
     
-    // Si NO hay conversacionId pero SÍ hay userId, crear conversación
-    if (!conversacionId && userId) {
-      console.log('🆕 Creando nueva conversación...')
-      const sesionId = userId || `anon_${Date.now()}`
-      
+    // Crear hilo para registrados y anónimos (el admin agrupa por conversacion_id)
+    if (!conversacionId) {
+      const primerMensaje = [...messages].reverse().find((m: any) => m.role === 'user')?.content || ''
+      const fila: Record<string, any> = {
+        sesion_id: userId || crypto.randomUUID(),
+        titulo: String(primerMensaje).trim().slice(0, 80) || 'Nueva conversación',
+        ubicacion_usuario: ubicacionUsuario || null,
+        total_mensajes: 0,
+      }
+      if (userId) fila.user_id = userId
+
       const { data: nuevaConv, error: convError } = await (supabase as any)
         .from('chatbot_conversaciones')
-        .insert({
-          user_id: userId,
-          sesion_id: sesionId,
-          titulo: 'Nueva conversación',
-          ubicacion_usuario: ubicacionUsuario || null,
-          total_mensajes: 0
-        })
+        .insert(fila)
         .select()
         .single()
-      
+
       if (convError) {
         console.error('❌ Error creando conversación:', convError)
       } else if (nuevaConv) {

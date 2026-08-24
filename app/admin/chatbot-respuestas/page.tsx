@@ -48,6 +48,33 @@ const BADGE_IA: Record<string, { label: string; clase: string }> = {
 
 type FiltroIA = 'todas' | 'correcta' | 'mejorable' | 'incorrecta' | 'sin_evaluar'
 type FiltroVoto = 'todas' | 'up' | 'down' | 'sin_voto'
+type Vista = 'respuestas' | 'conversaciones'
+
+interface ConversacionRow {
+  id: string
+  created_at: string | null
+  ultimo_mensaje_at: string | null
+  titulo: string
+  user_id: string | null
+  usuario: UsuarioLog | null
+  locale: string | null
+  respuestas: number
+  mensajes: number
+  first_user_message: string
+  last_message: string
+  correcta: number
+  mejorable: number
+  incorrecta: number
+  sin_evaluar: number
+  quality_score: number | null
+}
+
+interface HiloMensaje {
+  role: 'user' | 'assistant'
+  content: string | null
+  created_at: string
+  log?: RespuestaLog
+}
 
 interface StatsIA {
   correcta: number
@@ -109,13 +136,18 @@ function nombreUsuario(log: RespuestaLog) {
 export default function ChatbotRespuestasPage() {
   const router = useRouter()
   const [authorized, setAuthorized] = useState(false)
+  const [vista, setVista] = useState<Vista>('respuestas')
   const [logs, setLogs] = useState<RespuestaLog[]>([])
+  const [conversaciones, setConversaciones] = useState<ConversacionRow[]>([])
+  const [hilo, setHilo] = useState<HiloMensaje[] | null>(null)
+  const [hiloId, setHiloId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [filtro, setFiltro] = useState<'pendientes' | 'revisadas' | 'todas'>('todas')
   const [filtroIA, setFiltroIA] = useState<FiltroIA>('todas')
   const [filtroVoto, setFiltroVoto] = useState<FiltroVoto>('todas')
   const [pagina, setPagina] = useState(0)
   const [total, setTotal] = useState(0)
+  const [totalConversaciones, setTotalConversaciones] = useState(0)
   const [stats, setStats] = useState<StatsIA>(STATS_VACIOS)
   const [expandido, setExpandido] = useState<string | null>(null)
   const [notas, setNotas] = useState<Record<string, string>>({})
@@ -140,6 +172,7 @@ export default function ChatbotRespuestasPage() {
     setErrorCarga(null)
     try {
       const params = new URLSearchParams({
+        vista,
         filtro,
         filtroIA,
         filtroVoto,
@@ -148,7 +181,14 @@ export default function ChatbotRespuestasPage() {
       const res = await fetch(`/api/admin/chatbot-respuestas?${params}`, { cache: 'no-store' })
       const json = await res.json()
       if (!res.ok) throw new Error(json.details || json.error || 'Error cargando respuestas')
-      setLogs(json.data || [])
+      if (vista === 'conversaciones') {
+        setConversaciones(json.data || [])
+        setTotalConversaciones(json.totalConversaciones || json.total || 0)
+        setLogs([])
+      } else {
+        setLogs(json.data || [])
+        setConversaciones([])
+      }
       setTotal(json.total || 0)
       setStats(json.stats || STATS_VACIOS)
     } catch (e: any) {
@@ -160,11 +200,25 @@ export default function ChatbotRespuestasPage() {
     } finally {
       setLoading(false)
     }
-  }, [authorized, filtro, filtroIA, filtroVoto, pagina])
+  }, [authorized, vista, filtro, filtroIA, filtroVoto, pagina])
 
   useEffect(() => {
     cargar()
   }, [cargar])
+
+  const abrirHilo = async (id: string) => {
+    setHiloId(id)
+    setHilo(null)
+    try {
+      const res = await fetch(`/api/admin/chatbot-respuestas?vista=hilo&id=${id}`, { cache: 'no-store' })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'No se pudo cargar el hilo')
+      setHilo(json.hilo || [])
+    } catch (e) {
+      console.error(e)
+      setHilo([])
+    }
+  }
 
   const marcarRevisado = async (id: string, revisado: boolean) => {
     try {
@@ -210,10 +264,32 @@ export default function ChatbotRespuestasPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Respuestas del Tío Viajero</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Registro de preguntas y respuestas para revisión de calidad, incluidos usuarios anónimos.
-          </p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Respuestas del Tío Viajero</h1>
+              <p className="text-gray-500 text-sm mt-1">
+                {vista === 'conversaciones'
+                  ? 'Hilos completos, como en el chatbot de Furgocasa.'
+                  : 'Cada pregunta-respuesta por separado. Incluye anónimos.'}
+              </p>
+            </div>
+            <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => { setVista('respuestas'); setPagina(0); setExpandido(null); setHiloId(null) }}
+                className={`px-4 py-2 text-sm font-medium ${vista === 'respuestas' ? 'bg-sky-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              >
+                Respuestas
+              </button>
+              <button
+                type="button"
+                onClick={() => { setVista('conversaciones'); setPagina(0); setExpandido(null) }}
+                className={`px-4 py-2 text-sm font-medium ${vista === 'conversaciones' ? 'bg-sky-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              >
+                Conversaciones
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow mb-6 overflow-hidden">
@@ -313,7 +389,9 @@ export default function ChatbotRespuestasPage() {
               {f === 'pendientes' ? 'Pendientes' : f === 'revisadas' ? 'Revisadas' : 'Todas'}
             </button>
           ))}
-          <span className="ml-auto text-sm text-gray-500">{total} respuestas</span>
+          <span className="ml-auto text-sm text-gray-500">
+            {vista === 'conversaciones' ? `${totalConversaciones} conversaciones` : `${total} respuestas`}
+          </span>
         </div>
 
         <div className="flex items-center gap-2 mb-4 flex-wrap">
@@ -366,10 +444,94 @@ export default function ChatbotRespuestasPage() {
             No se pudieron cargar las respuestas.
             <p className="text-xs mt-2 text-gray-500">{errorCarga}</p>
           </div>
-        ) : logs.length === 0 ? (
+        ) : (vista === 'conversaciones' ? conversaciones.length === 0 : logs.length === 0) ? (
           <div className="bg-white rounded-lg shadow p-12 text-center text-gray-500">
-            No hay respuestas {filtro === 'pendientes' ? 'pendientes de revisar' : filtro === 'revisadas' ? 'revisadas' : 'registradas'} todavía.
+            {vista === 'conversaciones'
+              ? 'No hay conversaciones con este filtro. Los chats anónimos antiguos no tenían hilo; los nuevos sí.'
+              : `No hay respuestas ${filtro === 'pendientes' ? 'pendientes de revisar' : filtro === 'revisadas' ? 'revisadas' : 'registradas'} todavía.`}
           </div>
+        ) : vista === 'conversaciones' ? (
+          <>
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full table-fixed divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[14%]">Fecha</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[14%]">Usuario</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[36%]">Primer mensaje</th>
+                      <th className="px-2.5 py-2.5 text-center text-xs font-medium text-gray-500 uppercase w-[10%]">Resp.</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[16%]">Calidad</th>
+                      <th className="px-2.5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase w-[10%]">Idioma</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {conversaciones.map((c) => {
+                      const fecha = formatFecha(c.ultimo_mensaje_at || c.created_at || new Date().toISOString())
+                      const nombre = c.usuario?.nombre || c.usuario?.email?.split('@')[0] || (c.user_id ? 'Usuario' : 'Anónimo')
+                      return (
+                        <tr
+                          key={c.id}
+                          onClick={() => abrirHilo(c.id)}
+                          className={`cursor-pointer hover:bg-gray-50 ${hiloId === c.id ? 'bg-sky-50/60' : ''}`}
+                        >
+                          <td className="px-2.5 py-2 align-top">
+                            <div className="text-sm font-medium text-gray-900">{fecha.dia}</div>
+                            <div className="text-xs text-gray-500">{fecha.hora}</div>
+                          </td>
+                          <td className="px-2.5 py-2 align-top overflow-hidden">
+                            <div className="text-sm font-medium text-gray-900 truncate">{nombre}</div>
+                            {c.usuario?.email && <div className="text-xs text-gray-500 truncate">{c.usuario.email}</div>}
+                          </td>
+                          <td className="px-2.5 py-2 align-top overflow-hidden">
+                            <p className="text-sm text-gray-900 line-clamp-2">{c.first_user_message || c.titulo || '—'}</p>
+                          </td>
+                          <td className="px-2.5 py-2 text-center text-sm text-gray-700 tabular-nums">{c.respuestas}</td>
+                          <td className="px-2.5 py-2 align-top">
+                            {c.quality_score == null ? (
+                              <span className="text-xs text-gray-400">
+                                Sin valorar{c.sin_evaluar > 0 ? ` (${c.sin_evaluar})` : ''}
+                              </span>
+                            ) : (
+                              <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                c.quality_score >= 7 ? 'bg-green-50 text-green-700' : c.quality_score >= 4 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'
+                              }`}>
+                                {c.quality_score.toFixed(1)}/10
+                                {c.sin_evaluar > 0 ? ` · ${c.sin_evaluar}` : ''}
+                              </span>
+                            )}
+                            <div className="text-[10px] text-gray-400 mt-0.5">
+                              {c.correcta}✓ {c.mejorable}~ {c.incorrecta}✗
+                            </div>
+                          </td>
+                          <td className="px-2.5 py-2 text-xs uppercase text-gray-500">{c.locale || '—'}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {totalPaginas > 1 && (
+              <div className="flex items-center justify-center gap-3 pt-4">
+                <button
+                  onClick={() => { setPagina((p) => Math.max(0, p - 1)); setHiloId(null) }}
+                  disabled={pagina === 0}
+                  className="px-3 py-1.5 rounded-lg text-sm bg-white border border-gray-200 disabled:opacity-40"
+                >
+                  Anterior
+                </button>
+                <span className="text-sm text-gray-500">Página {pagina + 1} de {totalPaginas}</span>
+                <button
+                  onClick={() => { setPagina((p) => Math.min(totalPaginas - 1, p + 1)); setHiloId(null) }}
+                  disabled={pagina >= totalPaginas - 1}
+                  className="px-3 py-1.5 rounded-lg text-sm bg-white border border-gray-200 disabled:opacity-40"
+                >
+                  Siguiente
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <>
             <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -465,6 +627,15 @@ export default function ChatbotRespuestasPage() {
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-gray-500">
+                                  {log.conversacion_id && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); abrirHilo(log.conversacion_id!) }}
+                                      className="text-sky-700 font-medium hover:underline"
+                                    >
+                                      Ver hilo
+                                    </button>
+                                  )}
                                   {log.locale && <span className="uppercase font-semibold">{log.locale}</span>}
                                   {log.funciones && log.funciones.length > 0 && (
                                     <span>{log.funciones.map((f) => f.name).join(', ')}</span>
@@ -565,6 +736,65 @@ export default function ChatbotRespuestasPage() {
               </div>
             )}
           </>
+        )}
+
+        {hiloId && (
+          <div className="fixed inset-0 z-40 flex justify-end bg-black/30" onClick={() => { setHiloId(null); setHilo(null) }}>
+            <div
+              className="w-full max-w-xl h-full bg-white shadow-xl overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Conversación</h3>
+                  <p className="text-xs text-gray-500">Hilo completo, pregunta y respuesta</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setHiloId(null); setHilo(null) }}
+                  className="text-sm text-gray-500 hover:text-gray-800"
+                >
+                  Cerrar
+                </button>
+              </div>
+              <div className="p-4 space-y-3">
+                {hilo == null ? (
+                  <div className="flex justify-center py-10">
+                    <div className="animate-spin rounded-full h-8 w-8 border-[3px] border-sky-200 border-t-sky-600" />
+                  </div>
+                ) : hilo.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-10">Este hilo no tiene mensajes guardados.</p>
+                ) : (
+                  hilo.map((m, i) => {
+                    const esUser = m.role === 'user'
+                    const categoria = m.log?.valoracion_ia ? BADGE_IA[m.log.valoracion_ia] : null
+                    return (
+                      <div key={`${m.role}-${i}-${m.created_at}`} className={`flex ${esUser ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[88%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
+                          esUser ? 'bg-sky-50 text-gray-900' : 'bg-gray-100 text-gray-800 border border-gray-200'
+                        }`}>
+                          <p className="text-[10px] uppercase tracking-wide text-gray-400 mb-1">
+                            {esUser ? 'Usuario' : 'Tío Viajero'}
+                          </p>
+                          {m.content || '—'}
+                          {!esUser && categoria && (
+                            <div className="mt-2">
+                              <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${categoria.clase}`}>
+                                {categoria.label}
+                              </span>
+                            </div>
+                          )}
+                          {!esUser && m.log?.motivo_ia && (
+                            <p className="mt-1 text-xs text-gray-500">{m.log.motivo_ia}</p>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
