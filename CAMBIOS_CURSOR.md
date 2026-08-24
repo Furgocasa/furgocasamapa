@@ -152,7 +152,7 @@
 
 ### 7.5 Agente revisor IA (respuesta a respuesta)
 - **Migración**: `supabase/migrations/20260728_chatbot_evaluacion_ia.sql` — ✅ **aplicada en Supabase** (`valoracion_ia`, `motivo_ia`, `sugerencia_ia`, `evaluado_at`).
-- **Script nuevo**: `scripts/evaluar-respuestas-chatbot.js` | **Comando**: `npm run evaluar:chatbot` (dry-run; `EVAL_RUN=1` ejecuta; `EVAL_LIMIT` def 200).
+- **Script**: `scripts/evaluar-respuestas-chatbot.js` | En Windows: `node scripts/evaluar-respuestas-chatbot.js` (siempre en real; nunca `--dry-run` cuando se pide «revisa»). `--all`, `--limit=50`.
 - Clasifica cada respuesta como correcta/mejorable/incorrecta, con motivo y sugerencia. **Verifica hechos contra los datos reales de las áreas en BD** (carga las áreas de `areas_ids` y compara precios/servicios). Cola = filas con `evaluado_at IS NULL` (reanudable, sin duplicados).
 - La página `/admin/chatbot-respuestas` incluye filtros y badges por veredicto IA.
 - **Flujo de afinado (círculo, 21 ago 2026)**: evaluar → corregir código/prompt → push a `main`. No quedarse en el informe. Regla: `.cursor/rules/chatbot-revision.mdc`.
