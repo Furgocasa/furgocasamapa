@@ -229,6 +229,31 @@ export function esIncidenciaRecinto(mensaje: string): boolean {
   return /(parcela de al(ado| lado)|est[aá]n molestando|molestando en (la )?(parcela|tienda|bungalow)|coche arrancado|motor encendido|ruido (en|toda|de) (la )?(noche|parcela)|avisar a (la )?recepci[oó]n|llamar a (la )?recepci[oó]n|hay una persona con el coche|han ocupado (mi )?parcela|no me dejan dormir|alguien (est[aá] |ha )?(haciendo ruido|gritando))/i.test(t)
 }
 
+export function hiloIncidenciaRecinto(
+  previos?: string[],
+  ultimoAsistente?: string | null
+): boolean {
+  if ((previos || []).some((t) => esIncidenciaRecinto(t))) return true
+  return /no somos la recepci[oó]n|not the reception|pas la r[eé]ception|keine Rezeption|non siamo la reception|n[aã]o somos a rece/i.test(
+    ultimoAsistente || ''
+  )
+}
+
+/** Tras una queja: "Camping Taifa…" nombra DÓNDE está, no pide un listado. */
+export function pareceIdentificarRecinto(mensaje: string): boolean {
+  const t = (mensaje || '').replace(/[\u{1F300}-\u{1FAFF}]/gu, '').replace(/\s+/g, ' ').trim()
+  if (!t || t.length > 80) return false
+  if (parecePreguntaRuta(t) || extraerRutaNombrada(t) || pideCercaDeMi(t)) return false
+  if (/precio|cu[aá]nto (vale|cuesta)|servicios?|gratis|duchas?|electricidad|vaciado|cerca de/i.test(t)) return false
+  if (extraerNombreAreaConcreta(t)) return true
+  if (/^(camping|campeggio|aire|stellplatz|camper park|[aá]rea)\b/i.test(t)) return true
+  return esSitioSinIntencion(t)
+}
+
+export function nombreRecintoMencionado(mensaje: string): string {
+  return extraerNombreAreaConcreta(mensaje) || extraerSitioNombrado(mensaje) || ''
+}
+
 export function pideSoloGratuitas(mensaje: string): boolean {
   const t = (mensaje || '').replace(/[\u{1F300}-\u{1FAFF}🆓]/gu, '').replace(/\s+/g, ' ').trim()
   if (!t) return false
@@ -255,6 +280,9 @@ export function clasificarIntencion(opts: {
   const ultimo = (opts.ultimo || '').trim()
   if (!ultimo) return null
   if (esIncidenciaRecinto(ultimo)) return 'incidencia_recinto'
+  if (hiloIncidenciaRecinto(opts.previosUsuario, opts.ultimoAsistente) && pareceIdentificarRecinto(ultimo)) {
+    return 'incidencia_recinto'
+  }
   if (esGuiaTuristicaPura(ultimo)) return 'guia'
   if (esGasolineraSinSitio(ultimo)) return 'gas_sin_sitio'
   if (esPreguntaAreaConcreta(ultimo) || esDeixisMapa(ultimo) || extraerNombreAreaConcreta(ultimo)) return null
@@ -332,12 +360,24 @@ export function textoAtajoIntencion(tipo: AtajoIntencion, locale: ChatLocale, si
       pt: `Isto não é um guia de viagens. Ajudo com áreas de autocaravana e o útil da estrada (onde dormir, combustível na rota).\n\nPara aldeias, planos ou o que ver, as rotas da Furgocasa:\n${blog}`,
     },
     incidencia_recinto: {
-      es: `No somos la recepción de ningún camping ni área: esto es Mapa Furgocasa, un mapa de sitios para dormir.\n\nSi estás en un recinto y hay una molestia o una incidencia, avisa a la recepción o al responsable del lugar. Si hay riesgo, amenazas o una emergencia, llama al 112.\n\nSi lo que quieres es la ficha de un área (precio, servicios, cómo llegar), dime el nombre o pregúntame por sitios cerca.`,
-      en: `We're not the reception of any campsite or aire — this is Mapa Furgocasa, a map of places to sleep.\n\nIf you're on site and there's a disturbance or an incident, tell reception or the site manager. If there's danger, threats or an emergency, call the local emergency number.\n\nIf you want a listing (price, services, how to get there), tell me the name or ask what's nearby.`,
-      fr: `Nous ne sommes pas la réception d’un camping : ceci est Mapa Furgocasa, une carte d’aires pour dormir.\n\nSi tu es sur place et qu’il y a une nuisance ou un incident, préviens la réception ou le responsable. En cas de danger, appelle les secours.\n\nSi tu veux la fiche d’une aire (prix, services, accès), dis-moi le nom ou ce qu’il y a près de toi.`,
-      de: `Wir sind keine Rezeption — das hier ist Mapa Furgocasa, eine Karte zum Übernachten.\n\nWenn du vor Ort bist und es Lärm oder einen Vorfall gibt, sag es der Rezeption oder dem Platzwart. Bei Gefahr ruf den Notruf.\n\nWenn du die Karteikarte eines Platzes willst (Preis, Services, Anfahrt), nenn den Namen oder frag, was in der Nähe liegt.`,
-      it: `Non siamo la reception di un campeggio: questo è Mapa Furgocasa, una mappa di posti dove dormire.\n\nSe sei in struttura e c’è un disturbo o un incidente, avvisa la reception o il responsabile. Se c’è pericolo, chiama i soccorsi.\n\nSe vuoi la scheda di un’area (prezzo, servizi, come arrivare), dimmi il nome o cosa c’è vicino.`,
-      pt: `Não somos a receção de nenhum parque: isto é o Mapa Furgocasa, um mapa de sítios para dormir.\n\nSe estás no recinto e há um incómodo ou um incidente, avisa a receção ou o responsável. Se houver perigo, liga para o 112.\n\nSe queres a ficha de uma área (preço, serviços, como chegar), diz o nome ou o que há perto.`,
+      es: lugar
+        ? `Entendido: te refieres a **${lugar}**. Seguimos sin ser la recepción de ese recinto: esto es Mapa Furgocasa, un mapa.\n\nAvisa a su recepción o al responsable. Si hay riesgo, amenazas o una emergencia, llama al 112.`
+        : `No somos la recepción de ningún camping ni área: esto es Mapa Furgocasa, un mapa de sitios para dormir.\n\nSi estás en un recinto y hay una molestia, avisa a la recepción o al responsable de ESE lugar. Si hay riesgo, amenazas o una emergencia, llama al 112.\n\nSi me dices el nombre del recinto, lo tomo como el sitio donde estás, no como una búsqueda en el mapa.`,
+      en: lugar
+        ? `Got it: you mean **${lugar}**. We're still not that site's reception — this is Mapa Furgocasa, a map.\n\nTell their reception or the site manager. If there's danger, threats or an emergency, call the local emergency number.`
+        : `We're not the reception of any campsite or aire — this is Mapa Furgocasa, a map of places to sleep.\n\nIf you're on site and there's a disturbance, tell reception or the manager of THAT place. If there's danger, call the local emergency number.\n\nIf you name the site, I'll take it as where you are, not as a map search.`,
+      fr: lugar
+        ? `Compris : tu parles de **${lugar}**. Nous ne sommes toujours pas la réception de ce lieu : ceci est Mapa Furgocasa, une carte.\n\nPréviens sa réception ou le responsable. En cas de danger, appelle les secours.`
+        : `Nous ne sommes pas la réception d’un camping : ceci est Mapa Furgocasa, une carte d’aires pour dormir.\n\nSi tu es sur place et qu’il y a une nuisance, préviens la réception de CE lieu. En cas de danger, appelle les secours.\n\nSi tu donnes le nom du lieu, je le prends comme l’endroit où tu es, pas comme une recherche.`,
+      de: lugar
+        ? `Verstanden: du meinst **${lugar}**. Wir sind trotzdem nicht die Rezeption dieses Platzes — das hier ist Mapa Furgocasa, eine Karte.\n\nSag es der Rezeption oder dem Platzwart. Bei Gefahr ruf den Notruf.`
+        : `Wir sind keine Rezeption — das hier ist Mapa Furgocasa, eine Karte zum Übernachten.\n\nWenn du vor Ort bist und es Lärm gibt, sag es der Rezeption DIESES Platzes. Bei Gefahr ruf den Notruf.\n\nWenn du den Namen nennst, verstehe ich ihn als den Ort, an dem du bist, nicht als Suche.`,
+      it: lugar
+        ? `Capito: ti riferisci a **${lugar}**. Non siamo comunque la reception di quella struttura: questo è Mapa Furgocasa, una mappa.\n\nAvvisa la reception o il responsabile. Se c’è pericolo, chiama i soccorsi.`
+        : `Non siamo la reception di un campeggio: questo è Mapa Furgocasa, una mappa di posti dove dormire.\n\nSe sei in struttura e c’è un disturbo, avvisa la reception di QUEL posto. Se c’è pericolo, chiama i soccorsi.\n\nSe mi dici il nome, lo prendo come il posto in cui sei, non come una ricerca.`,
+      pt: lugar
+        ? `Percebido: referes-te a **${lugar}**. Continuamos sem ser a receção desse recinto: isto é o Mapa Furgocasa, um mapa.\n\nAvisa a receção ou o responsável. Se houver perigo, liga para o 112.`
+        : `Não somos a receção de nenhum parque: isto é o Mapa Furgocasa, um mapa de sítios para dormir.\n\nSe estás no recinto e há um incómodo, avisa a receção DESSE lugar. Se houver perigo, liga para o 112.\n\nSe disseres o nome do recinto, tomo-o como o sítio onde estás, não como uma pesquisa.`,
     },
     gas_sin_sitio: {
       es: `¿Gasolinera en qué zona, o entre qué dos ciudades? Dime origen y destino (o la ciudad) y te busco algo útil en la ruta.`,

@@ -74,6 +74,7 @@ const POOL: Array<{ tema: string; q: string }> = [
   { tema: 'guia', q: 'Qué ver en Huesca' },
   { tema: 'recepcion', q: 'Están molestando en la parcela de alado' },
   { tema: 'recepcion', q: 'Hay una persona con el coche arrancado' },
+  { tema: 'recepcion-nombre', q: 'Camping taifa puerto santa maria' },
   { tema: 'guia', q: 'En Cádiz' },
   { tema: 'guia', q: 'Con quién puedo hablar para hacer camping en la playa' },
   { tema: 'otro', q: 'hola' },
@@ -131,7 +132,11 @@ async function porCiudad(ciudad: string, gratis?: boolean) {
 }
 
 async function simular(q: string, tema: string) {
-  let atajo = clasificarIntencion({ ultimo: q, previosUsuario: [], ultimoAsistente: null })
+  let atajo = clasificarIntencion({
+    ultimo: q,
+    previosUsuario: tema === 'recepcion-nombre' ? ['Están molestando en la parcela de alado'] : [],
+    ultimoAsistente: null,
+  })
   const ruta = extraerRutaNombrada(q)
   const concreta = esPreguntaAreaConcreta(q) || esDeixisMapa(q) || Boolean(extraerNombreAreaConcreta(q))
   const nombraSitio =
@@ -156,8 +161,10 @@ async function simular(q: string, tema: string) {
     if (atajo === 'guia') nota = 'manda al blog, no inventa guía'
     if (atajo === 'gas_sin_sitio') nota = 'pide zona, no busca supermercado'
     if (atajo === 'incidencia_recinto') {
-      veredicto = /no somos la recepci[oó]n|mapa furgocasa/i.test(texto) ? 'OK' : 'FALLO'
-      nota = 'no se hace pasar por el camping'
+      veredicto = /no somos la recepci[oó]n|seguimos sin ser|mapa furgocasa/i.test(texto) ? 'OK' : 'FALLO'
+      nota = tema === 'recepcion-nombre'
+        ? 'nombra el recinto de la queja, no busca ficha'
+        : 'no se hace pasar por el camping'
     }
     if (atajo === 'filtro_sin_sitio' && inyectaGps) {
       veredicto = 'FALLO'

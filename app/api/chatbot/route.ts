@@ -55,6 +55,8 @@ import {
   esFiltroSinSitio,
   pideSoloGratuitas,
   esAmpliacionBusqueda,
+  nombreRecintoMencionado,
+  pareceIdentificarRecinto,
 } from '@/lib/chatbot/intencion'
 
 // ============================================
@@ -730,14 +732,21 @@ export async function POST(req: NextRequest) {
         .map((m: any) => m.content)
       const ruta = extraerRutaNombrada(ultimoMensajeUsuario)
         || [...previosUsuario].reverse().map((t) => extraerRutaNombrada(t)).find(Boolean)
-      const etiqueta =
+      let etiqueta =
         atajo === 'ambigua'
           ? extraerSitioNombrado(ultimoMensajeUsuario)
           : atajo === 'ruta_sin_intencion' && ruta
             ? `${ruta.origen} → ${ruta.destino}`
             : atajo === 'filtro_sin_sitio'
               ? etiquetaFiltro(ultimoMensajeUsuario)
-              : undefined
+              : atajo === 'incidencia_recinto'
+                ? nombreRecintoMencionado(ultimoMensajeUsuario)
+                  || (pareceIdentificarRecinto(ultimoMensajeUsuario) ? ultimoMensajeUsuario.trim() : '')
+                : undefined
+      if (atajo === 'incidencia_recinto' && etiqueta) {
+        const halladas = await buscarAreasPorNombre(etiqueta, 1, ubicacionUsuario)
+        if (halladas[0]?.nombre) etiqueta = halladas[0].nombre
+      }
       const message = textoAtajoIntencion(atajo, idiomaAtajo, etiqueta)
       const seguimiento = chipsSeguimiento(atajo, idiomaAtajo, etiqueta)
       logger.info('Respuesta corta sin modelo', { atajo, pregunta: ultimoMensajeUsuario.slice(0, 80) })
@@ -1040,6 +1049,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 - TIPO: solo tres. publica = ayuntamiento/organismo. privada = empresa/particular (camper park, granja, Weingut, CL, Brit Stop). camping = recinto. No existe la categoría stopover. En cada país la gente usa otro nombre (aire, sosta, Stellplatz, camperplaats, motorhome aire, trailer park): eso es etiqueta. Un "parking autocaravanas" del pueblo es pública. UK: touring park = camping; CL/aire de anfitrión = privada; Arosfan = pública. "Dónde estacionar" = áreas de esas tres, nunca un tipo parking.
 - MASCOTAS: zona_mascotas=true es lo único confirmado. Si piden "mascotas bienvenidas" NO filtres por eso (casi no hay dato) y NO digas que las cercanas admiten perros. Enseña cercanas y di que en las fichas no está confirmado, salvo las que lleven Mascotas en servicios.
 - NO eres la recepción de un camping ni de un área. Si se quejan de vecinos, ruido, parcela de al lado o un coche arrancado: di que somos un mapa, que avisen a recepción o al responsable, y al 112 si hay riesgo. CERO fichas.
+- Si el hilo ya es una incidencia y luego nombran un camping o un área, NO busques fichas ni preguntes si quieres campings de la ciudad. Están identificando DÓNDE están. Confirma el recinto y repite que no somos su recepción.
 - CERCA DE MÍ: si hay GPS válido y no nombran otra ciudad, busca ahí. Si no hay GPS, pide la ciudad. No busques en todo el mundo ni inventes una ubicación.
 - NO eres una guía turística. Si piden qué ver, pueblos, planes o itinerarios, NO inventes una guía y NO uses buscar_info_viaje. Di que no cubres eso y enlaza https://www.furgocasa.com/es/blog?category=rutas
 - Si piden áreas/gasolinera Y además turismo: responde SOLO la parte de áreas/gasolinera y manda el turismo al blog de Furgocasa.
