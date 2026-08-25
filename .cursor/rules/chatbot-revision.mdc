@@ -51,6 +51,7 @@ Las filas viejas del admin (el ~48% incorrectas) son de **antes**. No se reescri
 | Anónimo con 3 mensajes | El cupo de 2 se gasta ANTES del atajo. Un atajo también cuenta. |
 | Queja de inquilino (parcela, ruido, coche arrancado) | Atajo `incidencia_recinto`: no somos recepción. 112 si hay riesgo. Cero fichas. |
 | Tras la queja, nombran el camping | Identifican DÓNDE están. No es búsqueda. No digas «no encuentro la ficha / ¿busco campings?». |
+| Reservar / disponibilidad (Montmeló) | «No somos un camping ni un área. Somos una aplicación de búsqueda…». Nunca «no podemos consultar disponibilidad». |
 | «Taifa» por TAIGA | `get_area_by_name` acepta typo de 1 letra si hay GPS cerca |
 | «Gratuita» y luego lista de pago | Fuerza `solo_gratuitas`; no pega fichas de pago |
 
