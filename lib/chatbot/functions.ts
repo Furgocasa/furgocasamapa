@@ -911,7 +911,66 @@ function variantesNombreArea(nombre: string): string[] {
   return [...out].map((s) => s.trim()).filter((s) => s.length >= 3)
 }
 
-export async function buscarAreasPorNombre(nombre: string, limit: number = 3): Promise<AreaResumen[]> {
+const STOP_NOMBRE_AREA = new Set([
+  'camping', 'area', 'areas', 'autocaravana', 'autocaravanas', 'camper', 'park',
+  'puerto', 'santa', 'maria', 'de', 'del', 'la', 'el', 'los', 'las', 'y',
+])
+
+function normalizarTokenNombre(s: string): string {
+  return String(s || '')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+}
+
+function tokensNombreDistintivos(nombre: string): string[] {
+  return String(nombre || '')
+    .split(/\s+/)
+    .map(normalizarTokenNombre)
+    .filter((w) => w.length >= 4 && !STOP_NOMBRE_AREA.has(w))
+}
+
+function distanciaLevenshtein(a: string, b: string): number {
+  const s = normalizarTokenNombre(a)
+  const t = normalizarTokenNombre(b)
+  if (s === t) return 0
+  const rows = s.length + 1
+  const cols = t.length + 1
+  const d: number[][] = Array.from({ length: rows }, () => Array(cols).fill(0))
+  for (let i = 0; i < rows; i++) d[i][0] = i
+  for (let j = 0; j < cols; j++) d[0][j] = j
+  for (let i = 1; i < rows; i++) {
+    for (let j = 1; j < cols; j++) {
+      d[i][j] = Math.min(
+        d[i - 1][j] + 1,
+        d[i][j - 1] + 1,
+        d[i - 1][j - 1] + (s[i - 1] === t[j - 1] ? 0 : 1)
+      )
+    }
+  }
+  return d[s.length][t.length]
+}
+
+function coincideNombreFuzzy(consulta: string, candidato: string): boolean {
+  const q = tokensNombreDistintivos(consulta)
+  const c = tokensNombreDistintivos(candidato)
+  if (!q.length || !c.length) return false
+  return q.some((qt) =>
+    c.some((ct) => {
+      if (qt === ct) return true
+      const maxLen = Math.max(qt.length, ct.length)
+      if (maxLen < 4) return false
+      return distanciaLevenshtein(qt, ct) <= 1
+    })
+  )
+}
+
+export async function buscarAreasPorNombre(
+  nombre: string,
+  limit: number = 3,
+  cerca?: { lat?: number; lng?: number } | null
+): Promise<AreaResumen[]> {
   const supabase = getSupabaseClient()
   const variantes = variantesNombreArea(nombre)
   const termino = variantes[0] || String(nombre || '').trim()
@@ -945,6 +1004,17 @@ export async function buscarAreasPorNombre(nombre: string, limit: number = 3): P
     const ranked = rankMejoresAreas(ajustadas, limit)
     console.log(`✅ Encontradas ${data?.length || 0} → top ${ranked.length} por nombre`)
     if (ranked.length > 0) return ranked
+
+    if (esGpsValido(cerca?.lat, cerca?.lng)) {
+      const cercanas = await searchAreas({
+        ubicacion: { lat: cerca!.lat, lng: cerca!.lng, radio_km: 15 },
+      })
+      const fuzzy = (cercanas || []).filter((a) => coincideNombreFuzzy(nombre, a.nombre || ''))
+      if (fuzzy.length) {
+        console.log(`🔎 Sin exacto "${nombre}"; fuzzy cerca GPS → ${fuzzy[0].nombre}`)
+        return rankMejoresAreas(fuzzy, limit)
+      }
+    }
 
     const alias = resolverAliasUbicacion(nombre)
     if (alias !== nombre.trim()) {
@@ -1243,6 +1313,13 @@ export function elegirAreasParaTarjetas(
   }
   const blob = `${texto}\n${pregunta}`
   const mencionadas = areas.filter((a) => areaMencionadaEnTexto(blob, a))
+  const pideGratis = /gratis|gratuit/i.test(pregunta) && !/de pago/i.test(pregunta)
+  const candidatas = pideGratis
+    ? (mencionadas.length ? mencionadas : areas).filter((a) => a.precio_noche === 0)
+    : mencionadas.length
+      ? mencionadas
+      : areas
+  if (pideGratis) return candidatas.slice(0, max)
   if (mencionadas.length) return mencionadas.slice(0, max)
   if (esPreguntaAreaConcreta(pregunta)) return areas.slice(0, 1)
   return areas.slice(0, max)

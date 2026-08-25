@@ -67,10 +67,13 @@ const POOL: Array<{ tema: string; q: string }> = [
   { tema: 'concreta', q: 'El área de Ajo, Cantabria' },
   { tema: 'concreta', q: 'Ajo, Cantabria' },
   { tema: 'concreta', q: 'parking ciutat caravaning' },
+  { tema: 'concreta', q: 'Camping taifa puerto santa maria' },
   { tema: 'gas', q: 'Gasolineras' },
   { tema: 'gas', q: 'Gasolinera entre Murcia y Madrid' },
   { tema: 'gas', q: 'Taller cerca' },
   { tema: 'guia', q: 'Qué ver en Huesca' },
+  { tema: 'recepcion', q: 'Están molestando en la parcela de alado' },
+  { tema: 'recepcion', q: 'Hay una persona con el coche arrancado' },
   { tema: 'guia', q: 'En Cádiz' },
   { tema: 'guia', q: 'Con quién puedo hablar para hacer camping en la playa' },
   { tema: 'otro', q: 'hola' },
@@ -152,6 +155,10 @@ async function simular(q: string, tema: string) {
     }
     if (atajo === 'guia') nota = 'manda al blog, no inventa guía'
     if (atajo === 'gas_sin_sitio') nota = 'pide zona, no busca supermercado'
+    if (atajo === 'incidencia_recinto') {
+      veredicto = /no somos la recepci[oó]n|mapa furgocasa/i.test(texto) ? 'OK' : 'FALLO'
+      nota = 'no se hace pasar por el camping'
+    }
     if (atajo === 'filtro_sin_sitio' && inyectaGps) {
       veredicto = 'FALLO'
       nota = 'pregunta dónde con GPS puesto'

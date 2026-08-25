@@ -53,6 +53,8 @@ import {
   esPreguntaAreaConcreta,
   extraerNombreAreaConcreta,
   esFiltroSinSitio,
+  pideSoloGratuitas,
+  esAmpliacionBusqueda,
 } from '@/lib/chatbot/intencion'
 
 // ============================================
@@ -1032,11 +1034,12 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 ═══════════════════════════════════════
 ✅ CALIDAD DE DATOS (OBLIGATORIO)
 ═══════════════════════════════════════
-- PRECIO: Solo di "Gratis" si el resumen o precio_noche es 0. Si dice "Precio no disponible" o precio_noche es null, escribe exactamente eso. NUNCA conviertas un precio desconocido en gratis.
+- PRECIO: Solo di "Gratis" si el resumen o precio_noche es 0. Si dice "Precio no disponible" o precio_noche es null, escribe exactamente eso. NUNCA conviertas un precio desconocido en gratis. Si piden gratuita y no hay otra, dilo y NO listes de pago.
 - FICHAS: pega el campo "resumen" de cada área TAL CUAL. No reescribas precio, servicios ni enlaces. Prohibido autocaravanas.com, example.com y Google Maps. Di el mismo número de áreas que te llegan (máx. 3). Nunca "he encontrado 5" si solo hay 3 fichas.
 - FILTROS: Si el usuario nombra solo una ciudad DESPUÉS de haber pedido áreas/servicios, busca ahí SIN heredar filtros viejos.
 - TIPO: solo tres. publica = ayuntamiento/organismo. privada = empresa/particular (camper park, granja, Weingut, CL, Brit Stop). camping = recinto. No existe la categoría stopover. En cada país la gente usa otro nombre (aire, sosta, Stellplatz, camperplaats, motorhome aire, trailer park): eso es etiqueta. Un "parking autocaravanas" del pueblo es pública. UK: touring park = camping; CL/aire de anfitrión = privada; Arosfan = pública. "Dónde estacionar" = áreas de esas tres, nunca un tipo parking.
 - MASCOTAS: zona_mascotas=true es lo único confirmado. Si piden "mascotas bienvenidas" NO filtres por eso (casi no hay dato) y NO digas que las cercanas admiten perros. Enseña cercanas y di que en las fichas no está confirmado, salvo las que lleven Mascotas en servicios.
+- NO eres la recepción de un camping ni de un área. Si se quejan de vecinos, ruido, parcela de al lado o un coche arrancado: di que somos un mapa, que avisen a recepción o al responsable, y al 112 si hay riesgo. CERO fichas.
 - CERCA DE MÍ: si hay GPS válido y no nombran otra ciudad, busca ahí. Si no hay GPS, pide la ciudad. No busques en todo el mundo ni inventes una ubicación.
 - NO eres una guía turística. Si piden qué ver, pueblos, planes o itinerarios, NO inventes una guía y NO uses buscar_info_viaje. Di que no cubres eso y enlaza https://www.furgocasa.com/es/blog?category=rutas
 - Si piden áreas/gasolinera Y además turismo: responde SOLO la parte de áreas/gasolinera y manda el turismo al blog de Furgocasa.
@@ -1178,6 +1181,13 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
           if (fnArgs.ubicacion?.nombre) {
             fnArgs.ubicacion.nombre = resolverLugarRelativo(fnArgs.ubicacion.nombre, ciudadGps, ciudadHilo)
           }
+          const previosUser = messages
+            .filter((m: any) => m.role === 'user')
+            .map((m: any) => String(m.content || ''))
+          const hiloGratis = previosUser.some((t: string) => pideSoloGratuitas(t) || /gratis|gratuit/i.test(t))
+          if (pideSoloGratuitas(ultimoMensajeUsuario) || (hiloGratis && esAmpliacionBusqueda(ultimoMensajeUsuario))) {
+            fnArgs.solo_gratuitas = true
+          }
         }
         if (fnName === 'get_area_by_name') {
           const nombrada = extraerNombreAreaConcreta(ultimoMensajeUsuario)
@@ -1228,7 +1238,11 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
               if (Array.isArray(functionResult)) todasLasAreas.push(...functionResult)
               break
             case 'get_area_by_name':
-              functionResult = await buscarAreasPorNombre(fnArgs.nombre, fnArgs.limit || 2)
+              functionResult = await buscarAreasPorNombre(
+                fnArgs.nombre,
+                fnArgs.limit || 2,
+                ubicacionUsuario
+              )
               if (Array.isArray(functionResult)) todasLasAreas.push(...functionResult.slice(0, 2))
               break
             case 'search_areas_along_route':

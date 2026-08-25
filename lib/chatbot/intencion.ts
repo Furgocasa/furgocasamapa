@@ -3,7 +3,7 @@ import type { ChatLocale } from '@/lib/chatbot/functions'
 export const BLOG_RUTAS_FURGOCASA = 'https://www.furgocasa.com/es/blog?category=rutas'
 
 const UTIL_RE =
-  /(^|[^\p{L}\p{N}])(area|área|areas|áreas|stellplatz|sosta|aire camping|pernoct|dormir|autocaravana|autocaravanas|camper|furgo|furgoneta|motorhome|parking|aparcamiento|estacionar|estacionamiento|gasolinera|gasolineras|gasolina|di[eé]sel|petrol|tankstelle|taller|luz|electricidad|agua|ducha|duchas|wifi|wc|vaciado|precio|gratis|free|cerca de m[ií]|mejores|best)(?=[^\p{L}\p{N}]|$)/iu
+  /(^|[^\p{L}\p{N}])(area|área|areas|áreas|stellplatz|sosta|aire camping|camping|campings|pernoct|dormir|autocaravana|autocaravanas|camper|furgo|furgoneta|motorhome|parking|aparcamiento|estacionar|estacionamiento|gasolinera|gasolineras|gasolina|di[eé]sel|petrol|tankstelle|taller|luz|electricidad|agua|ducha|duchas|wifi|wc|vaciado|precio|gratis|free|cerca de m[ií]|mejores|best)(?=[^\p{L}\p{N}]|$)/iu
 
 const GUIA_RE =
   /(^|[^\p{L}\p{N}])(qu[eé]\s+ver|qu[eé]\s+visitar|qu[eé]\s+hacer|what to see|what to do|things to do|que visiter|quoi faire|was sehen|was unternehmen|cosa vedere|cosa fare|o que ver|pueblos?\s+(para\s+parar|que\s+visitar|con\s+encanto)|en qu[eé] pueblos|itinerario|monumentos?|museos?|catedral|atracciones?|turismo|tur[ií]stic|gu[ií]a de viaje|planes? en|actividades?|senderismo|birdwatching|p[áa]jaros|visitar en|fiestas? de|playas?\s+para\s+ba[nñ])(?=[^\p{L}\p{N}]|$)/iu
@@ -218,7 +218,29 @@ export function esFiltroSinSitio(mensaje: string): boolean {
   return pideUtilCamper(t) || /mascotas|pets|animales|haustier|animaux|water|electricity|[eé]lectricit[eé]|strom|acqua|elettricit/i.test(t)
 }
 
-export type AtajoIntencion = 'ambigua' | 'guia' | 'gas_sin_sitio' | 'ruta_sin_intencion' | 'filtro_sin_sitio'
+/**
+ * Queja de inquilino: ruido, parcela de al lado, coche arrancado…
+ * Nos tratan como recepción del camping. No lo somos.
+ */
+export function esIncidenciaRecinto(mensaje: string): boolean {
+  const t = (mensaje || '').replace(/[\u{1F300}-\u{1FAFF}]/gu, '').replace(/\s+/g, ' ').trim()
+  if (!t || t.length > 160) return false
+  if (parecePreguntaRuta(t) || extraerRutaNombrada(t)) return false
+  return /(parcela de al(ado| lado)|est[aá]n molestando|molestando en (la )?(parcela|tienda|bungalow)|coche arrancado|motor encendido|ruido (en|toda|de) (la )?(noche|parcela)|avisar a (la )?recepci[oó]n|llamar a (la )?recepci[oó]n|hay una persona con el coche|han ocupado (mi )?parcela|no me dejan dormir|alguien (est[aá] |ha )?(haciendo ruido|gritando))/i.test(t)
+}
+
+export function pideSoloGratuitas(mensaje: string): boolean {
+  const t = (mensaje || '').replace(/[\u{1F300}-\u{1FAFF}🆓]/gu, '').replace(/\s+/g, ' ').trim()
+  if (!t) return false
+  if (/de pago|no gratis|tampoco gratis|baratas? de pago/i.test(t)) return false
+  return /^(y\s+)?(alguna\s+)?(otra\s+)?gratuita?s?\??$|solo (las )?gratuit|solo gratis|[aá]reas? gratis|opci[oó]n gratuita/i.test(t)
+}
+
+export function esAmpliacionBusqueda(mensaje: string): boolean {
+  return /alej|regi[oó]n|m[aá]s lejos|media hora|ampli|toda la (zona|regi[oó]n|provincia)|m[aá]s lejos/i.test(mensaje || '')
+}
+
+export type AtajoIntencion = 'ambigua' | 'guia' | 'gas_sin_sitio' | 'ruta_sin_intencion' | 'filtro_sin_sitio' | 'incidencia_recinto'
 
 /** El asistente ya listó áreas: lo siguiente es un seguimiento, no una pregunta nueva. */
 export function asistenteListoAreas(texto: string | null | undefined): boolean {
@@ -232,9 +254,10 @@ export function clasificarIntencion(opts: {
 }): AtajoIntencion | null {
   const ultimo = (opts.ultimo || '').trim()
   if (!ultimo) return null
+  if (esIncidenciaRecinto(ultimo)) return 'incidencia_recinto'
   if (esGuiaTuristicaPura(ultimo)) return 'guia'
   if (esGasolineraSinSitio(ultimo)) return 'gas_sin_sitio'
-  if (esPreguntaAreaConcreta(ultimo) || esDeixisMapa(ultimo)) return null
+  if (esPreguntaAreaConcreta(ultimo) || esDeixisMapa(ultimo) || extraerNombreAreaConcreta(ultimo)) return null
   if (esRutaSinIntencion(ultimo)) return 'ruta_sin_intencion'
   const hiloRuta =
     (opts.previosUsuario || []).some((t) => parecePreguntaRuta(t) || Boolean(extraerRutaNombrada(t))) ||
@@ -308,6 +331,14 @@ export function textoAtajoIntencion(tipo: AtajoIntencion, locale: ChatLocale, si
       it: `Non sono una guida turistica. Ti aiuto con aree sosta e il pratico (dove dormire, benzina sul percorso).\n\nPer borghi, cose da fare o cosa vedere, le rotte Furgocasa:\n${blog}`,
       pt: `Isto não é um guia de viagens. Ajudo com áreas de autocaravana e o útil da estrada (onde dormir, combustível na rota).\n\nPara aldeias, planos ou o que ver, as rotas da Furgocasa:\n${blog}`,
     },
+    incidencia_recinto: {
+      es: `No somos la recepción de ningún camping ni área: esto es Mapa Furgocasa, un mapa de sitios para dormir.\n\nSi estás en un recinto y hay una molestia o una incidencia, avisa a la recepción o al responsable del lugar. Si hay riesgo, amenazas o una emergencia, llama al 112.\n\nSi lo que quieres es la ficha de un área (precio, servicios, cómo llegar), dime el nombre o pregúntame por sitios cerca.`,
+      en: `We're not the reception of any campsite or aire — this is Mapa Furgocasa, a map of places to sleep.\n\nIf you're on site and there's a disturbance or an incident, tell reception or the site manager. If there's danger, threats or an emergency, call the local emergency number.\n\nIf you want a listing (price, services, how to get there), tell me the name or ask what's nearby.`,
+      fr: `Nous ne sommes pas la réception d’un camping : ceci est Mapa Furgocasa, une carte d’aires pour dormir.\n\nSi tu es sur place et qu’il y a une nuisance ou un incident, préviens la réception ou le responsable. En cas de danger, appelle les secours.\n\nSi tu veux la fiche d’une aire (prix, services, accès), dis-moi le nom ou ce qu’il y a près de toi.`,
+      de: `Wir sind keine Rezeption — das hier ist Mapa Furgocasa, eine Karte zum Übernachten.\n\nWenn du vor Ort bist und es Lärm oder einen Vorfall gibt, sag es der Rezeption oder dem Platzwart. Bei Gefahr ruf den Notruf.\n\nWenn du die Karteikarte eines Platzes willst (Preis, Services, Anfahrt), nenn den Namen oder frag, was in der Nähe liegt.`,
+      it: `Non siamo la reception di un campeggio: questo è Mapa Furgocasa, una mappa di posti dove dormire.\n\nSe sei in struttura e c’è un disturbo o un incidente, avvisa la reception o il responsabile. Se c’è pericolo, chiama i soccorsi.\n\nSe vuoi la scheda di un’area (prezzo, servizi, come arrivare), dimmi il nome o cosa c’è vicino.`,
+      pt: `Não somos a receção de nenhum parque: isto é o Mapa Furgocasa, um mapa de sítios para dormir.\n\nSe estás no recinto e há um incómodo ou um incidente, avisa a receção ou o responsável. Se houver perigo, liga para o 112.\n\nSe queres a ficha de uma área (preço, serviços, como chegar), diz o nome ou o que há perto.`,
+    },
     gas_sin_sitio: {
       es: `¿Gasolinera en qué zona, o entre qué dos ciudades? Dime origen y destino (o la ciudad) y te busco algo útil en la ruta.`,
       en: `A petrol station where — which area, or between which two cities? Tell me origin and destination (or the town) and I’ll look it up.`,
@@ -340,6 +371,7 @@ export function chipsSeguimiento(tipo: AtajoIntencion, locale: ChatLocale, sitio
     ambigua: { es: [], en: [], fr: [], de: [], it: [], pt: [] },
     guia: { es: [], en: [], fr: [], de: [], it: [], pt: [] },
     gas_sin_sitio: { es: [], en: [], fr: [], de: [], it: [], pt: [] },
+    incidencia_recinto: { es: [], en: [], fr: [], de: [], it: [], pt: [] },
   }
   return t[tipo]?.[locale] || t[tipo]?.es || []
 }
