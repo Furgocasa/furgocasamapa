@@ -75,6 +75,7 @@ const POOL: Array<{ tema: string; q: string }> = [
   { tema: 'recepcion', q: 'Están molestando en la parcela de alado' },
   { tema: 'recepcion', q: 'Hay una persona con el coche arrancado' },
   { tema: 'recepcion-nombre', q: 'Camping taifa puerto santa maria' },
+  { tema: 'reserva', q: 'Hola, estaré en caravana en Montmeló los días 9 y 11 de octubre, se puede reservar plaza?' },
   { tema: 'guia', q: 'En Cádiz' },
   { tema: 'guia', q: 'Con quién puedo hablar para hacer camping en la playa' },
   { tema: 'otro', q: 'hola' },
@@ -161,10 +162,17 @@ async function simular(q: string, tema: string) {
     if (atajo === 'guia') nota = 'manda al blog, no inventa guía'
     if (atajo === 'gas_sin_sitio') nota = 'pide zona, no busca supermercado'
     if (atajo === 'incidencia_recinto') {
-      veredicto = /no somos la recepci[oó]n|seguimos sin ser|mapa furgocasa/i.test(texto) ? 'OK' : 'FALLO'
+      veredicto = /no somos un camping ni un [aá]rea|no somos la recepci[oó]n|seguimos sin ser|mapa furgocasa/i.test(texto) ? 'OK' : 'FALLO'
       nota = tema === 'recepcion-nombre'
         ? 'nombra el recinto de la queja, no busca ficha'
         : 'no se hace pasar por el camping'
+    }
+    if (atajo === 'no_somos_recinto') {
+      veredicto = /no somos un camping ni un [aá]rea|aplicaci[oó]n de b[uú]squeda/i.test(texto)
+        && !/no (podemos|puedo) consultar disponibilidad/i.test(texto)
+        ? 'OK'
+        : 'FALLO'
+      nota = 'identidad de app, no disponibilidad'
     }
     if (atajo === 'filtro_sin_sitio' && inyectaGps) {
       veredicto = 'FALLO'

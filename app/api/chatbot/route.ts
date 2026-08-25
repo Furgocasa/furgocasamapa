@@ -759,13 +759,30 @@ export async function POST(req: NextRequest) {
               : atajo === 'incidencia_recinto'
                 ? nombreRecintoMencionado(ultimoMensajeUsuario)
                   || (pareceIdentificarRecinto(ultimoMensajeUsuario) ? ultimoMensajeUsuario.trim() : '')
-                : undefined
+                : atajo === 'no_somos_recinto'
+                  ? extraerCiudadNombrada(ultimoMensajeUsuario)
+                    || extraerSitioNombrado(ultimoMensajeUsuario)
+                    || extraerNombreAreaConcreta(ultimoMensajeUsuario)
+                  : undefined
       if (atajo === 'incidencia_recinto' && etiqueta) {
         const halladas = await buscarAreasPorNombre(etiqueta, 1, ubicacionUsuario)
         if (halladas[0]?.nombre) etiqueta = halladas[0].nombre
       }
-      const message = textoAtajoIntencion(atajo, idiomaAtajo, etiqueta)
+      let message = textoAtajoIntencion(atajo, idiomaAtajo, etiqueta)
       const seguimiento = chipsSeguimiento(atajo, idiomaAtajo, etiqueta)
+      let areasAtajo: AreaResumen[] = []
+      if (atajo === 'no_somos_recinto') {
+        if (etiqueta) {
+          areasAtajo = (await searchAreas({ ubicacion: { nombre: etiqueta } })).slice(0, 3)
+        } else if (esGpsValido(ubicacionUsuario?.lat, ubicacionUsuario?.lng)) {
+          areasAtajo = (await searchAreas({
+            ubicacion: { lat: ubicacionUsuario!.lat, lng: ubicacionUsuario!.lng, radio_km: 20 },
+          })).slice(0, 3)
+        }
+        if (areasAtajo.length) {
+          message = componerRespuestaConFichas(message, areasAtajo, idiomaAtajo)
+        }
+      }
       logger.info('Respuesta corta sin modelo', { atajo, pregunta: ultimoMensajeUsuario.slice(0, 80) })
 
       if (!conversacionId) {
@@ -809,7 +826,7 @@ export async function POST(req: NextRequest) {
           { name: '_intencion', args: { tipo: atajo } },
           { name: '_ubicacion', args: ubicacionLog },
         ],
-        areas_ids: [],
+        areas_ids: areasAtajo.map((a) => a.id),
         tokens: 0,
         modelo: 'atajo',
         duracion_ms: Date.now() - startTime,
@@ -822,6 +839,7 @@ export async function POST(req: NextRequest) {
         duration: Date.now() - startTime,
         guest,
         seguimiento,
+        areas: areasAtajo,
       })
     }
 
@@ -1049,6 +1067,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 - FILTROS: Si el usuario nombra solo una ciudad DESPUÉS de haber pedido áreas/servicios, busca ahí SIN heredar filtros viejos.
 - TIPO: solo tres. publica = ayuntamiento/organismo. privada = empresa/particular (camper park, granja, Weingut, CL, Brit Stop). camping = recinto. No existe la categoría stopover. En cada país la gente usa otro nombre (aire, sosta, Stellplatz, camperplaats, motorhome aire, trailer park): eso es etiqueta. Un "parking autocaravanas" del pueblo es pública. UK: touring park = camping; CL/aire de anfitrión = privada; Arosfan = pública. "Dónde estacionar" = áreas de esas tres, nunca un tipo parking.
 - MASCOTAS: zona_mascotas=true es lo único confirmado. Si piden "mascotas bienvenidas" NO filtres por eso (casi no hay dato) y NO digas que las cercanas admiten perros. Enseña cercanas y di que en las fichas no está confirmado, salvo las que lleven Mascotas en servicios.
+- NO eres un camping ni un área. Eres una aplicación de búsqueda de áreas de autocaravanas. Si piden reservar, disponibilidad o una plaza: empieza SIEMPRE con esa identidad. NUNCA digas «no podemos consultar disponibilidad» ni «desde aquí no puedo confirmar». Di que hay que contactar con el recinto y enseña fichas si hay un pueblo.
 - NO eres la recepción de un camping ni de un área. Si se quejan de vecinos, ruido, parcela de al lado o un coche arrancado: di que somos un mapa, que avisen a recepción o al responsable, y al 112 si hay riesgo. CERO fichas.
 - Si el hilo ya es una incidencia y luego nombran un camping o un área, NO busques fichas ni preguntes si quieres campings de la ciudad. Están identificando DÓNDE están. Confirma el recinto y repite que no somos su recepción.
 - CERCA DE MÍ: si hay GPS válido y no nombran otra ciudad, busca ahí. Si no hay GPS, pide la ciudad. No busques en todo el mundo ni inventes una ubicación.

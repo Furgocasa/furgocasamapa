@@ -265,7 +265,24 @@ export function esAmpliacionBusqueda(mensaje: string): boolean {
   return /alej|regi[oó]n|m[aá]s lejos|media hora|ampli|toda la (zona|regi[oó]n|provincia)|m[aá]s lejos/i.test(mensaje || '')
 }
 
-export type AtajoIntencion = 'ambigua' | 'guia' | 'gas_sin_sitio' | 'ruta_sin_intencion' | 'filtro_sin_sitio' | 'incidencia_recinto'
+/** Nos tratan como el recinto: reservar, disponibilidad, hay plaza… */
+export function esPideReservaRecinto(mensaje: string): boolean {
+  const t = (mensaje || '').replace(/\s+/g, ' ').trim()
+  if (!t) return false
+  if (parecePreguntaRuta(t) || extraerRutaNombrada(t)) return false
+  return /(reservar|reserva|disponibilidad|hay plaza|queda plaza|se puede reservar|puedo reservar|book(ing)?|availability|r[eé]server|platz (frei|reserv))/i.test(t)
+}
+
+export const IDENTIDAD_MAPA: Record<ChatLocale, string> = {
+  es: 'Nosotros no somos un camping ni un área. Somos una aplicación de búsqueda de áreas de autocaravanas.',
+  en: 'We are not a campsite or an aire. We are an app for finding motorhome areas.',
+  fr: 'Nous ne sommes pas un camping ni une aire. Nous sommes une application de recherche d’aires pour camping-car.',
+  de: 'Wir sind kein Campingplatz und kein Stellplatz. Wir sind eine App zur Suche von Wohnmobilstellplätzen.',
+  it: 'Non siamo un campeggio né un’area di sosta. Siamo un’app per cercare aree per camper.',
+  pt: 'Não somos um parque de campismo nem uma área. Somos uma aplicação de pesquisa de áreas para autocaravanas.',
+}
+
+export type AtajoIntencion = 'ambigua' | 'guia' | 'gas_sin_sitio' | 'ruta_sin_intencion' | 'filtro_sin_sitio' | 'incidencia_recinto' | 'no_somos_recinto'
 
 /** El asistente ya listó áreas: lo siguiente es un seguimiento, no una pregunta nueva. */
 export function asistenteListoAreas(texto: string | null | undefined): boolean {
@@ -283,6 +300,7 @@ export function clasificarIntencion(opts: {
   if (hiloIncidenciaRecinto(opts.previosUsuario, opts.ultimoAsistente) && pareceIdentificarRecinto(ultimo)) {
     return 'incidencia_recinto'
   }
+  if (esPideReservaRecinto(ultimo)) return 'no_somos_recinto'
   if (esGuiaTuristicaPura(ultimo)) return 'guia'
   if (esGasolineraSinSitio(ultimo)) return 'gas_sin_sitio'
   if (esPreguntaAreaConcreta(ultimo) || esDeixisMapa(ultimo) || extraerNombreAreaConcreta(ultimo)) return null
@@ -359,10 +377,30 @@ export function textoAtajoIntencion(tipo: AtajoIntencion, locale: ChatLocale, si
       it: `Non sono una guida turistica. Ti aiuto con aree sosta e il pratico (dove dormire, benzina sul percorso).\n\nPer borghi, cose da fare o cosa vedere, le rotte Furgocasa:\n${blog}`,
       pt: `Isto não é um guia de viagens. Ajudo com áreas de autocaravana e o útil da estrada (onde dormir, combustível na rota).\n\nPara aldeias, planos ou o que ver, as rotas da Furgocasa:\n${blog}`,
     },
+    no_somos_recinto: {
+      es: lugar
+        ? `${IDENTIDAD_MAPA.es}\n\nPara reservar una plaza hay que contactar con el recinto. Aquí tienes sitios en ${lugar}:`
+        : `${IDENTIDAD_MAPA.es}\n\nPara reservar una plaza hay que contactar con el recinto. Si me dices el pueblo o el nombre del sitio, te enseño las fichas.`,
+      en: lugar
+        ? `${IDENTIDAD_MAPA.en}\n\nTo book a pitch you need to contact the site. Here are places in ${lugar}:`
+        : `${IDENTIDAD_MAPA.en}\n\nTo book a pitch you need to contact the site. Tell me the town or the place name and I’ll show the listings.`,
+      fr: lugar
+        ? `${IDENTIDAD_MAPA.fr}\n\nPour réserver, contacte l’établissement. Voici des lieux à ${lugar} :`
+        : `${IDENTIDAD_MAPA.fr}\n\nPour réserver, contacte l’établissement. Dis-moi la ville ou le nom du lieu et je te montre les fiches.`,
+      de: lugar
+        ? `${IDENTIDAD_MAPA.de}\n\nZum Reservieren musst du den Platz selbst kontaktieren. Hier sind Orte in ${lugar}:`
+        : `${IDENTIDAD_MAPA.de}\n\nZum Reservieren musst du den Platz selbst kontaktieren. Sag Ort oder Namen, dann zeige ich die Karten.`,
+      it: lugar
+        ? `${IDENTIDAD_MAPA.it}\n\nPer prenotare devi contattare la struttura. Ecco posti a ${lugar}:`
+        : `${IDENTIDAD_MAPA.it}\n\nPer prenotare devi contattare la struttura. Dimmi il paese o il nome e ti mostro le schede.`,
+      pt: lugar
+        ? `${IDENTIDAD_MAPA.pt}\n\nPara reservar, contacta o recinto. Aqui tens sítios em ${lugar}:`
+        : `${IDENTIDAD_MAPA.pt}\n\nPara reservar, contacta o recinto. Diz a localidade ou o nome e mostro as fichas.`,
+    },
     incidencia_recinto: {
       es: lugar
-        ? `Entendido: te refieres a **${lugar}**. Seguimos sin ser la recepción de ese recinto: esto es Mapa Furgocasa, un mapa.\n\nAvisa a su recepción o al responsable. Si hay riesgo, amenazas o una emergencia, llama al 112.`
-        : `No somos la recepción de ningún camping ni área: esto es Mapa Furgocasa, un mapa de sitios para dormir.\n\nSi estás en un recinto y hay una molestia, avisa a la recepción o al responsable de ESE lugar. Si hay riesgo, amenazas o una emergencia, llama al 112.\n\nSi me dices el nombre del recinto, lo tomo como el sitio donde estás, no como una búsqueda en el mapa.`,
+        ? `Entendido: te refieres a **${lugar}**. ${IDENTIDAD_MAPA.es}\n\nAvisa a su recepción o al responsable. Si hay riesgo, amenazas o una emergencia, llama al 112.`
+        : `${IDENTIDAD_MAPA.es}\n\nSi estás en un recinto y hay una molestia, avisa a la recepción o al responsable de ESE lugar. Si hay riesgo, amenazas o una emergencia, llama al 112.\n\nSi me dices el nombre del recinto, lo tomo como el sitio donde estás, no como una búsqueda en el mapa.`,
       en: lugar
         ? `Got it: you mean **${lugar}**. We're still not that site's reception — this is Mapa Furgocasa, a map.\n\nTell their reception or the site manager. If there's danger, threats or an emergency, call the local emergency number.`
         : `We're not the reception of any campsite or aire — this is Mapa Furgocasa, a map of places to sleep.\n\nIf you're on site and there's a disturbance, tell reception or the manager of THAT place. If there's danger, call the local emergency number.\n\nIf you name the site, I'll take it as where you are, not as a map search.`,
@@ -412,6 +450,7 @@ export function chipsSeguimiento(tipo: AtajoIntencion, locale: ChatLocale, sitio
     guia: { es: [], en: [], fr: [], de: [], it: [], pt: [] },
     gas_sin_sitio: { es: [], en: [], fr: [], de: [], it: [], pt: [] },
     incidencia_recinto: { es: [], en: [], fr: [], de: [], it: [], pt: [] },
+    no_somos_recinto: { es: [], en: [], fr: [], de: [], it: [], pt: [] },
   }
   return t[tipo]?.[locale] || t[tipo]?.es || []
 }
