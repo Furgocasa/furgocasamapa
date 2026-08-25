@@ -49,6 +49,7 @@ Las filas viejas del admin (el ~48% incorrectas) son de **antes**. No se reescri
 | Revisor pide 3-4 paradas de A→B | Derivación a `/ruta` = Correcta. Listar el corredor = Incorrecta |
 | Chip «Planificar una ruta» como pregunta de chat | No. Es enlace a `/ruta`. El admin solo loguea trayectos escritos. Uso = `route_calculate` |
 | Queja de inquilino (parcela, ruido, coche arrancado) | Atajo `incidencia_recinto`: no somos recepción. 112 si hay riesgo. Cero fichas. |
+| Tras la queja, nombran el camping | Identifican DÓNDE están. No es búsqueda. No digas «no encuentro la ficha / ¿busco campings?». |
 | «Taifa» por TAIGA | `get_area_by_name` acepta typo de 1 letra si hay GPS cerca |
 | «Gratuita» y luego lista de pago | Fuerza `solo_gratuitas`; no pega fichas de pago |
 
