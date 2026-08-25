@@ -703,6 +703,23 @@ export async function POST(req: NextRequest) {
       logger.debug(`Rate limit OK. Restantes: ${remaining}/${limit}`)
     }
 
+    // Cupo anónimo: toda pregunta cuenta, también un atajo. Si no, 2 atajos + 2 del modelo.
+    if (!userId) {
+      const quota = await consumeGuestQuestion(supabase, huella)
+      guest = { used: quota.used, limit: quota.limit, remaining: quota.remaining }
+      if (!quota.allowed) {
+        logger.warn('Cupo anónimo del chatbot agotado', { huella, used: quota.used })
+        return NextResponse.json({
+          error: 'LOGIN_REQUIRED',
+          errorType: 'LOGIN_REQUIRED',
+          message: `Has usado tus ${GUEST_QUESTION_LIMIT} preguntas gratis. Entra o crea una cuenta para seguir.`,
+          loginUrl: '/auth/login',
+          registerUrl: '/auth/register',
+          guest,
+        }, { status: 403 })
+      }
+    }
+
     const ultimoMensajeUsuario = [...messages]
       .reverse()
       .find((m: any) => m.role === 'user')?.content || ''
@@ -806,22 +823,6 @@ export async function POST(req: NextRequest) {
         guest,
         seguimiento,
       })
-    }
-
-    if (!userId) {
-      const quota = await consumeGuestQuestion(supabase, huella)
-      guest = { used: quota.used, limit: quota.limit, remaining: quota.remaining }
-      if (!quota.allowed) {
-        logger.warn('Cupo anónimo del chatbot agotado', { huella, used: quota.used })
-        return NextResponse.json({
-          error: 'LOGIN_REQUIRED',
-          errorType: 'LOGIN_REQUIRED',
-          message: `Has usado tus ${GUEST_QUESTION_LIMIT} preguntas gratis. Entra o crea una cuenta para seguir.`,
-          loginUrl: '/auth/login',
-          registerUrl: '/auth/register',
-          guest,
-        }, { status: 403 })
-      }
     }
 
     // Crear hilo para registrados y anónimos (el admin agrupa por conversacion_id)
