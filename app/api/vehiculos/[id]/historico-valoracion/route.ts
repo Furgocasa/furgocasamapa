@@ -1,14 +1,14 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 // GET - Obtener histórico de valoraciones
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    const { id } = await params
+    const supabase = await createClient()
     
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -19,7 +19,7 @@ export async function GET(
     const { data: vehiculo, error: vehiculoError } = await (supabase as any)
       .from('vehiculos_registrados')
       .select('id')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single()
 
@@ -31,7 +31,7 @@ export async function GET(
     const { data, error } = await (supabase as any)
       .from('historico_precios_usuario')
       .select('*')
-      .eq('vehiculo_id', params.id)
+      .eq('vehiculo_id', id)
       .order('fecha_valoracion', { ascending: true })
 
     if (error) throw error
@@ -49,10 +49,11 @@ export async function GET(
 // POST - Guardar nueva valoración en el histórico
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    const { id } = await params
+    const supabase = await createClient()
     
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -66,7 +67,7 @@ export async function POST(
     const { data: vehiculo, error: vehiculoError } = await (supabase as any)
       .from('vehiculos_registrados')
       .select('id')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single()
 
@@ -78,7 +79,7 @@ export async function POST(
     const { data, error } = await (supabase as any)
       .from('historico_precios_usuario')
       .insert({
-        vehiculo_id: params.id,
+        vehiculo_id: id,
         fecha_valoracion: new Date().toISOString(),
         valor_estimado,
         kilometros,

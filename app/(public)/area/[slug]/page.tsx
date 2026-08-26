@@ -25,9 +25,9 @@ import Script from 'next/script'
 import Link from 'next/link'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 function redirectIfLegacySlug(slug: string) {
@@ -39,13 +39,14 @@ function redirectIfLegacySlug(slug: string) {
 
 // Generar metadata dinámica para SEO
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  redirectIfLegacySlug(params.slug)
+  const { slug } = await params
+  redirectIfLegacySlug(slug)
   const supabase = await createClient()
 
   const { data: area } = await (supabase as any)
     .from('areas')
     .select('*')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .eq('activo', true)
     .single()
 
@@ -78,7 +79,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function AreaPage({ params }: PageProps) {
-  redirectIfLegacySlug(params.slug)
+  const { slug } = await params
+  redirectIfLegacySlug(slug)
   const supabase = await createClient()
   const cookieStore = await cookies()
   const locale = normalizeLocale(cookieStore.get(LANG_COOKIE)?.value)
@@ -87,7 +89,7 @@ export default async function AreaPage({ params }: PageProps) {
   const { data: areaRaw, error } = await (supabase as any)
     .from('areas')
     .select('*')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .eq('activo', true)
     .single()
 

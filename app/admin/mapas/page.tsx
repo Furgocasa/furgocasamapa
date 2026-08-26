@@ -31,7 +31,7 @@ export default function AdminMapasPage() {
   const loadCurrentConfig = async () => {
     try {
       const supabase = createClient()
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('configuracion_mapas')
         .select('*')
         .eq('activo', true)
@@ -58,13 +58,13 @@ export default function AdminMapasPage() {
       const supabase = createClient()
 
       // Desactivar todas las configuraciones anteriores
-      await supabase
+      await (supabase as any)
         .from('configuracion_mapas')
         .update({ activo: false })
         .eq('activo', true)
 
       // Crear nueva configuración activa
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('configuracion_mapas')
         .insert({
           proveedor: config.proveedor,

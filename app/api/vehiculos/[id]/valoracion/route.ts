@@ -1,24 +1,23 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
-    
+    const { id } = await params
+    const supabase = await createClient()
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    // Verificar que el vehículo pertenece al usuario
     const { data: vehiculo, error: vehiculoError } = await (supabase as any)
       .from('vehiculos_registrados')
       .select('id, marca, modelo, año')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single()
 
@@ -26,10 +25,9 @@ export async function GET(
       return NextResponse.json({ error: 'Vehículo no encontrado' }, { status: 404 })
     }
 
-    // Llamar a la función SQL de valoración
     const { data, error } = await (supabase as any)
       .rpc('calcular_valoracion_automatica', {
-        p_vehiculo_id: params.id
+        p_vehiculo_id: id
       })
 
     if (error) {
@@ -53,4 +51,3 @@ export async function GET(
     )
   }
 }
-

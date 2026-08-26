@@ -1301,11 +1301,12 @@ async function procesarValoracionIA(
 // POST: Crear trabajo asíncrono
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     console.log(`\n🚀 [POST IA-VALORACION] Creando trabajo asíncrono`);
-    console.log(`📍 Vehículo ID: ${params.id}`);
+    console.log(`📍 Vehículo ID: ${id}`);
 
     const supabase = await createClient();
     const {
@@ -1323,7 +1324,7 @@ export async function POST(
     const { data: vehiculo, error: vehiculoError } = await (supabase as any)
       .from("vehiculos_registrados")
       .select("id, user_id")
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", user.id)
       .single();
 
@@ -1339,7 +1340,7 @@ export async function POST(
     const { data: trabajo, error: errorTrabajo } = await (supabase as any)
       .from("valoracion_ia_trabajos")
       .insert({
-        vehiculo_id: params.id,
+        vehiculo_id: id,
         user_id: user.id,
         estado: "pendiente",
         progreso: 0,
@@ -1361,7 +1362,7 @@ export async function POST(
     // INICIAR PROCESAMIENTO EN SEGUNDO PLANO con waitUntil
     // waitUntil garantiza que Vercel mantenga la función viva hasta que termine
     waitUntil(
-      procesarValoracionIA(trabajo.id, params.id, user.id).catch((error) => {
+      procesarValoracionIA(trabajo.id, id, user.id).catch((error) => {
         console.error("❌ Error en procesamiento asíncrono:", error);
       })
     );
@@ -1389,11 +1390,12 @@ export async function POST(
 // GET: Obtener historial de valoraciones
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     console.log(
-      `\n🔍 [GET VALORACIONES] Iniciando carga para vehículo: ${params.id}`
+      `\n🔍 [GET VALORACIONES] Iniciando carga para vehículo: ${id}`
     );
 
     const supabase = await createClient();
@@ -1421,7 +1423,7 @@ export async function GET(
     const { data: informes, error } = await (supabase as any)
       .from("valoracion_ia_informes")
       .select("*")
-      .eq("vehiculo_id", params.id)
+      .eq("vehiculo_id", id)
       .eq("user_id", user.id)
       .order("fecha_valoracion", { ascending: false });
 
@@ -1456,9 +1458,10 @@ export async function GET(
 // DELETE: Eliminar una valoración específica del historial
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     console.log(`\n🗑️ [DELETE VALORACION] Iniciando eliminación`);
 
     const supabase = await createClient();
@@ -1485,7 +1488,7 @@ export async function DELETE(
       );
     }
 
-    console.log(`   📋 Vehículo ID: ${params.id}`);
+    console.log(`   📋 Vehículo ID: ${id}`);
     console.log(`   🗑️ Valoración ID: ${valoracionId}`);
 
     // 3. Verificar que la valoración pertenece al usuario y al vehículo
@@ -1494,7 +1497,7 @@ export async function DELETE(
       .select("id, vehiculo_id, user_id")
       .eq("id", valoracionId)
       .eq("user_id", user.id)
-      .eq("vehiculo_id", params.id)
+      .eq("vehiculo_id", id)
       .single();
 
     if (checkError || !valoracion) {

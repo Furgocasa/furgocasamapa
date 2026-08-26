@@ -59,7 +59,7 @@ export function useMapConfig() {
     try {
       const supabase = createClient()
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('configuracion_mapas')
         .select('*')
         .eq('activo', true)

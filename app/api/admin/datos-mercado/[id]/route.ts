@@ -2,16 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // DELETE: Eliminar un dato de mercado (solo admins)
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const supabase = await createClient();
-    const datoId = params.id;
+    const { id: datoId } = await params;
 
     // Verificar autenticación
     const {

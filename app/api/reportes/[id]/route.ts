@@ -10,7 +10,7 @@ import { NextResponse } from 'next/server'
 // PATCH: Actualizar estado de un reporte (marcar como leído, cerrado, etc.)
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
@@ -25,7 +25,7 @@ export async function PATCH(
       )
     }
 
-    const reporte_id = params.id
+    const { id: reporte_id } = await params
     const body = await request.json()
     const { leido, cerrado, notas_propietario } = body
 

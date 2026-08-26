@@ -2,14 +2,14 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse, NextRequest } from 'next/server'
 
 type RouteParams = {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 // GET: Obtener datos de valoración y venta
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const supabase = await createClient()
-    const vehiculoId = params.id
+    const { id: vehiculoId } = await params
 
     // Verificar autenticación
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const supabase = await createClient()
-    const vehiculoId = params.id
+    const { id: vehiculoId } = await params
     const body = await request.json()
 
     console.log('📤 [Venta API] Recibida solicitud POST para vehículo:', vehiculoId)
@@ -368,7 +368,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const supabase = await createClient()
-    const vehiculoId = params.id
+    const { id: vehiculoId } = await params
     const body = await request.json()
 
     // Verificar autenticación

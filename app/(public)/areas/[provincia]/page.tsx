@@ -196,11 +196,12 @@ function AreaCard({ area, provincia }: { area: AreaRow; provincia: string }) {
 }
 
 interface PageProps {
-  params: { provincia: string }
+  params: Promise<{ provincia: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const prov = provinciaPorSlug(params.provincia)
+  const { provincia } = await params
+  const prov = provinciaPorSlug(provincia)
   if (!prov) return { title: 'Provincia no encontrada - Mapa Furgocasa' }
   const areas = await getAreasProvincia(prov)
   if (!areas.length) return { title: 'Provincia no encontrada - Mapa Furgocasa' }
@@ -230,7 +231,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function ProvinciaPage({ params }: PageProps) {
-  const prov = provinciaPorSlug(params.provincia)
+  const { provincia } = await params
+  const prov = provinciaPorSlug(provincia)
   if (!prov) notFound()
 
   const areas = await getAreasProvincia(prov)

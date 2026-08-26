@@ -4,9 +4,10 @@ import { NextResponse } from 'next/server'
 // GET: Consultar estado de un trabajo
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const { searchParams } = new URL(request.url)
     const jobId = searchParams.get('job_id')
 
@@ -30,7 +31,7 @@ export async function GET(
       .select('*')
       .eq('id', jobId)
       .eq('user_id', user.id)
-      .eq('vehiculo_id', params.id)
+      .eq('vehiculo_id', id)
       .single()
 
     if (error || !trabajo) {

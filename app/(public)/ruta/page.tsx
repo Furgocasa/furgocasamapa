@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useState, useEffect } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@/lib/supabase/client'
 import { Navbar } from '@/components/layout/Navbar'
 import PlanificadorRuta from '@/components/ruta/PlanificadorRuta'
 import LoginWall from '@/components/ui/LoginWall'
@@ -14,7 +14,7 @@ export default function RutaPage() {
   const [vistaActual, setVistaActual] = useState<VistaRuta>('ruta')
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const { t } = useLanguage()
 
   useEffect(() => {

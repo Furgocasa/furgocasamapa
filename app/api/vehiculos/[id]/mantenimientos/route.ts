@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 interface RouteParams {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 // Helper: Normalizar valores numéricos (DECIMAL de PostgreSQL viene como string en JSON)
@@ -36,7 +36,7 @@ function normalizeNumericFields(data: any): any {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const supabase = await createClient()
-    const vehiculoId = params.id
+    const { id: vehiculoId } = await params
 
     // Verificar autenticación
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const supabase = await createClient()
-    const vehiculoId = params.id
+    const { id: vehiculoId } = await params
     const body = await request.json()
 
     // Verificar autenticación
