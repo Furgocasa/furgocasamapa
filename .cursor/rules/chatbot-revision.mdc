@@ -17,7 +17,7 @@ El estado de cada respuesta en el admin **es** el veredicto IA: `Sin revisar` (=
    `$env:NODE_TLS_REJECT_UNAUTHORIZED="0"; node scripts/evaluar-respuestas-chatbot.js`
    Por defecto coge solo las `Sin revisar` (`evaluado_at` null). Reevaluar todo: `--all`. Límite: `--limit=50`. Una fila: `--id=<uuid>`. **Nunca `--dry-run`.**
    Tabla: `chatbot_respuestas_log`. Informe: `scripts/INFORME-REVISION-MENSAJES.md`.
-2. Agrupar **incorrectas** y **mejorables** por causa raíz (precio, geo, GPS, filtros, idioma, prompt, datos). El voto del usuario (`voto_usuario` 👍/👎) es señal extra: no pisa el dato real (incorrecta + 👍 sigue incorrecta).
+2. Agrupar **incorrectas** y **mejorables** por causa raíz (precio, geo, GPS, filtros, idioma, prompt, datos). El voto del usuario (`voto_usuario` 👍/👎) es señal extra: no pisa el dato real (incorrecta + 👍 sigue incorrecta). Huecos `missing` / `not_retrieved` → `scripts/INCIDENCIAS-PENDIENTES.csv` (un hecho por fila); valídalos contra la BD, no inventes áreas.
 3. **Corregir de verdad** en código o prompt (`lib/chatbot/functions.ts`, `app/api/chatbot/route.ts`, `chatbot_config`) hasta que esa causa no se repita. Un canvas o un listado de fallos no cierra el ciclo.
 4. Commit + push a `main` de los arreglos. Decir qué se ha cambiado y que las filas viejas del admin no se reescriben: lo nuevo ya debe salir bien.
 
