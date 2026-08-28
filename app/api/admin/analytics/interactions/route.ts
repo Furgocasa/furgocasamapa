@@ -79,6 +79,44 @@ export async function GET() {
       console.error('[admin/analytics/interactions] rutas', rutasError)
     }
 
+    // Tablas de producto: el panel las dejaba vacías o las leía con RLS de usuario
+    // (favoritos solo los del admin; visitas pide role=admin, no is_admin).
+    const [
+      conversacionesRes,
+      chatbotAnalyticsRes,
+      mensajesUserRes,
+      mensajesTotalRes,
+      mantenimientosRes,
+      averiasRes,
+      reportesRes,
+      visitasRes,
+      favoritosRes,
+    ] = await Promise.all([
+      (admin as any).from('chatbot_conversaciones').select('id, created_at, total_mensajes, user_id'),
+      (admin as any).from('chatbot_analytics').select('id, evento, detalles, created_at'),
+      (admin as any).from('chatbot_mensajes').select('id', { count: 'exact', head: true }).eq('rol', 'user'),
+      (admin as any).from('chatbot_mensajes').select('id', { count: 'exact', head: true }),
+      (admin as any).from('mantenimientos').select('id, coste, created_at, user_id'),
+      (admin as any).from('averias').select('id, coste_total, coste_reparacion, created_at, user_id'),
+      (admin as any).from('reportes_accidentes').select('id, created_at'),
+      (admin as any).from('visitas').select('id, created_at, area_id, user_id, fecha_visita'),
+      (admin as any).from('favoritos').select('id, created_at, area_id, user_id'),
+    ])
+
+    for (const [label, res] of [
+      ['chatbot_conversaciones', conversacionesRes],
+      ['chatbot_analytics', chatbotAnalyticsRes],
+      ['mantenimientos', mantenimientosRes],
+      ['averias', averiasRes],
+      ['reportes_accidentes', reportesRes],
+      ['visitas', visitasRes],
+      ['favoritos', favoritosRes],
+    ] as const) {
+      if (res.error) {
+        console.error(`[admin/analytics/interactions] ${label}`, res.error)
+      }
+    }
+
     const routeCalculateCount = allInteractions.filter(
       (i) => i.event_type === 'route_calculate'
     ).length
@@ -86,12 +124,21 @@ export async function GET() {
     const response = NextResponse.json({
       interactions: allInteractions,
       rutas: rutas || [],
+      chatbotConversaciones: conversacionesRes.data || [],
+      chatbotAnalytics: chatbotAnalyticsRes.data || [],
+      mantenimientos: mantenimientosRes.data || [],
+      averias: averiasRes.data || [],
+      reportesAccidentes: reportesRes.data || [],
+      visitas: visitasRes.data || [],
+      favoritos: favoritosRes.data || [],
       meta: {
         totalInteractions: allInteractions.length,
         routeCalculateCount,
         totalRutas: rutas?.length || 0,
         lookbackDays: INTERACTIONS_LOOKBACK_DAYS,
         truncated: page >= MAX_PAGES,
+        chatbotMensajesUser: mensajesUserRes.count ?? 0,
+        chatbotMensajesTotal: mensajesTotalRes.count ?? 0,
       },
     })
 

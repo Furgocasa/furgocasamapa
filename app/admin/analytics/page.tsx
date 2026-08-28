@@ -305,6 +305,14 @@ export default function AdminAnalyticsPage() {
       console.log('🗺️📡 Cargando rutas e interacciones vía API admin...')
       let rutas: any[] = []
       let allInteractions: any[] = []
+      let chatbotConversaciones: any[] = []
+      let chatbotAnalyticsData: any[] = []
+      let mantenimientos: any[] = []
+      let averias: any[] = []
+      let reportesAccidentes: any[] = []
+      let visitas: any[] = []
+      let favoritos: any[] = []
+      let chatbotMensajesUserCount: number | null = null
       try {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 55000)
@@ -320,10 +328,21 @@ export default function AdminAnalyticsPage() {
           const payload = await interactionsRes.json()
           rutas = payload.rutas || []
           allInteractions = payload.interactions || []
+          chatbotConversaciones = payload.chatbotConversaciones || []
+          chatbotAnalyticsData = payload.chatbotAnalytics || []
+          mantenimientos = payload.mantenimientos || []
+          averias = payload.averias || []
+          reportesAccidentes = payload.reportesAccidentes || []
+          visitas = payload.visitas || []
+          favoritos = payload.favoritos || []
+          if (typeof payload.meta?.chatbotMensajesUser === 'number') {
+            chatbotMensajesUserCount = payload.meta.chatbotMensajesUser
+          }
           console.log(
             `✅ API: ${payload.meta?.totalRutas ?? rutas.length} rutas, ` +
               `${payload.meta?.routeCalculateCount ?? 0} route_calculate, ` +
-              `${allInteractions.length} interacciones`
+              `${allInteractions.length} interacciones, ` +
+              `${chatbotConversaciones.length} chats`
           )
         }
       } catch (error) {
@@ -345,8 +364,8 @@ export default function AdminAnalyticsPage() {
       const eventosRutaCalc = interactionsByType['route_calculate'] || []
 
       // ========== MENSAJES DEL CHATBOT (fuente real: chatbot_mensajes) ==========
-      // El widget escribe en chatbot_mensajes, así que esa es la fuente de verdad
-      // para el conteo de mensajes del usuario al asistente IA.
+      // El widget escribe en chatbot_mensajes. El conteo total llega por service role;
+      // aquí solo hace falta created_at para Hoy / Semana / Mes.
       console.log('🤖 Cargando mensajes del chatbot (rol=user) desde chatbot_mensajes...')
       const { data: chatbotMensajesUser, error: chatbotMensajesError } = await (supabase as any)
         .from('chatbot_mensajes')
@@ -357,7 +376,8 @@ export default function AdminAnalyticsPage() {
         console.error('⚠️ Error cargando chatbot_mensajes:', chatbotMensajesError)
       }
       const mensajes = chatbotMensajesUser || []
-      const totalInteraccionesIA = mensajes.length
+      const totalInteraccionesIA =
+        chatbotMensajesUserCount != null ? chatbotMensajesUserCount : mensajes.length
       console.log(`✅ ${totalInteraccionesIA} mensajes de usuario al chatbot`)
       console.log(`🧭 ${eventosRutaCalc.length} cálculos de ruta (route_calculate)`)
 
@@ -541,20 +561,20 @@ export default function AdminAnalyticsPage() {
       )
 
       // ========== MÉTRICAS DE VISITAS TEMPORALES ==========
-      console.log('👁️ Obteniendo visitas registradas...')
-      const { data: visitas, error: errorVisitas } = await (supabase as any)
-        .from('visitas')
-        .select('id, created_at, area_id, user_id, fecha_visita')
+      // Ya vienen de la API admin (service role). RLS de visitas pide role=admin, no is_admin.
+      if (visitas.length === 0) {
+        console.log('👁️ Fallback visitas por cliente...')
+        const { data: visitasCliente, error: errorVisitas } = await (supabase as any)
+          .from('visitas')
+          .select('id, created_at, area_id, user_id, fecha_visita')
 
-      if (errorVisitas) {
-        console.error('❌ Error obteniendo visitas:', errorVisitas)
-        console.error('❌ Detalles error visitas:', JSON.stringify(errorVisitas))
-      } else {
-        console.log(`✅ ${visitas?.length || 0} visitas registradas en BD`)
-        if (visitas && visitas.length > 0) {
-          console.log('📋 Primera visita ejemplo:', visitas[0])
+        if (errorVisitas) {
+          console.error('❌ Error obteniendo visitas:', errorVisitas)
+        } else {
+          visitas = visitasCliente || []
         }
       }
+      console.log(`✅ ${visitas.length} visitas registradas en BD`)
 
       const visitasHoy = visitas?.filter((v: any) => estaEnRango(v.created_at, inicioDia)).length || 0
       const visitasEstaSemana = visitas?.filter((v: any) => estaEnRango(v.created_at, inicioSemana)).length || 0
@@ -635,9 +655,13 @@ export default function AdminAnalyticsPage() {
       console.log(`✅ Valoraciones: ${valoracionesHoy} hoy, ${valoracionesEstaSemana} esta semana, ${valoracionesEsteMes} este mes`)
 
       // ========== MÉTRICAS DE FAVORITOS TEMPORALES ==========
-      const { data: favoritos } = await (supabase as any)
-        .from('favoritos')
-        .select('id, created_at, area_id, user_id')
+      // RLS de favoritos solo enseña los del usuario; el admin los recibe por service role.
+      if (favoritos.length === 0) {
+        const { data: favoritosCliente } = await (supabase as any)
+          .from('favoritos')
+          .select('id, created_at, area_id, user_id')
+        favoritos = favoritosCliente || []
+      }
 
       const favoritosTotales = favoritos?.length || 0
       const favoritosHoy = favoritos?.filter((f: any) => estaEnRango(f.created_at, inicioDia)).length || 0
@@ -871,12 +895,6 @@ export default function AdminAnalyticsPage() {
       let fichasTecnicas: any[] = []
       let datosMercado: any[] = []
       let valoracionesIA: any[] = []
-      let mantenimientos: any[] = []
-      let averias: any[] = []
-      let reportesAccidentes: any[] = []
-      let chatbotConversaciones: any[] = []
-      let chatbotMensajes: any[] = []
-      let chatbotAnalyticsData: any[] = []
       let registrosKilometraje: any[] = []
 
       try {
@@ -975,7 +993,10 @@ export default function AdminAnalyticsPage() {
       const costeTotalMantenimientos = mantenimientos.reduce((sum: number, m: any) => sum + (m.coste || 0), 0)
       
       const totalAverias = averias.length
-      const costeTotalAverias = averias.reduce((sum: number, a: any) => sum + (a.coste || 0), 0)
+      const costeTotalAverias = averias.reduce((sum: number, a: any) => {
+        const coste = Number(a.coste_total ?? a.coste_reparacion ?? a.coste ?? 0)
+        return sum + (Number.isFinite(coste) ? coste : 0)
+      }, 0)
       
       const totalReportesAccidentes = reportesAccidentes.length
 
@@ -983,6 +1004,10 @@ export default function AdminAnalyticsPage() {
       const totalConversacionesIA = chatbotConversaciones.length
       const totalMensajesIA = chatbotConversaciones.reduce((sum: number, c: any) => sum + (c.total_mensajes || 0), 0)
       const promedioMensajesPorConversacion = totalConversacionesIA > 0 ? totalMensajesIA / totalConversacionesIA : 0
+      console.log(
+        `✅ Chatbot: ${totalConversacionesIA} conversaciones, ${totalMensajesIA} mensajes, ` +
+          `${promedioMensajesPorConversacion.toFixed(1)} de profundidad`
+      )
       
       // Funciones de IA más usadas
       const functionCallsCount: Record<string, number> = {}
@@ -3785,7 +3810,13 @@ export default function AdminAnalyticsPage() {
             <div className="bg-white rounded-xl shadow mb-6">
               <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-fuchsia-50">
                 <h3 className="text-lg font-bold text-gray-900">🤖 Inteligencia Artificial & Chatbot</h3>
-                <p className="text-sm text-gray-600">Uso real del asistente inteligente en la app</p>
+                <p className="text-sm text-gray-600">
+                  Tío Viajero · tablas <code>chatbot_conversaciones</code> y <code>chatbot_analytics</code>
+                  {' · '}
+                  <Link href="/admin/chatbot-respuestas" className="text-fuchsia-700 hover:underline">
+                    ver hilos
+                  </Link>
+                </p>
               </div>
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
