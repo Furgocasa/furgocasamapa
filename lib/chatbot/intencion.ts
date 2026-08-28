@@ -261,6 +261,26 @@ export function pideSoloGratuitas(mensaje: string): boolean {
   return /^(y\s+)?(alguna\s+)?(otra\s+)?gratuita?s?\??$|solo (las )?gratuit|solo gratis|[aá]reas? gratis|opci[oó]n gratuita/i.test(t)
 }
 
+/** "Camping no.", "sin camping", "no quiero un camping". */
+export function pideSinCamping(mensaje: string): boolean {
+  const t = (mensaje || '').replace(/\s+/g, ' ').trim()
+  if (!t) return false
+  return /camping\s*no|no\s+(quiero\s+)?(un\s+|el\s+|ning[uú]n\s+)?campings?|sin campings?|nada de campings?|no campings?|excepto campings?|pas de camping|kein camping|niente camping|no campsites?/i.test(t)
+}
+
+/** "Muy cara 40 euros" → tope por debajo de ese precio. Sin queja, no adivina. */
+export function topePrecioQueja(mensaje: string): number | undefined {
+  const t = (mensaje || '').replace(/\s+/g, ' ')
+  if (!/(cara|caro|car[ií]simo|dispara|barat|menos de|m[aá]ximo|tope|demasiado|too expensive|too much|cher|teuer)/i.test(t)) {
+    return undefined
+  }
+  const m = t.match(/(\d+(?:[.,]\d+)?)\s*(€|eur|euros?)/i)
+  if (!m) return undefined
+  const n = parseFloat(m[1].replace(',', '.'))
+  if (!Number.isFinite(n) || n <= 0) return undefined
+  return Math.max(1, Math.floor(n) - 1)
+}
+
 export function esAmpliacionBusqueda(mensaje: string): boolean {
   return /alej|regi[oó]n|m[aá]s lejos|media hora|ampli|toda la (zona|regi[oó]n|provincia)|m[aá]s lejos/i.test(mensaje || '')
 }

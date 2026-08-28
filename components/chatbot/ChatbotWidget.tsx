@@ -44,6 +44,18 @@ export function onAreaMapaChange(cb: (area: AreaEnMapa | null) => void) {
   return () => window.removeEventListener(AREA_MAPA_CHANGE, handler)
 }
 
+function guestKeyLocal(): string {
+  try {
+    const actual = localStorage.getItem('fc_guest_key') || ''
+    if (/^[a-f0-9-]{16,64}$/i.test(actual)) return actual
+    const nuevo = (crypto.randomUUID?.() || `${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`).replace(/-/g, '')
+    localStorage.setItem('fc_guest_key', nuevo)
+    return nuevo
+  } catch {
+    return ''
+  }
+}
+
 interface Message {
   rol: 'user' | 'assistant'
   contenido: string
@@ -615,6 +627,7 @@ export default function ChatbotWidget() {
             content: m.contenido 
           })),
           conversacionId,
+          guestKey: !user ? guestKeyLocal() : undefined,
           ubicacionUsuario:
             ubicacion && !(Math.abs(ubicacion.lat) < 0.5 && Math.abs(ubicacion.lng) < 0.5)
               ? ubicacion

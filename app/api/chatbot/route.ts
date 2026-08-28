@@ -39,7 +39,14 @@ import { getCached, CACHE_TTL } from '@/lib/cache/redis'
 import { logger } from '@/lib/logger'
 import { validateOpenAIModel, buildTokensParam, buildReasoningForTools, buildTemperatureParam } from '@/lib/openai/model-validation'
 import { createClient as createServerClient } from '@/lib/supabase/server'
-import { clientIp, consumeGuestQuestion, huellaDeIp, GUEST_QUESTION_LIMIT } from '@/lib/chatbot/guest-quota'
+import {
+  clientIp,
+  consumeGuestQuestion,
+  huellaDeIp,
+  leerOCrearGuestCookie,
+  ponerGuestCookie,
+  GUEST_QUESTION_LIMIT,
+} from '@/lib/chatbot/guest-quota'
 import {
   clasificarIntencion,
   extraerSitioNombrado,
@@ -54,6 +61,8 @@ import {
   extraerNombreAreaConcreta,
   esFiltroSinSitio,
   pideSoloGratuitas,
+  pideSinCamping,
+  topePrecioQueja,
   esAmpliacionBusqueda,
   nombreRecintoMencionado,
   pareceIdentificarRecinto,
@@ -185,6 +194,10 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
           type: 'string',
           enum: ['publica', 'privada', 'camping'],
           description: 'Tipo: publica (área municipal/organismo), privada (área de empresa o particular: camper park, granja, Weingut), camping (recinto). Un parking de autocaravanas es publica o privada, no un cuarto tipo.'
+        },
+        excluir_camping: {
+          type: 'boolean',
+          description: 'true si el usuario dice "camping no", "sin camping" o no quiere campings. No devuelve recintos.'
         },
         pais: {
           type: 'string',
@@ -340,6 +353,7 @@ interface ChatbotRequest {
     content: string
   }>
   conversacionId?: string
+  guestKey?: string
   ubicacionUsuario?: {
     lat: number
     lng: number
@@ -606,7 +620,7 @@ export async function POST(req: NextRequest) {
     
     // Parsear body primero
     const body: ChatbotRequest = await req.json()
-    let { messages, conversacionId, ubicacionUsuario, locale, areaEnMapa } = body
+    let { messages, conversacionId, ubicacionUsuario, locale, areaEnMapa, guestKey } = body
     if (areaEnMapa && (!areaEnMapa.id || !areaEnMapa.nombre)) areaEnMapa = undefined
     if (ubicacionUsuario && !esGpsValido(ubicacionUsuario.lat, ubicacionUsuario.lng)) {
       logger.warn('GPS inválido o Null Island; se ignora', ubicacionUsuario)
@@ -624,8 +638,15 @@ export async function POST(req: NextRequest) {
     }
 
     const ip = clientIp(req)
-    const huella = huellaDeIp(ip)
+    const huellaIp = huellaDeIp(ip)
+    const guestCookieId = userId ? null : leerOCrearGuestCookie(req)
+    let huella = guestCookieId ? huellaDeIp(`ck:${guestCookieId}`) : huellaIp
     let guest: { used: number; limit: number; remaining: number } | undefined
+    const responder = (payload: any, init?: { status?: number; headers?: HeadersInit }) => {
+      const res = NextResponse.json(payload, init)
+      if (guestCookieId) ponerGuestCookie(res, guestCookieId)
+      return res
+    }
     
     // ============================================
     // VALIDACIONES
@@ -703,13 +724,20 @@ export async function POST(req: NextRequest) {
       logger.debug(`Rate limit OK. Restantes: ${remaining}/${limit}`)
     }
 
-    // Cupo anónimo: toda pregunta cuenta, también un atajo. Si no, 2 atajos + 2 del modelo.
+    // Cupo anónimo: cookie + clave del navegador + IP + hilo.
+    // Un cambio de IP (4G/WiFi) no puede regalar una tercera pregunta.
     if (!userId) {
-      const quota = await consumeGuestQuestion(supabase, huella)
+      const quota = await consumeGuestQuestion(supabase, {
+        ipHuella: huellaIp,
+        cookieId: guestCookieId,
+        clientKey: guestKey,
+        conversacionId,
+      })
       guest = { used: quota.used, limit: quota.limit, remaining: quota.remaining }
+      if (quota.huella) huella = quota.huella
       if (!quota.allowed) {
-        logger.warn('Cupo anónimo del chatbot agotado', { huella, used: quota.used })
-        return NextResponse.json({
+        logger.warn('Cupo anónimo del chatbot agotado', { huella: quota.huella, used: quota.used })
+        return responder({
           error: 'LOGIN_REQUIRED',
           errorType: 'LOGIN_REQUIRED',
           message: `Has usado tus ${GUEST_QUESTION_LIMIT} preguntas gratis. Entra o crea una cuenta para seguir.`,
@@ -831,7 +859,7 @@ export async function POST(req: NextRequest) {
         modelo: 'atajo',
         duracion_ms: Date.now() - startTime,
       })
-      return NextResponse.json({
+      return responder({
         message,
         conversacionId: conversacionId || null,
         logId,
@@ -1066,6 +1094,10 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 - FICHAS: pega el campo "resumen" de cada área TAL CUAL. No reescribas precio, servicios ni enlaces. Prohibido autocaravanas.com, example.com y Google Maps. Di el mismo número de áreas que te llegan (máx. 3). Nunca "he encontrado 5" si solo hay 3 fichas.
 - FILTROS: Si el usuario nombra solo una ciudad DESPUÉS de haber pedido áreas/servicios, busca ahí SIN heredar filtros viejos.
 - TIPO: solo tres. publica = ayuntamiento/organismo. privada = empresa/particular (camper park, granja, Weingut, CL, Brit Stop). camping = recinto. No existe la categoría stopover. En cada país la gente usa otro nombre (aire, sosta, Stellplatz, camperplaats, motorhome aire, trailer park): eso es etiqueta. Un "parking autocaravanas" del pueblo es pública. UK: touring park = camping; CL/aire de anfitrión = privada; Arosfan = pública. "Dónde estacionar" = áreas de esas tres, nunca un tipo parking.
+- Si dicen "camping no" / "sin camping": search_areas con excluir_camping=true. CERO fichas de camping. No las menciones "para descartarlas".
+- Nunca llames "privada" a un área pública ni al revés. El tipo va en el resumen: pégalo tal cual.
+- No inventes tarifas semanales o mensuales. Si precio_noche es null, di "Precio no disponible" y que lo confirmen en el recinto.
+- Si dicen que X € es caro: search_areas con precio_max por debajo. Si no hay fichas con precio confirmado en ese tope, dilo y NO listes áreas de precio desconocido como si fueran más baratas.
 - MASCOTAS: zona_mascotas=true es lo único confirmado. Si piden "mascotas bienvenidas" NO filtres por eso (casi no hay dato) y NO digas que las cercanas admiten perros. Enseña cercanas y di que en las fichas no está confirmado, salvo las que lleven Mascotas en servicios.
 - NO eres un camping ni un área. Eres una aplicación de búsqueda de áreas de autocaravanas. Si piden reservar, disponibilidad o una plaza: empieza SIEMPRE con esa identidad. NUNCA digas «no podemos consultar disponibilidad» ni «desde aquí no puedo confirmar». Di que hay que contactar con el recinto y enseña fichas si hay un pueblo.
 - NO eres la recepción de un camping ni de un área. Si se quejan de vecinos, ruido, parcela de al lado o un coche arrancado: di que somos un mapa, que avisen a recepción o al responsable, y al 112 si hay riesgo. CERO fichas.
@@ -1218,6 +1250,16 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
           if (pideSoloGratuitas(ultimoMensajeUsuario) || (hiloGratis && esAmpliacionBusqueda(ultimoMensajeUsuario))) {
             fnArgs.solo_gratuitas = true
           }
+          const hiloSinCamping = previosUser.some((t: string) => pideSinCamping(t)) || pideSinCamping(ultimoMensajeUsuario)
+          if (hiloSinCamping) {
+            fnArgs.excluir_camping = true
+            if (fnArgs.tipo_area === 'camping') delete fnArgs.tipo_area
+          }
+          const tope = topePrecioQueja(ultimoMensajeUsuario)
+            || [...previosUser].reverse().map((t: string) => topePrecioQueja(t)).find((n: number | undefined) => n != null)
+          if (tope && !fnArgs.solo_gratuitas && !fnArgs.precio_max) {
+            fnArgs.precio_max = tope
+          }
         }
         if (fnName === 'get_area_by_name') {
           const nombrada = extraerNombreAreaConcreta(ultimoMensajeUsuario)
@@ -1346,9 +1388,15 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       const delPin = await getAreaDetails(areaEnMapa.id)
       if (delPin) areasBrutas.unshift(delPin)
     }
+    const hiloPideSinCamping =
+      pideSinCamping(ultimoMensajeUsuario) ||
+      messages.some((m: any) => m.role === 'user' && pideSinCamping(String(m.content || '')))
+    const areasFiltradas = hiloPideSinCamping
+      ? areasBrutas.filter((a) => a.tipo_area !== 'camping')
+      : areasBrutas
     const areasEncontradas = elegirAreasParaTarjetas(
       finalResponse || '',
-      areasBrutas,
+      areasFiltradas,
       ultimoMensajeUsuario,
       3
     )
@@ -1356,7 +1404,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
     if (finalResponse) {
       finalResponse = areasEncontradas.length
         ? componerRespuestaConFichas(finalResponse, areasEncontradas, idiomaRespuesta)
-        : sanitizarRespuestaChat(finalResponse, areasBrutas)
+        : sanitizarRespuestaChat(finalResponse, areasFiltradas)
     }
 
     const functionName = firstFunctionName
@@ -1437,7 +1485,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         duracion_ms: duration,
       })
 
-      return NextResponse.json({
+      return responder({
         message: finalResponse,
         conversacionId: conversacionId,
         logId,
@@ -1499,7 +1547,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       duracion_ms: duration,
     })
 
-    return NextResponse.json({
+    return responder({
       message: finalResponse,
       conversacionId: conversacionId,
       logId,

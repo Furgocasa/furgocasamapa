@@ -48,12 +48,15 @@ Las filas viejas del admin (el ~48% incorrectas) son de **antes**. No se reescri
 | Atajo de ruta sin ciudad en admin | El atajo geocodifica el GPS y guarda `_ubicacion` en el log |
 | Revisor pide 3-4 paradas de A→B | Derivación a `/ruta` = Correcta. Listar el corredor = Incorrecta |
 | Chip «Planificar una ruta» como pregunta de chat | No. Es enlace a `/ruta`. El admin solo loguea trayectos escritos. Uso = `route_calculate` |
-| Anónimo con 3 mensajes | El cupo de 2 se gasta ANTES del atajo. Un atajo también cuenta. |
+| Anónimo con 3 mensajes | El cupo de 2 se gasta ANTES del atajo. Un atajo también cuenta. Cookie `fc_guest` + `fc_guest_key` + hilo + IP: un cambio de IP no regala otra pregunta. |
 | Queja de inquilino (parcela, ruido, coche arrancado) | Atajo `incidencia_recinto`: no somos recepción. 112 si hay riesgo. Cero fichas. |
 | Tras la queja, nombran el camping | Identifican DÓNDE están. No es búsqueda. No digas «no encuentro la ficha / ¿busco campings?». |
 | Reservar / disponibilidad (Montmeló) | «No somos un camping ni un área. Somos una aplicación de búsqueda…». Nunca «no podemos consultar disponibilidad». |
 | «Taifa» por TAIGA | `get_area_by_name` acepta typo de 1 letra si hay GPS cerca |
 | «Gratuita» y luego lista de pago | Fuerza `solo_gratuitas`; no pega fichas de pago |
+| «Camping no» y sale un camping | `excluir_camping` en la búsqueda y en las tarjetas. No lo menciones para descartarlo. |
+| Pública llamada privada | El tipo va en la ficha (`🏷️`). No lo reescribas. |
+| «Muy cara 40 €» sin filtro | `topePrecioQueja` fuerza `precio_max`. Sin precio confirmado, no listes desconocidos como más baratos. |
 
 La tabla `chatbot_respuestas_log` no tiene columnas `ciudad`/`pais`/`lat`/`lng`. La ubicación vive en `funciones` (`_ubicacion`) y en `chatbot_conversaciones.preferencias_detectadas.ubicacion`.
 

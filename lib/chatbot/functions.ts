@@ -37,6 +37,8 @@ export interface BusquedaAreasParams {
   precio_max?: number
   solo_gratuitas?: boolean
   tipo_area?: 'publica' | 'privada' | 'camping'
+  /** Si el usuario dice "camping no" / "sin camping". */
+  excluir_camping?: boolean
   pais?: string
   valoracion_minima?: number
 }
@@ -185,6 +187,9 @@ const FICHA_I18N: Record<ChatLocale, {
   away: string
   detour: string
   locationUnknown: string
+  typePublica: string
+  typePrivada: string
+  typeCamping: string
 }> = {
   es: {
     priceUnknown: 'Precio no disponible',
@@ -198,6 +203,9 @@ const FICHA_I18N: Record<ChatLocale, {
     away: 'de distancia',
     detour: 'km de desvío',
     locationUnknown: 'Ubicación no disponible',
+    typePublica: 'Área pública',
+    typePrivada: 'Área privada',
+    typeCamping: 'Camping',
   },
   en: {
     priceUnknown: 'Price not available',
@@ -211,6 +219,9 @@ const FICHA_I18N: Record<ChatLocale, {
     away: 'away',
     detour: 'km detour',
     locationUnknown: 'Location not available',
+    typePublica: 'Public area',
+    typePrivada: 'Private area',
+    typeCamping: 'Campsite',
   },
   fr: {
     priceUnknown: 'Prix non disponible',
@@ -224,6 +235,9 @@ const FICHA_I18N: Record<ChatLocale, {
     away: 'de distance',
     detour: 'km de détour',
     locationUnknown: 'Lieu non disponible',
+    typePublica: 'Aire publique',
+    typePrivada: 'Aire privée',
+    typeCamping: 'Camping',
   },
   de: {
     priceUnknown: 'Preis nicht verfügbar',
@@ -237,6 +251,9 @@ const FICHA_I18N: Record<ChatLocale, {
     away: 'entfernt',
     detour: 'km Umweg',
     locationUnknown: 'Ort nicht verfügbar',
+    typePublica: 'Öffentlicher Platz',
+    typePrivada: 'Privater Platz',
+    typeCamping: 'Campingplatz',
   },
   it: {
     priceUnknown: 'Prezzo non disponibile',
@@ -250,6 +267,9 @@ const FICHA_I18N: Record<ChatLocale, {
     away: 'di distanza',
     detour: 'km di deviazione',
     locationUnknown: 'Posizione non disponibile',
+    typePublica: 'Area pubblica',
+    typePrivada: 'Area privata',
+    typeCamping: 'Campeggio',
   },
   pt: {
     priceUnknown: 'Preço não disponível',
@@ -263,7 +283,18 @@ const FICHA_I18N: Record<ChatLocale, {
     away: 'de distância',
     detour: 'km de desvio',
     locationUnknown: 'Localização não disponível',
+    typePublica: 'Área pública',
+    typePrivada: 'Área privada',
+    typeCamping: 'Camping',
   },
+}
+
+function etiquetaTipoArea(tipo: string | undefined, locale: ChatLocale): string | null {
+  const L = FICHA_I18N[locale] || FICHA_I18N.es
+  if (tipo === 'publica') return L.typePublica
+  if (tipo === 'privada') return L.typePrivada
+  if (tipo === 'camping') return L.typeCamping
+  return null
 }
 
 const SERVICIOS_I18N: Record<ChatLocale, Record<string, string>> = {
@@ -458,6 +489,7 @@ export function serializeToolResultForModel(result: any, locale: ChatLocale = 'e
     google_rating: a.google_rating ?? null,
     google_ratings_total: a.google_ratings_total ?? null,
     precio_noche: a.precio_noche ?? null,
+    tipo_area: a.tipo_area || null,
     distancia_km: a.distancia_km,
     desvio_km: a.desvio_km,
   })
@@ -467,7 +499,7 @@ export function serializeToolResultForModel(result: any, locale: ChatLocale = 'e
     return JSON.stringify({
       total: mostradas.length,
       instrucciones:
-        `Muestra SOLO estas ${mostradas.length} (no digas un número mayor). El campo "resumen" YA está en el idioma de respuesta: pégalo TAL CUAL (servicios, rating, /area/{slug}). Si el precio es desconocido el resumen lo dice: NUNCA lo conviertas en Gratis. No inventes servicios ni pegues Google Maps / imágenes.`,
+        `Muestra SOLO estas ${mostradas.length} (no digas un número mayor). El campo "resumen" YA está en el idioma de respuesta: pégalo TAL CUAL (tipo, servicios, rating, /area/{slug}). El tipo_area es el único válido: no llames pública a una privada ni al revés, ni presentes un camping si el usuario lo rechazó. Si el precio es desconocido el resumen lo dice: NUNCA lo conviertas en Gratis. No inventes tarifas semanales/mensuales ni servicios ni pegues Google Maps / imágenes.`,
       areas: mostradas.map(mapArea),
     })
   }
@@ -653,6 +685,9 @@ export async function searchAreas(params: BusquedaAreasParams): Promise<AreaResu
           area.tipo_area === params.tipo_area
         )
       }
+      if (params.excluir_camping) {
+        filtered = filtered.filter((area: any) => area.tipo_area !== 'camping')
+      }
 
       // Filtro por valoración mínima
       if (params.valoracion_minima) {
@@ -736,6 +771,9 @@ export async function searchAreas(params: BusquedaAreasParams): Promise<AreaResu
       if (params.tipo_area) {
         console.log('🏷️ Filtrando por tipo:', params.tipo_area)
         query = query.eq('tipo_area', params.tipo_area)
+      }
+      if (params.excluir_camping) {
+        query = query.neq('tipo_area', 'camping')
       }
 
       if (params.valoracion_minima) {
@@ -1314,15 +1352,18 @@ export function elegirAreasParaTarjetas(
   const blob = `${texto}\n${pregunta}`
   const mencionadas = areas.filter((a) => areaMencionadaEnTexto(blob, a))
   const pideGratis = /gratis|gratuit/i.test(pregunta) && !/de pago/i.test(pregunta)
+  const sinCamping = /camping\s*no|sin campings?|no\s+(quiero\s+)?(un\s+|el\s+)?campings?|no campsite|pas de camping|kein camping|niente camping/i.test(blob)
+  const base = sinCamping ? areas.filter((a) => a.tipo_area !== 'camping') : areas
+  const mencionadasOk = sinCamping ? mencionadas.filter((a) => a.tipo_area !== 'camping') : mencionadas
   const candidatas = pideGratis
-    ? (mencionadas.length ? mencionadas : areas).filter((a) => a.precio_noche === 0)
-    : mencionadas.length
-      ? mencionadas
-      : areas
+    ? (mencionadasOk.length ? mencionadasOk : base).filter((a) => a.precio_noche === 0)
+    : mencionadasOk.length
+      ? mencionadasOk
+      : base
   if (pideGratis) return candidatas.slice(0, max)
-  if (mencionadas.length) return mencionadas.slice(0, max)
-  if (esPreguntaAreaConcreta(pregunta)) return areas.slice(0, 1)
-  return areas.slice(0, max)
+  if (mencionadasOk.length) return mencionadasOk.slice(0, max)
+  if (esPreguntaAreaConcreta(pregunta)) return base.slice(0, 1)
+  return candidatas.slice(0, max)
 }
 
 export function componerRespuestaConFichas(
@@ -1341,7 +1382,7 @@ export function componerRespuestaConFichas(
       enFicha = true
       continue
     }
-    if (enFicha && (/^[📍💰✨⭐🅿️🔗📏↔]/.test(l) || /✨ Servicios:|✨ Services:|✨ Servizi:|✨ Serviços:|🔗 \/area\//.test(l))) {
+    if (enFicha && (/^[📍🏷️💰✨⭐🅿️🔗📏↔]/.test(l) || /✨ Servicios:|✨ Services:|✨ Servizi:|✨ Serviços:|🔗 \/area\//.test(l))) {
       continue
     }
     if (enFicha && !l) {
@@ -1362,6 +1403,8 @@ export function formatAreaParaChat(area: AreaResumen, locale: ChatLocale = 'es')
   const L = FICHA_I18N[locale] || FICHA_I18N.es
   let texto = `🚐 **${area.nombre}**\n`
   texto += `📍 ${formatUbicacionArea(area, locale)}\n`
+  const tipo = etiquetaTipoArea(area.tipo_area, locale)
+  if (tipo) texto += `🏷️ ${tipo}\n`
   
   if (area.distancia_km !== undefined) {
     const desde = formatDistanciaDesde(area.distancia_desde, locale)
