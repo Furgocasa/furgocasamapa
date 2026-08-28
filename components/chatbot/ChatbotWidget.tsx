@@ -455,6 +455,12 @@ export default function ChatbotWidget() {
     setIsMinimized(true)
   }
 
+  const minimizarSiCubrePantalla = () => {
+    if (typeof window !== 'undefined' && !window.matchMedia('(min-width: 768px)').matches) {
+      setIsMinimized(true)
+    }
+  }
+
   // Nueva conversación: resetea SOLO la vista y el hilo actual.
   // Las conversaciones anteriores permanecen intactas en la base de datos.
   const nuevaConversacion = () => {
@@ -869,7 +875,7 @@ export default function ChatbotWidget() {
                     : 'bg-white text-gray-900 shadow-md border border-blue-100'
                 }`}>
                   <div className="text-sm leading-relaxed">
-                    <ChatMensajeTexto texto={msg.contenido} />
+                    <ChatMensajeTexto texto={msg.contenido} onInternalNavigate={minimizarSiCubrePantalla} />
                   </div>
 
                   {/* La bienvenida presenta las herramientas y preguntas dentro del mensaje. */}
@@ -1118,12 +1124,14 @@ export default function ChatbotWidget() {
                 <div className="flex gap-2 justify-center">
                   <Link
                     href={nextAuth}
+                    onClick={minimizarSiCubrePantalla}
                     className="rounded-full bg-gradient-to-r from-blue-600 to-gray-700 text-white text-sm font-semibold px-4 py-2"
                   >
                     {txt.loginCta}
                   </Link>
                   <Link
                     href={nextRegister}
+                    onClick={minimizarSiCubrePantalla}
                     className="rounded-full border border-sky-300 bg-white text-sky-800 text-sm font-semibold px-4 py-2"
                   >
                     {txt.registerCta}

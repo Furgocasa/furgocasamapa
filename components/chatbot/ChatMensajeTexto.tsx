@@ -19,7 +19,13 @@ function conNegrita(texto: string, key: { n: number }): ReactNode[] {
 }
 
 /** Mismo pintado que ve el usuario en el Tío Viajero: enlaces, /area, negritas. */
-export function ChatMensajeTexto({ texto }: { texto: string }) {
+export function ChatMensajeTexto({
+  texto,
+  onInternalNavigate,
+}: {
+  texto: string
+  onInternalNavigate?: () => void
+}) {
   const sinImagenes = String(texto || '')
     .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
     .replace(/(^|\n)\s*[-*]\s+/g, '$1• ')
@@ -42,7 +48,12 @@ export function ChatMensajeTexto({ texto }: { texto: string }) {
       const [, label, href] = md
       if (href.startsWith('/')) {
         nodes.push(
-          <Link key={key.n++} href={href} target="_blank" className="text-sky-700 hover:text-sky-900 underline font-medium">
+          <Link
+            key={key.n++}
+            href={href}
+            onClick={onInternalNavigate}
+            className="text-sky-700 hover:text-sky-900 underline font-medium"
+          >
             {label}
           </Link>
         )
@@ -62,7 +73,12 @@ export function ChatMensajeTexto({ texto }: { texto: string }) {
       )
     } else if (/^\/area\//i.test(token) || /^\/ruta/i.test(token)) {
       nodes.push(
-        <Link key={key.n++} href={token} target="_blank" className="text-sky-700 hover:text-sky-900 underline font-medium">
+        <Link
+          key={key.n++}
+          href={token}
+          onClick={onInternalNavigate}
+          className="text-sky-700 hover:text-sky-900 underline font-medium"
+        >
           {token.startsWith('/area/') ? 'Ver área →' : 'Planificador de rutas →'}
         </Link>
       )

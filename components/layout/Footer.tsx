@@ -36,7 +36,7 @@ export function Footer() {
     <footer className="bg-gray-900 text-gray-300 pb-20 md:pb-0">
       <div className="max-w-7xl mx-auto px-4 py-12">
         {/* Grid Principal */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-8">
           {/* Columna 1: Sobre Furgocasa */}
           <div>
             <Link href="/" className="inline-block mb-4">
@@ -195,10 +195,41 @@ export function Footer() {
               </li>
               <li>
                 <Link
+                  href="/comparativa"
+                  className="hover:text-white transition-colors text-primary-400 font-semibold"
+                >
+                  {t("footer_compare")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/valoracion-ia-vehiculos"
+                  className="hover:text-white transition-colors text-purple-400 font-semibold"
+                >
+                  {t("footer_ai")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/sistema-reporte-accidentes"
+                  className="hover:text-white transition-colors text-orange-400 font-semibold"
+                >
+                  {t("footer_alerts")}
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <h3 className="text-white font-bold text-lg mb-4">Legal</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link
                   href="/condiciones"
                   className="hover:text-white transition-colors"
                 >
-                  {t("footer_terms")}
+                  {t("footer_notice")}
                 </Link>
               </li>
               <li>
@@ -221,47 +252,11 @@ export function Footer() {
                 <button
                   type="button"
                   onClick={openCookieSettings}
-                  className="hover:text-accent-400 transition-colors inline-flex items-center gap-2"
+                  className="hover:text-white transition-colors"
                   aria-label={t("cookies_open_settings")}
                 >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path
-                      d="M12 2a9.5 9.5 0 0 0-1.2 18.93A10 10 0 1 0 21.8 11.4 7 7 0 0 1 12 2Z"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinejoin="round"
-                    />
-                    <circle cx="8.2" cy="10" r="1.1" fill="currentColor" />
-                    <circle cx="12.5" cy="8" r="1" fill="currentColor" />
-                    <circle cx="10.5" cy="14.2" r="1.15" fill="currentColor" />
-                    <circle cx="15.2" cy="13.2" r="0.9" fill="currentColor" />
-                  </svg>
                   {t("footer_cookies_config")}
                 </button>
-              </li>
-              <li>
-                <Link
-                  href="/comparativa"
-                  className="hover:text-white transition-colors text-primary-400 font-semibold"
-                >
-                  {t("footer_compare")}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/valoracion-ia-vehiculos"
-                  className="hover:text-white transition-colors text-purple-400 font-semibold"
-                >
-                  {t("footer_ai")}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/sistema-reporte-accidentes"
-                  className="hover:text-white transition-colors text-orange-400 font-semibold"
-                >
-                  {t("footer_alerts")}
-                </Link>
               </li>
             </ul>
           </div>
@@ -314,12 +309,18 @@ export function Footer() {
                   Furgocasa
                 </a>
               </span>
-              <span className="hidden sm:inline">-</span>
-              <span className="flex items-center gap-1">
-                {t("footer_made")}
-              </span>
             </p>
           </div>
+          <p className="mt-4 text-center text-gray-500 text-xs leading-relaxed">
+            <span className="block sm:inline">Hecho con <span className="text-red-500 inline-block animate-pulse">❤️</span> en Murcia</span>
+            <span className="hidden sm:inline"> · </span>
+            <span className="block sm:inline mt-1 sm:mt-0">
+              Web desarrollada por{' '}
+              <a href="https://www.eskaladigital.com" target="_blank" rel="noopener noreferrer" className="text-primary-400 hover:text-primary-300 font-medium whitespace-nowrap">
+                ESKALA Agencia de Marketing Digital
+              </a>
+            </span>
+          </p>
         </div>
       </div>
     </footer>
