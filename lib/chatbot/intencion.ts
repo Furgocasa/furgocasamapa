@@ -261,6 +261,26 @@ export function pideSoloGratuitas(mensaje: string): boolean {
   return /^(y\s+)?(alguna\s+)?(otra\s+)?gratuita?s?\??$|solo (las )?gratuit|solo gratis|[aá]reas? gratis|opci[oó]n gratuita/i.test(t)
 }
 
+const SERVICIO_PALABRAS: Array<[RegExp, string]> = [
+  [/duchas?|showers?|douches?/i, 'duchas'],
+  [/\bagua\b|water|\beau\b/i, 'agua'],
+  [/electricidad|\bluz\b|electricity|strom|électri/i, 'electricidad'],
+  [/\bwifi\b|wlan/i, 'wifi'],
+  [/\bwc\b|baño|aseo|toilets?/i, 'wc'],
+  [/vaciado/i, 'vaciado_aguas_negras'],
+  [/lavander/i, 'lavanderia'],
+]
+
+/** Servicios nombrados en el mensaje (para heredarlos en el follow-up). */
+export function extraerServiciosPedidos(mensaje: string): string[] {
+  const t = mensaje || ''
+  const out: string[] = []
+  for (const [re, key] of SERVICIO_PALABRAS) {
+    if (re.test(t)) out.push(key)
+  }
+  return [...new Set(out)]
+}
+
 /** "Camping no.", "sin camping", "no quiero un camping". */
 export function pideSinCamping(mensaje: string): boolean {
   const t = (mensaje || '').replace(/\s+/g, ' ').trim()

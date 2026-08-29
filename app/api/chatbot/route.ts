@@ -64,6 +64,7 @@ import {
   pideSinCamping,
   topePrecioQueja,
   esAmpliacionBusqueda,
+  extraerServiciosPedidos,
   nombreRecintoMencionado,
   pareceIdentificarRecinto,
 } from '@/lib/chatbot/intencion'
@@ -1107,7 +1108,17 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 - Si piden áreas/gasolinera Y además turismo: responde SOLO la parte de áreas/gasolinera y manda el turismo al blog de Furgocasa.
 - Gasolinera o taller de emergencia: buscar_info_viaje. Di que es info de la web, no una ficha /area/. Prohibido restaurantes, hoteles, monumentos y "qué ver".
 - example.com u otras URLs inventadas: prohibido. Solo /area/{slug}.
-- Idioma: último mensaje del cliente. TODO en ese idioma (intro y etiquetas). Las fichas "resumen" ya están traducidas.`
+- Idioma: último mensaje del cliente. TODO en ese idioma (intro y etiquetas). Las fichas "resumen" ya están traducidas.
+
+═══════════════════════════════════════
+📋 SEIS REGLAS DE DIRECTORIO (comunes a Roy y Casi Cinco)
+═══════════════════════════════════════
+1. Ciudad o pueblo dicho en el mensaje gana al GPS.
+2. Pega el campo "resumen" tal cual (precio, ⭐, /area/{slug}). No inventes ni redondees.
+3. Si este turno trae fichas, prohibido decir «no tengo». Di el mismo número que te llegan (máx. 3).
+4. Follow-up («y con duchas», «más baratos», «¿y en Murcia?») conserva filtros y sitio. Una ciudad SOLA, sin «y» ni filtro, es búsqueda nueva: no heredes duchas/gratis.
+5. «Cerca» sin GPS → pregunta la ciudad. No inventes dónde está.
+6. Solo /area/{slug} y /ruta. Prohibido Google Maps, maps.google, goo.gl/maps, example.com.`
     
     // 5. PREPARAR MENSAJES COMPLETOS (un solo hilo, sin duplicar)
     const fullMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
@@ -1259,6 +1270,20 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
             || [...previosUser].reverse().map((t: string) => topePrecioQueja(t)).find((n: number | undefined) => n != null)
           if (tope && !fnArgs.solo_gratuitas && !fnArgs.precio_max) {
             fnArgs.precio_max = tope
+          }
+          const ciudadSola =
+            Boolean(extraerCiudadNombrada(ultimoMensajeUsuario)) &&
+            !esFiltroSinSitio(ultimoMensajeUsuario) &&
+            !esAmpliacionBusqueda(ultimoMensajeUsuario) &&
+            !/^(y |¿y |and )/i.test(ultimoMensajeUsuario.trim())
+          if (!ciudadSola) {
+            const serviciosHilo = [
+              ...extraerServiciosPedidos(ultimoMensajeUsuario),
+              ...previosUser.flatMap((t: string) => extraerServiciosPedidos(t)),
+            ]
+            if (serviciosHilo.length) {
+              fnArgs.servicios = [...new Set([...(fnArgs.servicios || []), ...serviciosHilo])]
+            }
           }
         }
         if (fnName === 'get_area_by_name') {
