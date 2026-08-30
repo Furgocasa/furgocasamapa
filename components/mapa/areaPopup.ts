@@ -1,9 +1,8 @@
 import type { Area } from '@/types/database.types'
 import type { Locale } from '@/lib/i18n/config'
 import { DEFAULT_LOCALE } from '@/lib/i18n/config'
-import { getServicioLabel, getTipoAreaLabel, SERVICIO_ICONS } from '@/lib/i18n/labels'
+import { getServicioLabel, SERVICIO_ICONS } from '@/lib/i18n/labels'
 import { t } from '@/lib/i18n/ui'
-import { getTipoAreaIconSvg } from '@/lib/areas/tipo-area'
 import { createClient } from '@/lib/supabase/client'
 import {
   hasLocalFavorite,
@@ -11,8 +10,7 @@ import {
   removeLocalFavorite,
 } from '@/lib/favoritos/local'
 import { track } from '@/lib/analytics/track'
-import { fichaBaseDePin } from '@/lib/talleres/map-pin'
-import { TALLER_PIN_COLOR } from '@/lib/talleres/types'
+import { colorPin, esPinTaller, etiquetaDePin, fichaBaseDePin, iconSvgDePin } from '@/lib/talleres/map-pin'
 
 const INVALID_COVER = /PhotoService\.GetPhoto|maps\.googleapis\.com\/maps\/api\/place\/js/i
 
@@ -174,8 +172,9 @@ export function buildAreaPopupHTML(
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
 
-  const color = fichaBaseDePin(area) === '/taller' ? TALLER_PIN_COLOR : getColor(area.tipo_area)
-  const tipo = getTipoAreaLabel(area.tipo_area, locale)
+  const color = colorPin(area)
+  const tipo = etiquetaDePin(area, locale)
+  const esTaller = esPinTaller(area)
   const ubicacion = [area.ciudad, area.provincia].filter(Boolean).map((v) => esc(v)).join(', ')
   const mapsUrl =
     area.google_maps_url ||
@@ -221,7 +220,7 @@ export function buildAreaPopupHTML(
   const chips: string[] = [
     `<span style="display:inline-flex;align-items:center;background:${color}20;color:${color};padding:5px 10px;border-radius:999px;font-size:12px;font-weight:600;line-height:1;">${esc(tipo)}</span>`,
   ]
-  if (area.precio_noche !== null && area.precio_noche !== undefined) {
+  if (!esTaller && area.precio_noche !== null && area.precio_noche !== undefined) {
     chips.push(
       area.precio_noche === 0
         ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:700;line-height:1;">${esc(t(locale, 'free'))}</span>`
@@ -241,7 +240,7 @@ export function buildAreaPopupHTML(
     : ''
 
   // Icono redondo del tipo (misma leyenda que los pines y la lista)
-  const tipoIcon = `<span style="width:34px;height:34px;border-radius:999px;background:${color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,0.18);">${getTipoAreaIconSvg(area.tipo_area, 18)}</span>`
+  const tipoIcon = `<span style="width:34px;height:34px;border-radius:999px;background:${color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,0.18);">${iconSvgDePin(area, 18)}</span>`
 
   const isFavInicial = typeof window !== 'undefined' && hasLocalFavorite(area.id)
   const favLabelOff = t(locale, 'favorite')

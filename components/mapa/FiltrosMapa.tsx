@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { MagnifyingGlassIcon, XMarkIcon, ChevronRightIcon, CheckIcon, GlobeAltIcon } from '@heroicons/react/24/outline'
 import { useLanguage, getServicioLabel, getTipoAreaLabel, SERVICIO_ICONS } from '@/lib/i18n'
 import { TIPO_AREA_IDS, getTipoAreaColor, getTipoAreaIconPath, type TipoArea } from '@/lib/areas/tipo-area'
+import { TALLER_ICON_PATH, TALLER_PIN_COLOR } from '@/lib/talleres/types'
 import { sinTildes } from '@/lib/areas/slug'
 
 export interface Filtros {
@@ -27,6 +28,7 @@ interface FiltrosMapaProps {
     sudamerica: number
     centroamerica: number
   }
+  capa?: 'areas' | 'talleres'
 }
 
 const SERVICIO_IDS = [
@@ -151,7 +153,7 @@ export function paisPerteneceAFiltro(pais: string, filtro: string): boolean {
   return paisNormalizado === filtro || paisNormalizado === normalizarPais(filtro)
 }
 
-export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, totalResultados, paisesDisponibles, conteoPaisesRegion }: FiltrosMapaProps) {
+export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, totalResultados, paisesDisponibles, conteoPaisesRegion, capa = 'areas' }: FiltrosMapaProps) {
   const { locale, t } = useLanguage()
   const [busquedaLocal, setBusquedaLocal] = useState(filtros.busqueda)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -297,14 +299,14 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
         {/* Búsqueda */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            {t('search_placeholder')}
+            {capa === 'talleres' ? t('search_placeholder_talleres') : t('search_placeholder')}
           </label>
           <div className="relative">
             <input
               type="text"
               value={busquedaLocal}
               onChange={(e) => handleBusquedaChange(e.target.value)}
-              placeholder={t('search_placeholder')}
+              placeholder={capa === 'talleres' ? t('search_placeholder_talleres') : t('search_placeholder')}
               className="w-full pl-8 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
             <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -345,6 +347,27 @@ export function FiltrosMapa({ filtros, onFiltrosChange, onPaisChange, onClose, t
             {t('type_filter')}
           </label>
           <div className="space-y-2">
+            {capa === 'talleres' && (
+              <div
+                className="w-full flex items-center gap-3 rounded-xl border-2 px-3 py-2.5 text-left shadow-sm"
+                style={{ borderColor: TALLER_PIN_COLOR, backgroundColor: `${TALLER_PIN_COLOR}14` }}
+              >
+                <span
+                  className="w-[22px] h-[22px] shrink-0 rounded-full border-2 border-white shadow-sm flex items-center justify-center"
+                  style={{ backgroundColor: TALLER_PIN_COLOR }}
+                  aria-hidden
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff">
+                    <path d={TALLER_ICON_PATH} />
+                  </svg>
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-gray-900">{t('type_taller')}</span>
+                  <span className="block text-[11px] text-gray-500 leading-tight">{t('type_taller_hint')}</span>
+                </span>
+                <CheckIcon className="w-5 h-5 shrink-0" style={{ color: TALLER_PIN_COLOR }} />
+              </div>
+            )}
             {TIPO_AREA_IDS.map((tipo) => {
               const hintKey =
                 tipo === 'publica'

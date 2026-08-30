@@ -24,6 +24,13 @@ export const TIPO_AREA_LABELS: Record<string, Dict> = {
     de: 'Campingplatz',
     it: 'Campeggio',
   },
+  taller: {
+    es: 'Taller',
+    en: 'Workshop',
+    fr: 'Atelier',
+    de: 'Werkstatt',
+    it: 'Officina',
+  },
 }
 
 /** Labels cortos para chips/filtros/popups */

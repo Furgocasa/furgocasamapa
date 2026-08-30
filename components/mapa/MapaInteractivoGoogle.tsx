@@ -9,7 +9,8 @@ import { BuscadorGeografico } from './BuscadorGeografico'
 import { buildAreaPopupHTML, getAreaFocusCameraOffset } from './areaPopup'
 import { getMapStyle } from '@/lib/mapStyles'
 import { useLanguage } from '@/lib/i18n'
-import { getTipoAreaColor, getTipoAreaPinSvg } from '@/lib/areas/tipo-area'
+import { getTipoAreaColor } from '@/lib/areas/tipo-area'
+import { pinSvgDePin } from '@/lib/talleres/map-pin'
 import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
 import { avisarGps, cookiesGranted, onCookieConsentChange, onGpsChange, pedirAceptarCookies } from '@/components/CookieConsentBar'
 
@@ -285,7 +286,7 @@ export function MapaInteractivoGoogle({ areas, areaSeleccionada, onAreaClick, ma
 
     const newMarkers = newAreas.map((area) => {
       // Un Symbol de Google no admite glifo dentro: el pin va como imagen SVG
-      const pinSvg = getTipoAreaPinSvg(area.tipo_area)
+      const pinSvg = pinSvgDePin(area)
 
       const marker = new google.maps.Marker({
         position: {

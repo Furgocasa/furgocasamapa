@@ -20,7 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cookiesGranted, onCookieConsentChange } from '@/components/CookieConsentBar'
 import { avisarAreaMapa } from '@/components/chatbot/ChatbotWidget'
 import { tallerToMapPin, type MapPin } from '@/lib/talleres/map-pin'
-import type { Taller } from '@/lib/talleres/types'
+import { TALLER_ICON_PATH, TALLER_PIN_COLOR, type Taller } from '@/lib/talleres/types'
 
 const SPLASH_JOKES = ['splash_joke_1', 'splash_joke_2', 'splash_joke_3'] as const
 
@@ -652,6 +652,7 @@ export default function MapaPage() {
             totalResultados={areasParaLista.length}
             paisesDisponibles={paisesDisponibles}
             conteoPaisesRegion={conteoPaisesRegion}
+            capa={capa}
           />
         </aside>
 
@@ -769,7 +770,6 @@ export default function MapaPage() {
           </div>
           </div>
 
-          {capa === 'areas' && (
           <button
             type="button"
             onClick={() => setLeyendaAbierta((v) => !v)}
@@ -778,10 +778,20 @@ export default function MapaPage() {
             aria-label={t('type_filter')}
           >
             <span className="flex items-center" aria-hidden>
+              {capa === 'talleres' && (
+                <span
+                  className="w-[15px] h-[15px] rounded-full ring-2 ring-white flex items-center justify-center"
+                  style={{ backgroundColor: TALLER_PIN_COLOR }}
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff">
+                    <path d={TALLER_ICON_PATH} />
+                  </svg>
+                </span>
+              )}
               {TIPO_AREA_IDS.map((tipo, i) => (
                 <span
                   key={tipo}
-                  className={`w-[15px] h-[15px] rounded-full ring-2 ring-white flex items-center justify-center ${i > 0 ? '-ml-1' : ''}`}
+                  className={`w-[15px] h-[15px] rounded-full ring-2 ring-white flex items-center justify-center ${capa === 'talleres' || i > 0 ? '-ml-1' : ''}`}
                   style={{ backgroundColor: getTipoAreaColor(tipo) }}
                 >
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff">
@@ -791,12 +801,28 @@ export default function MapaPage() {
               ))}
             </span>
           </button>
-          )}
 
-          {capa === 'areas' && leyendaAbierta && (
+          {leyendaAbierta && (
             <div className="absolute top-[6.75rem] left-3 z-30 bg-white/95 backdrop-blur-md shadow-lg rounded-2xl p-3 ring-1 ring-gray-900/5 w-60">
               <p className="text-xs font-semibold text-gray-900 mb-2">{t('type_filter')}</p>
               <div className="space-y-2">
+                {capa === 'talleres' && (
+                  <div className="flex items-start gap-2">
+                    <span
+                      className="w-[22px] h-[22px] shrink-0 rounded-full border-2 border-white shadow-sm flex items-center justify-center"
+                      style={{ backgroundColor: TALLER_PIN_COLOR }}
+                      aria-hidden
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff">
+                        <path d={TALLER_ICON_PATH} />
+                      </svg>
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-xs text-gray-900 leading-tight">{t('type_taller')}</p>
+                      <p className="text-[11px] text-gray-500 leading-tight">{t('type_taller_hint')}</p>
+                    </div>
+                  </div>
+                )}
                 {TIPO_AREA_IDS.map((tipo) => (
                   <div key={tipo} className="flex items-start gap-2">
                     <span
@@ -837,6 +863,7 @@ export default function MapaPage() {
             onClose={() => {}}
             userLocation={userLocation}
             gpsActive={gpsActive}
+            modo={capa}
           />
         </aside>
       </main>
@@ -865,6 +892,7 @@ export default function MapaPage() {
           totalResultados={areasParaLista.length}
           paisesDisponibles={paisesDisponibles}
           conteoPaisesRegion={conteoPaisesRegion}
+          capa={capa}
         />
       </BottomSheet>
 
@@ -881,6 +909,7 @@ export default function MapaPage() {
           onClose={() => setMostrarLista(false)}
           userLocation={userLocation}
           gpsActive={gpsActive}
+          modo={capa}
         />
       </BottomSheet>
 

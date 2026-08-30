@@ -6,8 +6,8 @@ import { BuscadorGeografico } from './BuscadorGeografico'
 import { buildAreaPopupHTML, getAreaFocusCameraOffset } from './areaPopup'
 import Supercluster from 'supercluster'
 import { useLanguage } from '@/lib/i18n'
-import { getTipoAreaColor, getTipoAreaIconSvg } from '@/lib/areas/tipo-area'
-import { colorPin } from '@/lib/talleres/map-pin'
+import { getTipoAreaColor } from '@/lib/areas/tipo-area'
+import { colorPin, iconSvgDePin } from '@/lib/talleres/map-pin'
 import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
 import { avisarGps, cookiesGranted, onCookieConsentChange, onGpsChange, pedirAceptarCookies } from '@/components/CookieConsentBar'
 
@@ -306,7 +306,7 @@ export function LeafletMap({
               display: flex;
               align-items: center;
               justify-content: center;
-            ">${getTipoAreaIconSvg(area.tipo_area)}</div>`,
+            ">${iconSvgDePin(area)}</div>`,
             className: 'area-marker',
             iconSize: [26, 26],
             iconAnchor: [13, 13]

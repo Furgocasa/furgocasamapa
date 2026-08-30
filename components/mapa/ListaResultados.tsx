@@ -4,9 +4,8 @@ import { Area } from '@/types/database.types'
 import { MapPinIcon, PhoneIcon, StarIcon, XMarkIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
 import { useState, useMemo } from 'react'
-import { useLanguage, getServicioLabel, getTipoAreaLabel, SERVICIO_ICONS } from '@/lib/i18n'
-import { getTipoAreaColor, getTipoAreaIconPath } from '@/lib/areas/tipo-area'
-import { fichaBaseDePin } from '@/lib/talleres/map-pin'
+import { useLanguage, getServicioLabel, SERVICIO_ICONS } from '@/lib/i18n'
+import { colorPin, esPinTaller, etiquetaDePin, fichaBaseDePin, iconPathDePin } from '@/lib/talleres/map-pin'
 
 interface ListaResultadosProps {
   areas: Area[]
@@ -16,6 +15,7 @@ interface ListaResultadosProps {
   gpsActive?: boolean
   emptyTitle?: string
   emptyHint?: string
+  modo?: 'areas' | 'talleres'
 }
 
 type SortOption = 'relevancia' | 'valoracion' | 'precio' | 'proximidad' | 'nombre'
@@ -32,6 +32,7 @@ export function ListaResultados({
   gpsActive,
   emptyTitle,
   emptyHint,
+  modo = 'areas',
 }: ListaResultadosProps) {
   const { locale, t } = useLanguage()
   const [sortBy, setSortBy] = useState<SortOption>('nombre')
@@ -163,7 +164,7 @@ export function ListaResultados({
           <div className="flex flex-col items-center justify-center h-full text-center py-12">
             <MapPinIcon className="w-16 h-16 text-gray-300 mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {emptyTitle || 'No se encontraron áreas'}
+              {emptyTitle || (modo === 'talleres' ? t('empty_talleres') : 'No se encontraron áreas')}
             </h3>
             <p className="text-gray-500 text-sm">
               {emptyHint || 'Intenta ajustar los filtros para ver más resultados'}
@@ -260,11 +261,11 @@ export function ListaResultados({
                     </div>
                     <span
                       className="w-8 h-8 shrink-0 rounded-full border-2 border-white shadow-sm flex items-center justify-center"
-                      style={{ backgroundColor: getTipoAreaColor(area.tipo_area) }}
-                      title={getTipoAreaLabel(area.tipo_area, locale)}
+                      style={{ backgroundColor: colorPin(area) }}
+                      title={etiquetaDePin(area, locale)}
                     >
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" aria-hidden>
-                        <path d={getTipoAreaIconPath(area.tipo_area)} />
+                        <path d={iconPathDePin(area)} />
                       </svg>
                     </span>
                   </div>
@@ -287,12 +288,13 @@ export function ListaResultados({
                     <span
                       className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
                       style={{
-                        backgroundColor: `${getTipoAreaColor(area.tipo_area)}20`,
-                        color: getTipoAreaColor(area.tipo_area),
+                        backgroundColor: `${colorPin(area)}20`,
+                        color: colorPin(area),
                       }}
                     >
-                      {getTipoAreaLabel(area.tipo_area, locale)}
+                      {etiquetaDePin(area, locale)}
                     </span>
+                    {!esPinTaller(area) && (
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                       area.precio_noche === 0
                         ? 'bg-green-100 text-green-800'
@@ -307,6 +309,7 @@ export function ListaResultados({
                         : `💰 ${area.precio_noche}€${t('per_night')}`
                       }
                     </span>
+                    )}
                     {area.verificado && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         ✓ {t('verified')}

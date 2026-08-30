@@ -8,8 +8,8 @@ import type { Area } from '@/types/database.types'
 import { BuscadorGeografico } from './BuscadorGeografico'
 import { buildAreaPopupHTML, getAreaFocusCameraOffset } from './areaPopup'
 import { useLanguage } from '@/lib/i18n'
-import { getTipoAreaColor, getTipoAreaIconSvg } from '@/lib/areas/tipo-area'
-import { colorPin } from '@/lib/talleres/map-pin'
+import { getTipoAreaColor } from '@/lib/areas/tipo-area'
+import { colorPin, iconSvgDePin } from '@/lib/talleres/map-pin'
 import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
 import { applyBrandTheme, applyMapLanguage } from '@/lib/map/brand-style'
 import { avisarGps, cookiesGranted, onCookieConsentChange, onGpsChange, pedirAceptarCookies } from '@/components/CookieConsentBar'
@@ -385,7 +385,7 @@ export function MapLibreMap({
             justify-content: center;
             animation-delay: ${Math.min(dropIndex++ * 35, 700)}ms;
           `
-          inner.innerHTML = getTipoAreaIconSvg(area.tipo_area)
+          inner.innerHTML = iconSvgDePin(area)
           el.appendChild(inner)
 
           el.addEventListener('mouseenter', () => showHoverTooltip(lng, lat, area))
