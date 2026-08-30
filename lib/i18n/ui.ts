@@ -7,6 +7,7 @@ type UiDict = Record<string, string>
 const UI: Record<Locale, UiDict> = {
   es: {
     nav_mapa: 'Mapa',
+    nav_talleres: 'Talleres',
     nav_ruta: 'Ruta',
     nav_reportar: 'Reportar',
     nav_reportar_full: 'Reportar Accidente',
@@ -99,6 +100,7 @@ const UI: Record<Locale, UiDict> = {
   },
   en: {
     nav_mapa: 'Map',
+    nav_talleres: 'Workshops',
     nav_ruta: 'Route',
     nav_reportar: 'Report',
     nav_reportar_full: 'Report Accident',
@@ -191,6 +193,7 @@ const UI: Record<Locale, UiDict> = {
   },
   fr: {
     nav_mapa: 'Carte',
+    nav_talleres: 'Ateliers',
     nav_ruta: 'Itinéraire',
     nav_reportar: 'Signaler',
     nav_reportar_full: 'Signaler un accident',
@@ -283,6 +286,7 @@ const UI: Record<Locale, UiDict> = {
   },
   de: {
     nav_mapa: 'Karte',
+    nav_talleres: 'Werkstätten',
     nav_ruta: 'Route',
     nav_reportar: 'Melden',
     nav_reportar_full: 'Unfall melden',
@@ -375,6 +379,7 @@ const UI: Record<Locale, UiDict> = {
   },
   it: {
     nav_mapa: 'Mappa',
+    nav_talleres: 'Officine',
     nav_ruta: 'Percorso',
     nav_reportar: 'Segnala',
     nav_reportar_full: 'Segnala incidente',

@@ -336,7 +336,7 @@ export function ListaResultados({
                   {/* Acciones */}
                   <div className="flex gap-2">
                     <Link
-                      href={`/area/${area.slug}`}
+                      href={`${(area as { fichaBase?: string }).fichaBase === '/taller' ? '/taller' : '/area'}/${area.slug}`}
                       target="_blank"
                       onClick={(e) => e.stopPropagation()}
                       className="flex-1 text-center text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg px-3 py-2 transition-colors"

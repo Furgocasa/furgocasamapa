@@ -7,6 +7,7 @@ import { buildAreaPopupHTML, getAreaFocusCameraOffset } from './areaPopup'
 import Supercluster from 'supercluster'
 import { useLanguage } from '@/lib/i18n'
 import { getTipoAreaColor, getTipoAreaIconSvg } from '@/lib/areas/tipo-area'
+import { colorPin } from '@/lib/talleres/map-pin'
 import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
 import { avisarGps, cookiesGranted, onCookieConsentChange, onGpsChange, pedirAceptarCookies } from '@/components/CookieConsentBar'
 
@@ -298,7 +299,7 @@ export function LeafletMap({
               width: 26px;
               height: 26px;
               border-radius: 50%;
-              background-color: ${getTipoAreaColor(area.tipo_area)};
+              background-color: ${colorPin(area)};
               border: 2px solid white;
               cursor: pointer;
               box-shadow: 0 2px 4px rgba(0,0,0,0.3);

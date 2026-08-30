@@ -34,6 +34,10 @@ export function esSitioSinIntencion(mensaje: string): boolean {
   return /^(en\s+|in\s+|à\s+|a\s+|stadt\s+|ciudad de\s+)?[A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9\s,'-]{1,46}$/i.test(t)
 }
 
+export function pideTaller(mensaje: string): boolean {
+  return /(^|[^\p{L}\p{N}])(talleres?|taller camper|camperizaci[oó]n|workshop)(?=[^\p{L}\p{N}]|$)/iu.test(mensaje || '')
+}
+
 export function esGasolineraSinSitio(mensaje: string): boolean {
   const t = (mensaje || '').replace(/[¿?¡!.,]/g, ' ').replace(/\s+/g, ' ').trim()
   return GAS_SUELTA_RE.test(t)

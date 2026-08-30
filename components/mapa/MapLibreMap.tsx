@@ -9,6 +9,7 @@ import { BuscadorGeografico } from './BuscadorGeografico'
 import { buildAreaPopupHTML, getAreaFocusCameraOffset } from './areaPopup'
 import { useLanguage } from '@/lib/i18n'
 import { getTipoAreaColor, getTipoAreaIconSvg } from '@/lib/areas/tipo-area'
+import { colorPin } from '@/lib/talleres/map-pin'
 import { buildMarkerTooltipHTML, hasFinePointer, MARKER_TOOLTIP_CSS } from '@/lib/map/marker-hover'
 import { applyBrandTheme, applyMapLanguage } from '@/lib/map/brand-style'
 import { avisarGps, cookiesGranted, onCookieConsentChange, onGpsChange, pedirAceptarCookies } from '@/components/CookieConsentBar'
@@ -376,7 +377,7 @@ export function MapLibreMap({
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            background-color: ${getTipoAreaColor(area.tipo_area)};
+            background-color: ${colorPin(area)};
             border: 2px solid white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             display: flex;

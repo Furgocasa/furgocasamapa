@@ -1482,9 +1482,78 @@ export interface InfoViajeWebParams {
   idioma?: ChatLocale
 }
 
+export async function searchTalleres(params: {
+  ciudad?: string
+  provincia?: string
+  lat?: number
+  lng?: number
+  radio_km?: number
+  nombre?: string
+}): Promise<Array<{
+  nombre: string
+  slug: string
+  ciudad: string | null
+  provincia: string | null
+  google_rating: number | null
+  google_ratings_total: number | null
+  distancia_km?: number
+  resumen: string
+}>> {
+  const supabase = getSupabaseClient()
+  if (params.lat != null && params.lng != null) {
+    const { data, error } = await (supabase as any).rpc('talleres_cerca', {
+      lat_usuario: params.lat,
+      lng_usuario: params.lng,
+      radio_km: params.radio_km || 50,
+    })
+    if (error) throw error
+    return (data || []).slice(0, 3).map((t: any) => ({
+      ...t,
+      resumen: formatTallerParaChat(t),
+    }))
+  }
+
+  let query = (supabase as any)
+    .from('talleres')
+    .select('nombre, slug, ciudad, provincia, google_rating, google_ratings_total')
+    .eq('activo', true)
+    .order('google_rating', { ascending: false, nullsFirst: false })
+    .limit(3)
+
+  if (params.nombre) query = query.ilike('nombre', `%${params.nombre}%`)
+  if (params.ciudad) query = query.ilike('ciudad', `%${params.ciudad}%`)
+  if (params.provincia) query = query.ilike('provincia', `%${params.provincia}%`)
+
+  const { data, error } = await query
+  if (error) throw error
+  return (data || []).map((t: any) => ({ ...t, resumen: formatTallerParaChat(t) }))
+}
+
+export function formatTallerParaChat(t: {
+  nombre: string
+  slug?: string
+  ciudad?: string | null
+  provincia?: string | null
+  google_rating?: number | null
+  google_ratings_total?: number | null
+  distancia_km?: number
+}): string {
+  const sitio = [t.ciudad, t.provincia].filter(Boolean).join(', ')
+  let texto = `🔧 **${t.nombre}**\n`
+  if (sitio) texto += `📍 ${sitio}\n`
+  if (t.distancia_km != null) texto += `📏 ${Number(t.distancia_km).toFixed(1)} km\n`
+  if (t.google_rating) {
+    texto += t.google_ratings_total
+      ? `⭐ ${Number(t.google_rating).toFixed(1)}/5 (${t.google_ratings_total} reseñas)\n`
+      : `⭐ ${Number(t.google_rating).toFixed(1)}/5 (Google)\n`
+  }
+  if (t.slug) texto += `🔗 /taller/${t.slug}\n`
+  return texto
+}
+
 /**
  * Web search de Terra SOLO para lo práctico del camino
- * (gasolineras, diésel, taller). Nunca para listar áreas ni para guías turísticas.
+ * (gasolineras, diésel). Los talleres van por search_talleres.
  */
 export async function buscarInfoViajeWeb(params: InfoViajeWebParams): Promise<{
   texto: string
@@ -1514,7 +1583,7 @@ export async function buscarInfoViajeWeb(params: InfoViajeWebParams): Promise<{
     max_output_tokens: 700,
     reasoning: { effort: 'low' },
     instructions:
-      'Información práctica de camino: SOLO gasolineras, diésel o taller de emergencia. ' +
+      'Información práctica de camino: SOLO gasolineras o diésel. ' +
       `Responde ENTERA en el idioma del cliente (${params.idioma || 'el de la pregunta'}). ` +
       'Sitios reales, breve. Nada de qué ver, pueblos, restaurantes ni guía turística. ' +
       'NO inventes áreas de autocaravanas ni enlaces /area/. ' +

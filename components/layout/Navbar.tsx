@@ -223,6 +223,14 @@ export function Navbar() {
               {t('nav_mapa')}
             </Link>
             <Link
+              href="/talleres"
+              className={`text-white font-semibold hover:text-primary-100 transition-colors ${
+                pathname.startsWith("/taller") ? "border-b-2 border-white pb-1" : ""
+              }`}
+            >
+              {t('nav_talleres')}
+            </Link>
+            <Link
               href="/ruta"
               className={`text-white font-semibold hover:text-primary-100 transition-colors ${
                 pathname === "/ruta" ? "border-b-2 border-white pb-1" : ""
@@ -463,6 +471,15 @@ export function Navbar() {
               }`}
             >
               {t('nav_mapa')}
+            </Link>
+            <Link
+              href="/talleres"
+              onClick={() => setShowMobileMenu(false)}
+              className={`block px-3 py-3 rounded-lg font-semibold ${
+                pathname.startsWith("/taller") ? "bg-white/15" : "hover:bg-white/10"
+              }`}
+            >
+              {t('nav_talleres')}
             </Link>
             <Link
               href="/ruta"

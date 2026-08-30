@@ -269,6 +269,50 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }))
     : []
 
-  return [...staticPages, ...paisesLandingPages, ...provinciaPages, ...areaPages]
+  const allTalleres: Array<{ slug: string; updated_at: string | null; provincia: string | null }> = []
+  {
+    let pageT = 0
+    let hasMoreT = true
+    while (hasMoreT) {
+      const { data, error } = await (supabase as any)
+        .from('talleres')
+        .select('slug, updated_at, provincia')
+        .eq('activo', true)
+        .range(pageT * pageSize, (pageT + 1) * pageSize - 1)
+      if (error || !data || data.length === 0) break
+      allTalleres.push(...data)
+      pageT++
+      if (data.length < pageSize) hasMoreT = false
+    }
+  }
+
+  const tallerProvinciaSlugs = new Set<string>()
+  for (const row of allTalleres) {
+    const prov = normalizarProvincia(row.provincia)
+    if (prov) tallerProvinciaSlugs.add(prov.slug)
+  }
+
+  const tallerPages: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/talleres`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    ...[...tallerProvinciaSlugs].sort().map((slug) => ({
+      url: `${baseUrl}/talleres/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    })),
+    ...allTalleres.map((t) => ({
+      url: `${baseUrl}/taller/${t.slug}`,
+      lastModified: t.updated_at ? new Date(t.updated_at) : new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.65,
+    })),
+  ]
+
+  return [...staticPages, ...paisesLandingPages, ...provinciaPages, ...areaPages, ...tallerPages]
 }
 

@@ -1,0 +1,119 @@
+import { cache } from 'react'
+import Link from 'next/link'
+import Script from 'next/script'
+import type { Metadata } from 'next'
+import { createClient } from '@/lib/supabase/server'
+import { Navbar } from '@/components/layout/Navbar'
+import { Footer } from '@/components/layout/Footer'
+import { PROVINCIAS_ES, normalizarProvincia } from '@/lib/areas/provincias'
+
+export const revalidate = 3600
+
+const BASE_URL = 'https://www.mapafurgocasa.com'
+
+const getConteos = cache(async () => {
+  const supabase = await createClient()
+  const conteos = new Map<string, number>()
+  let total = 0
+  const pageSize = 1000
+  for (let page = 0; ; page++) {
+    const { data, error } = await (supabase as any)
+      .from('talleres')
+      .select('provincia')
+      .eq('activo', true)
+      .range(page * pageSize, (page + 1) * pageSize - 1)
+    if (error || !data) break
+    for (const row of data) {
+      total++
+      const prov = normalizarProvincia(row.provincia)
+      if (prov) conteos.set(prov.slug, (conteos.get(prov.slug) || 0) + 1)
+    }
+    if (data.length < pageSize) break
+  }
+  return { conteos, total }
+})
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { total } = await getConteos()
+  const title = `Talleres camper en España: ${total} talleres`
+  const description = `Directorio de ${total} talleres de campers y autocaravanas en España, por provincia. Mapa, ficha y contacto.`
+  return {
+    title,
+    description,
+    alternates: { canonical: `${BASE_URL}/talleres` },
+    openGraph: { title, description, url: `${BASE_URL}/talleres` },
+  }
+}
+
+export default async function TalleresIndexPage() {
+  const { conteos, total } = await getConteos()
+  const provincias = PROVINCIAS_ES
+    .map((p) => ({ ...p, total: conteos.get(p.slug) || 0 }))
+    .filter((p) => p.total > 0)
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Inicio', item: BASE_URL },
+          { '@type': 'ListItem', position: 2, name: 'Talleres camper en España', item: `${BASE_URL}/talleres` },
+        ],
+      },
+      {
+        '@type': 'ItemList',
+        name: 'Talleres camper en España por provincia',
+        numberOfItems: provincias.length,
+        itemListElement: provincias.map((p, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          name: `Talleres camper en ${p.nombre}`,
+          url: `${BASE_URL}/talleres/${p.slug}`,
+        })),
+      },
+    ],
+  }
+
+  return (
+    <>
+      <Script id="schema-talleres-index" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <Navbar />
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-[#0b3c74] text-white">
+          <div className="max-w-[1200px] mx-auto px-4 md:px-8 py-10 md:py-14">
+            <h1 className="text-3xl md:text-5xl font-bold mb-4">Talleres de campers en España</h1>
+            <p className="text-base md:text-xl text-white/90 max-w-3xl">
+              {total} talleres de campers y autocaravanas, organizados por provincia. Misma ficha que un área: mapa, contacto y valoración Google.
+            </p>
+            <div className="mt-8">
+              <Link
+                href="/mapa?capa=talleres"
+                className="inline-flex items-center justify-center px-6 py-3 bg-white text-[#0b3c74] rounded-xl font-bold hover:bg-gray-100"
+              >
+                Verlos en el mapa
+              </Link>
+            </div>
+          </div>
+        </div>
+        <div className="max-w-[1200px] mx-auto px-4 md:px-8 py-10">
+          <h2 className="text-2xl font-bold text-[#0b3c74] mb-6">Elige provincia</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {provincias.map((p) => (
+              <Link
+                key={p.slug}
+                href={`/talleres/${p.slug}`}
+                className="bg-white border-2 border-gray-200 rounded-xl px-4 py-3 hover:border-[#0b3c74]"
+              >
+                <span className="block font-semibold text-gray-900">{p.nombre}</span>
+                <span className="block text-sm text-gray-500">{p.total} talleres</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+      <Footer />
+    </>
+  )
+}

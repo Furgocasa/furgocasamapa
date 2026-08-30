@@ -19,12 +19,16 @@ import { sinTildes } from '@/lib/areas/slug'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cookiesGranted, onCookieConsentChange } from '@/components/CookieConsentBar'
 import { avisarAreaMapa } from '@/components/chatbot/ChatbotWidget'
+import { tallerToMapPin, type MapPin } from '@/lib/talleres/map-pin'
+import type { Taller } from '@/lib/talleres/types'
 
 const SPLASH_JOKES = ['splash_joke_1', 'splash_joke_2', 'splash_joke_3'] as const
 
 export default function MapaPage() {
   const { locale, t } = useLanguage()
   const [areas, setAreas] = useState<Area[]>([])
+  const [tallerPins, setTallerPins] = useState<MapPin[]>([])
+  const [capa, setCapa] = useState<'areas' | 'talleres'>('areas')
   const [loading, setLoading] = useState(true)
   const [initialLoading, setInitialLoading] = useState(true) // Para skeleton loader
   const [loadingProgress, setLoadingProgress] = useState({ loaded: 0, total: 0 })
@@ -176,6 +180,38 @@ export default function MapaPage() {
 
     loadAreas()
   }, [locale])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const q = new URLSearchParams(window.location.search)
+    if (q.get('capa') === 'talleres') setCapa('talleres')
+  }, [])
+
+  useEffect(() => {
+    const loadTalleres = async () => {
+      try {
+        const res = await fetch(`/api/talleres?t=${Math.floor(Date.now() / 30_000)}`, { cache: 'no-store' })
+        if (!res.ok) return
+        const json = await res.json()
+        if (Array.isArray(json.talleres)) {
+          setTallerPins(json.talleres.map((t: Taller) => tallerToMapPin(t)))
+        }
+      } catch {
+        /* el conmutador quedará vacío hasta recargar */
+      }
+    }
+    loadTalleres()
+  }, [])
+
+  const cambiarCapa = (siguiente: 'areas' | 'talleres') => {
+    setCapa(siguiente)
+    setAreaSeleccionada(null)
+    if (typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    if (siguiente === 'talleres') url.searchParams.set('capa', 'talleres')
+    else url.searchParams.delete('capa')
+    window.history.replaceState({}, '', url)
+  }
 
   useEffect(() => {
     if (!initialLoading) return
@@ -402,7 +438,8 @@ export default function MapaPage() {
       paisFiltroLista
     })
     
-    return areas.filter((area: any) => {
+    const catalogo = capa === 'talleres' ? tallerPins : areas
+    return catalogo.filter((area: any) => {
       // Filtro de búsqueda
       if (filtros.busqueda) {
         const busqueda = sinTildes(filtros.busqueda)
@@ -430,7 +467,7 @@ export default function MapaPage() {
         }
       }
 
-      if (filtros.tipos?.length > 0) {
+      if (capa === 'areas' && filtros.tipos?.length > 0) {
         const tiposActivos = filtros.tipos.filter((t) =>
           (TIPO_AREA_IDS as readonly string[]).includes(t)
         )
@@ -439,7 +476,7 @@ export default function MapaPage() {
       }
 
       // Filtro de precio
-      if (filtros.precio) {
+      if (capa === 'areas' && filtros.precio) {
         if (filtros.precio === 'gratis') {
           // Gratis: precio es exactamente 0 (confirmado gratis)
           if (area.precio_noche !== 0) {
@@ -461,7 +498,7 @@ export default function MapaPage() {
       }
 
       // Filtro de características
-      if (filtros.caracteristicas.length > 0) {
+      if (capa === 'areas' && filtros.caracteristicas.length > 0) {
         if (filtros.caracteristicas.includes('verificado') && !area.verificado) {
           return false
         }
@@ -471,7 +508,7 @@ export default function MapaPage() {
       }
 
       // Filtro de servicios
-      if (filtros.servicios.length > 0) {
+      if (capa === 'areas' && filtros.servicios.length > 0) {
         const serviciosArea = area.servicios as Record<string, boolean>
         const tieneServicios = filtros.servicios.every(
           servicio => serviciosArea && serviciosArea[servicio] === true
@@ -481,7 +518,7 @@ export default function MapaPage() {
 
       return true
     })
-  }, [areas, filtros, paisFiltroLista])
+  }, [areas, tallerPins, capa, filtros, paisFiltroLista])
 
   // ✅ ÁREAS PARA EL MAPA: usan EXACTAMENTE los mismos filtros que la lista.
   // Antes había una copia idéntica de toda la lógica de filtrado (se recorrían
@@ -693,10 +730,33 @@ export default function MapaPage() {
           </AnimatePresence>
 
           {/* Recuento, botón de tipos y leyenda independientes: abrir la leyenda no ensancha el badge */}
-          <div className="absolute top-3 left-3 z-10 w-max whitespace-nowrap bg-white/90 backdrop-blur-md rounded-full shadow-lg ring-1 ring-gray-900/5 px-3 py-1.5">
+          <div className="absolute top-3 left-3 z-20 flex flex-col items-start gap-2">
+            <div className="flex rounded-full bg-white/95 shadow-lg ring-1 ring-gray-900/5 p-1">
+              <button
+                type="button"
+                onClick={() => cambiarCapa('areas')}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold ${
+                  capa === 'areas' ? 'bg-[#0b3c74] text-white' : 'text-gray-600'
+                }`}
+              >
+                Áreas
+              </button>
+              <button
+                type="button"
+                onClick={() => cambiarCapa('talleres')}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold ${
+                  capa === 'talleres' ? 'bg-[#B45309] text-white' : 'text-gray-600'
+                }`}
+              >
+                Talleres
+              </button>
+            </div>
+          <div className="w-max whitespace-nowrap bg-white/90 backdrop-blur-md rounded-full shadow-lg ring-1 ring-gray-900/5 px-3 py-1.5">
             <p className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
               <span className="text-primary-600 font-bold tabular-nums">{areasParaMapa.length}</span>
-              {areasParaMapa.length === 1 ? 'área' : 'áreas'}
+              {capa === 'talleres'
+                ? areasParaMapa.length === 1 ? 'taller' : 'talleres'
+                : areasParaMapa.length === 1 ? 'área' : 'áreas'}
               {filtros.pais && !filtros.pais.startsWith('REGION_') && (
                 <span className="text-xs text-gray-500 font-normal">· {filtros.pais}</span>
               )}
@@ -707,12 +767,14 @@ export default function MapaPage() {
               )}
             </p>
           </div>
+          </div>
 
+          {capa === 'areas' && (
           <button
             type="button"
             onClick={() => setLeyendaAbierta((v) => !v)}
             aria-expanded={leyendaAbierta}
-            className="absolute top-14 left-3 z-10 flex bg-white/90 backdrop-blur-md rounded-full shadow-lg ring-1 ring-gray-900/5 w-11 h-11 items-center justify-center active:scale-95 transition-transform"
+            className="absolute top-24 left-3 z-10 flex bg-white/90 backdrop-blur-md rounded-full shadow-lg ring-1 ring-gray-900/5 w-11 h-11 items-center justify-center active:scale-95 transition-transform"
             aria-label={t('type_filter')}
           >
             <span className="flex items-center" aria-hidden>
@@ -729,8 +791,9 @@ export default function MapaPage() {
               ))}
             </span>
           </button>
+          )}
 
-          {leyendaAbierta && (
+          {capa === 'areas' && leyendaAbierta && (
             <div className="absolute top-[6.75rem] left-3 z-30 bg-white/95 backdrop-blur-md shadow-lg rounded-2xl p-3 ring-1 ring-gray-900/5 w-60">
               <p className="text-xs font-semibold text-gray-900 mb-2">{t('type_filter')}</p>
               <div className="space-y-2">

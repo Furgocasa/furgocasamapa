@@ -17,6 +17,7 @@ import {
   getAreasByCountry,
   buscarAreasPorNombre,
   buscarInfoViajeWeb,
+  searchTalleres,
   serializeToolResultForModel,
   esGpsValido,
   sanitizarRespuestaChat,
@@ -67,6 +68,7 @@ import {
   extraerServiciosPedidos,
   nombreRecintoMencionado,
   pareceIdentificarRecinto,
+  pideTaller,
 } from '@/lib/chatbot/intencion'
 
 // ============================================
@@ -313,10 +315,28 @@ const AVAILABLE_FUNCTIONS: OpenAI.Chat.ChatCompletionCreateParams.Function[] = [
     }
   },
   {
+    name: 'search_talleres',
+    description:
+      'Busca talleres de campers del catálogo. Máximo 3 fichas. Ciudad dicha gana al GPS. Enlace /taller/slug. ' +
+      'NO la uses para áreas de pernocta ni para gasolineras.',
+    parameters: {
+      type: 'object',
+      properties: {
+        ciudad: { type: 'string', description: 'Ciudad o pueblo' },
+        provincia: { type: 'string', description: 'Provincia' },
+        nombre: { type: 'string', description: 'Nombre del taller si lo pide concreto' },
+        lat: { type: 'number' },
+        lng: { type: 'number' },
+        radio_km: { type: 'number', default: 50 },
+      },
+    },
+  },
+  {
     name: 'buscar_info_viaje',
     description:
-      'Búsqueda web SOLO para lo práctico del camino que NO está en el catálogo: gasolineras / diésel / taller de emergencia. ' +
+      'Búsqueda web SOLO para gasolineras / diésel. ' +
       'Ej: "hay gasolinera entre Madrid y Valencia". ' +
+      'NUNCA para talleres (usa search_talleres). ' +
       'NUNCA para qué ver, pueblos, monumentos, restaurantes, hoteles ni guías turísticas. ' +
       'NUNCA para listar áreas (usa search_areas).',
     parameters: {
@@ -484,7 +504,8 @@ function sanitizarArgsBusqueda(fnArgs: any, ultimoMensaje: string) {
 
 function esPreguntaFueraCatalogo(mensaje: string): boolean {
   if (!mensaje) return false
-  return /\b(gasolinera|gasolineras|gasolina|di[eé]sel|petrol|tankstelle|station.?service|talleres?\b)/i.test(mensaje)
+  if (pideTaller(mensaje)) return false
+  return /\b(gasolinera|gasolineras|gasolina|di[eé]sel|petrol|tankstelle|station.?service)\b/i.test(mensaje)
 }
 
 function pideAreasEnMensaje(mensaje: string): boolean {
@@ -1106,7 +1127,8 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 - CERCA DE MÍ: si hay GPS válido y no nombran otra ciudad, busca ahí. Si no hay GPS, pide la ciudad. No busques en todo el mundo ni inventes una ubicación.
 - NO eres una guía turística. Si piden qué ver, pueblos, planes o itinerarios, NO inventes una guía y NO uses buscar_info_viaje. Di que no cubres eso y enlaza https://www.furgocasa.com/es/blog?category=rutas
 - Si piden áreas/gasolinera Y además turismo: responde SOLO la parte de áreas/gasolinera y manda el turismo al blog de Furgocasa.
-- Gasolinera o taller de emergencia: buscar_info_viaje. Di que es info de la web, no una ficha /area/. Prohibido restaurantes, hoteles, monumentos y "qué ver".
+- Taller camper: search_talleres. Cita ficha y enlace /taller/slug. Si hay fichas, prohibido decir que no tienes.
+- Gasolinera o diésel: buscar_info_viaje. Di que es info de la web, no una ficha /area/. Prohibido restaurantes, hoteles, monumentos y "qué ver".
 - example.com u otras URLs inventadas: prohibido. Solo /area/{slug}.
 - Idioma: último mensaje del cliente. TODO en ese idioma (intro y etiquetas). Las fichas "resumen" ya están traducidas.
 
@@ -1176,6 +1198,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       Boolean(extraerNombreAreaConcreta(ultimoMensajeUsuario)) ||
       Boolean(areaEnMapa && /recomi[eé]ndame|esta no te suena|qu[eé] (pasa con |tal )?([eé]sta|[eé]sa)/i.test(ultimoMensajeUsuario))
     const forzarAreaConcreta = preguntaConcreta
+    const forzarTaller = pideTaller(ultimoMensajeUsuario) && !forzarAreaConcreta
     const pareceFueraCatalogo =
       esPreguntaFueraCatalogo(ultimoMensajeUsuario) && !pideAreasEnMensaje(ultimoMensajeUsuario)
     const nombraOtroSitioGps =
@@ -1196,7 +1219,9 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       console.log(`🔮 Llamando a OpenAI (ronda ${rounds})...`)
 
       const toolChoice: OpenAI.Chat.ChatCompletionToolChoiceOption =
-        rounds === 1 && forzarAreaConcreta && !firstFunctionName
+        rounds === 1 && forzarTaller && !firstFunctionName
+          ? { type: 'function', function: { name: 'search_talleres' } }
+          : rounds === 1 && forzarAreaConcreta && !firstFunctionName
           ? { type: 'function', function: { name: 'get_area_by_name' } }
           : rounds === 1 && pareceFueraCatalogo && !firstFunctionName
             ? { type: 'function', function: { name: 'buscar_info_viaje' } }
@@ -1206,7 +1231,9 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 
       if (toolChoice !== 'auto') {
         console.log(
-          forzarAreaConcreta
+          forzarTaller
+            ? '🔧 Forzando search_talleres'
+            : forzarAreaConcreta
             ? '📌 Forzando get_area_by_name (un área, no el corredor)'
             : pareceFueraCatalogo
               ? '🌐 Forzando buscar_info_viaje (fuera de catálogo)'
@@ -1357,6 +1384,25 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
                     `No listes áreas. El usuario quiere paradas de ruta: deriva al planificador ${q}. El chat no ve el trazado real.`,
                 }
               }
+              break
+            case 'search_talleres':
+              if (
+                ubicacionUsuario &&
+                esGpsValido(ubicacionUsuario.lat, ubicacionUsuario.lng) &&
+                !fnArgs.ciudad &&
+                !fnArgs.provincia &&
+                !fnArgs.nombre &&
+                (pideCercaDeMi(ultimoMensajeUsuario) || !nombraOtroSitio)
+              ) {
+                fnArgs.lat = ubicacionUsuario.lat
+                fnArgs.lng = ubicacionUsuario.lng
+                fnArgs.radio_km = fnArgs.radio_km || 50
+              }
+              if (!fnArgs.ciudad) {
+                const ciudad = extraerCiudadNombrada(ultimoMensajeUsuario) || extraerSitioNombrado(ultimoMensajeUsuario)
+                if (ciudad) fnArgs.ciudad = ciudad
+              }
+              functionResult = await searchTalleres(fnArgs)
               break
             case 'buscar_info_viaje':
               functionResult = await buscarInfoViajeWeb({

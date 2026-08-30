@@ -11,6 +11,8 @@ import {
   removeLocalFavorite,
 } from '@/lib/favoritos/local'
 import { track } from '@/lib/analytics/track'
+import { fichaBaseDePin } from '@/lib/talleres/map-pin'
+import { TALLER_PIN_COLOR } from '@/lib/talleres/types'
 
 const INVALID_COVER = /PhotoService\.GetPhoto|maps\.googleapis\.com\/maps\/api\/place\/js/i
 
@@ -172,7 +174,7 @@ export function buildAreaPopupHTML(
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
 
-  const color = getColor(area.tipo_area)
+  const color = fichaBaseDePin(area) === '/taller' ? TALLER_PIN_COLOR : getColor(area.tipo_area)
   const tipo = getTipoAreaLabel(area.tipo_area, locale)
   const ubicacion = [area.ciudad, area.provincia].filter(Boolean).map((v) => esc(v)).join(', ')
   const mapsUrl =
@@ -312,7 +314,7 @@ export function buildAreaPopupHTML(
             : `<p style="margin:0 0 12px 0;font-size:12px;color:#9CA3AF;font-style:italic;">${esc(t(locale, 'services_none'))}</p>`
         }
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-          <a href="/area/${esc(area.slug)}" style="display:flex;align-items:center;justify-content:center;gap:6px;background:#0b3c74;color:#fff;padding:10px;border-radius:12px;text-decoration:none;font-weight:700;font-size:13px;line-height:1;box-shadow:0 2px 6px rgba(11,60,116,0.35);">
+          <a href="${fichaBaseDePin(area)}/${esc(area.slug)}" style="display:flex;align-items:center;justify-content:center;gap:6px;background:#0b3c74;color:#fff;padding:10px;border-radius:12px;text-decoration:none;font-weight:700;font-size:13px;line-height:1;box-shadow:0 2px 6px rgba(11,60,116,0.35);">
             ${esc(t(locale, 'view_details'))}
           </a>
           <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="${btnOutline}">
