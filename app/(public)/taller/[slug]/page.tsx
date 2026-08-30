@@ -5,9 +5,11 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import Image from 'next/image'
 import { MapaUbicacion } from '@/components/area/MapaUbicacion'
 import { CtaAlquilerFurgocasa } from '@/components/area/CtaAlquilerFurgocasa'
 import { ContactoInfo } from '@/components/area/ContactoInfo'
+import { GaleriaFotos } from '@/components/area/GaleriaFotos'
 import { BackToTop } from '@/components/area/BackToTop'
 import { normalizarProvincia } from '@/lib/areas/provincias'
 import {
@@ -84,6 +86,10 @@ export default async function TallerPage({ params }: PageProps) {
   const provinciaLanding = normalizarProvincia(taller.provincia)
   const sitio = [taller.ciudad, taller.provincia].filter(Boolean).join(', ')
   const bloques = parrafos(taller.descripcion)
+  const fotos = [
+    taller.foto_principal,
+    ...(Array.isArray(taller.fotos_urls) ? taller.fotos_urls : []),
+  ].filter((u, i, arr): u is string => Boolean(u) && arr.indexOf(u) === i)
 
   const contactoArea = {
     id: taller.id,
@@ -176,6 +182,20 @@ export default async function TallerPage({ params }: PageProps) {
           </div>
         </div>
 
+        {taller.foto_principal ? (
+          <div className="relative h-[260px] sm:h-[340px] md:h-[420px] max-w-[1600px] mx-auto md:rounded-b-3xl overflow-hidden bg-slate-200">
+            <Image
+              src={taller.foto_principal}
+              alt={nombre}
+              fill
+              priority
+              quality={90}
+              className="object-cover"
+              sizes="100vw"
+            />
+          </div>
+        ) : null}
+
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-8">
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
             <div className="w-full lg:w-[60%] space-y-8">
@@ -199,6 +219,8 @@ export default async function TallerPage({ params }: PageProps) {
                   </p>
                 ) : null}
               </section>
+
+              {fotos.length > 1 ? <GaleriaFotos fotos={fotos} nombre={nombre} /> : null}
 
               <CtaAlquilerFurgocasa
                 variante="taller"
