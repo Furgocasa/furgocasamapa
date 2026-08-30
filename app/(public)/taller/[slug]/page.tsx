@@ -118,14 +118,17 @@ export default async function TallerPage({ params }: PageProps) {
   if (!taller) notFound()
 
   const supabase = await createClient()
-  const { data: relacionados } = await (supabase as any)
+  const { data: relacionadosRaw } = await (supabase as any)
     .from('talleres')
     .select('id, nombre, slug, ciudad, provincia, foto_principal, google_rating')
     .eq('provincia', taller.provincia)
     .eq('activo', true)
     .neq('id', taller.id)
     .order('google_rating', { ascending: false, nullsFirst: false })
-    .limit(4)
+    .limit(12)
+  const relacionados = (relacionadosRaw || [])
+    .filter((r: { nombre: string }) => !/nomad clean|desguace|neum[aá]tic|lunas|glassdrive|\bitv\b/i.test(r.nombre))
+    .slice(0, 4)
 
   const nombre = tituloTaller(taller.nombre)
   const direccion = direccionVisible(taller.direccion)
@@ -238,7 +241,7 @@ export default async function TallerPage({ params }: PageProps) {
                 </Link>
               )}
 
-              <CtaCenaCerca area={ctaArea} />
+              <CtaCenaCerca area={ctaArea} variante="taller" />
             </div>
 
             <div className="w-full lg:w-[40%] relative">

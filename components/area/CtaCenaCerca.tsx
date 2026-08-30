@@ -10,6 +10,13 @@ const TITULARES = [
   (sitio: string) => `Has aparcado. Ahora, ¿dónde se come de verdad en ${sitio}?`,
 ]
 
+const TITULARES_TALLER = [
+  (sitio: string) => `Sales del taller. En ${sitio} se cena de 4,7★.`,
+  (sitio: string) => `Hoy no se cocina en la furgo. ${sitio} tiene mesa.`,
+  (sitio: string) => `Google te tira 2.000 sitios. En ${sitio} solo dejamos los buenos.`,
+  (sitio: string) => `Has salido del taller. ¿Dónde se come de verdad en ${sitio}?`,
+]
+
 function pick<T>(id: string, list: T[]): T {
   let hash = 0
   for (let i = 0; i < id.length; i++) {
@@ -20,14 +27,15 @@ function pick<T>(id: string, list: T[]): T {
 
 interface Props {
   area: AreaCtaInput
+  variante?: 'area' | 'taller'
 }
 
-export function CtaCenaCerca({ area }: Props) {
+export function CtaCenaCerca({ area, variante = 'area' }: Props) {
   const href = urlCenaCerca(area)
   if (!href) return null
 
   const sitio = area.ciudad || area.provincia || 'esta zona'
-  const titular = pick(area.id || area.slug, TITULARES)(sitio)
+  const titular = pick(area.id || area.slug, variante === 'taller' ? TITULARES_TALLER : TITULARES)(sitio)
 
   return (
     <a

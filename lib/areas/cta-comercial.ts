@@ -115,21 +115,21 @@ export function resolverCtaAlquiler(area: AreaCtaInput): CtaAlquiler | null {
   return { zona, ...COPY[zona] }
 }
 
-/** En ficha de taller no se duerme: se pasa de camino. */
+/** En ficha de taller se vende probar el formato, no llevar la furgo al camperizador. */
 export function resolverCtaAlquilerTaller(area: AreaCtaInput): CtaAlquiler | null {
   const cta = resolverCtaAlquiler(area)
   if (!cta) return null
   if (cta.zona === 'murcia') {
     return {
       ...cta,
-      titulo: 'Alquila la camper en Murcia y pasa por el taller',
-      cuerpo: 'Recogida en Casillas. Neumáticos o una revisión antes de salir, a unos minutos.',
+      titulo: '¿Camperizar o probar primero? Alquila una de gran volumen en Murcia',
+      cuerpo: 'Recogida en Casillas, a diez minutos. Lista para salir: km ilimitados, desde 95 €/día.',
     }
   }
   return {
     ...cta,
-    titulo: 'Alquila la camper y sigue de ruta',
-    cuerpo: 'Recogida en Murcia. Este taller queda en tu recorrido por España.',
+    titulo: '¿Camperizar o probar primero? Alquila una camper',
+    cuerpo: 'Recogida en Murcia. Lista para salir: km ilimitados, desde 95 €/día.',
   }
 }
 

@@ -159,6 +159,7 @@ Qué dice, según zona:
 | Madrid / Albacete | Salimos desde Madrid / Albacete | Esa base |
 | Resto de España | Alquila una camper para recorrer esta zona | `/es/reservar` |
 | Fuera de España | **Nada** | Ni alquiler ni Casi Cinco |
+| Ficha `/taller` (Murcia) | ¿Camperizar o probar primero? Alquila una de gran volumen | Misma URL de zona. No «pásala por el taller»: el visitante mira camperizado, no una revisión de la furgo de alquiler |
 
 UTM obligatorio en todos los enlaces:
 
