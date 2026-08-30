@@ -248,9 +248,10 @@ export default async function TalleresProvinciaPage({
   const destacados = talleres.slice(0, Math.min(3, talleres.length))
   const indexable = s.total >= MIN_TALLERES_LANDING_INDEX
 
-  const vecinas = prov.vecinas
-    .map((slug) => PROVINCIAS_ES.find((p) => p.slug === slug))
-    .filter((p): p is ProvinciaES => Boolean(p) && slugsConTalleres.has(p.slug))
+  const vecinas = prov.vecinas.flatMap((slug) => {
+    const found = PROVINCIAS_ES.find((x) => x.slug === slug)
+    return found && slugsConTalleres.has(found.slug) ? [found] : []
+  })
 
   const cta = resolverCtaAlquilerTaller({
     id: prov.slug,
