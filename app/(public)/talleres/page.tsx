@@ -17,6 +17,7 @@ import {
 export const revalidate = 3600
 
 const BASE_URL = 'https://www.mapafurgocasa.com'
+const OG_IMAGE = `${BASE_URL}/og-image-v2.jpg`
 const TOP_N = 10
 const MIN_RESENAS_TOP = 20
 
@@ -71,7 +72,21 @@ export async function generateMetadata(): Promise<Metadata> {
     title,
     description,
     alternates: { canonical: `${BASE_URL}/talleres` },
-    openGraph: { title, description, url: `${BASE_URL}/talleres` },
+    openGraph: {
+      title,
+      description,
+      url: `${BASE_URL}/talleres`,
+      siteName: 'Mapa Furgocasa',
+      type: 'website',
+      locale: 'es_ES',
+      images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [OG_IMAGE],
+    },
   }
 }
 

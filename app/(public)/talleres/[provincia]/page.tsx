@@ -27,6 +27,7 @@ import {
 export const revalidate = 3600
 
 const BASE_URL = 'https://www.mapafurgocasa.com'
+const OG_IMAGE = `${BASE_URL}/og-image-v2.jpg`
 
 type TallerRow = {
   id: string
@@ -224,6 +225,13 @@ export async function generateMetadata({
       siteName: 'Mapa Furgocasa',
       type: 'website',
       locale: 'es_ES',
+      images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [OG_IMAGE],
     },
   }
 }
