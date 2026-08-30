@@ -19,6 +19,7 @@ import { normalizarProvincia } from '@/lib/areas/provincias'
 import {
   direccionVisible,
   esAlquilerNoTaller,
+  h1Taller,
   mapsUrlTaller,
   tallerSeoSnippet,
   tituloTaller,
@@ -136,6 +137,7 @@ export default async function TallerPage({ params }: PageProps) {
     .slice(0, 4)
 
   const nombre = tituloTaller(taller.nombre)
+  const h1 = h1Taller(taller.ciudad, taller.provincia)
   const direccion = direccionVisible(taller.direccion)
   const maps = mapsUrlTaller(taller)
   const area = areaDesdeTaller(taller, nombre, direccion, maps)
@@ -181,7 +183,8 @@ export default async function TallerPage({ params }: PageProps) {
     '@context': 'https://schema.org',
     '@type': 'AutoRepair',
     name: nombre,
-    description: area.descripcion || `Taller en ${sitio}`,
+    alternateName: h1,
+    description: area.descripcion || h1,
     url: `${BASE}/taller/${taller.slug}`,
     image: taller.foto_principal || `${BASE}/images/opengraph/opengraph_talleres.jpg`,
     telephone: taller.telefono || undefined,
@@ -218,7 +221,7 @@ export default async function TallerPage({ params }: PageProps) {
       <Navbar />
 
       <div className="min-h-screen bg-gray-50">
-        <DetalleAreaHeader area={area} variante="taller" />
+        <DetalleAreaHeader area={area} variante="taller" titulo={h1} subtitulo={nombre} />
 
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-8">
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
@@ -227,13 +230,17 @@ export default async function TallerPage({ params }: PageProps) {
 
               <CtaAlquilerFurgocasa variante="taller" area={ctaArea} />
 
-              {fotos.length > 1 ? <GaleriaFotos fotos={fotos} nombre={nombre} /> : null}
+              {fotos.length > 1 ? <GaleriaFotos fotos={fotos} nombre={h1} /> : null}
 
               {talleresRelacionados.length > 0 && (
                 <AreasRelacionadas
                   areas={talleresRelacionados}
                   hrefBase="/taller"
-                  titulo="Talleres Relacionados"
+                  titulo={
+                    taller.provincia
+                      ? `Otros talleres camper en ${taller.provincia}`
+                      : 'Otros talleres de camperización'
+                  }
                 />
               )}
 

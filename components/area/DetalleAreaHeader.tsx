@@ -27,9 +27,13 @@ import { track } from '@/lib/analytics/track'
 interface Props {
   area: Area
   variante?: 'area' | 'taller'
+  /** H1 propio (ficha taller: query local). Si no, se usa area.nombre. */
+  titulo?: string
+  /** Marca bajo el H1 (nombre del taller). */
+  subtitulo?: string
 }
 
-export function DetalleAreaHeader({ area, variante = 'area' }: Props) {
+export function DetalleAreaHeader({ area, variante = 'area', titulo, subtitulo }: Props) {
   const [isFavorite, setIsFavorite] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [localFavCount, setLocalFavCount] = useState(0)
@@ -175,7 +179,7 @@ export function DetalleAreaHeader({ area, variante = 'area' }: Props) {
           {area.foto_principal ? (
             <Image
               src={area.foto_principal}
-              alt={area.nombre}
+              alt={titulo || area.nombre}
               fill
               className="object-cover"
               priority
@@ -284,8 +288,13 @@ export function DetalleAreaHeader({ area, variante = 'area' }: Props) {
               </div>
 
               <h1 className="text-xl sm:text-3xl md:text-5xl font-extrabold text-white mb-2 md:mb-3 tracking-tight drop-shadow-md break-words">
-                {area.nombre}
+                {titulo || area.nombre}
               </h1>
+              {subtitulo && subtitulo !== (titulo || area.nombre) ? (
+                <p className="text-base sm:text-xl md:text-2xl font-semibold text-white/90 mb-2 md:mb-3 drop-shadow-sm">
+                  {subtitulo}
+                </p>
+              ) : null}
               
               <div className="flex items-start gap-2 text-slate-200 text-xs sm:text-sm md:text-base font-medium drop-shadow-sm">
                 <MapPinIcon className="w-4 h-4 md:w-5 md:h-5 text-slate-300 shrink-0 mt-0.5" />

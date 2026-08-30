@@ -171,8 +171,11 @@ Schema:
 - Provincia: breadcrumb + `FAQPage` + `ItemList`
 - Ficha: `AutoRepair` + geo + `aggregateRating` si hay nota Google
 
-Title ficha: `{Nombre} | Taller camper {ciudad, provincia}` (máx. 60).
-Description: primer párrafo propio o plantilla + nota Google (máx. 155).
+Ficha: la query local gana a la marca. No pelear solo el nombre comercial.
+- H1: `Taller de camperización en {ciudad}` (query larga)
+- Title: `Taller camper {ciudad} | {nombre}` (máx. 60; query corta + marca)
+- Subtítulo: la marca, no el H1
+- Schema: `name` = marca, `alternateName` = el H1
 
 Open Graph del hub y de las provincias: `images/opengraph/opengraph_talleres.jpg`
 (taller de camperizado, 1200×630). No reutilizar `og-image-v2.jpg` (pantallazo de `/ruta`).

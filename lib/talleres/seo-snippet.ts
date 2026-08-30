@@ -10,7 +10,13 @@ function clip(text: string, max: number): string {
 }
 
 export function tituloTaller(nombre?: string | null): string {
-  const n = (nombre || '').replace(/^[^\p{L}\p{N}]+/u, '').replace(/[.\s]+$/u, '').trim()
+  let n = (nombre || '')
+    .replace(/\([^)]*(online|shop only|solo tienda|tienda online)[^)]*\)/gi, ' ')
+    .replace(/\b(solo tienda online|shop only)\b/gi, ' ')
+    .replace(/^[^\p{L}\p{N}]+/u, '')
+    .replace(/[.\s]+$/u, '')
+    .replace(/\s+/g, ' ')
+    .trim()
   if (!n) return 'Taller'
   if (n === n.toUpperCase() && /[A-ZÁÉÍÓÚÑ]/.test(n)) {
     return n
@@ -18,6 +24,19 @@ export function tituloTaller(nombre?: string | null): string {
       .replace(/(^|[\s/-])(\S)/g, (_, sep, ch) => sep + ch.toUpperCase())
   }
   return n
+}
+
+/** Localidad que la gente busca: Cartagena, Murcia. No «nave 2». */
+export function lugarSeoTaller(ciudad?: string | null, provincia?: string | null): string {
+  const sitio = sitioTaller(ciudad, provincia)
+  if (!sitio) return ''
+  return sitio.split(',')[0].trim()
+}
+
+/** H1 de ficha: la query local, no la marca. */
+export function h1Taller(ciudad?: string | null, provincia?: string | null): string {
+  const lugar = lugarSeoTaller(ciudad, provincia)
+  return lugar ? `Taller de camperización en ${lugar}` : 'Taller de camperización'
 }
 
 /** Menos de esto: landing visible, noindex, fuera del sitemap. Molde áreas: no pueblo con 1. */
@@ -98,11 +117,10 @@ export function tallerSeoSnippet(t: {
   google_rating?: number | null
   descripcion?: string | null
 }) {
-  const sitio = [t.ciudad, t.provincia].filter(Boolean).join(', ')
-  const title = clip(
-    sitio ? `${t.nombre} | Taller camper ${sitio}` : `${t.nombre} | Taller camper`,
-    TITLE_MAX
-  )
+  const nombre = tituloTaller(t.nombre)
+  const lugar = lugarSeoTaller(t.ciudad, t.provincia)
+  const local = lugar ? `Taller camper ${lugar}` : 'Taller de camperización'
+  const title = clip(nombre && nombre !== 'Taller' ? `${local} | ${nombre}` : local, TITLE_MAX)
   const propio = (t.descripcion || '').split(/\n\s*\n/)[0]?.replace(/\s+/g, ' ').trim()
   const rating =
     t.google_rating && t.google_rating > 0
@@ -110,8 +128,8 @@ export function tallerSeoSnippet(t: {
       : ''
   const description = clip(
     propio ||
-      `${t.nombre} es un taller de camperizado y accesorios${sitio ? ` en ${sitio}` : ''}.${rating} Ficha en Mapa Furgocasa: dirección, teléfono y mapa.`,
+      `${h1Taller(t.ciudad, t.provincia)}: ficha de ${nombre}. Dirección, teléfono y mapa en MapafurgoCasa.${rating}`,
     DESC_MAX
   )
-  return { title, description }
+  return { title, description, h1: h1Taller(t.ciudad, t.provincia) }
 }
