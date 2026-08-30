@@ -20,6 +20,9 @@ export function tituloTaller(nombre?: string | null): string {
   return n
 }
 
+/** Menos de esto: landing visible, noindex, fuera del sitemap. Molde áreas: no pueblo con 1. */
+export const MIN_TALLERES_LANDING_INDEX = 3
+
 /** Ciudad de Places a veces es «nave 2» o un número. Entonces solo provincia. */
 export function sitioTaller(ciudad?: string | null, provincia?: string | null): string {
   const c = (ciudad || '').trim()
@@ -29,6 +32,14 @@ export function sitioTaller(ciudad?: string | null, provincia?: string | null): 
     /^(nave|n[ºo°.]?\s*\d|pol[ií]gono|c\/|calle |carril |pino )/i.test(c)
   const partes = sucia ? [provincia] : [c, provincia]
   return [...new Set(partes.filter(Boolean))].join(', ')
+}
+
+/** Agrupa el listado por localidad; sucias caen en la provincia. */
+export function ciudadGrupoTaller(ciudad?: string | null, provincia?: string | null): string {
+  const sitio = sitioTaller(ciudad, provincia)
+  if (!sitio) return ''
+  if (provincia && sitio === provincia) return provincia
+  return (ciudad || '').trim() || provincia || sitio
 }
 
 /** Misma fórmula que el Tío: nota × volumen. Un 5 con 2 votos no gana a un 4,8 con 80. */

@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { normalizarProvincia } from '@/lib/areas/provincias'
+import { MIN_TALLERES_LANDING_INDEX } from '@/lib/talleres/seo-snippet'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.mapafurgocasa.com'
@@ -286,11 +287,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  const tallerProvinciaSlugs = new Set<string>()
+  const tallerProvinciaConteo = new Map<string, number>()
   for (const row of allTalleres) {
     const prov = normalizarProvincia(row.provincia)
-    if (prov) tallerProvinciaSlugs.add(prov.slug)
+    if (prov) tallerProvinciaConteo.set(prov.slug, (tallerProvinciaConteo.get(prov.slug) || 0) + 1)
   }
+  const tallerProvinciaSlugs = [...tallerProvinciaConteo.entries()]
+    .filter(([, n]) => n >= MIN_TALLERES_LANDING_INDEX)
+    .map(([slug]) => slug)
+    .sort()
 
   const tallerPages: MetadataRoute.Sitemap = [
     {
@@ -299,7 +304,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly',
       priority: 0.8,
     },
-    ...[...tallerProvinciaSlugs].sort().map((slug) => ({
+    ...tallerProvinciaSlugs.map((slug) => ({
       url: `${baseUrl}/talleres/${slug}`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
