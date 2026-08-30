@@ -19,7 +19,7 @@ import { sinTildes } from '@/lib/areas/slug'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cookiesGranted, onCookieConsentChange } from '@/components/CookieConsentBar'
 import { avisarAreaMapa } from '@/components/chatbot/ChatbotWidget'
-import { tallerToMapPin, type MapPin } from '@/lib/talleres/map-pin'
+import { esPinTaller, tallerToMapPin, type MapPin } from '@/lib/talleres/map-pin'
 import { TALLER_ICON_PATH, TALLER_PIN_COLOR, type Taller } from '@/lib/talleres/types'
 
 const SPLASH_JOKES = ['splash_joke_1', 'splash_joke_2', 'splash_joke_3'] as const
@@ -28,6 +28,7 @@ export default function MapaPage() {
   const { locale, t } = useLanguage()
   const [areas, setAreas] = useState<Area[]>([])
   const [tallerPins, setTallerPins] = useState<MapPin[]>([])
+  const [talleresListos, setTalleresListos] = useState(false)
   const [capa, setCapa] = useState<'areas' | 'talleres'>('areas')
   const [loading, setLoading] = useState(true)
   const [initialLoading, setInitialLoading] = useState(true) // Para skeleton loader
@@ -108,6 +109,7 @@ export default function MapaPage() {
             slug: areaSeleccionada.slug || undefined,
             ciudad: areaSeleccionada.ciudad || undefined,
             pais: areaSeleccionada.pais || undefined,
+            fichaBase: esPinTaller(areaSeleccionada) ? '/taller' : '/area',
           }
         : null
     )
@@ -198,6 +200,8 @@ export default function MapaPage() {
         }
       } catch {
         /* el conmutador quedará vacío hasta recargar */
+      } finally {
+        setTalleresListos(true)
       }
     }
     loadTalleres()
@@ -553,42 +557,57 @@ export default function MapaPage() {
 
   // ✅ CONEXIÓN CHATBOT → MAPA: seleccionar un área por slug/id.
   // Los 3 mapas ya centran y abren el popup al cambiar areaSeleccionada.
-  const selectAreaBySlug = useCallback((slug: string) => {
+  const selectAreaBySlug = useCallback((slug: string, capaForzada?: 'areas' | 'talleres') => {
     if (!slug) return false
-    const area = areas.find((a: any) => a.slug === slug || a.id === slug)
-    if (area) {
-      handleAreaClick(area as Area)
-      return true
+    const enTalleres = tallerPins.find((a: any) => a.slug === slug || a.id === slug)
+    const enAreas = areas.find((a: any) => a.slug === slug || a.id === slug)
+    const pin = capaForzada === 'areas'
+      ? enAreas || enTalleres
+      : capaForzada === 'talleres'
+        ? enTalleres || enAreas
+        : enTalleres || enAreas
+    if (!pin) return false
+    const siguiente: 'areas' | 'talleres' = esPinTaller(pin) ? 'talleres' : 'areas'
+    setCapa(siguiente)
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      if (siguiente === 'talleres') url.searchParams.set('capa', 'talleres')
+      else url.searchParams.delete('capa')
+      window.history.replaceState({}, '', url)
     }
-    return false
-  }, [areas, handleAreaClick])
+    handleAreaClick(pin as Area)
+    return true
+  }, [areas, tallerPins, handleAreaClick])
 
   // Caso 1: llegada con /mapa?area=slug (desde el chatbot en otra página)
   const areaUrlProcesadaRef = useRef(false)
   useEffect(() => {
-    if (areas.length === 0 || areaUrlProcesadaRef.current) return
+    if (areaUrlProcesadaRef.current) return
+    if (areas.length === 0 && !talleresListos) return
     const params = new URLSearchParams(window.location.search)
     const slug = params.get('area')
     const provincia = params.get('provincia')
+    const capaUrl = params.get('capa') === 'talleres' ? 'talleres' : undefined
     if (slug) {
+      if (!selectAreaBySlug(slug, capaUrl) && (!areas.length || !talleresListos)) return
       areaUrlProcesadaRef.current = true
-      // Pequeño margen para que el mapa esté montado antes de centrar
-      setTimeout(() => selectAreaBySlug(slug), 400)
-      // Limpiar la URL para no re-seleccionar al recargar
+      setTimeout(() => selectAreaBySlug(slug, capaUrl), 400)
       window.history.replaceState({}, '', window.location.pathname)
     } else if (provincia) {
-      // Llegada desde las landings /areas/{provincia} (§15)
       areaUrlProcesadaRef.current = true
       setFiltros((prev) => ({ ...prev, busqueda: provincia }))
-      window.history.replaceState({}, '', window.location.pathname)
+      const keep = capaUrl ? '/mapa?capa=talleres' : window.location.pathname
+      window.history.replaceState({}, '', keep)
     }
-  }, [areas, selectAreaBySlug, setFiltros])
+  }, [areas, talleresListos, selectAreaBySlug, setFiltros])
 
   // Caso 2: el chatbot está abierto SOBRE el propio mapa → evento directo
   useEffect(() => {
     const handler = (e: Event) => {
-      const slug = (e as CustomEvent).detail?.slug
-      if (slug) selectAreaBySlug(slug)
+      const detail = (e as CustomEvent).detail || {}
+      const slug = detail.slug
+      const capaEvento = detail.capa === 'talleres' ? 'talleres' : undefined
+      if (slug) selectAreaBySlug(slug, capaEvento)
     }
     window.addEventListener('furgocasa:select-area', handler)
     return () => window.removeEventListener('furgocasa:select-area', handler)

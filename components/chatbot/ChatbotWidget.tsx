@@ -31,6 +31,7 @@ export type AreaEnMapa = {
   slug?: string
   ciudad?: string
   pais?: string
+  fichaBase?: '/area' | '/taller'
 }
 
 export function avisarAreaMapa(area: AreaEnMapa | null) {
@@ -569,14 +570,19 @@ export default function ChatbotWidget() {
   // Ir al MAPA con el área seleccionada (el chat se minimiza, no se pierde).
   // Si ya estamos en /mapa, avisamos a la página con un evento; si no, navegamos
   // en la MISMA pestaña con ?area=slug (la página del mapa lo lee al cargar).
-  const irAlMapa = (slug: string) => {
+  const irAlMapa = (slug: string, fichaBase?: '/area' | '/taller') => {
     if (!slug) return
     setIsMinimized(true)
-    track('chatbot_area_to_map', { event_data: { slug } })
+    track('chatbot_area_to_map', { event_data: { slug, fichaBase } })
+    const capa = fichaBase === '/taller' ? 'talleres' : undefined
     if (pathname === '/mapa') {
-      window.dispatchEvent(new CustomEvent('furgocasa:select-area', { detail: { slug } }))
+      window.dispatchEvent(
+        new CustomEvent('furgocasa:select-area', { detail: { slug, capa } })
+      )
     } else {
-      router.push(`/mapa?area=${encodeURIComponent(slug)}`)
+      const qs = new URLSearchParams({ area: slug })
+      if (capa) qs.set('capa', capa)
+      router.push(`/mapa?${qs.toString()}`)
     }
   }
   
@@ -945,8 +951,8 @@ export default function ChatbotWidget() {
                             key={area.id}
                             role="button"
                             tabIndex={0}
-                            onClick={() => irAlMapa(area.slug)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') irAlMapa(area.slug) }}
+                            onClick={() => irAlMapa(area.slug, area.fichaBase)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') irAlMapa(area.slug, area.fichaBase) }}
                             className="w-full text-left flex gap-2.5 bg-white hover:bg-sky-50 border border-gray-200 hover:border-sky-300 rounded-xl overflow-hidden transition-all group shadow-sm cursor-pointer"
                             title="Ver en el mapa"
                           >
@@ -963,6 +969,7 @@ export default function ChatbotWidget() {
                             <div className="py-2 pr-2.5 min-w-0 flex-1">
                               <div className="flex items-start gap-1">
                                 <p className="font-semibold text-gray-900 text-xs leading-tight truncate group-hover:text-sky-700 flex-1">{area.nombre}</p>
+                                {area.fichaBase !== '/taller' && (
                                 <button
                                   type="button"
                                   onClick={(e) => {
@@ -975,11 +982,14 @@ export default function ChatbotWidget() {
                                 >
                                   {favIds.has(area.id) ? '❤️' : '🤍'}
                                 </button>
+                                )}
                               </div>
                               <p className="text-[11px] text-gray-500 truncate">📍 {area.ciudad}, {area.pais}</p>
                               <div className="flex items-center gap-2 mt-1 text-[11px]">
-                                <span className={`font-bold ${area.precio_noche === 0 ? 'text-green-600' : 'text-gray-800'}`}>
-                                  {area.precio_noche === 0
+                                <span className={`font-bold ${area.fichaBase === '/taller' ? 'text-[#B45309]' : area.precio_noche === 0 ? 'text-green-600' : 'text-gray-800'}`}>
+                                  {area.fichaBase === '/taller'
+                                    ? 'Taller'
+                                    : area.precio_noche === 0
                                     ? 'Gratis'
                                     : area.precio_noche != null
                                       ? `${area.precio_noche}€/noche`

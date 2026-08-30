@@ -434,3 +434,46 @@ export async function generateAndStoreAreaImage(
 
   return { publicUrl, foto_principal: publicUrl, fotos_urls }
 }
+
+function buildTallerImagePrompt(t: AreaImageInput): string {
+  const lugar = [t.ciudad, t.provincia, t.pais].filter(Boolean).join(', ') || 'España'
+  const nombre = (t.nombre || 'camper workshop').trim()
+  const paisaje = paisajeDeUbicacion(t)
+  return [
+    `Photorealistic exterior of a small camper conversion workshop named "${nombre}" in ${lugar}.`,
+    `A white van or motorhome parked at the workshop door. Tools, metal door, modest industrial or peri-urban building.`,
+    `Landscape: ${paisaje}. Late-afternoon natural light, no text, no logos, no watermark, no people looking at camera.`,
+    'Not a campsite, not a motorhome aire, not a tyre shop. Looks like a real Spanish camper workshop.',
+  ].join(' ')
+}
+
+/** Colchón IA para un taller sin foto oficial. Misma marca de agua que las áreas. */
+export async function generateAndStoreTallerImage(
+  supabase: SupabaseClient,
+  taller: AreaImageInput & { id: string; foto_principal?: string | null; fotos_urls?: string[] | null }
+): Promise<{ publicUrl: string; foto_principal: string; fotos_urls: string[] }> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY no configurada')
+  }
+  await ensureAreasBucket(supabase)
+  const generated = await generateBytes(buildTallerImagePrompt(taller), null)
+  const bytes = await applyAiWatermark(generated.bytes)
+  const path = `talleres-ia/${taller.id}-${Date.now()}.jpg`
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, bytes, { contentType: 'image/jpeg', upsert: true })
+  if (uploadError) throw uploadError
+  const publicUrl = supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl
+  const actuales = Array.isArray(taller.fotos_urls) ? taller.fotos_urls.filter(Boolean) : []
+  const fotos_urls = [publicUrl, ...actuales.filter((u) => u !== publicUrl)].slice(0, 4)
+  const { error: updateError } = await (supabase as any)
+    .from('talleres')
+    .update({
+      foto_principal: publicUrl,
+      fotos_urls,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', taller.id)
+  if (updateError) throw updateError
+  return { publicUrl, foto_principal: publicUrl, fotos_urls }
+}

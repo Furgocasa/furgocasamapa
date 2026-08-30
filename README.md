@@ -29,6 +29,7 @@
 - 🚐 **Splash de carga** con furgoneta animada flotando sobre el mapa (no bloquea)
 - 🔵 **Clustering inteligente** con Supercluster (agrupa marcadores por zoom)
 - 🎯 **Zoom inteligente** por región/país (Europa, Sudamérica, Centroamérica)
+- 🔧 **Capa Talleres**: conmutador Áreas | Talleres. Catálogo aparte (`talleres`), pin ámbar. Guía: **[GUIA_TALLERES.md](./GUIA_TALLERES.md)**
 - 🔍 **Filtros táctiles 3.0**: tarjetas por tipo, chips de servicios, precio segmentado
 - 📍 **Búsqueda geográfica** con autocompletado Google Places (lupa plegable en móvil)
 - 📱 **Responsive** adaptado a móvil y desktop
@@ -37,7 +38,7 @@ Sistema visual completo (tokens, basemap, móvil, filtros): **[GUIA_DISENO_V3.md
 
 ### Para Usuarios
 - 🛣️ **Planificador de rutas** con paradas intermedias (guardar + volcar áreas a favoritos). En móvil abre el formulario al entrar; si lo cierran, un aviso en el mapa para calcular.
-- 🤖 **Chatbot IA "Tío Viajero"** — áreas, corazón en cards, atajos a tasación IA y QR
+- 🤖 **Chatbot IA "Tío Viajero"** — áreas, talleres (`search_talleres` → `/taller/{slug}`), corazón en cards, atajos a tasación IA y QR
 - ❤️ **Favoritos sin cuenta** (localStorage) y sync al crear sesión
 - ⭐ **Estuve aquí**: visita + valoración de área en un solo modal
 - 👤 **Home logada**: sitios guardados + última ruta + bloque furgo
@@ -45,7 +46,7 @@ Sistema visual completo (tokens, basemap, móvil, filtros): **[GUIA_DISENO_V3.md
 - 🚨 **Sistema de alertas QR** para accidentes (visible en ficha, home y navbar)
 - ⬆️ **Botón Back to Top** en páginas de detalle
 
-Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMENT.md)**. Para revisar fichas, zonas, países o toda la base: **[GUIA_REVISION_AREAS.md](./GUIA_REVISION_AREAS.md)**. El mapa existe para el alquiler de Furgocasa, no para competir con Park4Night: **[GUIA_MAPA_ALQUILER.md](./GUIA_MAPA_ALQUILER.md)**.
+Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMENT.md)**. Para revisar fichas, zonas, países o toda la base: **[GUIA_REVISION_AREAS.md](./GUIA_REVISION_AREAS.md)**. El mapa existe para el alquiler de Furgocasa, no para competir con Park4Night: **[GUIA_MAPA_ALQUILER.md](./GUIA_MAPA_ALQUILER.md)**. Talleres camper (capa, fichas, Tío, import): **[GUIA_TALLERES.md](./GUIA_TALLERES.md)**.
 
 ### Para Administradores
 - ⚙️ **Panel Admin 3.0** (`/admin`): menú lateral oscuro con secciones agrupadas (Áreas / IA y Chatbot / Datos y análisis / Sistema), barra superior con «Ver web» y dashboard con contadores en vivo. Layout único en `app/admin/layout.tsx` (auth admin centralizada; la navegación se edita en su array `NAV`)
@@ -89,9 +90,11 @@ Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMEN
 ```
 ├── app/
 │   ├── (public)/          # Páginas públicas
-│   │   ├── mapa/          # Mapa principal
+│   │   ├── mapa/          # Mapa principal (capa Áreas | Talleres)
 │   │   ├── ruta/          # Planificador de rutas
 │   │   ├── area/[slug]/   # Detalle de área
+│   │   ├── talleres/      # Hub + landings /talleres/[provincia]
+│   │   ├── taller/[slug]/ # Ficha de taller camper
 │   │   ├── perfil/        # Dashboard usuario
 │   │   └── mis-autocaravanas/
 │   ├── admin/             # Panel administración (layout propio con sidebar)
@@ -105,13 +108,14 @@ Guía de producto y técnica del embudo: **[GUIA_ENGAGEMENT.md](./GUIA_ENGAGEMEN
 │   ├── banners_furgocasa/ # Archivos HTML editables de banners
 │   └── banners_casicinco/ # Archivos HTML editables de banners
 ├── hooks/                 # useMapConfig, useToast, etc.
-├── lib/                   # Supabase, i18n, analytics, favoritos, areas/slug.ts
+├── lib/                   # Supabase, i18n, analytics, favoritos, areas/slug.ts, talleres/
 ├── supabase/migrations/   # Migraciones SQL
 ├── types/                 # Tipos TypeScript
 ├── GUIA_DISENO_V3.md      # Sistema visual 3.0: tokens, basemap, móvil, filtros
 ├── GUIA_ENGAGEMENT.md     # Embudo: favoritos, auth, furgo, digest
 ├── GUIA_MAPA_ALQUILER.md  # Criterio: el mapa al servicio del alquiler Furgocasa
 ├── GUIA_REVISION_AREAS.md # Ciclo de auditoría y corrección de fichas
+├── GUIA_TALLERES.md       # Capa talleres: mapa, fichas, Tío, import, SEO
 ├── PLAN_MEJORAS.md        # Seguimiento de producto
 ├── CAMBIOS_CURSOR.md      # Registro de cambios verificables
 └── .cursor/rules/         # Reglas (tipos, activo, Supabase vía .env.local)
@@ -166,6 +170,7 @@ Cifras de producción (agosto 2026; crecen con cada import):
 | 🌎 Sudamérica | Argentina (~308), Chile (~275), Uruguay… | ~600 |
 | 🌴 México / Centroamérica | trailer parks y RV parks | ~400 |
 | **Total activas** | | **~6.100** |
+| 🔧 Talleres camper (España) | Capa propia, no mezclados | **388** |
 
 Destacados recientes:
 
@@ -258,7 +263,7 @@ El modelo de texto por defecto es **`gpt-5.6-terra`** ([docs OpenAI](https://dev
 
 Terra cubre Chat Completions, Responses, function calling y `web_search`. Las fotos **no** usan Terra.
 
-> El Tío Viajero usa **gpt-5.6-terra** con function calling contra la base de áreas (no `web_search`: el catálogo es la fuente de verdad). Con tools el reasoning va a `none` para evitar 400. GPT-5 no admite temperature custom.
+> El Tío Viajero usa **gpt-5.6-terra** con function calling contra el catálogo (áreas y talleres; no `web_search` para fichas). Con tools el reasoning va a `none` para evitar 400. GPT-5 no admite temperature custom. Talleres: `search_talleres`, enlace `/taller/{slug}`. Gasolinera: `buscar_info_viaje`.
 
 ### Tío Viajero: producto (24 ago 2026)
 
@@ -354,7 +359,7 @@ Solo entra lo que encaja en **una de estas tres**. **Buscar** y **categorizar** 
 
 **Criterio:** ¿es un área municipal, un área empresarial/particular o un camping? Si no, **no entra**. Weingut, Brit Stop y «parking autocaravanas» no son un cuarto tipo: privada o pública.
 
-**Qué no entra:** parking del polideportivo, solar, arcén, zona de acampada, wild camp, taller, hire.
+**Qué no entra en `areas`:** parking del polideportivo, solar, arcén, zona de acampada, wild camp, taller, hire. El taller camper vive en la tabla `talleres` y en su capa: [GUIA_TALLERES.md](./GUIA_TALLERES.md).
 
 En cada búsqueda nueva, `decidirUbicacion()` corre **al encontrar** el sitio: o entra con uno de los tres tipos, o no se inserta. Recategorizar: `scripts/scripts_empresas/reclassify-tipos.ts`.
 
@@ -404,6 +409,7 @@ Cada país se trata como mercado propio: **se busca con el nombre local**, no co
 
 | Versión | Fecha | Cambios principales |
 |---------|-------|---------------------|
+| v5.3 | 30 ago 2026 | Capa Talleres (388 camperizadores ES): `/mapa?capa=talleres`, hub `/talleres`, ficha `/taller/{slug}`, Tío `search_talleres`. Ver `GUIA_TALLERES.md` |
 | v5.2 | 24 ago 2026 | `/ruta` móvil abre el planificador; atajo de ruta guarda GPS en el admin; revisor: `/ruta` = correcta |
 | v5.1 | 24 ago 2026 | Tío Viajero: GPS compartido, 2 preguntas anónimas, rutas → `/ruta`, admin = veredicto IA, ↻ no revive el hilo al F5 |
 | v5.0 | 22 ago 2026 | **Admin 3.0**: panel con menú lateral agrupado, layout propio, auth centralizada y dashboard con contadores |

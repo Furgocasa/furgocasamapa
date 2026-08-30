@@ -7,6 +7,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { esPreguntaAreaConcreta } from '@/lib/chatbot/intencion'
+import { esAlquilerNoTaller } from '@/lib/talleres/seo-snippet'
 
 // Cliente de Supabase con service role para acceso completo
 function getSupabaseClient() {
@@ -65,6 +66,8 @@ export interface AreaResumen {
   google_maps_url: string | null
   fotos_urls: string[]
   foto_principal?: string | null
+  /** Área o taller. Las tarjetas y el mapa lo usan para la URL. */
+  fichaBase?: '/area' | '/taller'
 }
 
 /** Media global aproximada de la plataforma (priors bayesianos). */
@@ -485,7 +488,7 @@ export function serializeToolResultForModel(result: any, locale: ChatLocale = 'e
     id: a.id,
     slug: a.slug,
     nombre: a.nombre,
-    resumen: formatAreaParaChat(a, locale),
+    resumen: formatFichaParaChat(a, locale),
     google_rating: a.google_rating ?? null,
     google_ratings_total: a.google_ratings_total ?? null,
     precio_noche: a.precio_noche ?? null,
@@ -499,7 +502,7 @@ export function serializeToolResultForModel(result: any, locale: ChatLocale = 'e
     return JSON.stringify({
       total: mostradas.length,
       instrucciones:
-        `Muestra SOLO estas ${mostradas.length} (no digas un número mayor). El campo "resumen" YA está en el idioma de respuesta: pégalo TAL CUAL (tipo, servicios, rating, /area/{slug}). El tipo_area es el único válido: no llames pública a una privada ni al revés, ni presentes un camping si el usuario lo rechazó. Si el precio es desconocido el resumen lo dice: NUNCA lo conviertas en Gratis. No inventes tarifas semanales/mensuales ni servicios ni pegues Google Maps / imágenes.`,
+        `Muestra SOLO estas ${mostradas.length} (no digas un número mayor). El campo "resumen" YA está en el idioma de respuesta: pégalo TAL CUAL (tipo, servicios, rating, /area/{slug} o /taller/{slug}). El tipo_area es el único válido en áreas: no llames pública a una privada ni al revés, ni presentes un camping si el usuario lo rechazó. Si el precio es desconocido el resumen lo dice: NUNCA lo conviertas en Gratis. No inventes tarifas semanales/mensuales ni servicios ni pegues Google Maps / imágenes.`,
       areas: mostradas.map(mapArea),
     })
   }
@@ -1382,7 +1385,7 @@ export function componerRespuestaConFichas(
       enFicha = true
       continue
     }
-    if (enFicha && (/^[📍🏷️💰✨⭐🅿️🔗📏↔]/.test(l) || /✨ Servicios:|✨ Services:|✨ Servizi:|✨ Serviços:|🔗 \/area\//.test(l))) {
+    if (enFicha && (/^[📍🏷️💰✨⭐🅿️🔗📏↔]/.test(l) || /✨ Servicios:|✨ Services:|✨ Servizi:|✨ Serviços:|🔗 \/area\/|🔗 \/taller\//.test(l))) {
       continue
     }
     if (enFicha && !l) {
@@ -1391,11 +1394,11 @@ export function componerRespuestaConFichas(
     }
     enFicha = false
     if (/autocaravanas\.com|example\.com/i.test(l)) continue
-    if (/💰|✨ Servicios:|✨ Services:|🔗 \/area\//.test(l)) continue
+    if (/💰|✨ Servicios:|✨ Services:|🔗 \/area\/|🔗 \/taller\//.test(l)) continue
     keep.push(linea)
   }
   const intro = keep.join('\n').replace(/\n{3,}/g, '\n\n').trim()
-  const fichas = areas.slice(0, 3).map((a) => formatAreaParaChat(a, locale)).join('\n')
+  const fichas = areas.slice(0, 3).map((a) => formatFichaParaChat(a, locale)).join('\n')
   return [intro, fichas].filter(Boolean).join('\n\n')
 }
 
@@ -1441,7 +1444,8 @@ export function formatAreaParaChat(area: AreaResumen, locale: ChatLocale = 'es')
 
   // Link interno (las tarjetas del chat también lo muestran; evita Google Maps / markdown de imagen)
   if (area.slug) {
-    texto += `🔗 /area/${area.slug}\n`
+    const base = area.fichaBase === '/taller' ? '/taller' : '/area'
+    texto += `🔗 ${base}/${area.slug}\n`
   }
   
   return texto
@@ -1482,6 +1486,33 @@ export interface InfoViajeWebParams {
   idioma?: ChatLocale
 }
 
+const CAMPOS_TALLER_CHAT =
+  'id, nombre, slug, ciudad, provincia, pais, latitud, longitud, descripcion, google_rating, google_ratings_total, foto_principal, fotos_urls, google_maps_url'
+
+function tallerAResumen(t: any): AreaResumen {
+  return {
+    id: t.id,
+    nombre: t.nombre,
+    slug: t.slug,
+    ciudad: t.ciudad || '',
+    provincia: t.provincia || '',
+    pais: t.pais || 'España',
+    latitud: Number(t.latitud) || 0,
+    longitud: Number(t.longitud) || 0,
+    distancia_km: t.distancia_km != null ? Number(t.distancia_km) : undefined,
+    precio_noche: null,
+    servicios: {},
+    tipo_area: 'taller',
+    google_rating: t.google_rating != null ? Number(t.google_rating) : null,
+    google_ratings_total: t.google_ratings_total,
+    plazas_totales: null,
+    google_maps_url: t.google_maps_url || null,
+    fotos_urls: Array.isArray(t.fotos_urls) ? t.fotos_urls : [],
+    foto_principal: t.foto_principal || null,
+    fichaBase: '/taller',
+  }
+}
+
 export async function searchTalleres(params: {
   ciudad?: string
   provincia?: string
@@ -1489,16 +1520,7 @@ export async function searchTalleres(params: {
   lng?: number
   radio_km?: number
   nombre?: string
-}): Promise<Array<{
-  nombre: string
-  slug: string
-  ciudad: string | null
-  provincia: string | null
-  google_rating: number | null
-  google_ratings_total: number | null
-  distancia_km?: number
-  resumen: string
-}>> {
+}): Promise<AreaResumen[]> {
   const supabase = getSupabaseClient()
   if (params.lat != null && params.lng != null) {
     const { data, error } = await (supabase as any).rpc('talleres_cerca', {
@@ -1507,18 +1529,18 @@ export async function searchTalleres(params: {
       radio_km: params.radio_km || 50,
     })
     if (error) throw error
-    return (data || []).slice(0, 3).map((t: any) => ({
-      ...t,
-      resumen: formatTallerParaChat(t),
-    }))
+    return (data || [])
+      .filter((t: any) => !esAlquilerNoTaller(t.nombre, t.descripcion))
+      .slice(0, 3)
+      .map((t: any) => tallerAResumen(t))
   }
 
   let query = (supabase as any)
     .from('talleres')
-    .select('nombre, slug, ciudad, provincia, google_rating, google_ratings_total')
+    .select(CAMPOS_TALLER_CHAT)
     .eq('activo', true)
     .order('google_rating', { ascending: false, nullsFirst: false })
-    .limit(3)
+    .limit(8)
 
   if (params.nombre) query = query.ilike('nombre', `%${params.nombre}%`)
   if (params.ciudad) query = query.ilike('ciudad', `%${params.ciudad}%`)
@@ -1526,7 +1548,43 @@ export async function searchTalleres(params: {
 
   const { data, error } = await query
   if (error) throw error
-  return (data || []).map((t: any) => ({ ...t, resumen: formatTallerParaChat(t) }))
+  return (data || [])
+    .filter((t: any) => !esAlquilerNoTaller(t.nombre, t.descripcion))
+    .slice(0, 3)
+    .map((t: any) => tallerAResumen(t))
+}
+
+export async function buscarTalleresPorNombre(
+  nombre: string,
+  limit = 2
+): Promise<AreaResumen[]> {
+  const termino = String(nombre || '').trim()
+  if (!termino || termino.length < 3) return []
+  const supabase = getSupabaseClient()
+  const { data, error } = await (supabase as any)
+    .from('talleres')
+    .select(CAMPOS_TALLER_CHAT)
+    .eq('activo', true)
+    .ilike('nombre', `%${termino.replace(/,/g, '')}%`)
+    .order('google_rating', { ascending: false, nullsFirst: false })
+    .limit(Math.max(8, limit * 3))
+  if (error) throw error
+  return (data || [])
+    .filter((t: any) => !esAlquilerNoTaller(t.nombre, t.descripcion))
+    .slice(0, limit)
+    .map((t: any) => tallerAResumen(t))
+}
+
+export async function getTallerDetails(id: string): Promise<AreaResumen | null> {
+  const supabase = getSupabaseClient()
+  const { data, error } = await (supabase as any)
+    .from('talleres')
+    .select(CAMPOS_TALLER_CHAT)
+    .eq('id', id)
+    .eq('activo', true)
+    .maybeSingle()
+  if (error || !data) return null
+  return tallerAResumen(data)
 }
 
 export function formatTallerParaChat(t: {
@@ -1549,6 +1607,11 @@ export function formatTallerParaChat(t: {
   }
   if (t.slug) texto += `🔗 /taller/${t.slug}\n`
   return texto
+}
+
+export function formatFichaParaChat(area: AreaResumen, locale: ChatLocale = 'es'): string {
+  if (area.fichaBase === '/taller') return formatTallerParaChat(area)
+  return formatAreaParaChat(area, locale)
 }
 
 /**

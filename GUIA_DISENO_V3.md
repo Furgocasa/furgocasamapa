@@ -24,10 +24,13 @@ o hex sueltos en componentes: usar los tokens.
 | `tipo.publica` | `#0284c7` | Pin y filtro de área pública |
 | `tipo.privada` | `#FF6B35` | Pin y filtro de área privada |
 | `tipo.camping` | `#52B788` | Pin y filtro de camping |
+| Taller (capa) | `#B45309` | Pin y conmutador de la capa Talleres. **No** es `tipo_area` |
 
-El color de tipo se obtiene siempre de `getTipoAreaColor()` (`lib/areas/tipo-area.ts`),
+El color de tipo de **área** se obtiene siempre de `getTipoAreaColor()` (`lib/areas/tipo-area.ts`),
 nunca a mano. El mismo color se usa en pines del mapa, leyenda y tarjetas de filtro:
-es el hilo conductor visual de los tres tipos.
+es el hilo conductor visual de los tres tipos. El pin de taller es otra capa:
+`TALLER_PIN_COLOR` + `TALLER_ICON_PATH` en `lib/talleres/types.ts`. Guía:
+[GUIA_TALLERES.md](./GUIA_TALLERES.md).
 
 ### Tipografía
 
@@ -170,6 +173,8 @@ Sin checkboxes de 16px: todo control es táctil, mínimo ~40px.
   En desktop muestra una bolita `accent-500` con el nº de filtros activos.
 - **Tipo de ubicación**: 3 tarjetas botón con el color de `getTipoAreaColor()`
   (borde + fondo al 8% + check al activarse). Mismo lenguaje que los pines.
+  En capa Talleres se añade la tarjeta ámbar (llave); precio/servicios se
+  pintan pero no recortan el catálogo.
 - **Servicios**: rejilla de chips a 2 columnas con icono; activo =
   `border-primary-600 bg-primary-50`.
 - **Precio**: botones segmentados 2×2; activo relleno `bg-primary-600` blanco.

@@ -30,7 +30,7 @@ export function ChatMensajeTexto({
     .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
     .replace(/(^|\n)\s*[-*]\s+/g, '$1• ')
   const tokenRegex =
-    /(\[[^\]]+\]\([^)]+\))|(Ver en Google Maps:\s*https?:\/\/[^\s)]+)|(\/area\/[a-z0-9\-]+)|(\/ruta(?:\?[^\s]*)?)|(https?:\/\/[^\s)]+)/gi
+    /(\[[^\]]+\]\([^)]+\))|(Ver en Google Maps:\s*https?:\/\/[^\s)]+)|(\/area\/[a-z0-9\-]+)|(\/taller\/[a-z0-9\-]+)|(\/ruta(?:\?[^\s]*)?)|(https?:\/\/[^\s)]+)/gi
 
   const nodes: ReactNode[] = []
   const key = { n: 0 }
@@ -71,7 +71,7 @@ export function ChatMensajeTexto({
           🗺️ Ver en Google Maps
         </a>
       )
-    } else if (/^\/area\//i.test(token) || /^\/ruta/i.test(token)) {
+    } else if (/^\/area\//i.test(token) || /^\/taller\//i.test(token) || /^\/ruta/i.test(token)) {
       nodes.push(
         <Link
           key={key.n++}
@@ -79,7 +79,11 @@ export function ChatMensajeTexto({
           onClick={onInternalNavigate}
           className="text-sky-700 hover:text-sky-900 underline font-medium"
         >
-          {token.startsWith('/area/') ? 'Ver área →' : 'Planificador de rutas →'}
+          {token.startsWith('/taller/')
+            ? 'Ver taller →'
+            : token.startsWith('/area/')
+              ? 'Ver área →'
+              : 'Planificador de rutas →'}
         </Link>
       )
     } else if (/^https?:\/\//i.test(token)) {

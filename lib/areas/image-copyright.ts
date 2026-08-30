@@ -127,7 +127,9 @@ export function classifyUrl(url: string): ClasificacionImagen {
   const host = hostOf(url)
   const full = (url || '').toLowerCase()
   if (!url) return 'invalid'
-  if (full.includes('/storage/v1/object/public/areas/ia/')) return 'ia_propia'
+  if (full.includes('/storage/v1/object/public/areas/ia/') || full.includes('/storage/v1/object/public/areas/talleres-ia/')) {
+    return 'ia_propia'
+  }
   if (!host && full.startsWith('x-raw-image://')) return 'basura'
   if (!host) return 'invalid'
   if (MAP_URL.some((p) => full.includes(p))) return 'mapa'

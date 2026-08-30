@@ -101,8 +101,10 @@ El popup de taller **aún** enseña Favorito y «Estuve aquí» (el HTML es el d
 área). La ficha `/taller` no tiene corazón. No guardar un taller en `favoritos`
 (esa tabla es de `area_id`).
 
-El chatbot sobre el mapa (`furgocasa:select-area` / `?area=`) solo busca en
-`areas`, no en `tallerPins`.
+El chatbot sobre el mapa (`furgocasa:select-area` / `?area=`) busca en **los dos
+catálogos**. Si la ficha es taller, cambia a la capa Talleres y abre el pin.
+Las tarjetas del Tío llevan `/taller/{slug}` igual que las de área llevan
+`/area/{slug}`. El mapa solo cambia de capa para ver; el chat responde de todo.
 
 ---
 
@@ -279,9 +281,9 @@ npx ts-node --project tsconfig.scripts.json scripts/enriquecer-fotos-talleres.ts
 # IMG_DRYRUN=1  IMG_LIMIT=20  IMG_MAX=4  IMG_CONCURRENCY=3
 ```
 
-`scrapeFotosWebOficial()` (`lib/areas/scrape-official-images.ts`). No Google,
-no logo, no Instagram, no IA. 30 ago: **246** con foto de **405** de entonces;
-98 webs sin foto usable.
+`scrapeFotosWebOficial()` (`lib/areas/scrape-official-images.ts`). Primero la
+web oficial. Si no queda foto, colchón IA (`generateAndStoreTallerImage`,
+marcada). No Google ni Instagram.
 
 ---
 

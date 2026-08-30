@@ -110,6 +110,7 @@ export function extraerNombreAreaConcreta(mensaje: string): string {
   if (pideCercaDeMi(t)) return ''
   const m =
     t.match(/castillo de\s+([A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9\s'-]{2,40})/i) ||
+    t.match(/taller(?:\s+camper)?\s+(?:de\s+)?([A-ZÁÉÍÓÚÑ][A-Za-zÀ-ÿ0-9\s'-]{2,40})/) ||
     t.match(/(?:[aá]rea(?: de autocaravanas)?|camping)\s+(?:de\s+)?([A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9\s'-]{2,40})/i) ||
     t.match(/(?:la de|el de|la del|el del)\s+([A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9\s'-]{2,40})/i)
   if (!m) return ''

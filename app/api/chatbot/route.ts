@@ -18,6 +18,8 @@ import {
   buscarAreasPorNombre,
   buscarInfoViajeWeb,
   searchTalleres,
+  buscarTalleresPorNombre,
+  getTallerDetails,
   serializeToolResultForModel,
   esGpsValido,
   sanitizarRespuestaChat,
@@ -387,6 +389,7 @@ interface ChatbotRequest {
     slug?: string
     ciudad?: string
     pais?: string
+    fichaBase?: '/area' | '/taller'
   } | null
 }
 
@@ -1063,7 +1066,7 @@ El Tío DEBE usar las últimas frases de ESTA conversación. No empieces de cero
 ${hiloModelo.slice(-8).map((m) => `- ${m.role === 'user' ? 'Usuario' : 'Tío'}: ${m.content.slice(0, 220)}`).join('\n') || '- (primer mensaje)'}
 - GPS (dónde está físicamente): ${ciudadGpsTxt}
 - Ciudades ya dichas en el hilo: ${ciudadesHilo.join(', ') || '(ninguna aún)'}
-- Pin abierto en el mapa: ${areaEnMapa ? `${areaEnMapa.nombre} (${[areaEnMapa.ciudad, areaEnMapa.pais].filter(Boolean).join(', ')}) /area/${areaEnMapa.slug || ''}` : '(ninguno)'}
+- Pin abierto en el mapa: ${areaEnMapa ? `${areaEnMapa.nombre} (${[areaEnMapa.ciudad, areaEnMapa.pais].filter(Boolean).join(', ')}) ${areaEnMapa.fichaBase === '/taller' ? '/taller' : '/area'}/${areaEnMapa.slug || ''}` : '(ninguno)'}
 - "aquí / cerca de mí / donde estoy" → GPS (${ciudadGpsTxt}).
 - "esta / esa / la del mapa / recomiéndame un área" con pin abierto → ESA área, una ficha.
 - "allí / la de antes" → el hilo (${ciudadHilo || ciudadGpsTxt}).
@@ -1128,6 +1131,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 - NO eres una guía turística. Si piden qué ver, pueblos, planes o itinerarios, NO inventes una guía y NO uses buscar_info_viaje. Di que no cubres eso y enlaza https://www.furgocasa.com/es/blog?category=rutas
 - Si piden áreas/gasolinera Y además turismo: responde SOLO la parte de áreas/gasolinera y manda el turismo al blog de Furgocasa.
 - Taller camper: search_talleres. Cita ficha y enlace /taller/slug. Si hay fichas, prohibido decir que no tienes.
+- Si piden un nombre concreto (Petervan, un taller, un área): busca en los dos catálogos. El enlace es /area/{slug} o /taller/{slug} según la ficha.
 - Gasolinera o diésel: buscar_info_viaje. Di que es info de la web, no una ficha /area/. Prohibido restaurantes, hoteles, monumentos y "qué ver".
 - example.com u otras URLs inventadas: prohibido. Solo /area/{slug}.
 - Idioma: último mensaje del cliente. TODO en ese idioma (intro y etiquetas). Las fichas "resumen" ya están traducidas.
@@ -1140,7 +1144,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 3. Si este turno trae fichas, prohibido decir «no tengo». Di el mismo número que te llegan (máx. 3).
 4. Follow-up («y con duchas», «más baratos», «¿y en Murcia?») conserva filtros y sitio. Una ciudad SOLA, sin «y» ni filtro, es búsqueda nueva: no heredes duchas/gratis.
 5. «Cerca» sin GPS → pregunta la ciudad. No inventes dónde está.
-6. Solo /area/{slug} y /ruta. Prohibido Google Maps, maps.google, goo.gl/maps, example.com.`
+6. Solo /area/{slug}, /taller/{slug} y /ruta. Prohibido Google Maps, maps.google, goo.gl/maps, example.com.`
     
     // 5. PREPARAR MENSAJES COMPLETOS (un solo hilo, sin duplicar)
     const fullMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
@@ -1367,6 +1371,10 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
                 fnArgs.limit || 2,
                 ubicacionUsuario
               )
+              if (!Array.isArray(functionResult) || functionResult.length === 0) {
+                const talleresNombrados = await buscarTalleresPorNombre(fnArgs.nombre, 2)
+                if (talleresNombrados.length) functionResult = talleresNombrados
+              }
               if (Array.isArray(functionResult)) todasLasAreas.push(...functionResult.slice(0, 2))
               break
             case 'search_areas_along_route':
@@ -1398,11 +1406,18 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
                 fnArgs.lng = ubicacionUsuario.lng
                 fnArgs.radio_km = fnArgs.radio_km || 50
               }
+              if (!fnArgs.nombre) {
+                const nombrado = extraerNombreAreaConcreta(ultimoMensajeUsuario)
+                if (nombrado) fnArgs.nombre = nombrado
+              }
               if (!fnArgs.ciudad) {
                 const ciudad = extraerCiudadNombrada(ultimoMensajeUsuario) || extraerSitioNombrado(ultimoMensajeUsuario)
-                if (ciudad) fnArgs.ciudad = ciudad
+                if (ciudad && ciudad.toLowerCase() !== String(fnArgs.nombre || '').toLowerCase()) {
+                  fnArgs.ciudad = ciudad
+                }
               }
               functionResult = await searchTalleres(fnArgs)
+              if (Array.isArray(functionResult)) todasLasAreas.push(...functionResult.slice(0, 3))
               break
             case 'buscar_info_viaje':
               functionResult = await buscarInfoViajeWeb({
@@ -1456,8 +1471,11 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
       }
     }
     if (areaEnMapa?.id && preguntaConcreta && !areasBrutas.some((a) => a.id === areaEnMapa.id)) {
-      const delPin = await getAreaDetails(areaEnMapa.id)
-      if (delPin) areasBrutas.unshift(delPin)
+      const delPin =
+        areaEnMapa.fichaBase === '/taller'
+          ? await getTallerDetails(areaEnMapa.id)
+          : (await getAreaDetails(areaEnMapa.id)) || (await getTallerDetails(areaEnMapa.id))
+      if (delPin) areasBrutas.unshift(delPin as AreaResumen)
     }
     const hiloPideSinCamping =
       pideSinCamping(ultimoMensajeUsuario) ||

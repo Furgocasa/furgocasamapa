@@ -35,4 +35,6 @@ Un «stopover», Weingut o Brit Stop **se busca** (es el nombre local) y **se gu
 
 Parking de polideportivo, solar, arcén, wild camp, zona de acampada, hire, taller, storage, marina seca, parking de coches.
 
+El taller camper **no es un tipo de área**. Vive en la tabla `talleres` y en la capa `/mapa?capa=talleres`. Guía: `GUIA_TALLERES.md`.
+
 **Búsquedas nuevas:** clasificar al encontrar. No default a `publica`. Código: `lib/areas/tipo-area.ts`.

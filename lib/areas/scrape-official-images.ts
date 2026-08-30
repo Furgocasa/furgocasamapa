@@ -310,10 +310,10 @@ async function validarLote(urls: string[], referer?: string): Promise<FotoOk[]> 
   return [...porClave.values()].sort((a, b) => score(b) - score(a))
 }
 
-function extraUrls(home: string): string[] {
+function extraUrls(home: string, extraPaths: string[] = []): string[] {
   try {
     const u = new URL(home)
-    return EXTRA_PATHS
+    return [...EXTRA_PATHS, ...extraPaths]
       .filter((p) => !SKIP_PATH.test(p))
       .map((p) => `${u.protocol}//${u.host}${p}`)
   } catch {
@@ -362,14 +362,18 @@ async function quedarseSoloRecinto(fotos: FotoOk[]): Promise<FotoOk[]> {
   return ok
 }
 
-export async function scrapeFotosWebOficial(website: string, max = 7): Promise<string[]> {
+export async function scrapeFotosWebOficial(
+  website: string,
+  max = 7,
+  opts?: { skipRecintoFilter?: boolean; extraPaths?: string[] }
+): Promise<string[]> {
   const home = website.replace(/[?#].*$/, '')
   const urls = new Set<string>()
 
   const first = await fetchHtml(home)
   if (first && !SKIP_PATH.test(new URL(first.url).pathname)) {
     extraerFotosDeHtml(first.url, first.html).forEach((u) => urls.add(u))
-    for (const page of extraUrls(first.url)) {
+    for (const page of extraUrls(first.url, opts?.extraPaths)) {
       const extra = await fetchHtml(page)
       if (!extra || SKIP_PATH.test(new URL(extra.url).pathname)) continue
       extraerFotosDeHtml(extra.url, extra.html).forEach((u) => urls.add(u))
@@ -380,6 +384,6 @@ export async function scrapeFotosWebOficial(website: string, max = 7): Promise<s
     [...urls].filter((u) => !esFotoEntornoPorNombre(u)),
     first?.url || home
   )
-  const recinto = await quedarseSoloRecinto(validadas)
-  return recinto.slice(0, max).map((f) => f.url)
+  const elegidas = opts?.skipRecintoFilter ? validadas : await quedarseSoloRecinto(validadas)
+  return elegidas.slice(0, max).map((f) => f.url)
 }

@@ -204,7 +204,7 @@ export function DetalleAreaHeader({ area, variante = 'area' }: Props) {
                 role="tooltip"
                 className="pointer-events-none absolute bottom-full left-0 mb-2 w-72 max-w-[calc(100vw-2rem)] rounded-lg bg-white text-slate-700 text-xs leading-relaxed p-3 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-opacity"
               >
-                Esta imagen es una imagen generada con inteligencia artificial, que ha sido generada al no disponer de imágenes originales del área. Si eres el propietario del lugar o un usuario, estaremos encantados de recibir una foto real y sustituirla.
+                Esta imagen es una imagen generada con inteligencia artificial, que ha sido generada al no disponer de imágenes originales del {variante === 'taller' ? 'taller' : 'área'}. Si eres el propietario del lugar o un usuario, estaremos encantados de recibir una foto real y sustituirla.
               </div>
             </div>
           )}

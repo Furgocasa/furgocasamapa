@@ -32,7 +32,7 @@ El estado de cada respuesta en el admin **es** el veredicto IA: `Sin revisar` (=
 - Listar paradas de A→B en el chat. Eso va a `/ruta`.
 - Decir que un área admite mascotas si `zona_mascotas` no es true.
 - Preguntar “¿dónde?” cuando ya hay GPS y no han nombrado otra ciudad.
-- Romper las seis reglas de directorio (taller `CHATBOTS-DIRECTORIOS.md`): ciudad > GPS; ficha tal cual; si hay fichas, prohibido «no tengo»; follow-up conserva filtros (ciudad sola resetea); cerca sin GPS → preguntar; solo `/area/{slug}` (no Google Maps).
+- Romper las seis reglas de directorio (taller `CHATBOTS-DIRECTORIOS.md`): ciudad > GPS; ficha tal cual; si hay fichas, prohibido «no tengo»; follow-up conserva filtros (ciudad sola resetea); cerca sin GPS → preguntar; solo `/area/{slug}` o `/taller/{slug}` (no Google Maps). Taller camper → `search_talleres`, no gasolinera.
 
 ## Patrones ya tapados (24 ago 2026)
 
