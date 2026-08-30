@@ -79,6 +79,9 @@ AppData/
 
 # OG valoración IA: en producción solo WebP (PNG fuente >8MB, límite Meta/Facebook)
 public/images/opengraph/opengraph_valoracion.png
+public/images/opengraph/bocetos/
+scripts/_og-fonts/
+scripts/_og-talleres-bocetos.mjs
 
 # Archivos de trabajo e imágenes de desarrollo
 /images/

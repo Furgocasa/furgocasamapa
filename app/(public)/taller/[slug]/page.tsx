@@ -109,7 +109,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: snippet.title,
       description: snippet.description,
       url: `${BASE}/taller/${taller.slug}`,
-      images: taller.foto_principal ? [taller.foto_principal] : [`${BASE}/images/opengraph/opengraph_talleres.jpg`],
+      images: taller.foto_principal ? [taller.foto_principal] : [`${BASE}/images/opengraph/opengraph_talleres_card.jpg`],
     },
   }
 }
@@ -186,7 +186,7 @@ export default async function TallerPage({ params }: PageProps) {
     alternateName: h1,
     description: area.descripcion || h1,
     url: `${BASE}/taller/${taller.slug}`,
-    image: taller.foto_principal || `${BASE}/images/opengraph/opengraph_talleres.jpg`,
+    image: taller.foto_principal || `${BASE}/images/opengraph/opengraph_talleres_card.jpg`,
     telephone: taller.telefono || undefined,
     email: taller.email || undefined,
     sameAs: taller.website ? [taller.website] : undefined,

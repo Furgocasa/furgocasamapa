@@ -18,7 +18,7 @@ import {
 export const revalidate = 3600
 
 const BASE_URL = 'https://www.mapafurgocasa.com'
-const OG_IMAGE = `${BASE_URL}/images/opengraph/opengraph_talleres.jpg`
+const OG_IMAGE = `${BASE_URL}/images/opengraph/opengraph_talleres_card.jpg`
 const TOP_N = 10
 const MIN_RESENAS_TOP = 20
 

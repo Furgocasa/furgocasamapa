@@ -38,7 +38,7 @@ siguen siendo solo de áreas. Un taller **no entra** en `areas`. Tabla propia:
 
 | Ruta | Qué es |
 |------|--------|
-| `/talleres` | Hub España. Top 10 (nota × reseñas, mín. 20). CTA al mapa. Sin grid de provincias. OG propio: `public/images/opengraph/opengraph_talleres.jpg` (taller de camperizado, no el pantallazo de rutas). |
+| `/talleres` | Hub España. Top 10 (nota × reseñas, mín. 20). CTA al mapa. Sin grid de provincias. OG: `opengraph_talleres_card.jpg` (panel editorial + foto de taller). |
 | `/talleres/{provincia}` | Landing por provincia (`lib/areas/provincias.ts`). Listado agrupado por ciudad. FAQ + schema. |
 | `/taller/{slug}` | Ficha. Molde visual de `/area/{slug}`. |
 | `/mapa?capa=talleres` | Mapa con la capa Talleres. |
@@ -177,8 +177,8 @@ Ficha: la query local gana a la marca. No pelear solo el nombre comercial.
 - Subtítulo: la marca, no el H1
 - Schema: `name` = marca, `alternateName` = el H1
 
-Open Graph del hub y de las provincias: `images/opengraph/opengraph_talleres.jpg`
-(taller de camperizado, 1200×630). No reutilizar `og-image-v2.jpg` (pantallazo de `/ruta`).
+Open Graph del hub y de las provincias: `images/opengraph/opengraph_talleres_card.jpg`
+(panel navy + foto de taller, 1200×630). No reutilizar `og-image-v2.jpg` (pantallazo de `/ruta`).
 Ficha: `foto_principal` si hay; si no, la misma OG de talleres.
 
 ---
