@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useState, useMemo } from 'react'
 import { useLanguage, getServicioLabel, getTipoAreaLabel, SERVICIO_ICONS } from '@/lib/i18n'
 import { getTipoAreaColor, getTipoAreaIconPath } from '@/lib/areas/tipo-area'
+import { fichaBaseDePin } from '@/lib/talleres/map-pin'
 
 interface ListaResultadosProps {
   areas: Area[]
@@ -336,7 +337,7 @@ export function ListaResultados({
                   {/* Acciones */}
                   <div className="flex gap-2">
                     <Link
-                      href={`${(area as { fichaBase?: string }).fichaBase === '/taller' ? '/taller' : '/area'}/${area.slug}`}
+                      href={`${fichaBaseDePin(area)}/${area.slug}`}
                       target="_blank"
                       onClick={(e) => e.stopPropagation()}
                       className="flex-1 text-center text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg px-3 py-2 transition-colors"

@@ -5,8 +5,9 @@ import type { Taller } from './types'
 
 export type MapPin = Area & { fichaBase?: '/area' | '/taller' }
 
-export function fichaBaseDePin(pin: Pick<MapPin, 'fichaBase'> | { fichaBase?: string } | null | undefined): '/area' | '/taller' {
-  return pin?.fichaBase === '/taller' ? '/taller' : '/area'
+export function fichaBaseDePin(pin: unknown): '/area' | '/taller' {
+  if (!pin || typeof pin !== 'object') return '/area'
+  return (pin as { fichaBase?: string }).fichaBase === '/taller' ? '/taller' : '/area'
 }
 
 export function colorPin(pin: Pick<MapPin, 'fichaBase' | 'tipo_area'>): string {
