@@ -106,9 +106,8 @@ export default async function TalleresIndexPage() {
           <section>
             <h2 className="text-2xl font-bold text-[#0b3c74] mb-4">Qué hay dentro</h2>
             <p>
-              Neumáticos, mecánica rápida, accesorios y talleres que atienden furgonetas y autocaravanas. No todos son
-              especialistas de camper: algunos son el taller de siempre del pueblo, con ruedas y alineado. La ficha lo dice
-              con lo que hay, no inventa un catálogo.
+              Solo talleres de camperizado, instalación de accesorios (techo, calefacción, placas, agua, gas) y reparación
+              del habitáculo o la autocaravana. No entran neumáticos, lunas, ITV, recambios ni el taller de coche genérico.
             </p>
             <p className="mt-4">
               Hoy hay cobertura en {provincias.length} provincias. Murcia, Barcelona, Alicante y Madrid concentran más puntos;

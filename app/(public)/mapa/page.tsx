@@ -778,7 +778,7 @@ export default function MapaPage() {
             aria-label={t('type_filter')}
           >
             <span className="flex items-center" aria-hidden>
-              {capa === 'talleres' && (
+              {capa === 'talleres' ? (
                 <span
                   className="w-[15px] h-[15px] rounded-full ring-2 ring-white flex items-center justify-center"
                   style={{ backgroundColor: TALLER_PIN_COLOR }}
@@ -787,18 +787,19 @@ export default function MapaPage() {
                     <path d={TALLER_ICON_PATH} />
                   </svg>
                 </span>
+              ) : (
+                TIPO_AREA_IDS.map((tipo, i) => (
+                  <span
+                    key={tipo}
+                    className={`w-[15px] h-[15px] rounded-full ring-2 ring-white flex items-center justify-center ${i > 0 ? '-ml-1' : ''}`}
+                    style={{ backgroundColor: getTipoAreaColor(tipo) }}
+                  >
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff">
+                      <path d={getTipoAreaIconPath(tipo)} />
+                    </svg>
+                  </span>
+                ))
               )}
-              {TIPO_AREA_IDS.map((tipo, i) => (
-                <span
-                  key={tipo}
-                  className={`w-[15px] h-[15px] rounded-full ring-2 ring-white flex items-center justify-center ${capa === 'talleres' || i > 0 ? '-ml-1' : ''}`}
-                  style={{ backgroundColor: getTipoAreaColor(tipo) }}
-                >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff">
-                    <path d={getTipoAreaIconPath(tipo)} />
-                  </svg>
-                </span>
-              ))}
             </span>
           </button>
 
@@ -823,7 +824,7 @@ export default function MapaPage() {
                     </div>
                   </div>
                 )}
-                {TIPO_AREA_IDS.map((tipo) => (
+                {capa === 'areas' && TIPO_AREA_IDS.map((tipo) => (
                   <div key={tipo} className="flex items-start gap-2">
                     <span
                       className="w-[22px] h-[22px] shrink-0 rounded-full border-2 border-white shadow-sm flex items-center justify-center"
