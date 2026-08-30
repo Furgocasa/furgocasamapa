@@ -7,6 +7,7 @@ import { isEspana } from '@/lib/areas/cta-comercial'
 
 interface Props {
   area: Area
+  modo?: 'area' | 'taller'
 }
 
 function waHref(telefono: string, nombre: string): string | null {
@@ -20,11 +21,27 @@ function waHref(telefono: string, nombre: string): string | null {
   return `https://wa.me/${num}?text=${text}`
 }
 
-export function ContactoInfo({ area }: Props) {
+function waHrefTaller(telefono: string, nombre: string): string | null {
+  const digits = telefono.replace(/\D/g, '')
+  if (digits.length < 8) return null
+  const num =
+    digits.startsWith('34') ? digits : digits.length === 9 ? `34${digits}` : digits
+  const text = encodeURIComponent(
+    `Hola, os escribo desde MapafurgoCasa (${nombre}). ¿Podéis atender una camper?`
+  )
+  return `https://wa.me/${num}?text=${text}`
+}
+
+export function ContactoInfo({ area, modo = 'area' }: Props) {
   const bookable =
+    modo === 'area' &&
     isEspana(area.pais) &&
     (area.tipo_area === 'privada' || area.tipo_area === 'camping')
-  const whatsapp = bookable && area.telefono ? waHref(area.telefono, area.nombre) : null
+  const whatsappTaller =
+    modo === 'taller' && area.telefono
+      ? waHrefTaller(area.telefono, area.nombre)
+      : null
+  const whatsapp = bookable && area.telefono ? waHref(area.telefono, area.nombre) : whatsappTaller
 
   const lead = (cta: string) => {
     track('click', {
@@ -47,7 +64,9 @@ export function ContactoInfo({ area }: Props) {
 
   return (
     <section className="bg-white rounded-3xl shadow-[0_2px_24px_-8px_rgba(0,0,0,0.08)] border border-gray-100 p-6 md:p-8">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">Contacto Directo</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-6">
+        {modo === 'taller' ? 'Contacto' : 'Contacto Directo'}
+      </h2>
 
       <div className="space-y-4">
         {whatsapp && (
@@ -67,7 +86,9 @@ export function ContactoInfo({ area }: Props) {
               <p className="text-xs text-emerald-700 font-bold tracking-wider uppercase mb-0.5">
                 WhatsApp · lead
               </p>
-              <p className="text-base font-bold text-slate-900">¿Hay plaza esta noche?</p>
+              <p className="text-base font-bold text-slate-900">
+                {modo === 'taller' ? 'Escribir por WhatsApp' : '¿Hay plaza esta noche?'}
+              </p>
             </div>
           </a>
         )}

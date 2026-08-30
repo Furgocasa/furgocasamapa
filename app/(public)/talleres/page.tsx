@@ -35,8 +35,8 @@ const getConteos = cache(async () => {
 
 export async function generateMetadata(): Promise<Metadata> {
   const { total } = await getConteos()
-  const title = `Talleres camper en España: ${total} talleres`
-  const description = `Directorio de ${total} talleres de campers y autocaravanas en España, por provincia. Mapa, ficha y contacto.`
+  const title = `Talleres camper en España: mapa de ${total} talleres`
+  const description = `Mapa de ${total} talleres de campers y autocaravanas en España. Ficha, teléfono y cómo llegar. Áreas y talleres, cada uno en su capa.`
   return {
     title,
     description,
@@ -63,15 +63,10 @@ export default async function TalleresIndexPage() {
         ],
       },
       {
-        '@type': 'ItemList',
-        name: 'Talleres camper en España por provincia',
-        numberOfItems: provincias.length,
-        itemListElement: provincias.map((p, i) => ({
-          '@type': 'ListItem',
-          position: i + 1,
-          name: `Talleres camper en ${p.nombre}`,
-          url: `${BASE_URL}/talleres/${p.slug}`,
-        })),
+        '@type': 'WebPage',
+        name: 'Talleres camper en España',
+        url: `${BASE_URL}/talleres`,
+        description: `Directorio en mapa de ${total} talleres de campers y autocaravanas en España.`,
       },
     ],
   }
@@ -82,35 +77,83 @@ export default async function TalleresIndexPage() {
       <Navbar />
       <div className="min-h-screen bg-gray-50">
         <div className="bg-[#0b3c74] text-white">
-          <div className="max-w-[1200px] mx-auto px-4 md:px-8 py-10 md:py-14">
-            <h1 className="text-3xl md:text-5xl font-bold mb-4">Talleres de campers en España</h1>
-            <p className="text-base md:text-xl text-white/90 max-w-3xl">
-              {total} talleres de campers y autocaravanas, organizados por provincia. Misma ficha que un área: mapa, contacto y valoración Google.
+          <div className="max-w-[800px] mx-auto px-4 md:px-8 py-12 md:py-16">
+            <p className="text-xs font-semibold uppercase tracking-wider text-amber-300 mb-3">MapafurgoCasa</p>
+            <h1 className="text-3xl md:text-5xl font-bold mb-5">Talleres de campers en España</h1>
+            <p className="text-lg md:text-xl text-white/90 leading-relaxed">
+              {total} talleres en el mismo mapa que las áreas. Cada uno con ficha: dónde está, cómo llamar y cómo llegar.
             </p>
             <div className="mt-8">
               <Link
                 href="/mapa?capa=talleres"
-                className="inline-flex items-center justify-center px-6 py-3 bg-white text-[#0b3c74] rounded-xl font-bold hover:bg-gray-100"
+                className="inline-flex items-center justify-center px-7 py-3.5 bg-white text-[#0b3c74] rounded-xl font-bold hover:bg-gray-100"
               >
-                Verlos en el mapa
+                Abrir el mapa de talleres
               </Link>
             </div>
           </div>
         </div>
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 py-10">
-          <h2 className="text-2xl font-bold text-[#0b3c74] mb-6">Elige provincia</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {provincias.map((p) => (
-              <Link
-                key={p.slug}
-                href={`/talleres/${p.slug}`}
-                className="bg-white border-2 border-gray-200 rounded-xl px-4 py-3 hover:border-[#0b3c74]"
-              >
-                <span className="block font-semibold text-gray-900">{p.nombre}</span>
-                <span className="block text-sm text-gray-500">{p.total} talleres</span>
-              </Link>
-            ))}
+
+        <div className="max-w-[800px] mx-auto px-4 md:px-8 py-12 space-y-10 text-gray-700 leading-relaxed">
+          <section>
+            <h2 className="text-2xl font-bold text-[#0b3c74] mb-4">Un directorio, no una guía de páginas amarillas</h2>
+            <p>
+              El listado no vive aquí. Vive en el mapa, en la capa <strong>Talleres</strong>, junto a las áreas pero sin mezclar pines.
+              Buscas ciudad, te acercas y abres la ficha. Igual que un área: contacto, valoración de Google y enlace a la web del taller si la tiene.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold text-[#0b3c74] mb-4">Qué hay dentro</h2>
+            <p>
+              Neumáticos, mecánica rápida, accesorios y talleres que atienden furgonetas y autocaravanas. No todos son
+              especialistas de camper: algunos son el taller de siempre del pueblo, con ruedas y alineado. La ficha lo dice
+              con lo que hay, no inventa un catálogo.
+            </p>
+            <p className="mt-4">
+              Hoy hay cobertura en {provincias.length} provincias. Murcia, Barcelona, Alicante y Madrid concentran más puntos;
+              hay provincias con uno o dos. El mapa no oculta el hueco.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold text-[#0b3c74] mb-4">Áreas y talleres, cada uno lo suyo</h2>
+            <p>
+              En <Link href="/mapa" className="text-[#0b3c74] font-semibold underline">/mapa</Link> el conmutador
+              Áreas | Talleres cambia de capa. Un taller no es un sitio para dormir. Un área no cambia ruedas.
+              El Tío también distingue: si pides taller, busca talleres.
+            </p>
+          </section>
+
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 text-center">
+            <p className="text-gray-900 font-semibold mb-4">
+              El directorio está en el mapa, con la capa de talleres puesta.
+            </p>
+            <Link
+              href="/mapa?capa=talleres"
+              className="inline-flex items-center justify-center px-7 py-3.5 bg-[#B45309] text-white rounded-xl font-bold hover:opacity-90"
+            >
+              Ver {total} talleres en el mapa
+            </Link>
           </div>
+
+          <section>
+            <h2 className="text-xl font-bold text-[#0b3c74] mb-3">Por provincia</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Landings para quien busca «taller camper» y una provincia. El uso diario es el mapa.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {provincias.map((p) => (
+                <Link
+                  key={p.slug}
+                  href={`/talleres/${p.slug}`}
+                  className="text-sm text-[#0b3c74] bg-white border border-gray-200 rounded-full px-3 py-1 hover:border-[#0b3c74]"
+                >
+                  {p.nombre}
+                </Link>
+              ))}
+            </div>
+          </section>
         </div>
       </div>
       <Footer />

@@ -3,6 +3,7 @@
 import { track } from '@/lib/analytics/track'
 import {
   resolverCtaAlquiler,
+  resolverCtaAlquilerTaller,
   urlAlquiler,
   type AreaCtaInput,
 } from '@/lib/areas/cta-comercial'
@@ -26,10 +27,11 @@ function fotoDeArea(id: string): string {
 
 interface Props {
   area: AreaCtaInput
+  variante?: 'area' | 'taller'
 }
 
-export function CtaAlquilerFurgocasa({ area }: Props) {
-  const cta = resolverCtaAlquiler(area)
+export function CtaAlquilerFurgocasa({ area, variante = 'area' }: Props) {
+  const cta = variante === 'taller' ? resolverCtaAlquilerTaller(area) : resolverCtaAlquiler(area)
   if (!cta) return null
 
   const href = urlAlquiler(area, cta)

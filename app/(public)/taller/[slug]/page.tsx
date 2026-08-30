@@ -7,11 +7,18 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { MapaUbicacion } from '@/components/area/MapaUbicacion'
 import { CtaAlquilerFurgocasa } from '@/components/area/CtaAlquilerFurgocasa'
+import { ContactoInfo } from '@/components/area/ContactoInfo'
 import { BackToTop } from '@/components/area/BackToTop'
 import { normalizarProvincia } from '@/lib/areas/provincias'
-import { tallerSeoSnippet } from '@/lib/talleres/seo-snippet'
+import {
+  direccionVisible,
+  mapsUrlTaller,
+  tallerSeoSnippet,
+  tituloTaller,
+} from '@/lib/talleres/seo-snippet'
 import type { Taller } from '@/lib/talleres/types'
-import { PhoneIcon, GlobeAltIcon, MapPinIcon, StarIcon } from '@heroicons/react/24/outline'
+import type { Area } from '@/types/database.types'
+import { MapPinIcon, StarIcon } from '@heroicons/react/24/outline'
 
 const BASE = 'https://www.mapafurgocasa.com'
 
@@ -30,11 +37,19 @@ async function getTaller(slug: string): Promise<Taller | null> {
   return data || null
 }
 
+function parrafos(texto: string | null): string[] {
+  if (!texto?.trim()) return []
+  return texto
+    .split(/\n\s*\n/)
+    .map((p) => p.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
   const taller = await getTaller(slug)
   if (!taller) return { title: 'Taller no encontrado - Mapa Furgocasa' }
-  const snippet = tallerSeoSnippet(taller)
+  const snippet = tallerSeoSnippet({ ...taller, nombre: tituloTaller(taller.nombre) })
   return {
     title: snippet.title,
     description: snippet.description,
@@ -43,6 +58,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: snippet.title,
       description: snippet.description,
       url: `${BASE}/taller/${taller.slug}`,
+      images: taller.foto_principal ? [taller.foto_principal] : [`${BASE}/og-image-v2.jpg`],
     },
   }
 }
@@ -62,24 +78,43 @@ export default async function TallerPage({ params }: PageProps) {
     .order('google_rating', { ascending: false, nullsFirst: false })
     .limit(4)
 
+  const nombre = tituloTaller(taller.nombre)
+  const direccion = direccionVisible(taller.direccion)
+  const maps = mapsUrlTaller(taller)
   const provinciaLanding = normalizarProvincia(taller.provincia)
+  const sitio = [taller.ciudad, taller.provincia].filter(Boolean).join(', ')
+  const bloques = parrafos(taller.descripcion)
+
+  const contactoArea = {
+    id: taller.id,
+    nombre,
+    slug: taller.slug,
+    telefono: taller.telefono,
+    email: taller.email,
+    website: taller.website,
+    google_maps_url: maps,
+    pais: taller.pais || 'España',
+    tipo_area: 'publica',
+  } as Area
+
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'AutoRepair',
-    name: taller.nombre,
-    description: taller.descripcion || `Taller de campers en ${taller.ciudad || taller.provincia}`,
+    name: nombre,
+    description: bloques[0] || `Taller en ${sitio}`,
     url: `${BASE}/taller/${taller.slug}`,
+    image: taller.foto_principal || `${BASE}/og-image-v2.jpg`,
     telephone: taller.telefono || undefined,
     email: taller.email || undefined,
-    url_web: taller.website || undefined,
+    sameAs: taller.website ? [taller.website] : undefined,
     geo: {
       '@type': 'GeoCoordinates',
-      latitude: taller.latitud,
-      longitude: taller.longitud,
+      latitude: Number(taller.latitud),
+      longitude: Number(taller.longitud),
     },
     address: {
       '@type': 'PostalAddress',
-      streetAddress: taller.direccion || '',
+      streetAddress: direccion || '',
       addressLocality: taller.ciudad,
       addressRegion: taller.provincia,
       postalCode: taller.codigo_postal,
@@ -89,8 +124,8 @@ export default async function TallerPage({ params }: PageProps) {
       ? {
           aggregateRating: {
             '@type': 'AggregateRating',
-            ratingValue: taller.google_rating,
-            bestRating: '5',
+            ratingValue: Number(taller.google_rating),
+            bestRating: 5,
             ratingCount: taller.google_ratings_total || 1,
           },
         }
@@ -104,14 +139,24 @@ export default async function TallerPage({ params }: PageProps) {
       <div className="min-h-screen bg-gray-50">
         <div className="bg-[#0b3c74] text-white">
           <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-8">
-            <Link href="/mapa?capa=talleres" className="text-sm text-white/70 hover:text-white">
-              ← Talleres en el mapa
-            </Link>
-            <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-amber-300">Taller camper</p>
-            <h1 className="text-3xl md:text-4xl font-bold mt-1">{taller.nombre}</h1>
+            <nav className="text-sm text-white/70 flex flex-wrap gap-x-2 gap-y-1">
+              <Link href="/talleres" className="hover:text-white">Talleres</Link>
+              {provinciaLanding ? (
+                <>
+                  <span>/</span>
+                  <Link href={`/talleres/${provinciaLanding.slug}`} className="hover:text-white">
+                    {provinciaLanding.nombre}
+                  </Link>
+                </>
+              ) : null}
+              <span>/</span>
+              <span className="text-white/90">{nombre}</span>
+            </nav>
+            <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-amber-300">Taller</p>
+            <h1 className="text-3xl md:text-4xl font-bold mt-1">{nombre}</h1>
             <p className="mt-2 text-white/80 flex items-center gap-2">
-              <MapPinIcon className="w-5 h-5" />
-              {[taller.ciudad, taller.provincia].filter(Boolean).join(', ')}
+              <MapPinIcon className="w-5 h-5 shrink-0" />
+              {direccion || sitio}
             </p>
             {taller.google_rating ? (
               <p className="mt-2 flex items-center gap-1 text-amber-200">
@@ -122,21 +167,41 @@ export default async function TallerPage({ params }: PageProps) {
                 ) : null}
               </p>
             ) : null}
+            <Link
+              href="/mapa?capa=talleres"
+              className="inline-block mt-5 text-sm font-semibold text-white/90 underline hover:text-white"
+            >
+              Ver en el mapa de talleres
+            </Link>
           </div>
         </div>
 
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-8">
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
             <div className="w-full lg:w-[60%] space-y-8">
-              <section className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8">
+              <section className="bg-white rounded-3xl shadow-[0_2px_24px_-8px_rgba(0,0,0,0.08)] border border-gray-100 p-6 md:p-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">El taller</h2>
-                <p className="text-gray-700 leading-relaxed">{taller.descripcion}</p>
-                {taller.direccion ? (
-                  <p className="mt-4 text-sm text-gray-500">{taller.direccion}</p>
+                {bloques.length ? (
+                  <div className="space-y-4 text-gray-700 leading-relaxed">
+                    {bloques.map((p) => (
+                      <p key={p.slice(0, 40)}>{p}</p>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-700 leading-relaxed">
+                    Taller en {sitio}. Ficha en MapafurgoCasa: dirección, teléfono y mapa.
+                  </p>
+                )}
+                {direccion ? (
+                  <p className="mt-6 text-sm text-gray-500 flex items-start gap-2">
+                    <MapPinIcon className="w-4 h-4 mt-0.5 shrink-0" />
+                    {direccion}
+                  </p>
                 ) : null}
               </section>
 
               <CtaAlquilerFurgocasa
+                variante="taller"
                 area={{
                   id: taller.id,
                   slug: taller.slug,
@@ -148,13 +213,13 @@ export default async function TallerPage({ params }: PageProps) {
               />
 
               {relacionados?.length ? (
-                <section className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8">
+                <section className="bg-white rounded-3xl shadow-[0_2px_24px_-8px_rgba(0,0,0,0.08)] border border-gray-100 p-6 md:p-8">
                   <h2 className="text-xl font-bold text-gray-900 mb-4">Otros talleres en {taller.provincia}</h2>
                   <ul className="space-y-3">
                     {relacionados.map((r: { slug: string; nombre: string; ciudad: string | null; google_rating: number | null }) => (
                       <li key={r.slug}>
                         <Link href={`/taller/${r.slug}`} className="block rounded-xl border border-gray-100 px-4 py-3 hover:border-[#0b3c74]">
-                          <span className="font-semibold text-gray-900">{r.nombre}</span>
+                          <span className="font-semibold text-gray-900">{tituloTaller(r.nombre)}</span>
                           <span className="block text-sm text-gray-500">
                             {r.ciudad}
                             {r.google_rating ? ` · ${Number(r.google_rating).toFixed(1)}★` : ''}
@@ -171,7 +236,7 @@ export default async function TallerPage({ params }: PageProps) {
                   href={`/talleres/${provinciaLanding.slug}`}
                   className="block bg-white rounded-2xl p-5 text-center font-semibold text-[#0b3c74] hover:bg-[#EEF4FB]"
                 >
-                  Ver todos los talleres de {provinciaLanding.nombre} →
+                  Talleres en {provinciaLanding.nombre} →
                 </Link>
               ) : null}
             </div>
@@ -181,28 +246,9 @@ export default async function TallerPage({ params }: PageProps) {
                 <MapaUbicacion
                   latitud={Number(taller.latitud)}
                   longitud={Number(taller.longitud)}
-                  nombre={taller.nombre}
+                  nombre={nombre}
                 />
-                <section className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8 space-y-3">
-                  <h2 className="text-xl font-bold text-gray-900">Contacto</h2>
-                  {taller.telefono ? (
-                    <a href={`tel:${taller.telefono.replace(/\s/g, '')}`} className="flex items-center gap-2 text-[#0b3c74] font-medium">
-                      <PhoneIcon className="w-5 h-5" />
-                      {taller.telefono}
-                    </a>
-                  ) : null}
-                  {taller.website ? (
-                    <a href={taller.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[#0b3c74] font-medium">
-                      <GlobeAltIcon className="w-5 h-5" />
-                      Web
-                    </a>
-                  ) : null}
-                  {taller.google_maps_url ? (
-                    <a href={taller.google_maps_url} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-500 underline">
-                      Abrir en Google Maps
-                    </a>
-                  ) : null}
-                </section>
+                <ContactoInfo area={contactoArea} modo="taller" />
               </div>
             </div>
           </div>
