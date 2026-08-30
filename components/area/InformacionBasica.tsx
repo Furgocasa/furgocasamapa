@@ -7,9 +7,11 @@ import { useLanguage } from '@/lib/i18n'
 interface Props {
   area: Area
   variante?: 'area' | 'taller'
+  /** H2 de ficha taller: query local. Si no, el título i18n. */
+  titulo?: string
 }
 
-export function InformacionBasica({ area, variante = 'area' }: Props) {
+export function InformacionBasica({ area, variante = 'area', titulo }: Props) {
   const { t } = useLanguage()
 
   const precioEsGratis = area.precio_noche === 0
@@ -45,7 +47,7 @@ export function InformacionBasica({ area, variante = 'area' }: Props) {
 
   return (
     <section className="bg-white rounded-3xl shadow-[0_2px_24px_-8px_rgba(0,0,0,0.08)] border border-gray-100 p-6 md:p-8">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('info_title')}</h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">{titulo || t('info_title')}</h2>
 
       {variante === 'area' && (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

@@ -221,16 +221,16 @@ export default async function TallerPage({ params }: PageProps) {
       <Navbar />
 
       <div className="min-h-screen bg-gray-50">
-        <DetalleAreaHeader area={area} variante="taller" titulo={h1} subtitulo={nombre} />
+        <DetalleAreaHeader area={area} variante="taller" />
 
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-8">
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
             <div className="w-full lg:w-[60%] space-y-8">
-              <InformacionBasica area={area} variante="taller" />
+              <InformacionBasica area={area} variante="taller" titulo={h1} />
 
               <CtaAlquilerFurgocasa variante="taller" area={ctaArea} />
 
-              {fotos.length > 1 ? <GaleriaFotos fotos={fotos} nombre={h1} /> : null}
+              {fotos.length > 1 ? <GaleriaFotos fotos={fotos} nombre={nombre} /> : null}
 
               {talleresRelacionados.length > 0 && (
                 <AreasRelacionadas

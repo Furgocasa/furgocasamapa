@@ -171,11 +171,12 @@ Schema:
 - Provincia: breadcrumb + `FAQPage` + `ItemList`
 - Ficha: `AutoRepair` + geo + `aggregateRating` si hay nota Google
 
-Ficha: la query local gana a la marca. No pelear solo el nombre comercial.
-- H1: `Taller de camperización en {ciudad}` (query larga)
-- Title: `Taller camper {ciudad} | {nombre}` (máx. 60; query corta + marca)
-- Subtítulo: la marca, no el H1
-- Schema: `name` = marca, `alternateName` = el H1
+Ficha: H1 = marca (el taller). Las queries locales van en H2, no en el H1.
+- H1: `{nombre}` (limpio, sin «SOLO Tienda Online»)
+- H2 info: `Taller de camperización en {ciudad}`
+- H2 relacionados: `Otros talleres camper en {provincia}`
+- Title: `Taller camper {ciudad} | {nombre}` (máx. 60)
+- Schema: `name` = marca, `alternateName` = el H2 local
 
 Open Graph del hub y de las provincias: `images/opengraph/opengraph_talleres_card.jpg`
 (panel navy + foto de taller, 1200×630). No reutilizar `og-image-v2.jpg` (pantallazo de `/ruta`).
