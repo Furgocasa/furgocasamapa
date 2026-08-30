@@ -6,9 +6,10 @@ import { useLanguage } from '@/lib/i18n'
 
 interface Props {
   area: Area
+  variante?: 'area' | 'taller'
 }
 
-export function InformacionBasica({ area }: Props) {
+export function InformacionBasica({ area, variante = 'area' }: Props) {
   const { t } = useLanguage()
 
   const precioEsGratis = area.precio_noche === 0
@@ -46,6 +47,7 @@ export function InformacionBasica({ area }: Props) {
     <section className="bg-white rounded-3xl shadow-[0_2px_24px_-8px_rgba(0,0,0,0.08)] border border-gray-100 p-6 md:p-8">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('info_title')}</h2>
 
+      {variante === 'area' && (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="flex flex-col p-4 bg-slate-50 rounded-2xl border border-slate-100">
           <ClockIcon className="w-6 h-6 text-slate-500 mb-2" />
@@ -80,6 +82,7 @@ export function InformacionBasica({ area }: Props) {
           </div>
         )}
       </div>
+      )}
 
       {area.descripcion && (
         <div className="prose prose-slate max-w-none text-gray-600">

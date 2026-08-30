@@ -26,9 +26,10 @@ import { track } from '@/lib/analytics/track'
 
 interface Props {
   area: Area
+  variante?: 'area' | 'taller'
 }
 
-export function DetalleAreaHeader({ area }: Props) {
+export function DetalleAreaHeader({ area, variante = 'area' }: Props) {
   const [isFavorite, setIsFavorite] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [localFavCount, setLocalFavCount] = useState(0)
@@ -38,8 +39,9 @@ export function DetalleAreaHeader({ area }: Props) {
   const { locale, t } = useLanguage()
 
   useEffect(() => {
+    if (variante === 'taller') return
     checkFavoriteStatus()
-  }, [])
+  }, [variante])
 
   const checkFavoriteStatus = async () => {
     try {
@@ -141,7 +143,10 @@ export function DetalleAreaHeader({ area }: Props) {
       try {
         await navigator.share({
           title: area.nombre,
-          text: area.descripcion || `Área para autocaravanas en ${area.ciudad}`,
+          text:
+            variante === 'taller'
+              ? `Taller en ${area.ciudad}`
+              : area.descripcion || `Área para autocaravanas en ${area.ciudad}`,
           url: window.location.href,
         })
       } catch (error) {
@@ -223,6 +228,7 @@ export function DetalleAreaHeader({ area }: Props) {
             >
               <ShareIcon className="w-5 h-5" />
             </button>
+            {variante === 'area' && (
             <motion.button
               onClick={handleFavorite}
               whileTap={{ scale: 0.85 }}
@@ -248,6 +254,7 @@ export function DetalleAreaHeader({ area }: Props) {
                 </span>
               )}
             </motion.button>
+            )}
           </div>
         </div>
 
@@ -258,8 +265,12 @@ export function DetalleAreaHeader({ area }: Props) {
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2 md:mb-4">
                 {/* Badge tipo de área */}
-                <span className={`${getTipoAreaColor(area.tipo_area)} px-4 py-1.5 rounded-full text-xs font-bold tracking-wider shadow-sm`}>
-                  {getTipoAreaLabel(area.tipo_area, locale)}
+                <span className={`${
+                  variante === 'taller'
+                    ? 'bg-amber-700/90 text-white backdrop-blur-md border border-amber-400/30'
+                    : getTipoAreaColor(area.tipo_area)
+                } px-4 py-1.5 rounded-full text-xs font-bold tracking-wider shadow-sm`}>
+                  {variante === 'taller' ? t('type_taller') : getTipoAreaLabel(area.tipo_area, locale)}
                 </span>
                 
                 {area.verificado && (
@@ -283,10 +294,10 @@ export function DetalleAreaHeader({ area }: Props) {
             </div>
 
             {/* Panel lateral derecho en hero (Rating y Precio) */}
-            {(area.google_rating || (area.precio_noche !== null && area.precio_noche !== undefined)) && (
+            {(area.google_rating || (variante === 'area' && area.precio_noche !== null && area.precio_noche !== undefined)) && (
               <div className="flex items-center self-start bg-black/40 backdrop-blur-lg border border-white/20 p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-xl">
                 {area.google_rating && (
-                  <div className={`flex flex-col items-center justify-center px-3 sm:px-5 ${(area.precio_noche !== null && area.precio_noche !== undefined) ? 'border-r border-white/20' : ''}`}>
+                  <div className={`flex flex-col items-center justify-center px-3 sm:px-5 ${variante === 'area' && area.precio_noche !== null && area.precio_noche !== undefined ? 'border-r border-white/20' : ''}`}>
                     <div className="flex items-center gap-1 text-white font-bold text-xl sm:text-2xl">
                       <span className="text-amber-400 text-lg sm:text-xl">★</span>
                       {area.google_rating.toFixed(1)}
@@ -299,7 +310,7 @@ export function DetalleAreaHeader({ area }: Props) {
                   </div>
                 )}
                 
-                {area.precio_noche !== null && area.precio_noche !== undefined && (
+                {variante === 'area' && area.precio_noche !== null && area.precio_noche !== undefined && (
                   <div className="flex flex-col items-center justify-center px-3 sm:px-5">
                     <div className="text-white font-bold text-xl sm:text-2xl">
                       {area.precio_noche === 0 ? t('free') : `${area.precio_noche}€`}
@@ -316,7 +327,7 @@ export function DetalleAreaHeader({ area }: Props) {
       </div>
 
       {/* Banner suave: favoritos guardados sin cuenta */}
-      {!user && localFavCount > 0 && (
+      {variante === 'area' && !user && localFavCount > 0 && (
         <div className="w-full max-w-[1600px] mx-auto">
           <button
             onClick={() => setShowAuthModal(true)}

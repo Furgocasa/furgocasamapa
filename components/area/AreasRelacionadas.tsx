@@ -7,28 +7,34 @@ interface AreaRelacionada {
   slug: string
   ciudad: string | null
   provincia: string | null
-  tipo_area: string
-  precio_noche: number | null
+  tipo_area?: string
+  precio_noche?: number | null
   foto_principal: string | null
   google_rating: number | null
 }
 
 interface AreasRelacionadasProps {
   areas: AreaRelacionada[]
+  hrefBase?: '/area' | '/taller'
+  titulo?: string
 }
 
-export function AreasRelacionadas({ areas }: AreasRelacionadasProps) {
+export function AreasRelacionadas({
+  areas,
+  hrefBase = '/area',
+  titulo = 'Áreas Relacionadas',
+}: AreasRelacionadasProps) {
   return (
     <section className="bg-white rounded-2xl shadow-card p-6">
       <h2 className="text-2xl font-bold text-[#0b3c74] mb-6">
-        Áreas Relacionadas
+        {titulo}
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {areas.map((area) => (
           <Link
             key={area.id}
-            href={`/area/${area.slug}`}
+            href={`${hrefBase}/${area.slug}`}
             className="group bg-white border-2 border-gray-200 rounded-lg overflow-hidden hover:shadow-xl hover:border-[#0b3c74] transition-all"
           >
             {/* Imagen */}
