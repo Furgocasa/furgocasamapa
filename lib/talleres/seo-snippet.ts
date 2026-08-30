@@ -23,6 +23,23 @@ export function tituloTaller(nombre?: string | null): string {
 /** Menos de esto: landing visible, noindex, fuera del sitemap. Molde áreas: no pueblo con 1. */
 export const MIN_TALLERES_LANDING_INDEX = 3
 
+/** Alquiler / flota = competencia de Furgocasa. No es taller de camperizado. */
+export function esAlquilerNoTaller(nombre?: string | null, descripcion?: string | null): boolean {
+  const blob = `${nombre || ''} ${descripcion || ''}`
+  if (/\b(indie campers|yescapa|camperdays|roadsurfer|alquicamper|rent.?a.?camper)\b/i.test(blob)) {
+    return true
+  }
+  if (/\bempresa de alquiler\b/i.test(blob)) return true
+  if (/se centra en el alquiler|actividad (publicada )?se centra en el alquiler/i.test(blob)) {
+    return true
+  }
+  if (/dedicad[oa] (al alquiler|a la venta y (el )?alquiler|a la compra, venta y alquiler)/i.test(blob)) {
+    return true
+  }
+  if (/apartado de reservas/i.test(blob) && !/camperizaci/i.test(blob)) return true
+  return false
+}
+
 /** Ciudad de Places a veces es «nave 2» o un número. Entonces solo provincia. */
 export function sitioTaller(ciudad?: string | null, provincia?: string | null): string {
   const c = (ciudad || '').trim()
