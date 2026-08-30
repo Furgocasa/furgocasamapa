@@ -7,7 +7,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { esPreguntaAreaConcreta } from '@/lib/chatbot/intencion'
-import { esAlquilerNoTaller } from '@/lib/talleres/seo-snippet'
+import { admiteTallerCamper } from '@/lib/talleres/seo-snippet'
 
 // Cliente de Supabase con service role para acceso completo
 function getSupabaseClient() {
@@ -1530,7 +1530,7 @@ export async function searchTalleres(params: {
     })
     if (error) throw error
     return (data || [])
-      .filter((t: any) => !esAlquilerNoTaller(t.nombre, t.descripcion))
+      .filter((t: any) => admiteTallerCamper(t, { exigirSenal: false }))
       .slice(0, 3)
       .map((t: any) => tallerAResumen(t))
   }
@@ -1549,7 +1549,7 @@ export async function searchTalleres(params: {
   const { data, error } = await query
   if (error) throw error
   return (data || [])
-    .filter((t: any) => !esAlquilerNoTaller(t.nombre, t.descripcion))
+    .filter((t: any) => admiteTallerCamper(t, { exigirSenal: false }))
     .slice(0, 3)
     .map((t: any) => tallerAResumen(t))
 }
@@ -1570,7 +1570,7 @@ export async function buscarTalleresPorNombre(
     .limit(Math.max(8, limit * 3))
   if (error) throw error
   return (data || [])
-    .filter((t: any) => !esAlquilerNoTaller(t.nombre, t.descripcion))
+    .filter((t: any) => admiteTallerCamper(t, { exigirSenal: false }))
     .slice(0, limit)
     .map((t: any) => tallerAResumen(t))
 }

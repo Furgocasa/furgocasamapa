@@ -10,7 +10,7 @@
     "baseUrl": ".",
     "paths": { "@/*": ["./*"] }
   },
-  "include": ["scripts/**/*", "lib/areas/**/*", "lib/chatbot/**/*"],
+  "include": ["scripts/**/*", "lib/areas/**/*", "lib/chatbot/**/*", "lib/talleres/**/*"],
   "exclude": ["node_modules"]
 }
 

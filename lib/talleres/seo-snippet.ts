@@ -59,6 +59,48 @@ export function esAlquilerNoTaller(nombre?: string | null, descripcion?: string 
   return false
 }
 
+const SENAL_CAMPER = /camper|autocaravan|caravana|\bfurgo|camperiz|\bvans?\b/i
+
+const RUIDO_TALLER =
+  /feu\s*vert|norauto|glassdrive|carglass|\bitv\b|desguace|eurorepar|nomad clean|neum[aá]tic|\blunas\b|concesionario|solo tienda|shop only|tienda online|camperizando|corte ingles|aparkarea|parking (camper|autocaravana|caravana)|área (de )?(servicio|autocaravana|sosta)|area (de )?(servicio|autocaravana)/i
+
+/** Coche genérico, concesionario, tienda online, lunas, ITV. */
+export function esRuidoTaller(
+  nombre?: string | null,
+  descripcion?: string | null,
+  types?: string[] | null
+): boolean {
+  const blob = `${nombre || ''} ${descripcion || ''}`
+  const tipos = types || []
+  if (tipos.includes('car_rental') || tipos.includes('car_dealer')) return true
+  if (RUIDO_TALLER.test(blob)) return true
+  if (/accesorios/i.test(blob) && !/(taller|camperiz|reparac)/i.test(blob)) return true
+  if (/taller oficial/i.test(blob) && !SENAL_CAMPER.test(blob)) return true
+  return false
+}
+
+export function tieneSenalCamper(nombre?: string | null, types?: string[] | null): boolean {
+  if (SENAL_CAMPER.test(nombre || '')) return true
+  return (types || []).some((t) => SENAL_CAMPER.test(t))
+}
+
+/** Import: exigir señal camper. Hub / Tío: `exigirSenal: false` (catálogo ya curado). */
+export function admiteTallerCamper(
+  t: {
+    nombre?: string | null
+    descripcion?: string | null
+    types?: string[] | null
+    google_types?: string[] | null
+  },
+  opts?: { exigirSenal?: boolean }
+): boolean {
+  const types = t.types || t.google_types || null
+  if (esAlquilerNoTaller(t.nombre, t.descripcion)) return false
+  if (esRuidoTaller(t.nombre, t.descripcion, types)) return false
+  if (opts?.exigirSenal !== false && !tieneSenalCamper(t.nombre, types)) return false
+  return true
+}
+
 /** Ciudad de Places a veces es «nave 2» o un número. Entonces solo provincia. */
 export function sitioTaller(ciudad?: string | null, provincia?: string | null): string {
   const c = (ciudad || '').trim()

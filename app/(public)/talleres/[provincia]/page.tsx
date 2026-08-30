@@ -17,6 +17,7 @@ import {
 import { resolverCtaAlquilerTaller } from '@/lib/areas/cta-comercial'
 import { TALLER_PIN_COLOR } from '@/lib/talleres/types'
 import {
+  admiteTallerCamper,
   ciudadGrupoTaller,
   MIN_TALLERES_LANDING_INDEX,
   scoreValoracionTaller,
@@ -56,10 +57,12 @@ const getTalleres = cache(async (prov: ProvinciaES): Promise<TallerRow[]> => {
   const supabase = await createClient()
   const { data } = await (supabase as any)
     .from('talleres')
-    .select('id, nombre, slug, ciudad, foto_principal, google_rating, google_ratings_total')
+    .select('id, nombre, slug, ciudad, descripcion, foto_principal, google_rating, google_ratings_total')
     .eq('activo', true)
     .in('provincia', valoresConsultaProvincia(prov))
-  return ((data || []) as TallerRow[]).sort(ordenValoracion)
+  return ((data || []) as (TallerRow & { descripcion?: string | null })[])
+    .filter((t) => admiteTallerCamper(t, { exigirSenal: false }))
+    .sort(ordenValoracion)
 })
 
 const getSlugsConTalleres = cache(async () => {

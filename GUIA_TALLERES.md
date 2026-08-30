@@ -24,9 +24,11 @@
 | | Concesionarios (no viajan desde Furgocasa) |
 | | Desguaces, lavaderos, «Nomad Clean» |
 
-Filtro de código: `esAlquilerNoTaller()` en `lib/talleres/seo-snippet.ts`.
-Se aplica en el hub, las relacionadas de ficha y el Tío. Indie Campers,
-Yescapa, «empresa de alquiler», «apartado de reservas» (sin camperizado) = fuera.
+Filtro de código: `admiteTallerCamper()` en `lib/talleres/seo-snippet.ts`
+(`esAlquilerNoTaller` + `esRuidoTaller` + señal camper en altas nuevas).
+Hub, provincia, relacionadas y Tío: `exigirSenal: false` (catálogo ya curado).
+Import de huecos: señal obligatoria (`camper|autocaravana|furgo|van`).
+Indie Campers, concesionario, tienda online, Feu Vert, ITV = fuera.
 
 **No es `tipo_area`.** Los tres tipos (`publica` | `privada` | `camping`)
 siguen siendo solo de áreas. Un taller **no entra** en `areas`. Tabla propia:
@@ -217,7 +219,7 @@ UTM landing provincia: `utm_medium=cta_talleres_provincia`.
 | Enlace | Solo `/taller/{slug}`. No Google Maps |
 | Si hay fichas | Prohibido «no tengo» |
 | Gasolinera | `buscar_info_viaje` (web). **Nunca** para talleres |
-| Alquiler | `esAlquilerNoTaller` filtra el resultado |
+| Alquiler / ruido | `admiteTallerCamper(..., { exigirSenal: false })` |
 
 El prompt de las seis reglas aún dice «solo `/area/{slug}`». La excepción
 de talleres está en el bloque de calidad: «Taller camper: `search_talleres`.
@@ -253,6 +255,21 @@ node scripts/import-talleres-camperizando.mjs --apply
 Lista pública de [camperizando.es/camperizadores](https://camperizando.es/camperizadores/).
 Ficha = Google Places. **No se copian** sus textos. 30 ago: 35 altas + 6
 reactivados; 46 de su lista sin Place fiable (no se inventan).
+
+### Huecos por provincia (Places)
+
+No es la malla de sierras de áreas. Se busca en provincias con **0–2**
+activos: Albacete, Cuenca, Ourense, Segovia y las de un taller. Ceuta y
+Melilla no. Queries: reparación autocaravanas / camperización / reparar camper.
+
+```powershell
+$env:NODE_TLS_REJECT_UNAUTHORIZED="0"
+npx ts-node --project tsconfig.scripts.json scripts/buscar-huecos-talleres.ts
+npx ts-node --project tsconfig.scripts.json scripts/buscar-huecos-talleres.ts --apply
+```
+
+Dry-run primero. Dedupe por `google_place_id` y 150 m. Sin fotos de Google.
+`HUECO_MAX=2` cambia el tope.
 
 ### Auditoría (0 €)
 

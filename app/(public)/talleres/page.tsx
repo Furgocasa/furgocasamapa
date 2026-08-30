@@ -9,7 +9,7 @@ import { Footer } from '@/components/layout/Footer'
 import { normalizarProvincia } from '@/lib/areas/provincias'
 import { TALLER_ICON_PATH, TALLER_PIN_COLOR } from '@/lib/talleres/types'
 import {
-  esAlquilerNoTaller,
+  admiteTallerCamper,
   scoreValoracionTaller,
   sitioTaller,
   tituloTaller,
@@ -54,7 +54,7 @@ const getDirectorio = cache(async () => {
   }
 
   const top = rows
-    .filter((t) => !esAlquilerNoTaller(t.nombre, t.descripcion))
+    .filter((t) => admiteTallerCamper(t, { exigirSenal: false }))
     .filter((t) => (t.google_ratings_total || 0) >= MIN_RESENAS_TOP && (t.google_rating || 0) > 0)
     .sort((a, b) => {
       const sa = scoreValoracionTaller(a.google_rating, a.google_ratings_total)

@@ -6,6 +6,7 @@
  *
  * Dry-run: IMG_DRYRUN=1
  * Lote: IMG_LIMIT=20
+ * Solo IA (sin scrape): IMG_IA_ONLY=1
  */
 import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
@@ -14,6 +15,7 @@ import { scrapeFotosWebOficial } from '../lib/areas/scrape-official-images'
 import { generateAndStoreTallerImage } from '../lib/areas/generate-area-image'
 
 const DRY = /^(1|true|yes)$/i.test(process.env.IMG_DRYRUN || '')
+const IA_ONLY = /^(1|true|yes)$/i.test(process.env.IMG_IA_ONLY || '')
 const LIMIT = Math.max(0, parseInt(process.env.IMG_LIMIT || '0', 10) || 0)
 const MAX_FOTOS = Math.max(1, parseInt(process.env.IMG_MAX || '4', 10) || 4)
 const CONCURRENCY = Math.max(1, parseInt(process.env.IMG_CONCURRENCY || '3', 10) || 3)
@@ -73,9 +75,15 @@ async function main() {
   })
   const lote = LIMIT ? targets.slice(0, LIMIT) : targets
 
-  console.log(`🧭 ${all.length} sin foto, ${targets.length} con web usable, lote ${lote.length}`)
+  console.log(`🧭 ${all.length} sin foto, ${targets.length} con web usable, lote ${lote.length}${IA_ONLY ? ' (solo IA)' : ''}`)
   if (DRY) {
-    lote.forEach((t) => console.log(' -', t.nombre, t.website))
+    all.forEach((t) => console.log(' -', t.nombre, t.website || 'sin web'))
+    return
+  }
+
+  if (IA_ONLY) {
+    const iaLote = LIMIT ? all.slice(0, LIMIT) : all
+    await generarIa(supa, iaLote)
     return
   }
 
@@ -122,7 +130,11 @@ async function main() {
     .is('foto_principal', null)
   const sinFoto = (siguen || []) as Row[]
   const iaLote = LIMIT ? sinFoto.slice(0, Math.max(0, LIMIT - ok)) : sinFoto
-  console.log(`🎨 IA para ${iaLote.length} sin foto (${sinFoto.length} pendientes)`)
+  await generarIa(supa, iaLote, ok)
+}
+
+async function generarIa(supa: any, iaLote: Row[], oficiales = 0) {
+  console.log(`🎨 IA para ${iaLote.length} sin foto`)
   let iaOk = 0
   let iaFail = 0
   const colaIa = iaLote.slice()
@@ -133,7 +145,7 @@ async function main() {
       try {
         await generateAndStoreTallerImage(supa, t)
         iaOk++
-        console.log(`✓ IA ${t.nombre}`)
+        console.log(`✓ IA ${t.nombre} (${iaOk}/${iaLote.length})`)
       } catch (e: any) {
         iaFail++
         console.log(`✗ IA ${t.nombre} ${e?.message || e}`)
@@ -141,7 +153,7 @@ async function main() {
     }
   })
   if (iaLote.length) await Promise.all(workersIa)
-  console.log(`\nRESUMEN: ${ok} oficiales, ${iaOk} IA, ${iaFail} fallos IA`)
+  console.log(`\nRESUMEN: ${oficiales} oficiales, ${iaOk} IA, ${iaFail} fallos IA`)
 }
 
 main().catch((e) => {

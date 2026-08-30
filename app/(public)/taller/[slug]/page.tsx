@@ -18,7 +18,7 @@ import { isEspana } from '@/lib/areas/cta-comercial'
 import { normalizarProvincia } from '@/lib/areas/provincias'
 import {
   direccionVisible,
-  esAlquilerNoTaller,
+  admiteTallerCamper,
   h1Taller,
   mapsUrlTaller,
   tallerSeoSnippet,
@@ -131,8 +131,7 @@ export default async function TallerPage({ params }: PageProps) {
   const relacionados = (relacionadosRaw || [])
     .filter(
       (r: { nombre: string; descripcion?: string | null }) =>
-        !esAlquilerNoTaller(r.nombre, r.descripcion) &&
-        !/nomad clean|desguace|neum[aá]tic|lunas|glassdrive|\bitv\b/i.test(r.nombre)
+        admiteTallerCamper(r, { exigirSenal: false })
     )
     .slice(0, 4)
 
