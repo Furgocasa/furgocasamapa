@@ -18,6 +18,7 @@ import { isEspana } from '@/lib/areas/cta-comercial'
 import { normalizarProvincia } from '@/lib/areas/provincias'
 import {
   direccionVisible,
+  esAlquilerNoTaller,
   mapsUrlTaller,
   tallerSeoSnippet,
   tituloTaller,
@@ -107,7 +108,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: snippet.title,
       description: snippet.description,
       url: `${BASE}/taller/${taller.slug}`,
-      images: taller.foto_principal ? [taller.foto_principal] : [`${BASE}/og-image-v2.jpg`],
+      images: taller.foto_principal ? [taller.foto_principal] : [`${BASE}/images/opengraph/opengraph_talleres.jpg`],
     },
   }
 }
@@ -120,14 +121,18 @@ export default async function TallerPage({ params }: PageProps) {
   const supabase = await createClient()
   const { data: relacionadosRaw } = await (supabase as any)
     .from('talleres')
-    .select('id, nombre, slug, ciudad, provincia, foto_principal, google_rating')
+    .select('id, nombre, slug, ciudad, provincia, descripcion, foto_principal, google_rating')
     .eq('provincia', taller.provincia)
     .eq('activo', true)
     .neq('id', taller.id)
     .order('google_rating', { ascending: false, nullsFirst: false })
     .limit(12)
   const relacionados = (relacionadosRaw || [])
-    .filter((r: { nombre: string }) => !/nomad clean|desguace|neum[aá]tic|lunas|glassdrive|\bitv\b/i.test(r.nombre))
+    .filter(
+      (r: { nombre: string; descripcion?: string | null }) =>
+        !esAlquilerNoTaller(r.nombre, r.descripcion) &&
+        !/nomad clean|desguace|neum[aá]tic|lunas|glassdrive|\bitv\b/i.test(r.nombre)
+    )
     .slice(0, 4)
 
   const nombre = tituloTaller(taller.nombre)
@@ -178,7 +183,7 @@ export default async function TallerPage({ params }: PageProps) {
     name: nombre,
     description: area.descripcion || `Taller en ${sitio}`,
     url: `${BASE}/taller/${taller.slug}`,
-    image: taller.foto_principal || `${BASE}/og-image-v2.jpg`,
+    image: taller.foto_principal || `${BASE}/images/opengraph/opengraph_talleres.jpg`,
     telephone: taller.telefono || undefined,
     email: taller.email || undefined,
     sameAs: taller.website ? [taller.website] : undefined,

@@ -9,6 +9,7 @@ import { Footer } from '@/components/layout/Footer'
 import { normalizarProvincia } from '@/lib/areas/provincias'
 import { TALLER_ICON_PATH, TALLER_PIN_COLOR } from '@/lib/talleres/types'
 import {
+  esAlquilerNoTaller,
   scoreValoracionTaller,
   sitioTaller,
   tituloTaller,
@@ -17,7 +18,7 @@ import {
 export const revalidate = 3600
 
 const BASE_URL = 'https://www.mapafurgocasa.com'
-const OG_IMAGE = `${BASE_URL}/og-image-v2.jpg`
+const OG_IMAGE = `${BASE_URL}/images/opengraph/opengraph_talleres.jpg`
 const TOP_N = 10
 const MIN_RESENAS_TOP = 20
 
@@ -26,6 +27,7 @@ type TallerTop = {
   slug: string
   ciudad: string | null
   provincia: string | null
+  descripcion: string | null
   foto_principal: string | null
   google_rating: number | null
   google_ratings_total: number | null
@@ -39,7 +41,7 @@ const getDirectorio = cache(async () => {
   for (let page = 0; ; page++) {
     const { data, error } = await (supabase as any)
       .from('talleres')
-      .select('nombre, slug, ciudad, provincia, foto_principal, google_rating, google_ratings_total')
+      .select('nombre, slug, ciudad, provincia, descripcion, foto_principal, google_rating, google_ratings_total')
       .eq('activo', true)
       .range(page * pageSize, (page + 1) * pageSize - 1)
     if (error || !data) break
@@ -52,6 +54,7 @@ const getDirectorio = cache(async () => {
   }
 
   const top = rows
+    .filter((t) => !esAlquilerNoTaller(t.nombre, t.descripcion))
     .filter((t) => (t.google_ratings_total || 0) >= MIN_RESENAS_TOP && (t.google_rating || 0) > 0)
     .sort((a, b) => {
       const sa = scoreValoracionTaller(a.google_rating, a.google_ratings_total)
@@ -189,7 +192,7 @@ export default async function TalleresIndexPage() {
             <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
               <h2 className="text-2xl font-bold text-[#0b3c74] mb-3">El listado vive en el mapa</h2>
               <p className="text-gray-600 leading-relaxed">
-                Aquí no hay 405 nombres en fila. Buscas ciudad, te acercas y abres la ficha.
+                Aquí no hay {total} nombres en fila. Buscas ciudad, te acercas y abres la ficha.
                 El conmutador Áreas | Talleres cambia de capa: un taller no es un sitio para dormir.
                 El Tío también distingue: si pides taller, busca talleres.
               </p>
@@ -201,6 +204,7 @@ export default async function TalleresIndexPage() {
             <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
               <h2 className="text-2xl font-bold text-[#0b3c74] mb-3">Qué no entra</h2>
               <ul className="space-y-2 text-gray-600">
+                <li>Alquiler de campers o autocaravanas</li>
                 <li>Neumáticos, Feu Vert, Norauto</li>
                 <li>Lunas y Carglass</li>
                 <li>ITV, recambios, grúas</li>
