@@ -19,6 +19,8 @@ import {
   tieneSenalCamper,
   tipoTaller,
   tituloTaller,
+  webConfirmaOficio,
+  webEsSoloFlota,
 } from '../lib/talleres/seo-snippet'
 
 const APPLY = process.argv.includes('--apply')
@@ -503,15 +505,12 @@ const RUIDO_IMPORT =
 
 /** Rótulos que ya dicen el oficio. Si no lo dicen, la web oficial tiene que decirlo. */
 const NOMBRE_OFICIO = /taller|camperiz|reparac|fabricac|accesor|servicio|recambio/i
-const SENAL_TALLER_WEB =
-  /taller|camperiz|reparaci[oó]n|mantenimiento|servicio t[eé]cnico|estanqueidad|instalaci[oó]n de accesorios|chapa y pintura/i
 
 /**
- * Caravan La Mancha: rótulo con «Caravan», Google lo devuelve por keyword,
- * pero su web es solo alquiler. true = web confirma taller; false = web sin
- * taller (rechazo); null = sin web o no se pudo leer (no decide).
+ * true = web confirma oficio; false = flota / sin oficio (Caravan La Mancha);
+ * null = sin web o no se pudo leer.
  */
-async function webConfirmaTaller(website?: string | null): Promise<boolean | null> {
+async function leerWebOficial(website?: string | null): Promise<string | null> {
   if (!website) return null
   try {
     const ctl = new AbortController()
@@ -522,8 +521,7 @@ async function webConfirmaTaller(website?: string | null): Promise<boolean | nul
     })
     clearTimeout(timer)
     if (!r.ok) return null
-    const html = (await r.text()).slice(0, 400000)
-    return SENAL_TALLER_WEB.test(html)
+    return (await r.text()).slice(0, 400000)
   } catch {
     return null
   }
@@ -642,7 +640,10 @@ async function main() {
           }
           if (d.latitud == null || d.longitud == null) continue
           if (
-            !admiteTallerCamper({ nombre: d.nombre, types: d.google_types }, { exigirSenal: true }) ||
+            !admiteTallerCamper(
+              { nombre: d.nombre, types: d.google_types, website: d.website },
+              { exigirSenal: true }
+            ) ||
             RUIDO_IMPORT.test(d.nombre)
           ) {
             rechazos.push(`filtro · ${d.nombre}`)
@@ -653,12 +654,14 @@ async function main() {
             rechazos.push(`<150m · ${d.nombre}`)
             continue
           }
-          if (!NOMBRE_OFICIO.test(d.nombre)) {
-            const confirma = await webConfirmaTaller(d.website)
-            if (confirma === false) {
-              rechazos.push(`web sin taller · ${d.nombre}`)
-              continue
-            }
+          const html = await leerWebOficial(d.website)
+          if (html && webEsSoloFlota(html)) {
+            rechazos.push(`web flota · ${d.nombre}`)
+            continue
+          }
+          if (!NOMBRE_OFICIO.test(d.nombre) && html && !webConfirmaOficio(html)) {
+            rechazos.push(`web sin oficio · ${d.nombre}`)
+            continue
           }
           const provincia = provinciaDe(d) || prov
           const nombre = tituloTaller(d.nombre)

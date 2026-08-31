@@ -7,7 +7,7 @@
 > `GUIA_DISENO_V3.md` (pin ámbar). Inventario del taller: `MAPA-PROYECTOS.md`
 > (ficha MapafurgoCasa). Bitácora: `RAID-CUENTAS-Y-STACK.md` (30 ago 2026).
 
-**Corte 31 ago 2026:** **415** talleres activos. Solo España. Ficha molde:
+**Corte 31 ago 2026 noche:** **693** talleres activos (malla + limpieza de flotas). Solo España. Ficha molde:
 [`/taller/petervan-camper-murcia`](https://www.mapafurgocasa.com/taller/petervan-camper-murcia).
 Alta puntual: [Caravanas Sangar](https://www.mapafurgocasa.com/taller/caravanas-sangar-sl-murcia) (Los Beatos, Cartagena), mismo molde que Caravanas Murcia (taller + venta + alquiler). No salía: Furgocasa lo tenía como concesionario y el buscador de huecos no pisa provincias ya cubiertas.
 
@@ -28,6 +28,9 @@ Alta puntual: [Caravanas Sangar](https://www.mapafurgocasa.com/taller/caravanas-
 Filtro: `admiteTallerCamper()` en `lib/talleres/seo-snippet.ts`.
 `esAlquilerNoTaller` = **solo flota**. Si hay taller, no se capa aunque vendan o alquilen.
 Hub / Tío: `exigirSenal: false`. Import de malla: señal camper o «Caravanas X».
+Si el rótulo no dice el oficio, se lee la web oficial: fianza / €/día / «alquila tu»
+sin camperización ni taller → flota (caso [Caravan La Mancha](https://caravanlamancha.com/)).
+Google `car_rental` solo no decide: lo pone a flotas y a quien camperiza.
 
 ### Tipo de taller (derivado, sin columna)
 
@@ -42,7 +45,6 @@ su texto cite camperización).
 | `autocaravanas` | Repara y mantiene autocaravanas y caravanas (Caravanas Murcia, Sangar) | Taller de autocaravanas en {lugar} |
 | `especialista` | Accesorios, electricidad, solar, toldos, tapicería | Taller especialista camper en {lugar} |
 
-Corte 31 ago: 335 camperización · 69 autocaravanas · 11 especialistas.
 El mismo `tipoTaller()` alimenta H1, title y la descripción de alta de la malla.
 No etiquetar a un taller de autocaravanas como «taller de camperización»: ese
 era el fallo del H1 de Sangar.

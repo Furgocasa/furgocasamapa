@@ -1487,7 +1487,7 @@ export interface InfoViajeWebParams {
 }
 
 const CAMPOS_TALLER_CHAT =
-  'id, nombre, slug, ciudad, provincia, pais, latitud, longitud, descripcion, google_rating, google_ratings_total, foto_principal, fotos_urls, google_maps_url'
+  'id, nombre, slug, ciudad, provincia, pais, latitud, longitud, descripcion, website, google_rating, google_ratings_total, foto_principal, fotos_urls, google_maps_url'
 
 function tallerAResumen(t: any): AreaResumen {
   return {
