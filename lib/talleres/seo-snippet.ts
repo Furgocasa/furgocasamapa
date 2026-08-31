@@ -107,14 +107,20 @@ export function esAlquilerNoTaller(nombre?: string | null, descripcion?: string 
     return true
   }
   if (/apartado de reservas/i.test(blob) && !/camperizaci/i.test(blob)) return true
-  if (/^alquiler\b|\balquiler de (autocaravanas|campers?|caravanas|furgonetas)\b/i.test(nombre || '')) {
+  // «Myvan Alquiler Autocaravanas», «AC-LLAR. Vacaciones en Autocaravana», «X Rent a Van»:
+  // flota con nombre camper pero sin taller. Sin «de» también cuenta.
+  if (
+    /^alquiler\b|\balquiler\s+(de\s+)?(autocaravanas?|campers?|caravanas?|furgonetas?)\b|vacaciones en (autocaravana|camper)|\brent\s?a\s?(car|van|camper)\b/i.test(
+      nombre || ''
+    )
+  ) {
     return true
   }
   return false
 }
 
 const RUIDO_TALLER =
-  /feu\s*vert|norauto|glassdrive|carglass|\bitv\b|desguace|eurorepar|nomad clean|neum[aá]tic|\blunas\b|solo tienda|shop only|tienda online|camperizando|corte ingles|aparkarea|parking (camper|autocaravana|caravana)|área (de )?(servicio|autocaravana|sosta)|area (de )?(servicio|autocaravana)/i
+  /feu\s*vert|norauto|glassdrive|carglass|\bitv\b|desguace|eurorepar|nomad clean|neum[aá]tic|\blunas\b|solo tienda|shop only|tienda online|camperizando|corte ingl[eé]s|aparkarea|parking (camper|autocaravana|caravana)|área (de )?(servicio|autocaravana|sosta)|area (de )?(servicio|autocaravana)/i
 
 /** Coche genérico, tienda online, lunas, ITV. No capar concesionario con taller. */
 export function esRuidoTaller(
@@ -124,7 +130,8 @@ export function esRuidoTaller(
 ): boolean {
   const blob = `${nombre || ''} ${descripcion || ''}`
   const tipos = types || []
-  if (tipos.includes('car_rental') && !SENAL_TALLER.test(blob) && !SENAL_CAMPER.test(nombre || '')) {
+  // car_rental sin señal de taller = flota, aunque el rótulo diga «Caravan» (Caravan La Mancha).
+  if (tipos.includes('car_rental') && !SENAL_TALLER.test(blob)) {
     return true
   }
   if (RUIDO_TALLER.test(blob)) return true

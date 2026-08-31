@@ -499,7 +499,35 @@ async function placeDetails(placeId: string) {
 }
 
 const RUIDO_IMPORT =
-  /área |area de |parking |aparkarea|camperizando|corte ingles|^alquiler\b|alquiler de (autocaravanas|campers?|caravanas)/i
+  /área |area de |parking |aparkarea|camperizando|corte ingl[eé]s|^alquiler\b|alquiler\s+(de\s+)?(autocaravanas?|campers?|caravanas?|furgonetas?)|vacaciones en (autocaravana|camper)/i
+
+/** Rótulos que ya dicen el oficio. Si no lo dicen, la web oficial tiene que decirlo. */
+const NOMBRE_OFICIO = /taller|camperiz|reparac|fabricac|accesor|servicio|recambio/i
+const SENAL_TALLER_WEB =
+  /taller|camperiz|reparaci[oó]n|mantenimiento|servicio t[eé]cnico|estanqueidad|instalaci[oó]n de accesorios|chapa y pintura/i
+
+/**
+ * Caravan La Mancha: rótulo con «Caravan», Google lo devuelve por keyword,
+ * pero su web es solo alquiler. true = web confirma taller; false = web sin
+ * taller (rechazo); null = sin web o no se pudo leer (no decide).
+ */
+async function webConfirmaTaller(website?: string | null): Promise<boolean | null> {
+  if (!website) return null
+  try {
+    const ctl = new AbortController()
+    const timer = setTimeout(() => ctl.abort(), 10000)
+    const r = await fetch(website, {
+      signal: ctl.signal,
+      headers: { 'user-agent': 'Mozilla/5.0 (compatible; MapafurgoCasa)' },
+    })
+    clearTimeout(timer)
+    if (!r.ok) return null
+    const html = (await r.text()).slice(0, 400000)
+    return SENAL_TALLER_WEB.test(html)
+  } catch {
+    return null
+  }
+}
 
 function provinciaDe(d: {
   codigo_postal?: string | null
@@ -624,6 +652,13 @@ async function main() {
           if (cerca) {
             rechazos.push(`<150m · ${d.nombre}`)
             continue
+          }
+          if (!NOMBRE_OFICIO.test(d.nombre)) {
+            const confirma = await webConfirmaTaller(d.website)
+            if (confirma === false) {
+              rechazos.push(`web sin taller · ${d.nombre}`)
+              continue
+            }
           }
           const provincia = provinciaDe(d) || prov
           const nombre = tituloTaller(d.nombre)
