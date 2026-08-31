@@ -7,8 +7,9 @@
 > `GUIA_DISENO_V3.md` (pin ámbar). Inventario del taller: `MAPA-PROYECTOS.md`
 > (ficha MapafurgoCasa). Bitácora: `RAID-CUENTAS-Y-STACK.md` (30 ago 2026).
 
-**Corte 30 ago 2026:** **388** talleres activos. Solo España. Ficha molde:
+**Corte 31 ago 2026:** **415** talleres activos. Solo España. Ficha molde:
 [`/taller/petervan-camper-murcia`](https://www.mapafurgocasa.com/taller/petervan-camper-murcia).
+Alta puntual: [Caravanas Sangar](https://www.mapafurgocasa.com/taller/caravanas-sangar-sl-murcia) (Los Beatos, Cartagena), mismo molde que Caravanas Murcia (taller + venta + alquiler). No salía: Furgocasa lo tenía como concesionario y el buscador de huecos no pisa provincias ya cubiertas.
 
 ---
 
@@ -16,19 +17,35 @@
 
 | Entra | No entra |
 |-------|----------|
-| Camperizado (muebles, techo, agua, gas) | Alquiler / flota (competencia de Furgocasa) |
-| Accesorios de habitáculo (calefacción, placas, nevera, claraboya, batería) | Neumáticos, Feu Vert, Norauto |
+| Camperizado (muebles, techo, agua, gas) | **Solo** flota / alquiler (Indie, Yescapa, «alquiler de autocaravanas X») |
+| Accesorios de habitáculo | Neumáticos, Feu Vert, Norauto |
 | Reparación del habitáculo o la autocaravana | Lunas / Carglass / Glassdrive |
 | Homologación para ITV del camperizado | ITV, recambios, grúas |
-| | Taller oficial de coche, Eurorepar |
-| | Concesionarios (no viajan desde Furgocasa) |
+| Taller + venta + alquiler (Caravanas Murcia, Caravanas Sangar) | Taller oficial de coche, Eurorepar |
 | | Desguaces, lavaderos, «Nomad Clean» |
+| | Tienda online / solo accesorios |
 
-Filtro de código: `admiteTallerCamper()` en `lib/talleres/seo-snippet.ts`
-(`esAlquilerNoTaller` + `esRuidoTaller` + señal camper en altas nuevas).
-Hub, provincia, relacionadas y Tío: `exigirSenal: false` (catálogo ya curado).
-Import de huecos: señal obligatoria (`camper|autocaravana|furgo|van`).
-Indie Campers, concesionario, tienda online, Feu Vert, ITV = fuera.
+Filtro: `admiteTallerCamper()` en `lib/talleres/seo-snippet.ts`.
+`esAlquilerNoTaller` = **solo flota**. Si hay taller, no se capa aunque vendan o alquilen.
+Hub / Tío: `exigirSenal: false`. Import de malla: señal camper o «Caravanas X».
+
+### Tipo de taller (derivado, sin columna)
+
+Tres tipos, todos dentro de `talleres`. No hay columna en BD:
+`tipoTaller()` en `lib/talleres/seo-snippet.ts` lo deriva de nombre +
+descripción (la marca pesa: «Caravanas Sangar» es autocaravanas aunque
+su texto cite camperización).
+
+| Tipo | Qué es | H1 de ficha |
+|------|--------|-------------|
+| `camperizacion` | Fabrica / transforma furgonetas | Taller de camperización en {lugar} |
+| `autocaravanas` | Repara y mantiene autocaravanas y caravanas (Caravanas Murcia, Sangar) | Taller de autocaravanas en {lugar} |
+| `especialista` | Accesorios, electricidad, solar, toldos, tapicería | Taller especialista camper en {lugar} |
+
+Corte 31 ago: 335 camperización · 69 autocaravanas · 11 especialistas.
+El mismo `tipoTaller()` alimenta H1, title y la descripción de alta de la malla.
+No etiquetar a un taller de autocaravanas como «taller de camperización»: ese
+era el fallo del H1 de Sangar.
 
 **No es `tipo_area`.** Los tres tipos (`publica` | `privada` | `camping`)
 siguen siendo solo de áreas. Un taller **no entra** en `areas`. Tabla propia:
@@ -175,7 +192,7 @@ Schema:
 
 Ficha: H1 = marca (el taller). Las queries locales van en H2, no en el H1.
 - H1: `{nombre}` (limpio, sin «SOLO Tienda Online»)
-- H2 info: `Taller de camperización en {ciudad}`
+- H2 info: `{etiqueta de tipoTaller()} en {ciudad}` (camperización / autocaravanas / especialista)
 - H2 relacionados: `Otros talleres camper en {provincia}`
 - Title: `Taller camper {ciudad} | {nombre}` (máx. 60)
 - Schema: `name` = marca, `alternateName` = el H2 local
@@ -239,8 +256,9 @@ $env:NODE_TLS_REJECT_UNAUTHORIZED="0"
 node scripts/import-talleres-desde-furgocasa.mjs
 ```
 
-Lee `motorhome_services` donde `category = taller_camper`. Concesionarios no
-viajan. Upsert por `google_place_id` (fallback `slug`). Galicia «comunidad»
+Lee `motorhome_services` donde `category = taller_camper`. Flota sola no.
+Taller+venta+alquiler sí (Caravanas Murcia). Upsert por `google_place_id`.
+Galicia «comunidad»
 se corrige a provincia real. `activo` = `status=active` y
 `operational_status=OPERATIONAL`. Descripción inicial de plantilla (luego
 la pisa el enriquecido).
@@ -256,20 +274,27 @@ Lista pública de [camperizando.es/camperizadores](https://camperizando.es/campe
 Ficha = Google Places. **No se copian** sus textos. 30 ago: 35 altas + 6
 reactivados; 46 de su lista sin Place fiable (no se inventan).
 
-### Huecos por provincia (Places)
+### Malla peninsular (Places Nearby) — igual que se buscaron los campings
 
-No es la malla de sierras de áreas. Se busca en provincias con **0–2**
-activos: Albacete, Cuenca, Ourense, Segovia y las de un taller. Ceuta y
-Melilla no. Queries: reparación autocaravanas / camperización / reparar camper.
+Sustituye al viejo «huecos por provincia» (solo miraba provincias con ≤2 y
+exigía «taller» en el rótulo: por eso se escapó Caravanas Sangar). Ahora:
+**todas** las provincias (Ceuta y Melilla no), puntos urbanos
+(capital + ciudades con polígono) con radio 20–30 km y **Nearby Search por
+keyword** (`taller autocaravanas`, `camperizacion furgonetas`, `taller camper`,
+`accesorios camper`): el keyword matcha el negocio, no solo el nombre.
 
 ```powershell
 $env:NODE_TLS_REJECT_UNAUTHORIZED="0"
-npx ts-node --project tsconfig.scripts.json scripts/buscar-huecos-talleres.ts
-npx ts-node --project tsconfig.scripts.json scripts/buscar-huecos-talleres.ts --apply
+npx tsx scripts/buscar-huecos-talleres.ts                     # dry-run todas
+npx tsx scripts/buscar-huecos-talleres.ts --provincia=murcia  # una provincia
+npx tsx scripts/buscar-huecos-talleres.ts --apply             # escribe por provincia (reanudable)
+npx tsx scripts/buscar-huecos-talleres.ts --apply --desde=Lugo # reanudar
 ```
 
 Dry-run primero. Dedupe por `google_place_id` y 150 m. Sin fotos de Google.
-`HUECO_MAX=2` cambia el tope.
+La provincia de cada alta sale del CP / dirección, no del punto del barrido.
+La descripción de alta usa `tipoTaller()` (camperización / autocaravanas /
+especialista). Barrido completo 31 ago 2026 en `scripts/malla-talleres-run.log`.
 
 ### Auditoría (0 €)
 

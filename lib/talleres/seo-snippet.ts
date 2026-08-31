@@ -33,38 +33,90 @@ export function lugarSeoTaller(ciudad?: string | null, provincia?: string | null
   return sitio.split(',')[0].trim()
 }
 
-/** H1 de ficha: la query local, no la marca. */
-export function h1Taller(ciudad?: string | null, provincia?: string | null): string {
-  const lugar = lugarSeoTaller(ciudad, provincia)
-  return lugar ? `Taller de camperización en ${lugar}` : 'Taller de camperización'
+/**
+ * Tipo de taller DERIVADO (no hay columna en BD): nombre + descripción + tipos Google.
+ * - camperizacion: fabrica / transforma furgonetas en camper.
+ * - autocaravanas: repara y mantiene autocaravanas y caravanas (Caravanas Murcia, Sangar).
+ * - especialista: accesorios, electricidad, solar, toldos, tapicería… sin fabricar.
+ * Una única función para H1, title/description, malla de import y Tío Viajero.
+ */
+export type TipoTaller = 'camperizacion' | 'autocaravanas' | 'especialista'
+
+export const TIPO_TALLER_LABEL: Record<TipoTaller, string> = {
+  camperizacion: 'Taller de camperización',
+  autocaravanas: 'Taller de autocaravanas',
+  especialista: 'Taller especialista camper',
+}
+
+const RE_CAMPERIZA = /camperiz\w*|conversi[oó]n de furg|transformaci[oó]n de furg|fabricaci[oó]n de campers?|fabricamos campers?/gi
+const RE_AUTOCARAVANA = /autocaravanas?|caravanas?|motorhomes?/gi
+const RE_ESPECIALISTA =
+  /accesorios|el[eé]ctric\w*|electricidad|energ[ií]a solar|placas? solares?|bater[ií]as?|toldos?|calefacci[oó]n|tapicer[ií]a|rotulaci[oó]n|aislamiento|mosquiteras?/i
+
+function cuenta(texto: string, re: RegExp): number {
+  return (texto.match(re) || []).length
+}
+
+export function tipoTaller(t: {
+  nombre?: string | null
+  descripcion?: string | null
+  google_types?: string[] | null
+}): TipoTaller {
+  const nombre = t.nombre || ''
+  const blob = `${nombre} ${t.descripcion || ''}`
+  let camperiza = cuenta(blob, RE_CAMPERIZA)
+  let autocaravana = cuenta(blob, RE_AUTOCARAVANA)
+  // La marca pesa: «Caravanas Sangar» es taller de autocaravanas aunque su texto cite camperización.
+  if (/caravan|autocaravan|motorhome/i.test(nombre)) autocaravana += 3
+  if (/camperiz|\bvans?\b|furgo|\bcampers?\b/i.test(nombre)) camperiza += 3
+  if (!camperiza && !autocaravana) {
+    return RE_ESPECIALISTA.test(blob) ? 'especialista' : 'camperizacion'
+  }
+  if (autocaravana > camperiza) return 'autocaravanas'
+  return 'camperizacion'
+}
+
+/** H1 de ficha: la query local según el tipo real, no la marca. */
+export function h1Taller(t: {
+  nombre?: string | null
+  descripcion?: string | null
+  ciudad?: string | null
+  provincia?: string | null
+  google_types?: string[] | null
+}): string {
+  const etiqueta = TIPO_TALLER_LABEL[tipoTaller(t)]
+  const lugar = lugarSeoTaller(t.ciudad, t.provincia)
+  return lugar ? `${etiqueta} en ${lugar}` : etiqueta
 }
 
 /** Menos de esto: landing visible, noindex, fuera del sitemap. Molde áreas: no pueblo con 1. */
 export const MIN_TALLERES_LANDING_INDEX = 3
 
-/** Alquiler / flota = competencia de Furgocasa. No es taller de camperizado. */
+const SENAL_CAMPER = /camper|autocaravan|caravana|\bfurgo|camperiz|\bvans?\b/i
+const SENAL_TALLER = /taller|camperiz|reparac|fabricac|conversi[oó]n/i
+const FLOTA_SOLA =
+  /\b(indie campers|yescapa|camperdays|roadsurfer|alquicamper|rent.?a.?camper|semura camper)\b/i
+
+/** Solo flota. Caravanas Murcia (taller + venta + alquiler) no entra aquí. */
 export function esAlquilerNoTaller(nombre?: string | null, descripcion?: string | null): boolean {
   const blob = `${nombre || ''} ${descripcion || ''}`
-  if (/\b(indie campers|yescapa|camperdays|roadsurfer|alquicamper|rent.?a.?camper)\b/i.test(blob)) {
-    return true
-  }
+  if (FLOTA_SOLA.test(blob)) return true
+  if (SENAL_TALLER.test(blob)) return false
   if (/\bempresa de alquiler\b/i.test(blob)) return true
   if (/se centra en el alquiler|actividad (publicada )?se centra en el alquiler/i.test(blob)) {
     return true
   }
-  if (/dedicad[oa] (al alquiler|a la venta y (el )?alquiler|a la compra, venta y alquiler)/i.test(blob)) {
+  if (/apartado de reservas/i.test(blob) && !/camperizaci/i.test(blob)) return true
+  if (/^alquiler\b|\balquiler de (autocaravanas|campers?|caravanas|furgonetas)\b/i.test(nombre || '')) {
     return true
   }
-  if (/apartado de reservas/i.test(blob) && !/camperizaci/i.test(blob)) return true
   return false
 }
 
-const SENAL_CAMPER = /camper|autocaravan|caravana|\bfurgo|camperiz|\bvans?\b/i
-
 const RUIDO_TALLER =
-  /feu\s*vert|norauto|glassdrive|carglass|\bitv\b|desguace|eurorepar|nomad clean|neum[aá]tic|\blunas\b|concesionario|solo tienda|shop only|tienda online|camperizando|corte ingles|aparkarea|parking (camper|autocaravana|caravana)|área (de )?(servicio|autocaravana|sosta)|area (de )?(servicio|autocaravana)/i
+  /feu\s*vert|norauto|glassdrive|carglass|\bitv\b|desguace|eurorepar|nomad clean|neum[aá]tic|\blunas\b|solo tienda|shop only|tienda online|camperizando|corte ingles|aparkarea|parking (camper|autocaravana|caravana)|área (de )?(servicio|autocaravana|sosta)|area (de )?(servicio|autocaravana)/i
 
-/** Coche genérico, concesionario, tienda online, lunas, ITV. */
+/** Coche genérico, tienda online, lunas, ITV. No capar concesionario con taller. */
 export function esRuidoTaller(
   nombre?: string | null,
   descripcion?: string | null,
@@ -72,9 +124,11 @@ export function esRuidoTaller(
 ): boolean {
   const blob = `${nombre || ''} ${descripcion || ''}`
   const tipos = types || []
-  if (tipos.includes('car_rental') || tipos.includes('car_dealer')) return true
+  if (tipos.includes('car_rental') && !SENAL_TALLER.test(blob) && !SENAL_CAMPER.test(nombre || '')) {
+    return true
+  }
   if (RUIDO_TALLER.test(blob)) return true
-  if (/accesorios/i.test(blob) && !/(taller|camperiz|reparac)/i.test(blob)) return true
+  if (/accesorios/i.test(blob) && !SENAL_TALLER.test(blob)) return true
   if (/taller oficial/i.test(blob) && !SENAL_CAMPER.test(blob)) return true
   return false
 }
@@ -161,7 +215,9 @@ export function tallerSeoSnippet(t: {
 }) {
   const nombre = tituloTaller(t.nombre)
   const lugar = lugarSeoTaller(t.ciudad, t.provincia)
-  const local = lugar ? `Taller camper ${lugar}` : 'Taller de camperización'
+  const tipo = tipoTaller(t)
+  const query = tipo === 'autocaravanas' ? 'Taller de autocaravanas' : 'Taller camper'
+  const local = lugar ? `${query} ${lugar}` : TIPO_TALLER_LABEL[tipo]
   const title = clip(nombre && nombre !== 'Taller' ? `${local} | ${nombre}` : local, TITLE_MAX)
   const propio = (t.descripcion || '').split(/\n\s*\n/)[0]?.replace(/\s+/g, ' ').trim()
   const rating =
@@ -170,8 +226,8 @@ export function tallerSeoSnippet(t: {
       : ''
   const description = clip(
     propio ||
-      `${h1Taller(t.ciudad, t.provincia)}: ficha de ${nombre}. Dirección, teléfono y mapa en MapafurgoCasa.${rating}`,
+      `${h1Taller(t)}: ficha de ${nombre}. Dirección, teléfono y mapa en MapafurgoCasa.${rating}`,
     DESC_MAX
   )
-  return { title, description, h1: h1Taller(t.ciudad, t.provincia) }
+  return { title, description, h1: h1Taller(t) }
 }

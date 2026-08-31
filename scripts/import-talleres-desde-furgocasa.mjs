@@ -1,6 +1,6 @@
 /**
  * Copia talleres camper desde Supabase de Furgocasa a MapafurgoCasa.
- * Solo category=taller_camper. Concesionarios no viajan.
+ * Solo category=taller_camper. Flota sola no. Taller+venta+alquiler sí.
  *
  * Uso (desde webmapafurgocasa):
  *   node scripts/import-talleres-desde-furgocasa.mjs

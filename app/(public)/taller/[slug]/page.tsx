@@ -136,7 +136,7 @@ export default async function TallerPage({ params }: PageProps) {
     .slice(0, 4)
 
   const nombre = tituloTaller(taller.nombre)
-  const h1 = h1Taller(taller.ciudad, taller.provincia)
+  const h1 = h1Taller(taller)
   const direccion = direccionVisible(taller.direccion)
   const maps = mapsUrlTaller(taller)
   const area = areaDesdeTaller(taller, nombre, direccion, maps)
@@ -238,7 +238,7 @@ export default async function TallerPage({ params }: PageProps) {
                   titulo={
                     taller.provincia
                       ? `Otros talleres camper en ${taller.provincia}`
-                      : 'Otros talleres de camperización'
+                      : 'Otros talleres camper'
                   }
                 />
               )}

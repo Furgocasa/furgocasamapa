@@ -17,6 +17,7 @@ import { generateAndStoreTallerImage } from '../lib/areas/generate-area-image'
 const DRY = /^(1|true|yes)$/i.test(process.env.IMG_DRYRUN || '')
 const IA_ONLY = /^(1|true|yes)$/i.test(process.env.IMG_IA_ONLY || '')
 const LIMIT = Math.max(0, parseInt(process.env.IMG_LIMIT || '0', 10) || 0)
+const SLUG = (process.env.IMG_SLUG || '').trim()
 const MAX_FOTOS = Math.max(1, parseInt(process.env.IMG_MAX || '4', 10) || 4)
 const CONCURRENCY = Math.max(1, parseInt(process.env.IMG_CONCURRENCY || '3', 10) || 3)
 
@@ -33,6 +34,8 @@ const EXTRA = [
   '/camperización',
   '/realizaciones',
   '/portfolio',
+  '/taller',
+  '/taller/',
 ]
 
 type Row = {
@@ -56,13 +59,15 @@ async function main() {
   )
   const all: Row[] = []
   for (let page = 0; ; page++) {
-    const { data, error } = await supa
+    let q = supa
       .from('talleres')
       .select('id,nombre,slug,website,foto_principal,fotos_urls,ciudad,provincia,pais,latitud,longitud')
       .eq('activo', true)
-      .is('foto_principal', null)
       .order('nombre')
       .range(page * 1000, (page + 1) * 1000 - 1)
+    if (SLUG) q = q.eq('slug', SLUG)
+    else q = q.is('foto_principal', null)
+    const { data, error } = await q
     if (error) throw error
     if (!data?.length) break
     all.push(...(data as Row[]))
@@ -122,6 +127,13 @@ async function main() {
   })
   await Promise.all(workers)
   console.log(`\nOficial: ${ok} con foto, ${miss} sin usable, de ${lote.length}`)
+
+  if (SLUG) {
+    const sinFotoSlug = all.filter((t) => !t.foto_principal)
+    if (sinFotoSlug.length) await generarIa(supa, sinFotoSlug, ok)
+    else console.log('IMG_SLUG: con foto oficial, sin IA.')
+    return
+  }
 
   const { data: siguen } = await supa
     .from('talleres')
