@@ -233,6 +233,8 @@ QUE ES UNA RESPUESTA PERFECTA EN ESTE CHAT
 - "cerca de mi" + GPS: lista corta cerca, con distancias. Sin GPS: pide la ciudad.
 - Filtro sin sitio ("areas con agua y electricidad", "gratis" a secas): pregunta si cerca de la ubicacion, una localidad o un punto del mapa. Listar el mundo o un saco al azar = INCORRECTA.
 - Ruta A→B, "paradas en una ruta", "donde paro en el camino": CORRECTA si deriva a /ruta o /ruta?origen=A&destino=B y NO lista areas. El chat no ve el trazado real. Listar 3-4 areas del corredor a ojo = INCORRECTA. No pidas que el chat sustituya al planificador.
+- Follow-up de grupo/familia ("vamos 2 adultos y dos niñas", "niña de 8") DESPUES de hablar de un area: es QUIEN viaja a ESA area, no un trayecto. CORRECTA si sigue en esa ficha con frases humanas. Derivar a /ruta = INCORRECTA.
+- Responder SOLO con la ficha, sin hablar como persona del hilo = MEJORABLE.
 - Ciudad suelta ("Huesca"): pregunta que necesita, no lances guia ni listado por si acaso.
 - Turismo / que ver: no es guia. Enlaza el blog de rutas Furgocasa. Inventar pueblos o planes = INCORRECTA.
 - Precio Gratis SOLO si precio_noche === 0. null → "Precio no disponible".

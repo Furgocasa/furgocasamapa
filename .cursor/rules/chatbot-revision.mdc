@@ -58,6 +58,7 @@ Las filas viejas del admin (el ~48% incorrectas) son de **antes**. No se reescri
 | «Camping no» y sale un camping | `excluir_camping` en la búsqueda y en las tarjetas. No lo menciones para descartarlo. |
 | Pública llamada privada | El tipo va en la ficha (`🏷️`). No lo reescribas. |
 | «Muy cara 40 €» sin filtro | `topePrecioQueja` fuerza `precio_max`. Sin precio confirmado, no listes desconocidos como más baratos. |
+| «Vamos 2 adultos niña de 8…» tras un área (Los Narejos) | NO es ruta. `\ba\b` partía «niña». `pareceComposicionGrupo` + ficha del hilo. Hablar como persona, no soltar solo la ficha. |
 
 La tabla `chatbot_respuestas_log` no tiene columnas `ciudad`/`pais`/`lat`/`lng`. La ubicación vive en `funciones` (`_ubicacion`) y en `chatbot_conversaciones.preferencias_detectadas.ubicacion`.
 

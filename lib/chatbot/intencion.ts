@@ -119,20 +119,56 @@ export function extraerNombreAreaConcreta(mensaje: string): string {
   return nombre
 }
 
+/**
+ * "Vamos 2 adultos, niña de 8…" es el grupo que viaja, no un trayecto.
+ * En JS, `\ba\b` parte "niña" por la ñ (ñ no es \w) y el atajo de ruta disparaba.
+ */
+export function pareceComposicionGrupo(mensaje: string): boolean {
+  const t = (mensaje || '').replace(/[\u{1F300}-\u{1FAFF}]/gu, '').replace(/\s+/g, ' ').trim()
+  if (!t) return false
+  if (/(d[oó]nde paro|paradas?\s+entre|stops?\s+along|de\s+[A-ZÁÉÍÓÚÑ].{0,40}\s+a\s+[A-ZÁÉÍÓÚÑ])/i.test(t)) {
+    return false
+  }
+  return (
+    /\b(\d+|un|una|dos|tres|cuatro|cinco|two|three|four|cinq|drei)\s+(adultos?|niñ[oa]s?|hijos?|beb[eé]s?|personas?|adults?|kids?|children|enfants?|kinder)\b/i.test(t) ||
+    /\bniñ[oa]s?\s+de\s+\d+/i.test(t) ||
+    /\b(vamos|somos|viajamos|iremos|we are|we're|on est|wir sind|siamo)\s+.+\b(adultos?|niñ[oa]s?|hijos?|beb[eé]s?|familia|personas?|adults?|kids?|children)\b/i.test(t)
+  )
+}
+
+const NO_LUGAR_RUTA =
+  /\b(adultos?|niñ[oa]s?|niños|años?|hijos?|beb[eé]s?|familia|personas?|kids?|children|adults?|enfants?|kinder)\b/i
+
+function esNombreLugarRuta(raw: string): boolean {
+  const t = limpiarNombreRuta(raw)
+  if (t.length < 2 || t.length > 42) return false
+  if (NO_LUGAR_RUTA.test(t) || /^\d/.test(t)) return false
+  if (/^(aqu[ií]|aca|acá|here|hier|qui)$/i.test(t)) return true
+  return /^[\p{L}][\p{L}\s.'’-]*$/u.test(t)
+}
+
 /** "Voy de Madrid a Valencia, dónde paro" — pregunta de ruta, no de un sitio suelto. */
 export function extraerRutaNombrada(mensaje: string): { origen: string; destino: string } | null {
   const t = (mensaje || '').replace(/[\u{1F300}-\u{1FAFF}]/gu, '').replace(/\s+/g, ' ').trim()
-  if (!t) return null
+  if (!t || pareceComposicionGrupo(t)) return null
   const patrones = [
-    /(?:voy|vamos|ir|ruta|route|driving|drive|from|de|desde)\s+(?:de\s+)?(.+?)\s+(?:a|hacia|to)\s+(.+)/i,
+    /(?:voy|vamos|iremos|ir)\s+(?:de\s+|desde\s+)?(.+?)\s+(?:a|hacia)\s+(.+)/iu,
+    /(?:from|driving|drive|route)\s+(.+?)\s+to\s+(.+)/i,
     /entre\s+(.+?)\s+y\s+(.+)/i,
+    /(?:de|desde)\s+([A-ZÁÉÍÓÚÑ][\p{L}\s.'’-]{1,40})\s+(?:a|hacia)\s+([A-ZÁÉÍÓÚÑ][\p{L}\s.'’-]{1,40})/iu,
   ]
   for (const re of patrones) {
     const m = t.match(re)
     if (!m) continue
     const origen = limpiarNombreRuta(m[1])
     const destino = limpiarNombreRuta(m[2])
-    if (origen.length >= 2 && destino.length >= 2 && origen.toLowerCase() !== destino.toLowerCase()) {
+    if (
+      origen.length >= 2 &&
+      destino.length >= 2 &&
+      origen.toLowerCase() !== destino.toLowerCase() &&
+      esNombreLugarRuta(origen) &&
+      esNombreLugarRuta(destino)
+    ) {
       return { origen, destino }
     }
   }
@@ -149,15 +185,30 @@ function limpiarNombreRuta(raw: string): string {
 }
 
 export function parecePreguntaRuta(mensaje: string): boolean {
-  if (!mensaje) return false
+  if (!mensaje || pareceComposicionGrupo(mensaje)) return false
   const t = mensaje.trim()
   const patrones = [
-    /\b(?:driving|drive|voy|vamos|ir|ruta|route|trayecto)\b.+\b(?:to|a|hacia|→|->)\b.+/i,
-    /\b(?:from|de|desde)\s+(?:aqu[ií]|aca|acá|here|hier|qui|[A-Za-zÀ-ÿ][\wÀ-ÿ\s.'-]{1,40})\s+(?:to|a|hacia)\s+[A-Za-zÀ-ÿ][\wÀ-ÿ\s.'-]{1,40}/i,
+    /\b(?:from|de|desde)\s+(?:aqu[ií]|aca|acá|here|hier|qui|[A-ZÁÉÍÓÚÑ][\p{L}\s.'-]{1,40})\s+(?:to|a|hacia)\s+[A-ZÁÉÍÓÚÑ][\p{L}\s.'-]{1,40}/iu,
     /\b(?:where to stop|d[oó]nde paro|donde parar|paradas?\s+entre|stop(?:s)?\s+along|áreas?\s+de\s+camino)\b/i,
-    /\b[A-Za-zÀ-ÿ][\wÀ-ÿ.'-]{2,30}\s+(?:to|→|->|–|-)\s+[A-Za-zÀ-ÿ][\wÀ-ÿ.'-]{2,30}.{0,40}\b(?:stop|paro|parar|paradas?)\b/i,
+    /\b[A-Za-zÀ-ÿ][\wÀ-ÿ.'-]{2,30}\s+(?:to|→|->|–)\s+[A-Za-zÀ-ÿ][\wÀ-ÿ.'-]{2,30}.{0,40}\b(?:stop|paro|parar|paradas?)\b/i,
   ]
   return patrones.some((re) => re.test(t)) || Boolean(extraerRutaNombrada(t))
+}
+
+/** Nombre del área del que ya hablamos (ficha o mensaje anterior). */
+export function extraerNombreAreaDelHilo(
+  previosUsuario?: string[],
+  ultimoAsistente?: string | null
+): string {
+  const delAsistente = (ultimoAsistente || '').match(/\*\*([^*]{3,80})\*\*/)
+  if (delAsistente?.[1]) return delAsistente[1].trim()
+  const slug = (ultimoAsistente || '').match(/\/area\/([a-z0-9-]+)/i)
+  if (slug?.[1]) return slug[1].replace(/-/g, ' ')
+  for (const prev of [...(previosUsuario || [])].reverse()) {
+    const nombrada = extraerNombreAreaConcreta(prev)
+    if (nombrada) return nombrada
+  }
+  return ''
 }
 
 /** Ya dijo pernocta, tipo o tramo: se puede buscar. */
@@ -348,6 +399,7 @@ export function clasificarIntencion(opts: {
   if (esPideReservaRecinto(ultimo)) return 'no_somos_recinto'
   if (esGuiaTuristicaPura(ultimo)) return 'guia'
   if (esGasolineraSinSitio(ultimo)) return 'gas_sin_sitio'
+  if (pareceComposicionGrupo(ultimo)) return null
   if (esPreguntaAreaConcreta(ultimo) || esDeixisMapa(ultimo) || extraerNombreAreaConcreta(ultimo)) return null
   if (esRutaSinIntencion(ultimo)) return 'ruta_sin_intencion'
   const hiloRuta =

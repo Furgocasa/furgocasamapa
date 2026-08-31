@@ -22,6 +22,8 @@ import {
   pideCercaDeMi,
   textoAtajoIntencion,
   enlacePlanificador,
+  pareceComposicionGrupo,
+  extraerNombreAreaDelHilo,
 } from '../lib/chatbot/intencion'
 
 const GPS = { lat: 37.9922, lng: -1.1307 }
@@ -68,6 +70,8 @@ const POOL: Array<{ tema: string; q: string }> = [
   { tema: 'concreta', q: 'Ajo, Cantabria' },
   { tema: 'concreta', q: 'parking ciutat caravaning' },
   { tema: 'concreta', q: 'Camping taifa puerto santa maria' },
+  { tema: 'followup-grupo', q: 'Vamos 2 adultos niña de 8 años y niña de 12' },
+  { tema: 'followup-grupo', q: 'Vamos dos adultos, niña de 8 años y niña de 12' },
   { tema: 'gas', q: 'Gasolineras' },
   { tema: 'gas', q: 'Gasolinera entre Murcia y Madrid' },
   { tema: 'gas', q: 'Taller cerca' },
@@ -133,10 +137,17 @@ async function porCiudad(ciudad: string, gratis?: boolean) {
 }
 
 async function simular(q: string, tema: string) {
+  const previosGrupo = tema === 'followup-grupo' ? ['Área autocaravanas los narejos'] : []
+  const asistenteGrupo = tema === 'followup-grupo'
+    ? '🚐 **Área autocaravanas Los Narejos**\n🔗 /area/area-autocaravanas-los-narejos-los-alcazares'
+    : null
   let atajo = clasificarIntencion({
     ultimo: q,
-    previosUsuario: tema === 'recepcion-nombre' ? ['Están molestando en la parcela de alado'] : [],
-    ultimoAsistente: null,
+    previosUsuario:
+      tema === 'recepcion-nombre'
+        ? ['Están molestando en la parcela de alado']
+        : previosGrupo,
+    ultimoAsistente: asistenteGrupo,
   })
   const ruta = extraerRutaNombrada(q)
   const concreta = esPreguntaAreaConcreta(q) || esDeixisMapa(q) || Boolean(extraerNombreAreaConcreta(q))
@@ -148,6 +159,29 @@ async function simular(q: string, tema: string) {
   const inyectaGps = pideCercaDeMi(q) || !nombraSitio
   // Igual que route.ts: con GPS no preguntamos el dónde
   if (atajo === 'filtro_sin_sitio' && inyectaGps) atajo = null
+
+  if (tema === 'followup-grupo') {
+    const area = extraerNombreAreaDelHilo(previosGrupo, asistenteGrupo)
+    const grupo = pareceComposicionGrupo(q)
+    if (atajo) {
+      return {
+        q,
+        tema,
+        via: `atajo:${atajo}`,
+        veredicto: 'FALLO',
+        nota: `atajo ${atajo} (debía seguir en ${area || 'el área del hilo'})`,
+        preview: q,
+      }
+    }
+    return {
+      q,
+      tema,
+      via: 'followup-area-hilo',
+      veredicto: grupo && area ? 'OK' : 'FALLO',
+      nota: grupo && area ? `sigue en ${area}, no /ruta` : 'no detectó grupo o área del hilo',
+      preview: area,
+    }
+  }
 
   if (atajo) {
     const etiqueta = atajo === 'ruta_sin_intencion' && ruta ? `${ruta.origen} → ${ruta.destino}` : undefined

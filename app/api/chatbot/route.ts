@@ -71,6 +71,9 @@ import {
   nombreRecintoMencionado,
   pareceIdentificarRecinto,
   pideTaller,
+  pareceComposicionGrupo,
+  extraerNombreAreaDelHilo,
+  asistenteListoAreas,
 } from '@/lib/chatbot/intencion'
 
 // ============================================
@@ -868,6 +871,18 @@ export async function POST(req: NextRequest) {
           .eq('id', conversacionId)
       }
 
+      if (conversacionId) {
+        await (supabase as any).from('chatbot_mensajes').insert([
+          { conversacion_id: conversacionId, rol: 'user', contenido: ultimoMensajeUsuario },
+          {
+            conversacion_id: conversacionId,
+            rol: 'assistant',
+            contenido: message,
+            modelo_usado: 'atajo',
+          },
+        ])
+      }
+
       const logId = await logRespuesta(supabase, {
         conversacion_id: conversacionId || null,
         user_id: userId || null,
@@ -1071,6 +1086,7 @@ ${hiloModelo.slice(-8).map((m) => `- ${m.role === 'user' ? 'Usuario' : 'Tío'}: 
 - "esta / esa / la del mapa / recomiéndame un área" con pin abierto → ESA área, una ficha.
 - "allí / la de antes" → el hilo (${ciudadHilo || ciudadGpsTxt}).
 - SEGUIMIENTO: si acabas de listar áreas y el usuario dice "amplía", "más", "y con duchas", "y gratis" o corrige ("esas no son gratis"), MANTÉN los filtros de antes (gratis, servicios, tipo) y la misma ubicación/GPS. No preguntes "¿dónde?" otra vez ni pierdas el filtro. Si dijiste "gratis", que TODAS sean precio 0; si una no lo es, no la incluyas ni la llames gratuita.
+- GRUPO / FAMILIA: "vamos 2 adultos y dos niñas", "somos cuatro", "niña de 8" es QUIÉN viaja a la área del hilo, NO un trayecto. Sigue hablando de ESA ficha. No saltes a /ruta.
 GPS, pin y memoria se complementan. No dispares el corredor entero si preguntan por una.`
     
     // Añadir estadísticas de la plataforma
@@ -1144,7 +1160,18 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
 3. Si este turno trae fichas, prohibido decir «no tengo». Di el mismo número que te llegan (máx. 3).
 4. Follow-up («y con duchas», «más baratos», «¿y en Murcia?») conserva filtros y sitio. Una ciudad SOLA, sin «y» ni filtro, es búsqueda nueva: no heredes duchas/gratis.
 5. «Cerca» sin GPS → pregunta la ciudad. No inventes dónde está.
-6. Solo /area/{slug}, /taller/{slug} y /ruta. Prohibido Google Maps, maps.google, goo.gl/maps, example.com.`
+6. Solo /area/{slug}, /taller/{slug} y /ruta. Prohibido Google Maps, maps.google, goo.gl/maps, example.com.
+
+═══════════════════════════════════════
+🗣️ TONO Y CONVERSACIÓN (como Andrea en Furgocasa)
+═══════════════════════════════════════
+- Habla como una persona del equipo: cercana, clara, tutea. Nunca suenes a listado automático.
+- Empieza humano cuando encaje: "Claro", "Te cuento", "Perfecto", "Entiendo".
+- PROHIBIDO responder solo con la ficha. Antes, 2-5 frases que contesten LO QUE ACABA DE DECIR, ligadas al hilo. La ficha se pega sola después.
+- Mantén el tema: si hablabais de Los Narejos / Los Alcázares y dicen con quién van, habla de ESA área (plazas, precio, servicios confirmados). No inventes parque infantil ni "ideal para niños" si la ficha no lo dice.
+- "vamos a X" con UN sitio = esa área o pueblo. "vamos de A a B" / "dónde paro" = /ruta. Quien viaja no es origen→destino.
+- No cambies de tema ni ofrezcas el planificador si no piden un trayecto.
+- Cierra a veces con una pregunta útil ("¿Una noche o varios días?", "¿Te encaja el precio o busco alternativas cerca?").`
     
     // 5. PREPARAR MENSAJES COMPLETOS (un solo hilo, sin duplicar)
     const fullMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
@@ -1196,10 +1223,23 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         ...messages.filter((m: any) => m.role === 'user').slice(0, -1).map((m: any) => m.content),
       ],
     })
+    const areaHilo = extraerNombreAreaDelHilo(
+      messages
+        .filter((m: any) => m.role === 'user')
+        .slice(0, -1)
+        .map((m: any) => String(m.content || '')),
+      [...messages].reverse().find((m: any) => m.role === 'assistant')?.content || null
+    )
+    const followupGrupoSobreArea =
+      pareceComposicionGrupo(ultimoMensajeUsuario) &&
+      Boolean(areaHilo || areaEnMapa || asistenteListoAreas(
+        [...messages].reverse().find((m: any) => m.role === 'assistant')?.content || null
+      ))
     const preguntaConcreta =
       esPreguntaAreaConcreta(ultimoMensajeUsuario) ||
       esDeixisMapa(ultimoMensajeUsuario) ||
       Boolean(extraerNombreAreaConcreta(ultimoMensajeUsuario)) ||
+      followupGrupoSobreArea ||
       Boolean(areaEnMapa && /recomi[eé]ndame|esta no te suena|qu[eé] (pasa con |tal )?([eé]sta|[eé]sa)/i.test(ultimoMensajeUsuario))
     const forzarAreaConcreta = preguntaConcreta
     const forzarTaller = pideTaller(ultimoMensajeUsuario) && !forzarAreaConcreta
@@ -1320,7 +1360,7 @@ Usa estas estadísticas cuando el usuario pregunte "cuántas áreas hay", "dónd
         if (fnName === 'get_area_by_name') {
           const nombrada = extraerNombreAreaConcreta(ultimoMensajeUsuario)
           if (!fnArgs.nombre || esDeixisMapa(fnArgs.nombre) || String(fnArgs.nombre).length < 3) {
-            fnArgs.nombre = nombrada || areaEnMapa?.nombre || fnArgs.nombre
+            fnArgs.nombre = nombrada || areaHilo || areaEnMapa?.nombre || fnArgs.nombre
           }
           fnArgs.limit = Math.min(Number(fnArgs.limit) || 2, 2)
         }
